@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { asPaged, formatMoney, slugify } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
 import { MediaUpload } from '@/components/MediaUpload';
+import { GalleryMediaField } from '@/components/GalleryMediaField';
 import { Checkbox } from '@/components/Checkbox';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import type { Product } from '@/lib/types';
@@ -410,17 +411,19 @@ export default function ProductsPage() {
               folder="products"
             />
           </div>
-          <label className="block text-sm md:col-span-2">
-            <span className="mono text-[10px] uppercase text-muted">
-              Galeri URL&apos;leri (satır başına bir)
-            </span>
-            <textarea
-              rows={3}
-              value={form.gallery}
-              onChange={(e) => setForm((f) => ({ ...f, gallery: e.target.value }))}
-              className="mt-1 w-full border border-border-muted bg-background px-3 py-2 mono text-xs"
+          <div className="md:col-span-2">
+            <GalleryMediaField
+              label="Galeri"
+              urls={form.gallery
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean)}
+              onChange={(urls) =>
+                setForm((f) => ({ ...f, gallery: urls.join('\n') }))
+              }
+              folder="products"
             />
-          </label>
+          </div>
           <Checkbox
             checked={form.isActive}
             onChange={(isActive) => setForm((f) => ({ ...f, isActive }))}

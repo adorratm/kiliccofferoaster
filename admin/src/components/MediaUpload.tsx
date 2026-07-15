@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { uploadMedia } from '@/lib/api';
+import { ImageDropZone } from '@/components/ImageDropZone';
 
 type Props = {
   value?: string;
@@ -16,11 +17,12 @@ export function MediaUpload({
   folder = 'media',
   label = 'Görsel',
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
+  async function handleFiles(files: File[]) {
+    const file = files[0];
+    if (!file) return;
     setUploading(true);
     setError(null);
     try {
@@ -36,39 +38,35 @@ export function MediaUpload({
   return (
     <div className="space-y-2">
       <span className="mono text-[10px] uppercase text-muted">{label}</span>
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex flex-wrap items-stretch gap-3">
         {value ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={value}
-            alt=""
-            className="h-24 w-24 border border-border-muted object-cover"
-          />
+          <div className="relative shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={value}
+              alt=""
+              className="h-28 w-28 border border-border-muted object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="absolute right-1 top-1 bg-black/70 px-1.5 py-0.5 text-[10px] text-white"
+            >
+              Kaldır
+            </button>
+          </div>
         ) : null}
-        <div className="flex flex-col gap-2">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleFile(file);
-            }}
+        <div className="min-w-60 flex-1 space-y-2">
+          <ImageDropZone
+            onFiles={handleFiles}
+            busy={uploading}
+            hint="Görseli sürükleyip bırakın veya seçin"
           />
-          <button
-            type="button"
-            disabled={uploading}
-            onClick={() => inputRef.current?.click()}
-            className="border border-border-muted px-3 py-2 text-sm hover:bg-surface-high disabled:opacity-50"
-          >
-            {uploading ? 'Yükleniyor…' : 'S3\'e yükle'}
-          </button>
           <input
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder="veya URL yapıştır"
-            className="w-full min-w-60 border border-border-muted bg-background px-3 py-2 text-sm"
+            className="w-full border border-border-muted bg-background px-3 py-2 text-sm"
           />
         </div>
       </div>
