@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KILIÇ COFFEE ROASTERS | ENGINEERED PRECISION</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anton:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#3a3939",
+                        "secondary-container": "#454747",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-surface-variant": "#dec0b9",
+                        "primary-fixed": "#ffdbd2",
+                        "surface-dim": "#131313",
+                        "on-secondary-container": "#b5b5b5",
+                        "on-error-container": "#ffdad6",
+                        "on-background": "#e5e2e1",
+                        "primary-container": "#e46d4f",
+                        "inverse-primary": "#a33d23",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "surface-variant": "#353534",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-primary-fixed": "#3c0800",
+                        "surface-container-highest": "#353534",
+                        "secondary": "#c6c6c6",
+                        "background": "#131313",
+                        "surface-container": "#201f1f",
+                        "secondary-fixed-dim": "#c6c6c6",
+                        "tertiary": "#c8c6c5",
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "tertiary-fixed": "#e5e2e1",
+                        "on-secondary": "#2f3131",
+                        "on-primary-container": "#550f00",
+                        "outline-variant": "#57423d",
+                        "primary": "#ffb4a2",
+                        "on-primary": "#611200",
+                        "outline": "#a58b84",
+                        "surface": "#131313",
+                        "on-surface": "#e5e2e1",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-tint": "#ffb4a2",
+                        "error": "#ffb4ab",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-error": "#690005",
+                        "surface-container-low": "#1c1b1b",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#1c1b1b",
+                        "on-tertiary": "#313030",
+                        "on-tertiary-container": "#2a2a2a",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "inverse-on-surface": "#313030",
+                        "tertiary-container": "#929090",
+                        "on-primary-fixed-variant": "#83260d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    "spacing": {
+                        "column-gap": "24px",
+                        "section-padding": "120px",
+                        "base": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Anton"],
+                        "display-lg": ["Anton"],
+                        "headline-md": ["Anton"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "meta-technical": ["JetBrains Mono"],
+                        "display-lg-mobile": ["Anton"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["48px", {"lineHeight": "52px", "fontWeight": "400"}],
+                        "display-lg": ["80px", {"lineHeight": "80px", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                        "headline-md": ["32px", {"lineHeight": "36px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "meta-technical": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg-mobile": ["48px", {"lineHeight": "48px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            scroll-behavior: smooth;
+        }
+        .grid-overlay {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+        }
+        .text-outline {
+            -webkit-text-stroke: 1px #ffb4a2;
+            color: transparent;
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 180, 162, 0.2);
+            position: absolute;
+            animation: scan 4s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+    </style>
+</head>
+<body class="font-body-md antialiased overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-background flex justify-between items-center h-20 px-margin-desktop w-full border-b border-outline-variant/20">
+<div class="font-headline-md text-headline-md text-primary dark:text-primary tracking-tighter cursor-pointer active:opacity-80">
+            KILIÇ COFFEE ROASTERS
+        </div>
+<div class="hidden md:flex gap-10 font-meta-technical text-meta-technical uppercase tracking-widest items-center">
+<a class="text-primary font-bold border-b border-primary hover:text-primary transition-colors duration-200" href="#">ROASTS</a>
+<a class="text-secondary dark:text-secondary hover:text-primary transition-colors duration-200" href="#">EQUIPMENT</a>
+<a class="text-secondary dark:text-secondary hover:text-primary transition-colors duration-200" href="#">SUBSCRIPTIONS</a>
+<a class="text-secondary dark:text-secondary hover:text-primary transition-colors duration-200" href="#">WHOLESALE</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="cursor-pointer active:opacity-80 text-primary">
+<span class="material-symbols-outlined">shopping_bag</span>
+</button>
+<button class="cursor-pointer active:opacity-80 text-primary">
+<span class="material-symbols-outlined">person</span>
+</button>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative h-[90vh] flex flex-col justify-center items-center overflow-hidden border-b border-outline-variant">
+<div class="absolute inset-0 z-0">
+<img alt="" class="w-full h-full object-cover grayscale brightness-50 opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlBUxy0Q0LkoCDnmlNE_INRsAZuJIhwdtJ8wbh9MICmXWy597fYqCiu7j0RGENTOOMlsVzYkukQREVMFvPsmJCCYWTequtBy7AqFc_sVDTDW-ATBZiSpjwqF_EuATzxBZqNZkd-p06CAMTXcetWYgQHzn4DIqn3MhS51xqkGPH1IASTpY-M3jUKri9z-JNRJoxvBZCb0wPolZFxqk4RmJkv2BtI0l2qUcyJmsdAow1r6pCIHat2eiKlxfA6s5bG_YelOpHZUIMb7k"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 w-full px-margin-desktop flex flex-col items-start">
+<div class="font-meta-technical text-primary text-label-sm mb-4 tracking-[0.3em]">EST. 2024 / ISTANBUL</div>
+<h1 class="font-display-lg text-display-lg leading-[0.85] flex flex-col">
+<span class="block">KILIÇ</span>
+<span class="block text-outline ml-12 md:ml-32">ROASTERS</span>
+</h1>
+<div class="mt-8 max-w-xl font-meta-technical text-secondary uppercase leading-relaxed border-l-2 border-primary-container pl-6 py-2">
+                    Engineered Precision. Artisanal Depth. High-Tech Roasting for the Discerning Professional.
+                </div>
+<div class="mt-12 flex gap-gutter">
+<button class="bg-primary-container text-on-primary-container px-10 py-4 font-meta-technical uppercase tracking-widest text-sm hover:brightness-110 transition-all">
+                        EXPLORE THE COLLECTION
+                    </button>
+<button class="border border-on-background text-on-background px-10 py-4 font-meta-technical uppercase tracking-widest text-sm hover:bg-on-background hover:text-background transition-all">
+                        OUR ETHOS
+                    </button>
+</div>
+</div>
+<!-- Side Tech Bar -->
+<div class="absolute right-0 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-8 pr-8 items-end font-meta-technical text-[10px] text-primary/40 uppercase tracking-tighter">
+<div class="rotate-90 origin-right translate-y-12">SYSTEM_STATUS: OPTIMAL</div>
+<div class="rotate-90 origin-right translate-y-12">LATENCY: 14MS</div>
+<div class="rotate-90 origin-right translate-y-12">GRID_COORD: 41.0082° N, 28.9784° E</div>
+</div>
+</section>
+<!-- The Roasting Ethos / Live Telemetry -->
+<section class="py-section-padding bg-surface-container-lowest border-b border-outline-variant relative overflow-hidden">
+<div class="scanline z-20"></div>
+<div class="px-margin-desktop grid grid-cols-12 gap-gutter relative z-10">
+<div class="col-span-12 lg:col-span-4 mb-12">
+<h2 class="font-headline-lg text-headline-lg text-on-background mb-8 leading-none">THE<br/>ROASTING<br/>ETHOS</h2>
+<p class="font-body-lg text-secondary max-w-sm">
+                        Our methodology is rooted in data. We track 48 unique variables per batch to ensure total consistency across the thermal curve.
+                    </p>
+<div class="mt-10 grid grid-cols-2 gap-4">
+<div class="border border-outline-variant/30 p-4">
+<div class="text-[10px] font-meta-technical text-primary/60 uppercase">Drum Speed</div>
+<div class="text-2xl font-meta-technical text-primary">54 RPM</div>
+</div>
+<div class="border border-outline-variant/30 p-4">
+<div class="text-[10px] font-meta-technical text-primary/60 uppercase">Airflow</div>
+<div class="text-2xl font-meta-technical text-primary">82%</div>
+</div>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-8">
+<div class="border border-primary/20 bg-surface h-[500px] relative overflow-hidden grid-overlay">
+<img alt="" class="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLAWHvcoiflFp9SNDKZsAUTezYqSFw4TSpL7U7xTKq6pXsckCl0fAew60L3bkQ7QhiHezwm1iR_n-d81dsntrrE-vdRsfiT-bj8fSRxn9yETPuC9idXzwbPI7cbwKJ5rhH8vtu1dncv5ZZaI9BdAhZSKQFCAAPaoS-wJ2cG-IFWmuul_pvjy7QlhvBWTH3Ss2kL6ciHNSh-ePGbMwLuQX47Vd1vR7atGRIw_0Nj4j_Abln7-ME22qtZ_LAMhLqYy3Cm5rWAyJLuNo"/>
+<!-- Telemetry Overlay -->
+<div class="absolute inset-0 p-8 flex flex-col justify-between">
+<div class="flex justify-between font-meta-technical text-xs text-primary">
+<div>PROFILE: KRC-74-ALPHA</div>
+<div>LIVE_FEED: ACTIVE</div>
+</div>
+<div class="w-full h-48 border-b border-primary/40 relative">
+<!-- Simulated SVG Graph -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 200">
+<path d="M0 180 Q 250 160, 400 100 T 700 50 T 1000 20" fill="none" stroke="#ffb4a2" stroke-width="2"></path>
+<path d="M0 180 Q 250 170, 450 140 T 800 110 T 1000 100" fill="none" opacity="0.5" stroke="#ffb4a2" stroke-dasharray="4" stroke-width="1"></path>
+</svg>
+<div class="absolute top-4 left-4 font-meta-technical text-[10px] text-primary bg-background/80 px-2 py-1">FIRST CRACK DETECTED</div>
+</div>
+<div class="grid grid-cols-4 gap-4 mt-4 font-meta-technical text-[10px]">
+<div class="border-t border-primary/20 pt-2">
+<span class="block text-primary/40 mb-1">TEMP_INTERNAL</span>
+<span class="text-lg text-primary">204.5°C</span>
+</div>
+<div class="border-t border-primary/20 pt-2">
+<span class="block text-primary/40 mb-1">ROR_PHASE</span>
+<span class="text-lg text-primary">+8.2</span>
+</div>
+<div class="border-t border-primary/20 pt-2">
+<span class="block text-primary/40 mb-1">EXHAUST_TEMP</span>
+<span class="text-lg text-primary">188.1°C</span>
+</div>
+<div class="border-t border-primary/20 pt-2">
+<span class="block text-primary/40 mb-1">FUEL_STABILITY</span>
+<span class="text-lg text-primary">99.8%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Curated Specimens -->
+<section class="py-section-padding px-margin-desktop">
+<div class="flex justify-between items-end mb-16">
+<div>
+<h2 class="font-headline-lg text-headline-lg mb-4">CURATED SPECIMENS</h2>
+<p class="font-meta-technical text-secondary-container uppercase tracking-widest text-sm">SELECT THE HARVEST // FILTER BY LOGIC</p>
+</div>
+<div class="font-meta-technical text-primary text-sm flex gap-4">
+<span class="border border-primary px-4 py-1">VIEW ALL (14)</span>
+<span class="border border-outline-variant/30 px-4 py-1 text-secondary opacity-50">ARCHIVE</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<!-- Specimen 1 -->
+<div class="group border border-outline-variant/20 bg-surface-container-low p-6 transition-all hover:border-primary">
+<div class="relative aspect-[4/5] bg-surface-dim mb-6 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A minimalist, industrial style coffee bag design for KILIÇ COFFEE ROASTERS. The bag is matte black with sharp edges and silver foil technical data printed on it. It sits on a concrete surface with high-contrast shadows. The aesthetic is modern brutalist and premium, with warm lighting accents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxXYGQQisYo_bWv43xjbG3fMuNz1VxqKP6tZHSuQOMfmGUA3VlsHyYa9EtdWlhW57SUT0MWZzhJdv8L3K0K4rX-3jMgiB3SqEnDxbBxYZu5A3wwxuXSKikm3_LVZbAiMIFi_FCPYgqEA0YkqB0QXsLJDKX7bs3L9JJWsC27q98EdUr5wLYjEvQkZH5XwMK3akMAcbDO0sBfHmLkYI37un7Wz-n18jojAYTBBu6uawEvdiq4RTWjY8_b6BWu5LMZXxfETCmbaQhVKo')"></div>
+<div class="absolute top-4 right-4 bg-primary text-background font-meta-technical text-[10px] px-2 py-1">NEW RELEASE</div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-2xl uppercase">SPECIMEN_01: ETHIOPIA</h3>
+<span class="font-meta-technical text-primary">$32.00</span>
+</div>
+<div class="border-t border-outline-variant/30 pt-4 font-meta-technical text-[11px] text-secondary grid grid-cols-2 gap-y-2">
+<div>ALTITUDE</div>
+<div class="text-on-background">2100 - 2300 MASL</div>
+<div>PROCESS</div>
+<div class="text-on-background">ANAEROBIC NATURAL</div>
+<div>BATCH NO.</div>
+<div class="text-on-background">KRC-2024-08A</div>
+<div>VARIETAL</div>
+<div class="text-on-background">HEIRLOOM</div>
+</div>
+<button class="mt-4 w-full py-4 border border-primary text-primary font-meta-technical text-xs uppercase tracking-widest group-hover:bg-primary group-hover:text-background transition-all">
+                            INITIALIZE PURCHASE
+                        </button>
+</div>
+</div>
+<!-- Specimen 2 -->
+<div class="group border border-outline-variant/20 bg-surface-container-low p-6 transition-all hover:border-primary">
+<div class="relative aspect-[4/5] bg-surface-dim mb-6 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A macro shot of a coffee bag with professional technical labelling. The lighting is low and moody, highlighting the texture of the paper and the sharp typography. The background features blurred industrial machinery. Dark charcoal and copper color palette with an engineered feel." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTgYziRPd94m_S6CxGu9n827KBr73LVoQWB8TdGJbhOrL_mhtZ62LO5nr6LT47cMM-65mXk3bksO4PFA7nY-om6juJlWBiACqlOjmvfFsLFhvH8KZWoAwbgE5ZE8p4UH7mrRxuoK3k_YqSAn8D6py4WahIVxUgIVB-oL7AWkFH7MCKC-oSn9RrEYTWiAJxk4gLYh5YO_YZ8sLZZoVFVEPrAqzU-cZmEOFaH3oUaMVeCuZXUanoGcTa9zaH6_BM_NKL1rjjZGD0Ju0')"></div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-2xl uppercase">SPECIMEN_02: COLOMBIA</h3>
+<span class="font-meta-technical text-primary">$28.00</span>
+</div>
+<div class="border-t border-outline-variant/30 pt-4 font-meta-technical text-[11px] text-secondary grid grid-cols-2 gap-y-2">
+<div>ALTITUDE</div>
+<div class="text-on-background">1900 MASL</div>
+<div>PROCESS</div>
+<div class="text-on-background">WASHED</div>
+<div>BATCH NO.</div>
+<div class="text-on-background">KRC-2024-11F</div>
+<div>VARIETAL</div>
+<div class="text-on-background">GESHA</div>
+</div>
+<button class="mt-4 w-full py-4 border border-primary text-primary font-meta-technical text-xs uppercase tracking-widest group-hover:bg-primary group-hover:text-background transition-all">
+                            INITIALIZE PURCHASE
+                        </button>
+</div>
+</div>
+<!-- Specimen 3 -->
+<div class="group border border-outline-variant/20 bg-surface-container-low p-6 transition-all hover:border-primary">
+<div class="relative aspect-[4/5] bg-surface-dim mb-6 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Product photography of a high-end specialty coffee bag. The brand identity is KILIÇ COFFEE ROASTERS. The bag is placed in a high-tech lab environment with stainless steel tools. High contrast, sharp edges, no shadows, very clean and clinical lighting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAop7XCpG4Tlb-zPCiOR1Ei4lMaYM_wG12q_GgHwRuTRz7gJVQOLwJPMzK8i1QB9y6sqO4fo4B5VSGb820yW4ovrogvEvI6b6nVWbP_tK7HWvX-f9pWevVd_h1yhDPy467Drueb6LpgBBUGexWf6vorq6seOkovhJ4Fz_i8x7sLlSBzABzZQRzex3zI182xQVSndlIaSVOKjiQWz1kW-P5pkqGnR7_Iamu1mwqsx22qwZU_-vfECek7wY8kmdiHOesJZEbZZfzOUXw')"></div>
+<div class="absolute top-4 right-4 bg-outline text-background font-meta-technical text-[10px] px-2 py-1">LIMITED STOCK</div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-2xl uppercase">SPECIMEN_03: BRAZIL</h3>
+<span class="font-meta-technical text-primary">$24.00</span>
+</div>
+<div class="border-t border-outline-variant/30 pt-4 font-meta-technical text-[11px] text-secondary grid grid-cols-2 gap-y-2">
+<div>ALTITUDE</div>
+<div class="text-on-background">1200 MASL</div>
+<div>PROCESS</div>
+<div class="text-on-background">PULPED NATURAL</div>
+<div>BATCH NO.</div>
+<div class="text-on-background">KRC-2024-03C</div>
+<div>VARIETAL</div>
+<div class="text-on-background">YELLOW BOURBON</div>
+</div>
+<button class="mt-4 w-full py-4 border border-primary text-primary font-meta-technical text-xs uppercase tracking-widest group-hover:bg-primary group-hover:text-background transition-all">
+                            INITIALIZE PURCHASE
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Visit the Workshop -->
+<section class="border-y border-outline-variant/30 bg-background overflow-hidden">
+<div class="grid grid-cols-1 lg:grid-cols-2">
+<div class="p-margin-desktop flex flex-col justify-center border-r border-outline-variant/20">
+<span class="font-meta-technical text-primary uppercase text-sm mb-6 tracking-widest">PHYSICAL NODE</span>
+<h2 class="font-headline-lg text-headline-lg mb-8 leading-none">VISIT THE<br/>WORKSHOP</h2>
+<p class="font-body-lg text-secondary mb-12 max-w-md">
+                        Experience the precision. Our headquarters features a fully equipped tasting lab where we push the boundaries of what coffee can be.
+                    </p>
+<div class="space-y-6 font-meta-technical uppercase text-sm">
+<div class="flex justify-between border-b border-outline-variant/20 pb-4">
+<span class="text-secondary/60">ADDRESS</span>
+<span>KEMANKES CD. NO:14, ISTANBUL</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant/20 pb-4">
+<span class="text-secondary/60">COORDINATES</span>
+<span class="text-primary">41°01'27.7"N 28°59'02.9"E</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant/20 pb-4">
+<span class="text-secondary/60">OPERATIONAL</span>
+<span>MON — SAT / 08:00 — 18:00</span>
+</div>
+</div>
+<div class="mt-12">
+<button class="border-2 border-primary text-primary px-10 py-5 font-meta-technical uppercase tracking-widest hover:bg-primary hover:text-background transition-all flex items-center gap-4">
+                            BOOK A PRIVATE TASTING <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="relative h-[600px] lg:h-auto">
+<img alt="" class="w-full h-full object-cover grayscale brightness-75" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYKaPwswONiamtzMbZmnf11zYIg5jPYglFvp2E5Jy0Z2-S_dUFmPW51RHZ1CjZBPsuFMbxA19v3X9UHPRpKgDx1L4a9sBgwL487YSNRvrNMvkFqKnfDL4MdABmzu2TUOT2yYvqJ775WaQP7nHapabBTGalo-YvI0IV8sBZevG6dpX7h1W8AjBS_L4jauUtAaAgyRGeIf6cnwANtE-zgOd1lG6miXOcCj_XAe00Nk3-qedgvIanErxka7d0iDGfQCUCeg3a1S9i6OI"/>
+<div class="absolute bottom-12 right-12 w-48 h-48 border border-primary/40 bg-background/90 p-4 backdrop-blur-sm hidden md:block">
+<div class="w-full h-full relative grid-overlay opacity-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<div class="absolute -top-1 -left-1 w-2 h-2 bg-primary"></div>
+<div class="absolute -bottom-1 -right-1 w-2 h-2 bg-primary"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter / Wholesale CTA -->
+<section class="py-section-padding px-margin-desktop text-center bg-surface-container-low">
+<div class="max-w-4xl mx-auto border border-primary/20 p-16 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-8 h-[1px] bg-primary"></div>
+<div class="absolute top-0 left-0 w-[1px] h-8 bg-primary"></div>
+<div class="absolute bottom-0 right-0 w-8 h-[1px] bg-primary"></div>
+<div class="absolute bottom-0 right-0 w-[1px] h-8 bg-primary"></div>
+<h3 class="font-headline-md text-3xl mb-4">SYSTEM NOTIFICATIONS</h3>
+<p class="font-body-md text-secondary mb-10 uppercase tracking-widest">JOIN THE NETWORK FOR DROP ALERTS AND TECHNICAL LOGS</p>
+<form class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+<input class="flex-grow bg-background border border-outline-variant px-6 py-4 font-meta-technical focus:border-primary focus:ring-0 text-primary" placeholder="USER@TERMINAL.COM" type="email"/>
+<button class="bg-primary text-background px-8 py-4 font-meta-technical uppercase tracking-widest font-bold hover:brightness-110 transition-all">
+                        SUBSCRIBE
+                    </button>
+</form>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-section-padding bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant/20 grid grid-cols-12 gap-gutter px-margin-desktop py-section-padding w-full">
+<div class="col-span-12 lg:col-span-6 flex flex-col justify-between">
+<div>
+<div class="font-headline-lg text-headline-lg text-on-background dark:text-on-background opacity-10 mb-8">
+                    KILIÇ COFFEE ROASTERS
+                </div>
+<div class="font-meta-technical text-meta-technical text-primary dark:text-primary max-w-sm">
+                    ENGINEERING THE PERFECT ROAST PROFILE THROUGH EMPIRICAL DATA AND ARTISANAL INTUITION. ESTABLISHED IN THE HEART OF THE OLD CITY.
+                </div>
+</div>
+<div class="font-meta-technical text-meta-technical text-secondary dark:text-secondary mt-12">
+                © 2024 KILIÇ COFFEE ROASTERS. ENGINEERED PRECISION.
+            </div>
+</div>
+<div class="col-span-6 lg:col-span-3 flex flex-col gap-4 font-meta-technical text-meta-technical">
+<span class="text-primary opacity-50 mb-4 uppercase">Navigation</span>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">PRIVACY POLICY</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">TERMS OF SERVICE</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">SHIPPING & RETURNS</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">CONTACT</a>
+</div>
+<div class="col-span-6 lg:col-span-3 flex flex-col gap-4 font-meta-technical text-meta-technical">
+<span class="text-primary opacity-50 mb-4 uppercase">Social Nodes</span>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">INSTAGRAM</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">TWITTER (X)</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">LINKEDIN</a>
+<a class="text-secondary dark:text-secondary hover:text-primary underline transition-all" href="#">YOUTUBE</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for hover effects or active state toggles
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                document.querySelectorAll('nav a').forEach(l => {
+                    l.classList.remove('text-primary', 'font-bold', 'border-b', 'border-primary');
+                    l.classList.add('text-secondary');
+                });
+                this.classList.add('text-primary', 'font-bold', 'border-b', 'border-primary');
+                this.classList.remove('text-secondary');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>COMMUNICATIONS PROTOCOL | KILIÇ COFFEE ROASTERS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#3c0800",
+                    "surface-container-low": "#1c1b1b",
+                    "outline-variant": "#57423d",
+                    "primary-container": "#e46d4f",
+                    "secondary-fixed-dim": "#c6c6c6",
+                    "surface": "#131313",
+                    "on-primary-fixed-variant": "#83260d",
+                    "on-background": "#e5e2e1",
+                    "outline": "#a58b84",
+                    "error": "#ffb4ab",
+                    "inverse-on-surface": "#313030",
+                    "surface-container": "#201f1f",
+                    "surface-bright": "#3a3939",
+                    "surface-variant": "#353534",
+                    "on-tertiary-container": "#2a2a2a",
+                    "tertiary-fixed-dim": "#c8c6c5",
+                    "secondary": "#c6c6c6",
+                    "tertiary-container": "#929090",
+                    "on-tertiary": "#313030",
+                    "on-secondary-fixed-variant": "#454747",
+                    "surface-container-high": "#2a2a2a",
+                    "on-tertiary-fixed": "#1c1b1b",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb4a2",
+                    "error-container": "#93000a",
+                    "on-tertiary-fixed-variant": "#474746",
+                    "background": "#131313",
+                    "tertiary": "#c8c6c5",
+                    "surface-dim": "#131313",
+                    "secondary-fixed": "#e2e2e2",
+                    "primary": "#ffb4a2",
+                    "on-secondary-container": "#b5b5b5",
+                    "on-secondary-fixed": "#1a1c1c",
+                    "on-primary-container": "#550f00",
+                    "on-primary": "#611200",
+                    "primary-fixed": "#ffdbd2",
+                    "inverse-primary": "#a33d23",
+                    "on-error": "#690005",
+                    "inverse-surface": "#e5e2e1",
+                    "surface-tint": "#ffb4a2",
+                    "secondary-container": "#454747",
+                    "surface-container-highest": "#353534",
+                    "on-surface-variant": "#dec0b9",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-surface": "#e5e2e1",
+                    "on-secondary": "#2f3131"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "column-gap": "24px",
+                    "base": "8px",
+                    "section-padding": "120px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "meta-technical": ["JetBrains Mono"],
+                    "display-lg": ["Anton"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Anton"],
+                    "headline-lg": ["Anton"],
+                    "display-lg-mobile": ["Anton"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "meta-technical": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display-lg": ["80px", {"lineHeight": "80px", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "36px", "fontWeight": "400"}],
+                    "headline-lg": ["48px", {"lineHeight": "52px", "fontWeight": "400"}],
+                    "display-lg-mobile": ["48px", {"lineHeight": "48px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>body {
+    background-color: #131313;
+    color: #e5e2e1;
+    -webkit-font-smoothing: antialiased
+    }
+.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.grain-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.03;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAQeMutzxe-Dg8mOTAjClqTTfUVJ5O5VMksWat9GyMSjRAYPcVy8MOwEVrA0ygC93ZjV4HBZzXrD1DjeyRNPLf261oV3hm-RIYIEkq4OCrNl-LFJaLcEb140449tAZ_mrn9wn6S9xUvGh0JVEL2qmjWoJ0LEnf72fAVeZhh1Q9Ac2x-HqpMZn1lXVH1Lyv-VJBD1Tm_mkBqy4LPG2LeDbS_Keyve8PLkBijRTjjl7YSjbG2WPPTl6_wtFgB-8QfogbtEHpub8oW3u8)
+    }
+.technical-border {
+    border: 1px solid rgba(229, 226, 225, 0.1)
+    }
+.focus-ring:focus {
+    outline: none;
+    border-color: #ffb4a2;
+    box-shadow: 0 0 0 1px #ffb4a2
+    }
+::-webkit-scrollbar {
+    width: 8px
+    }
+::-webkit-scrollbar-track {
+    background: #131313
+    }
+::-webkit-scrollbar-thumb {
+    background: #353534
+    }</style>
+</head>
+<body class="font-body-md overflow-x-hidden">
+<div class="grain-overlay"></div>
+<!-- Navigation Shell -->
+<nav class="w-full top-0 sticky z-40 bg-surface dark:bg-surface border-b border-outline-variant/20 flex justify-between items-center px-margin-desktop py-base max-w-full">
+<div class="font-headline-md text-headline-md text-primary dark:text-primary tracking-tighter uppercase">ROAST_LAB</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-meta-technical text-meta-technical uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">SPECIMENS</a>
+<a class="font-meta-technical text-meta-technical uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">EQUIPMENT</a>
+<a class="font-meta-technical text-meta-technical uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">LOGS</a>
+<a class="font-meta-technical text-meta-technical uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">ORIGINS</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-low border border-outline-variant/30 font-meta-technical text-[12px] px-10 py-2 w-48 focus:border-primary outline-none transition-all" placeholder="QUERY_ID" type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="account_circle">account_circle</button>
+<div class="flex items-center gap-2 text-primary font-meta-technical cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="text-xs">CART [0]</span>
+</div>
+</div>
+</nav>
+<main class="min-h-screen">
+<!-- Hero Header -->
+<header class="px-margin-desktop pt-section-padding pb-base border-b border-outline-variant/20">
+<div class="max-w-7xl mx-auto">
+<div class="flex items-baseline gap-4 mb-4">
+<span class="font-meta-technical text-primary text-meta-technical">[ STATUS: ONLINE ]</span>
+<div class="h-[1px] flex-grow bg-outline-variant/20"></div>
+</div>
+<h1 class="font-display-lg text-display-lg uppercase tracking-tighter leading-none mb-4">COMMUNICATIONS<br/>PROTOCOL</h1>
+<p class="font-meta-technical text-on-surface-variant max-w-xl">
+                    ESTABLISH DIRECT UPLINK WITH KILIÇ ROASTERY OPERATIONS. TECHNICAL INQUIRIES, WHOLESALE ACQUISITIONS, AND LOGISTICAL COORDINATION ARE PROCESSED THROUGH THIS TERMINAL.
+                </p>
+</div>
+</header>
+<!-- Contact Section Grid -->
+<section class="grid grid-cols-1 md:grid-cols-12 w-full px-margin-desktop py-section-padding gap-column-gap max-w-full">
+<!-- Left Column: Information -->
+<div class="md:col-span-5 flex flex-col gap-12">
+<!-- Location HQ -->
+<div class="technical-border p-8 bg-surface-container-lowest">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<h3 class="font-meta-technical text-primary uppercase tracking-widest">KILIÇ_HQ_COORDINATES</h3>
+</div>
+<div class="space-y-4">
+<p class="font-display-lg text-headline-md leading-tight text-on-surface">
+                            MODA CAD. NO: 154<br/>
+                            KADIKÖY / ISTANBUL
+                        </p>
+<div class="font-meta-technical text-on-surface-variant text-sm border-t border-outline-variant/20 pt-4 flex justify-between">
+<span>GEO_LAT: 40.9912° N</span>
+<span>GEO_LONG: 29.0271° E</span>
+</div>
+</div>
+</div>
+<!-- Operational Hours -->
+<div class="technical-border p-8">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="schedule">schedule</span>
+<h3 class="font-meta-technical text-primary uppercase tracking-widest">OPERATIONAL_WINDOW</h3>
+</div>
+<ul class="space-y-4 font-meta-technical">
+<li class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="text-on-surface-variant">MON — FRI</span>
+<span class="text-on-surface font-bold text-right">08:00 - 19:00</span>
+</li>
+<li class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="text-on-surface-variant">SATURDAY</span>
+<span class="text-on-surface font-bold text-right">10:00 - 20:00</span>
+</li>
+<li class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="text-on-surface-variant">SUNDAY</span>
+<span class="text-on-surface font-bold text-right">10:00 - 18:00</span>
+</li>
+</ul>
+</div>
+<!-- Direct Links -->
+<div class="grid grid-cols-2 gap-4">
+<div class="technical-border p-6 flex flex-col justify-between h-32 hover:bg-surface-container transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="mail">mail</span>
+<div class="font-meta-technical">
+<div class="text-[10px] text-on-surface-variant uppercase">Email</div>
+<div class="text-sm">ops@kilic.coffee</div>
+</div>
+</div>
+<div class="technical-border p-6 flex flex-col justify-between h-32 hover:bg-surface-container transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary" data-icon="call">call</span>
+<div class="font-meta-technical">
+<div class="text-[10px] text-on-surface-variant uppercase">Secure Line</div>
+<div class="text-sm">+90 216 555 4433</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Technical Form -->
+<div class="md:col-span-7">
+<div class="technical-border bg-surface-container p-10 relative overflow-hidden">
+<!-- Subtle Background Pattern -->
+<div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+<span class="font-meta-technical text-8xl leading-none font-bold">K_RC</span>
+</div>
+<form class="relative z-10 space-y-10">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Name Field -->
+<div class="space-y-2">
+<label class="font-meta-technical text-[10px] uppercase tracking-widest text-primary">01_SENDER_NAME</label>
+<input class="w-full bg-transparent border-b border-outline-variant py-3 font-meta-technical text-on-surface focus-ring placeholder:text-on-surface-variant/30" placeholder="NAME / ORGANIZATION" type="text"/>
+</div>
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-meta-technical text-[10px] uppercase tracking-widest text-primary">02_CONTACT_UPLINK</label>
+<input class="w-full bg-transparent border-b border-outline-variant py-3 font-meta-technical text-on-surface focus-ring placeholder:text-on-surface-variant/30" placeholder="EMAIL_ADDRESS" type="email"/>
+</div>
+</div>
+<!-- Inquiry Type -->
+<div class="space-y-4">
+<label class="font-meta-technical text-[10px] uppercase tracking-widest text-primary">03_PROTOCOL_TYPE</label>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<button class="technical-border py-3 px-4 font-meta-technical text-xs uppercase hover:bg-primary hover:text-on-primary transition-colors text-center" type="button">Wholesale</button>
+<button class="technical-border py-3 px-4 font-meta-technical text-xs uppercase hover:bg-primary hover:text-on-primary transition-colors text-center border-primary bg-primary/10 text-primary" type="button">General</button>
+<button class="technical-border py-3 px-4 font-meta-technical text-xs uppercase hover:bg-primary hover:text-on-primary transition-colors text-center" type="button">Tech Support</button>
+<button class="technical-border py-3 px-4 font-meta-technical text-xs uppercase hover:bg-primary hover:text-on-primary transition-colors text-center" type="button">Events</button>
+</div>
+</div>
+<!-- Message Body -->
+<div class="space-y-2">
+<label class="font-meta-technical text-[10px] uppercase tracking-widest text-primary">04_DATA_TRANSMISSION</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant p-4 font-meta-technical text-on-surface focus-ring placeholder:text-on-surface-variant/30 resize-none" placeholder="ENTER MESSAGE CONTENT..." rows="6"></textarea>
+</div>
+<!-- Submit Button -->
+<div class="pt-4">
+<button class="w-full bg-primary text-on-primary-container font-meta-technical py-6 uppercase tracking-[0.3em] font-bold hover:bg-primary-container transition-all flex justify-center items-center gap-4 group" type="submit">
+                                EXECUTE TRANSMISSION
+                                <span class="material-symbols-outlined group-hover:translate-x-2 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<p class="text-[10px] font-meta-technical text-on-surface-variant text-center mt-4 uppercase">Encrypted tunnel established via RoastLab Secure Protocol</p>
+</div>
+</form>
+</div>
+</div>
+</section>
+<!-- Map Section -->
+<section class="w-full border-t border-outline-variant/20">
+<div class="grid grid-cols-1 md:grid-cols-12 w-full">
+<div class="md:col-span-4 p-margin-desktop bg-surface-container-lowest flex flex-col justify-between border-r border-outline-variant/20">
+<div>
+<h2 class="font-headline-lg text-headline-lg uppercase mb-6">VISIT THE ENGINE ROOM</h2>
+<p class="font-body-md text-on-surface-variant mb-8">
+                            Experience the precision of KILIÇ Roasters first-hand. Our industrial facility in Kadıköy serves as both a production hub and an educational laboratory for coffee science.
+                        </p>
+<div class="space-y-4">
+<div class="flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="directions_bus">directions_bus</span>
+<div class="font-meta-technical text-sm">
+<span class="block text-on-surface font-bold">PUBLIC TRANSIT</span>
+<span class="text-on-surface-variant">6 mins walk from Kadıköy Ferry Terminal. Take the T3 Tram to Moda.</span>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="local_parking">local_parking</span>
+<div class="font-meta-technical text-sm">
+<span class="block text-on-surface font-bold">LOGISTICS / PARKING</span>
+<span class="text-on-surface-variant">Limited loading bay access for wholesale clients. Public parking available at İSPARK Moda.</span>
+</div>
+</div>
+</div>
+</div>
+<button class="technical-border py-4 px-6 font-meta-technical text-xs uppercase flex items-center justify-between group hover:bg-on-surface hover:text-surface transition-all mt-12">
+<span>Open in Global Navcom</span>
+<span class="material-symbols-outlined" data-icon="map">map</span>
+</button>
+</div>
+<div class="md:col-span-8 min-h-[500px] bg-surface-container relative">
+<!-- Map Placeholder with data-location -->
+<div class="w-full h-full grayscale opacity-80 hover:opacity-100 transition-opacity" data-location="Kadıköy, Istanbul" style="">
+<img class="w-full h-full object-cover" data-alt="A high-contrast, dark monochrome satellite map of the Kadıköy district in Istanbul. The map features stark white street lines against a deep charcoal and black background, emphasizing the industrial urban grid. A single glowing orange marker indicates the Roastery HQ. The aesthetic is clean, technical, and architectural, fitting a premium industrial brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwPEuQLsgLIXycUtPCbLBZR9MXImpaczEvGbMm5reCXskE0M70480M-57QnlM1_6x5kTcVrzvx9FBQ2yHyEjhPLJNx8m3zma6_UJO5VTS4zsEgizgThWZUt3I1J9bKkeJ-i5OqC_NFD-72Jj2KKPLugWDPbzfDTd8JBMb_Wx_A3veroGUjDNl8Bj9_HiMzqH0gIaTEOlo9ndGSowMHdlGRiKBA4YgEUWE5TWzM4wk3zYWmyaoQ33Qsnju8_aV5rz3XjtSETngs8KA"/>
+</div>
+<!-- Overlay Coordinates -->
+<div class="absolute bottom-8 right-8 bg-surface/80 backdrop-blur-md p-4 technical-border font-meta-technical text-[10px] space-y-1">
+<div>REF: TR-34-KDK</div>
+<div>SYSTEM: WGS84</div>
+<div>ELEVATION: 12M AMSL</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter / Footer Prep -->
+<section class="w-full py-section-padding border-t border-outline-variant/20 px-margin-desktop bg-surface-container-lowest">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+<div class="max-w-md">
+<h4 class="font-headline-md text-headline-md uppercase mb-2">INTELLIGENCE FEED</h4>
+<p class="font-meta-technical text-on-surface-variant text-sm">SUBSCRIBE TO TECHNICAL BULLETINS, ROAST LOGS, AND HARVEST DATA RELEASES.</p>
+</div>
+<div class="w-full max-w-lg flex flex-col sm:flex-row gap-0">
+<input class="flex-grow bg-surface border border-outline-variant p-4 font-meta-technical text-xs focus:ring-0 focus:border-primary outline-none" placeholder="USER_IDENTIFICATION@HOST.COM" type="email"/>
+<button class="bg-primary text-on-primary-container font-meta-technical px-8 py-4 uppercase text-xs font-bold hover:bg-primary-container transition-colors">AUTHORIZE</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-section-padding bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-outline-variant grid grid-cols-12 gap-column-gap px-margin-desktop py-section-padding">
+<div class="col-span-12 md:col-span-4 space-y-6">
+<div class="font-headline-lg text-headline-lg text-primary dark:text-primary uppercase leading-none">ROAST_LAB<br/>INDUSTRIAL</div>
+<p class="font-meta-technical text-on-surface-variant text-xs max-w-xs">
+                Pioneering the intersection of mechanical precision and botanical craft. Engineered in Istanbul since 2018.
+            </p>
+</div>
+<div class="col-span-6 md:col-span-2 space-y-4">
+<h5 class="font-meta-technical text-primary uppercase text-xs font-bold">DIRECTORY</h5>
+<ul class="space-y-2">
+<li><a class="font-meta-technical text-sm text-on-surface-variant hover:text-on-surface underline transition-all duration-300" href="#">TERMS_OF_SERVICE</a></li>
+<li><a class="font-meta-technical text-sm text-on-surface-variant hover:text-on-surface underline transition-all duration-300" href="#">PRIVACY_POLICY</a></li>
+</ul>
+</div>
+<div class="col-span-6 md:col-span-2 space-y-4">
+<h5 class="font-meta-technical text-primary uppercase text-xs font-bold">LOGISTICS</h5>
+<ul class="space-y-2">
+<li><a class="font-meta-technical text-sm text-on-surface-variant hover:text-on-surface underline transition-all duration-300" href="#">SHIPPING_LOGISTICS</a></li>
+<li><a class="font-meta-technical text-sm text-on-surface-variant hover:text-on-surface underline transition-all duration-300" href="#">WHOLESALE_API</a></li>
+</ul>
+</div>
+<div class="col-span-12 md:col-span-4 space-y-6 text-right flex flex-col justify-between">
+<div class="flex justify-end gap-4">
+<a class="technical-border p-2 hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined" data-icon="share">share</span></a>
+<a class="technical-border p-2 hover:text-primary transition-colors" href="#"><span class="material-symbols-outlined" data-icon="rss_feed">rss_feed</span></a>
+</div>
+<div class="font-meta-technical text-meta-technical text-on-surface-variant uppercase text-[10px] leading-relaxed">
+                © 2024 ROAST_LAB INDUSTRIAL. ENGINEERED PRECISION. <br/>
+                ALL RIGHTS RESERVED. VERSION 4.2.0_STABLE
+            </div>
+</div>
+</footer>
+<script>
+        // Micro-interaction for form inputs
+        const inputs = document.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label')?.classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                if (!input.value) {
+                    input.parentElement.querySelector('label')?.classList.remove('text-primary');
+                }
+            });
+        });
+
+        // Simple smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body></html>

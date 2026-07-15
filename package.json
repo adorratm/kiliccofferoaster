@@ -1,0 +1,26 @@
+{
+  "name": "kiliccofferoasters",
+  "private": true,
+  "workspaces": [
+    "api",
+    "frontend",
+    "admin"
+  ],
+  "scripts": {
+    "dev:api": "yarn workspace @kilic/api start:dev",
+    "dev:frontend": "yarn workspace @kilic/frontend dev",
+    "dev:admin": "yarn workspace @kilic/admin dev",
+    "build": "yarn workspaces foreach -Apt run build",
+    "build:api": "yarn workspace @kilic/api build",
+    "build:frontend": "yarn workspace @kilic/frontend build",
+    "build:admin": "yarn workspace @kilic/admin build",
+    "migration:run": "yarn workspace @kilic/api migration:run",
+    "migration:generate": "yarn workspace @kilic/api migration:generate",
+    "lint": "yarn workspaces foreach -Apt run lint"
+  },
+  "volta": {
+    "node": "26.5.0",
+    "yarn": "4.17.1"
+  },
+  "packageManager": "yarn@4.17.0"
+}
