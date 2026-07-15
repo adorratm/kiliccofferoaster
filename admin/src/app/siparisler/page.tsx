@@ -87,7 +87,13 @@ function OrdersPageInner() {
   }
 
   useEffect(() => {
-    if (initialQ && initialQ !== q) setQ(initialQ);
+    if (initialQ !== q) setQ(initialQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQ]);
+
+  useEffect(() => {
+    setPage(1);
+    void load({ page: 1, q: initialQ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQ]);
 

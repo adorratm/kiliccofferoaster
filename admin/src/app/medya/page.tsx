@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { MediaUpload } from '@/components/MediaUpload';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -15,13 +16,25 @@ type MediaAsset = {
   createdAt: string;
 };
 
-export default function MediaPage() {
+function MediaPageInner() {
+  const searchParams = useSearchParams();
+  const filterQ = (searchParams.get('q') || '').trim().toLowerCase();
+
   const [items, setItems] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const visible = useMemo(() => {
+    if (!filterQ) return items;
+    return items.filter(
+      (item) =>
+        item.filename.toLowerCase().includes(filterQ) ||
+        item.url.toLowerCase().includes(filterQ),
+    );
+  }, [items, filterQ]);
 
   async function load() {
     setLoading(true);
@@ -92,13 +105,21 @@ export default function MediaPage() {
         </form>
       </Reveal>
 
+      {filterQ ? (
+        <p className="mono text-xs text-muted">
+          Filtre: “{filterQ}” · {visible.length} sonuç
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
         {loading ? (
           <p className="text-sm text-muted">Yükleniyor…</p>
-        ) : items.length === 0 ? (
-          <p className="text-sm text-muted">Henüz görsel yok</p>
+        ) : visible.length === 0 ? (
+          <p className="text-sm text-muted">
+            {items.length === 0 ? 'Henüz görsel yok' : 'Eşleşen görsel yok'}
+          </p>
         ) : (
-          items.map((item, i) => (
+          visible.map((item, i) => (
             <Reveal
               key={item.id}
               delay={Math.min(i, 8) * 45}
@@ -146,5 +167,15 @@ export default function MediaPage() {
         onConfirm={() => void confirmRemove()}
       />
     </div>
+  );
+}
+
+export default function MediaPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <MediaPageInner />
+    </Suspense>
   );
 }

@@ -1,12 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asArray } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
 import type { ContactMessage } from '@/lib/types';
 
-export default function MessagesPage() {
+function MessagesPageInner() {
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get('id') || '';
+  const filterQ = (searchParams.get('q') || '').trim().toLowerCase();
+
   const [rows, setRows] = useState<ContactMessage[]>([]);
   const [selected, setSelected] = useState<ContactMessage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +34,24 @@ export default function MessagesPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  const visible = useMemo(() => {
+    if (!filterQ) return rows;
+    return rows.filter((m) => {
+      const hay = [m.senderName, m.senderEmail, m.message, m.protocolType]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.includes(filterQ);
+    });
+  }, [rows, filterQ]);
+
+  useEffect(() => {
+    if (!focusId || !rows.length) return;
+    const match = rows.find((m) => m.id === focusId);
+    if (match) void openMessage(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, rows]);
 
   async function openMessage(row: ContactMessage) {
     setSelected(row);
@@ -60,9 +83,15 @@ export default function MessagesPage() {
         </p>
       ) : null}
 
+      {filterQ ? (
+        <p className="mono text-xs text-muted">
+          Filtre: “{filterQ}” · {visible.length} sonuç
+        </p>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <DataTable
-          rows={rows}
+          rows={visible}
           rowKey={(r) => r.id}
           emptyMessage={loading ? 'Yükleniyor…' : 'Mesaj yok'}
           onRowClick={(r) => void openMessage(r)}
@@ -118,5 +147,15 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <MessagesPageInner />
+    </Suspense>
   );
 }

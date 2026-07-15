@@ -44,10 +44,10 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-border-muted bg-background px-6">
-      <div key={pathname} className="page-enter shrink-0">
-        <h1 className="text-base font-medium text-foreground">{title}</h1>
-        <p className="mono text-[10px] uppercase tracking-widest text-muted">
+    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-background px-3 sm:gap-4 sm:px-6">
+      <div key={pathname} className="page-enter min-w-0 shrink">
+        <h1 className="truncate text-base font-medium text-foreground">{title}</h1>
+        <p className="mono hidden text-[10px] uppercase tracking-widest text-muted sm:block">
           {pathname}
         </p>
       </div>

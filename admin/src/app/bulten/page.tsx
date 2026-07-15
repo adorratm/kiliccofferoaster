@@ -1,15 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asArray } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
 import type { NewsletterSubscriber } from '@/lib/types';
 
-export default function NewsletterPage() {
+function NewsletterPageInner() {
+  const searchParams = useSearchParams();
+  const filterQ = (searchParams.get('q') || '').trim().toLowerCase();
+
   const [rows, setRows] = useState<NewsletterSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const visible = useMemo(() => {
+    if (!filterQ) return rows;
+    return rows.filter((r) => {
+      const hay = [r.email, r.source].filter(Boolean).join(' ').toLowerCase();
+      return hay.includes(filterQ);
+    });
+  }, [rows, filterQ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,10 +55,14 @@ export default function NewsletterPage() {
         </p>
       ) : null}
       <p className="text-sm text-muted">
-        {loading ? 'Yükleniyor…' : `${rows.length} abone`}
+        {loading
+          ? 'Yükleniyor…'
+          : filterQ
+            ? `${visible.length} / ${rows.length} abone`
+            : `${rows.length} abone`}
       </p>
       <DataTable
-        rows={rows}
+        rows={visible}
         rowKey={(r) => r.id}
         emptyMessage={loading ? 'Yükleniyor…' : 'Abone yok'}
         columns={[
@@ -76,5 +92,15 @@ export default function NewsletterPage() {
         ]}
       />
     </div>
+  );
+}
+
+export default function NewsletterPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <NewsletterPageInner />
+    </Suspense>
   );
 }

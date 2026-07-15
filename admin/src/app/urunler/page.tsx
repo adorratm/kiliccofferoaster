@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asArray, asPaged, formatMoney, slugify } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
@@ -74,7 +75,10 @@ const emptyForm = (): FormState => ({
   variants: [emptyVariant()],
 });
 
-export default function ProductsPage() {
+function ProductsPageInner() {
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get('q') || '';
+
   const [rows, setRows] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -87,7 +91,7 @@ export default function ProductsPage() {
   const [deleteVariantIndex, setDeleteVariantIndex] = useState<number | null>(
     null,
   );
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(initialQ);
   const [sort, setSort] = useState('createdAt');
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [page, setPage] = useState(1);
@@ -95,18 +99,20 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
 
-  async function load() {
+  async function load(opts?: { page?: number; q?: string }) {
+    const nextPage = opts?.page ?? page;
+    const nextQ = opts?.q ?? q;
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({
-        page: String(page),
+        page: String(nextPage),
         limit: String(limit),
         sort,
         order,
         includeInactive: 'true',
       });
-      if (q.trim()) params.set('q', q.trim());
+      if (nextQ.trim()) params.set('q', nextQ.trim());
       const [data, cats] = await Promise.all([
         api<unknown>(`/products/admin/all?${params}`),
         api<unknown>('/categories/admin/all').catch(() => []),
@@ -123,6 +129,13 @@ export default function ProductsPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    setQ(initialQ);
+    setPage(1);
+    void load({ page: 1, q: initialQ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQ]);
 
   useEffect(() => {
     void load();
@@ -760,5 +773,15 @@ export default function ProductsPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <ProductsPageInner />
+    </Suspense>
   );
 }

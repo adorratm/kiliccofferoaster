@@ -226,7 +226,7 @@ export class SearchService {
           id: p.id,
           title: p.name,
           subtitle: p.slug,
-          href: '/urunler',
+          href: `/urunler?q=${encodeURIComponent(p.name)}`,
         })),
       });
     }
@@ -252,7 +252,7 @@ export class SearchService {
           id: c.id,
           title: c.name,
           subtitle: c.slug,
-          href: '/kategoriler',
+          href: `/kategoriler?q=${encodeURIComponent(c.name)}`,
         })),
       });
     }
@@ -265,7 +265,7 @@ export class SearchService {
           id: m.id,
           title: m.senderName,
           subtitle: m.senderEmail,
-          href: '/mesajlar',
+          href: `/mesajlar?id=${encodeURIComponent(m.id)}`,
         })),
       });
     }
@@ -278,7 +278,7 @@ export class SearchService {
           id: a.id,
           title: a.filename,
           subtitle: a.mimeType,
-          href: '/medya',
+          href: `/medya?q=${encodeURIComponent(a.filename)}`,
         })),
       });
     }
@@ -291,7 +291,7 @@ export class SearchService {
           id: n.id,
           title: n.email,
           subtitle: n.source,
-          href: '/bulten',
+          href: `/bulten?q=${encodeURIComponent(n.email)}`,
         })),
       });
     }
@@ -304,7 +304,7 @@ export class SearchService {
           id: d.id,
           title: d.title,
           subtitle: d.slug,
-          href: '/sozlesmeler',
+          href: `/sozlesmeler?q=${encodeURIComponent(d.slug)}`,
         })),
       });
     }
@@ -317,7 +317,7 @@ export class SearchService {
           id: p.id,
           title: p.title,
           subtitle: p.isPublished ? 'published' : 'draft',
-          href: '/blog',
+          href: `/blog?q=${encodeURIComponent(p.title)}`,
         })),
       });
     }

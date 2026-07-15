@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asArray, slugify } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
@@ -32,13 +33,17 @@ const emptyForm = (): FormState => ({
   isActive: true,
 });
 
-export default function CategoriesPage() {
+function CategoriesPageInner() {
+  const searchParams = useSearchParams();
+  const filterQ = (searchParams.get('q') || '').trim().toLowerCase();
+
   const [rows, setRows] = useState<Category[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const openedFromQuery = useRef(false);
 
   async function load() {
     setLoading(true);
@@ -55,6 +60,39 @@ export default function CategoriesPage() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    openedFromQuery.current = false;
+  }, [filterQ]);
+
+  useEffect(() => {
+    if (!filterQ || !rows.length || openedFromQuery.current) return;
+    const match = rows.find(
+      (c) =>
+        c.name.toLowerCase().includes(filterQ) ||
+        c.slug.toLowerCase().includes(filterQ),
+    );
+    if (!match) return;
+    openedFromQuery.current = true;
+    setForm({
+      id: match.id,
+      name: match.name,
+      slug: match.slug,
+      description: match.description || '',
+      sortOrder: String(match.sortOrder),
+      isActive: match.isActive,
+    });
+    setEditing(true);
+  }, [filterQ, rows]);
+
+  const visible = useMemo(() => {
+    if (!filterQ) return rows;
+    return rows.filter(
+      (c) =>
+        c.name.toLowerCase().includes(filterQ) ||
+        c.slug.toLowerCase().includes(filterQ),
+    );
+  }, [rows, filterQ]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -86,7 +124,13 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between gap-3">
-        <p className="text-sm text-muted">{loading ? 'Yükleniyor…' : `${rows.length} kategori`}</p>
+        <p className="text-sm text-muted">
+          {loading
+            ? 'Yükleniyor…'
+            : filterQ
+              ? `${visible.length} / ${rows.length} kategori`
+              : `${rows.length} kategori`}
+        </p>
         <button
           type="button"
           onClick={() => {
@@ -102,7 +146,10 @@ export default function CategoriesPage() {
       {error ? <p className="text-sm text-danger">{error}</p> : null}
 
       {editing ? (
-        <form onSubmit={onSubmit} className="grid gap-3 border border-border-muted bg-surface p-4 md:grid-cols-2">
+        <form
+          onSubmit={onSubmit}
+          className="grid gap-3 border border-border-muted bg-surface p-4 md:grid-cols-2"
+        >
           <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">Ad</span>
             <input
@@ -124,16 +171,20 @@ export default function CategoriesPage() {
               required
               value={form.slug}
               onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-              className="mt-1 w-full border border-border-muted bg-background px-3 py-2 mono"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />
           </label>
           <label className="block text-sm md:col-span-2">
-            <span className="mono text-[10px] uppercase text-muted">Açıklama</span>
+            <span className="mono text-[10px] uppercase text-muted">
+              Açıklama
+            </span>
             <textarea
-              rows={3}
               value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              rows={3}
             />
           </label>
           <label className="block text-sm">
@@ -141,7 +192,9 @@ export default function CategoriesPage() {
             <input
               type="number"
               value={form.sortOrder}
-              onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, sortOrder: e.target.value }))
+              }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />
           </label>
@@ -152,10 +205,18 @@ export default function CategoriesPage() {
             description="Kategori vitrinde görünür"
           />
           <div className="md:col-span-2 flex gap-2">
-            <button type="submit" disabled={saving} className="btn-motion bg-accent px-4 py-2 text-sm text-white">
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-motion bg-accent px-4 py-2 text-sm text-white"
+            >
               Kaydet
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="border px-4 py-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="border px-4 py-2 text-sm"
+            >
               İptal
             </button>
           </div>
@@ -163,13 +224,17 @@ export default function CategoriesPage() {
       ) : null}
 
       <DataTable
-        rows={rows}
+        rows={visible}
         rowKey={(r) => r.id}
         emptyMessage="Kategori yok"
         columns={[
           { key: 'name', header: 'Kategori', render: (r) => r.name },
           { key: 'slug', header: 'Slug', render: (r) => r.slug },
-          { key: 'active', header: 'Durum', render: (r) => (r.isActive ? 'Aktif' : 'Pasif') },
+          {
+            key: 'active',
+            header: 'Durum',
+            render: (r) => (r.isActive ? 'Aktif' : 'Pasif'),
+          },
           {
             key: 'actions',
             header: '',
@@ -196,5 +261,15 @@ export default function CategoriesPage() {
         ]}
       />
     </div>
+  );
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <CategoriesPageInner />
+    </Suspense>
   );
 }

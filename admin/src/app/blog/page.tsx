@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asPaged, slugify } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
@@ -36,7 +37,10 @@ const emptyForm = (): FormState => ({
   isPublished: false,
 });
 
-export default function BlogAdminPage() {
+function BlogAdminPageInner() {
+  const searchParams = useSearchParams();
+  const initialQ = searchParams.get('q') || '';
+
   const [rows, setRows] = useState<BlogPost[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [editing, setEditing] = useState(false);
@@ -44,7 +48,7 @@ export default function BlogAdminPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(initialQ);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   async function load(search = q) {
@@ -69,9 +73,10 @@ export default function BlogAdminPage() {
   }
 
   useEffect(() => {
-    void load();
+    setQ(initialQ);
+    void load(initialQ);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialQ]);
 
   function startCreate() {
     setForm(emptyForm());
@@ -383,5 +388,15 @@ export default function BlogAdminPage() {
         onCancel={() => setDeleteId(null)}
       />
     </div>
+  );
+}
+
+export default function BlogAdminPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <BlogAdminPageInner />
+    </Suspense>
   );
 }

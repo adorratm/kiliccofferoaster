@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { asArray, slugify } from '@/lib/utils';
 import { DataTable } from '@/components/DataTable';
@@ -21,7 +22,10 @@ const emptyForm = (): FormState => ({
   version: '1.0',
 });
 
-export default function LegalPage() {
+function LegalPageInner() {
+  const searchParams = useSearchParams();
+  const filterQ = (searchParams.get('q') || '').trim().toLowerCase();
+
   const [rows, setRows] = useState<LegalDocument[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [editing, setEditing] = useState(false);
@@ -29,6 +33,35 @@ export default function LegalPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const openedFromQuery = useRef(false);
+
+  const visible = useMemo(() => {
+    if (!filterQ) return rows;
+    return rows.filter(
+      (d) =>
+        d.title.toLowerCase().includes(filterQ) ||
+        d.slug.toLowerCase().includes(filterQ),
+    );
+  }, [rows, filterQ]);
+
+  useEffect(() => {
+    openedFromQuery.current = false;
+  }, [filterQ]);
+
+  useEffect(() => {
+    if (!filterQ || !rows.length || openedFromQuery.current) return;
+    const match = rows.find(
+      (d) =>
+        d.slug.toLowerCase() === filterQ ||
+        d.title.toLowerCase().includes(filterQ) ||
+        d.slug.toLowerCase().includes(filterQ),
+    );
+    if (!match) return;
+    openedFromQuery.current = true;
+    startEdit(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterQ, rows]);
 
   async function load() {
     setLoading(true);
@@ -226,7 +259,7 @@ export default function LegalPage() {
       ) : null}
 
       <DataTable
-        rows={rows}
+        rows={visible}
         rowKey={(r) => r.id}
         emptyMessage={loading ? 'Yükleniyor…' : 'Belge yok'}
         columns={[
@@ -273,5 +306,15 @@ export default function LegalPage() {
         ]}
       />
     </div>
+  );
+}
+
+export default function LegalPage() {
+  return (
+    <Suspense
+      fallback={<p className="mono text-sm text-muted">Yükleniyor…</p>}
+    >
+      <LegalPageInner />
+    </Suspense>
   );
 }
