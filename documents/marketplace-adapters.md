@@ -83,3 +83,10 @@ Sipariş sync sırasında (credentials ile veya mock):
 4. Aktif siparişlerde yerel stok düşülür  
 
 Sipariş numarası örneği: `KLC-TY-20260716-0001` (TY / HB / N11).
+
+Otomatik import başarısız olduysa veya sipariş bağlı değilse Admin `/pazaryeri` → Detay:
+
+- Tek sipariş: `POST /marketplace/orders/:id/import` (UI: **İçe aktar** / **Durum güncelle**)
+- Hesaptaki bekleyenler: `POST /marketplace/accounts/:id/import-orders` (UI: **Bekleyen siparişleri aktar**)
+
+Zaten bağlı siparişte yeniden çağrı yalnızca durumu senkronlar; kopya iç sipariş üretmez.

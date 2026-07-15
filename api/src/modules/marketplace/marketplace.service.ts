@@ -175,6 +175,35 @@ export class MarketplaceService {
     });
   }
 
+  async importMarketplaceOrder(marketplaceOrderId: string) {
+    const mOrder = await this.em.findOne(MarketplaceOrder, {
+      where: { id: marketplaceOrderId },
+    });
+    if (!mOrder) {
+      throw new NotFoundException('Pazaryeri siparişi bulunamadı');
+    }
+    const result = await this.orderImport.importIfNeeded(marketplaceOrderId);
+    if (result.reason === 'not_found') {
+      throw new NotFoundException('Pazaryeri siparişi bulunamadı');
+    }
+    return {
+      marketplaceOrderId,
+      externalOrderId: mOrder.externalOrderId,
+      ...result,
+    };
+  }
+
+  async importPendingOrders(accountId: string) {
+    const account = await this.em.findOne(MarketplaceAccount, {
+      where: { id: accountId },
+    });
+    if (!account) {
+      throw new NotFoundException('Pazar yeri hesabı bulunamadı');
+    }
+    const result = await this.orderImport.importPendingForAccount(accountId);
+    return { accountId, ...result };
+  }
+
   async syncAccount(id: string, dto: SyncMarketplaceDto = {}) {
     const account = await this.em.findOne(MarketplaceAccount, {
       where: { id },

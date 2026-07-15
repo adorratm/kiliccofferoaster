@@ -91,6 +91,8 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [mpOrders, setMpOrders] = useState<MpOrderRow[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [importingOrderId, setImportingOrderId] = useState<string | null>(null);
+  const [importingPending, setImportingPending] = useState(false);
 
   const [pushAccountId, setPushAccountId] = useState('');
   const [pushProductId, setPushProductId] = useState('');
@@ -137,6 +139,58 @@ export default function MarketplacePage() {
       setMpOrders([]);
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  async function importOrder(orderId: string) {
+    setImportingOrderId(orderId);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await api<{
+        imported: boolean;
+        orderId: string | null;
+        reason?: string;
+        externalOrderId?: string;
+      }>(`/marketplace/orders/${orderId}/import`, { method: 'POST' });
+      if (result.imported) {
+        setMessage(
+          `Sipariş içe aktarıldı${result.orderId ? ` → ${result.orderId.slice(0, 8)}` : ''}`,
+        );
+      } else if (result.reason === 'already_linked') {
+        setMessage('Zaten bağlı — durum senkronlandı');
+      } else {
+        setMessage(result.reason || 'İçe aktarma tamamlandı');
+      }
+      if (detailId) await loadDetail(detailId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'İçe aktarma başarısız');
+    } finally {
+      setImportingOrderId(null);
+    }
+  }
+
+  async function importPendingOrders(accountId: string) {
+    setImportingPending(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await api<{
+        scanned: number;
+        imported: number;
+        skipped: number;
+        failed: number;
+      }>(`/marketplace/accounts/${accountId}/import-orders`, {
+        method: 'POST',
+      });
+      setMessage(
+        `Manuel aktarım: ${result.imported} içe aktarıldı / ${result.skipped} atlandı / ${result.failed} hata (tarama ${result.scanned})`,
+      );
+      await loadDetail(accountId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Toplu aktarım başarısız');
+    } finally {
+      setImportingPending(false);
     }
   }
 
@@ -688,17 +742,29 @@ export default function MarketplacePage() {
             <h2 className="text-base font-medium">
               {detailAccount.platform} · {detailAccount.storeName}
             </h2>
-            <button
-              type="button"
-              onClick={() => {
-                setDetailId(null);
-                setListings([]);
-                setMpOrders([]);
-              }}
-              className="text-xs text-muted hover:underline"
-            >
-              Kapat
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={importingPending || detailLoading}
+                onClick={() => void importPendingOrders(detailId)}
+                className="btn-motion border border-border-muted px-3 py-1.5 text-xs text-accent hover:border-accent disabled:opacity-40"
+              >
+                {importingPending
+                  ? 'Aktarılıyor…'
+                  : 'Bekleyen siparişleri aktar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDetailId(null);
+                  setListings([]);
+                  setMpOrders([]);
+                }}
+                className="text-xs text-muted hover:underline"
+              >
+                Kapat
+              </button>
+            </div>
           </div>
           {detailLoading ? (
             <p className="text-sm text-muted">Detay yükleniyor…</p>
@@ -730,47 +796,60 @@ export default function MarketplacePage() {
                 )}
               </div>
               <div>
-                <p className="mono mb-2 text-[10px] uppercase text-muted">
-                  Pazaryeri siparişleri ({mpOrders.length})
-                </p>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="mono text-[10px] uppercase text-muted">
+                    Pazaryeri siparişleri ({mpOrders.length})
+                    {mpOrders.filter((o) => !o.internalOrderId).length > 0
+                      ? ` · ${mpOrders.filter((o) => !o.internalOrderId).length} bekleyen`
+                      : ''}
+                  </p>
+                </div>
                 {mpOrders.length === 0 ? (
                   <p className="text-xs text-muted">Sipariş yok</p>
                 ) : (
                   <ul className="divide-y divide-border-muted border border-border-muted text-xs">
                     {mpOrders.map((o) => (
                       <li key={o.id} className="px-3 py-2">
-                        <p className="mono">{o.externalOrderId}</p>
-                        <p className="text-muted">
-                          {o.externalStatus}
-                          {o.createdAt
-                            ? ` · ${new Date(o.createdAt).toLocaleString('tr-TR')}`
-                            : ''}
-                        </p>
-                        {o.internalOrderId ? (
-                          <p className="mt-1 text-accent">
-                            İç sipariş:{' '}
-                            <a
-                              className="underline"
-                              href={`/siparisler/${o.internalOrderId}`}
-                            >
-                              {o.internalOrder?.orderNumber ||
-                                o.internalOrderId.slice(0, 8)}
-                            </a>
-                            {o.internalOrder?.status
-                              ? ` · ${o.internalOrder.status}`
-                              : ''}
-                          </p>
-                        ) : (
-                          <p className="mt-1 text-muted">
-                            İçe aktarılmadı ·{' '}
-                            <a
-                              className="underline"
-                              href={`/siparisler?q=${encodeURIComponent(o.externalOrderId)}`}
-                            >
-                              siparişlerde ara
-                            </a>
-                          </p>
-                        )}
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="mono">{o.externalOrderId}</p>
+                            <p className="text-muted">
+                              {o.externalStatus}
+                              {o.createdAt
+                                ? ` · ${new Date(o.createdAt).toLocaleString('tr-TR')}`
+                                : ''}
+                            </p>
+                            {o.internalOrderId ? (
+                              <p className="mt-1 text-accent">
+                                İç sipariş:{' '}
+                                <a
+                                  className="underline"
+                                  href={`/siparisler/${o.internalOrderId}`}
+                                >
+                                  {o.internalOrder?.orderNumber ||
+                                    o.internalOrderId.slice(0, 8)}
+                                </a>
+                                {o.internalOrder?.status
+                                  ? ` · ${o.internalOrder.status}`
+                                  : ''}
+                              </p>
+                            ) : (
+                              <p className="mt-1 text-muted">İçe aktarılmadı</p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            disabled={importingOrderId === o.id}
+                            onClick={() => void importOrder(o.id)}
+                            className="shrink-0 text-xs text-accent hover:underline disabled:opacity-40"
+                          >
+                            {importingOrderId === o.id
+                              ? '…'
+                              : o.internalOrderId
+                                ? 'Durum güncelle'
+                                : 'İçe aktar'}
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>

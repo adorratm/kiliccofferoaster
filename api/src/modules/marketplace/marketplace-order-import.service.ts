@@ -46,6 +46,7 @@ export class MarketplaceOrderImportService {
   /**
    * MarketplaceOrder henüz iç siparişe bağlı değilse Order + Payment + Items oluşturur.
    * Zaten bağlıysa yalnızca status senkronlar.
+   * Kopuk bağlantı (ID var, sipariş yok) temizlenip yeniden denenir.
    */
   async importIfNeeded(
     marketplaceOrderId: string,
@@ -56,6 +57,14 @@ export class MarketplaceOrderImportService {
     });
     if (!mOrder) {
       return { imported: false, orderId: null, reason: 'not_found' };
+    }
+
+    if (mOrder.internalOrderId && !mOrder.internalOrder) {
+      this.logger.warn(
+        `Stale internalOrderId on marketplace order ${mOrder.id}; clearing`,
+      );
+      mOrder.internalOrderId = null;
+      await this.em.save(mOrder);
     }
 
     if (mOrder.internalOrderId && mOrder.internalOrder) {
@@ -183,6 +192,79 @@ export class MarketplaceOrderImportService {
       `Imported marketplace order ${mOrder.externalOrderId} → ${order.orderNumber}`,
     );
     return { imported: true, orderId: order.id };
+  }
+
+  /**
+   * Hesaptaki iç siparişe bağlı olmayan tüm pazaryeri siparişlerini aktarır.
+   */
+  async importPendingForAccount(accountId: string): Promise<{
+    scanned: number;
+    imported: number;
+    skipped: number;
+    failed: number;
+    results: Array<{
+      marketplaceOrderId: string;
+      externalOrderId: string;
+      imported: boolean;
+      orderId: string | null;
+      reason?: string;
+    }>;
+  }> {
+    const rows = await this.em
+      .createQueryBuilder(MarketplaceOrder, 'm')
+      .where('m.account_id = :accountId', { accountId })
+      .andWhere('m.internal_order_id IS NULL')
+      .orderBy('m.created_at', 'DESC')
+      .take(100)
+      .getMany();
+
+    const results: Array<{
+      marketplaceOrderId: string;
+      externalOrderId: string;
+      imported: boolean;
+      orderId: string | null;
+      reason?: string;
+    }> = [];
+    let imported = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const row of rows) {
+      try {
+        const res = await this.importIfNeeded(row.id);
+        results.push({
+          marketplaceOrderId: row.id,
+          externalOrderId: row.externalOrderId,
+          imported: res.imported,
+          orderId: res.orderId,
+          reason: res.reason,
+        });
+        if (res.imported) imported += 1;
+        else skipped += 1;
+      } catch (err) {
+        failed += 1;
+        results.push({
+          marketplaceOrderId: row.id,
+          externalOrderId: row.externalOrderId,
+          imported: false,
+          orderId: null,
+          reason: err instanceof Error ? err.message : String(err),
+        });
+        this.logger.warn(
+          `Manual import failed for ${row.externalOrderId}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
+    }
+
+    return {
+      scanned: rows.length,
+      imported,
+      skipped,
+      failed,
+      results,
+    };
   }
 
   private async syncStatus(mOrder: MarketplaceOrder): Promise<void> {

@@ -105,4 +105,21 @@ export class MarketplaceController {
   listOrders(@Param('id') id: string) {
     return this.marketplaceService.listOrders(id);
   }
+
+  @Post('accounts/:id/import-orders')
+  @ApiOperation({
+    summary:
+      'Admin: hesaptaki içe aktarılmamış pazaryeri siparişlerini manuel aktar',
+  })
+  importPendingOrders(@Param('id') id: string) {
+    return this.marketplaceService.importPendingOrders(id);
+  }
+
+  @Post('orders/:id/import')
+  @ApiOperation({
+    summary: 'Admin: tek pazaryeri siparişini iç siparişe aktar (yeniden dene)',
+  })
+  importOrder(@Param('id') id: string) {
+    return this.marketplaceService.importMarketplaceOrder(id);
+  }
 }
