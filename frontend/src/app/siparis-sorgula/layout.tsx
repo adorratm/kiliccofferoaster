@@ -4,14 +4,17 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
-  return buildPageMetadata({
-    title: "Sipariş Sorgula",
-    description:
-      "Misafir siparişlerinizi e-posta ve sipariş numarasıyla sorgulayın.",
-    path: "/siparis-sorgula",
-    settings,
-    keywords: ["sipariş sorgu", "misafir sipariş"],
-  });
+  return {
+    ...buildPageMetadata({
+      title: "Sipariş Sorgula",
+      description:
+        "Misafir siparişlerinizi e-posta ve sipariş numarasıyla sorgulayın.",
+      path: "/siparis-sorgula",
+      settings,
+      keywords: ["sipariş sorgu", "misafir sipariş"],
+    }),
+    robots: { index: false, follow: false },
+  };
 }
 
 export default function GuestLookupLayout({

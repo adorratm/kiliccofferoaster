@@ -14,7 +14,6 @@ const STATIC_ROUTES: {
   { path: "/blog", changeFrequency: "weekly", priority: 0.85 },
   { path: "/iletisim", changeFrequency: "monthly", priority: 0.7 },
   { path: "/takip", changeFrequency: "monthly", priority: 0.5 },
-  { path: "/siparis-sorgula", changeFrequency: "monthly", priority: 0.5 },
   { path: "/kvkk", changeFrequency: "yearly", priority: 0.3 },
   { path: "/gizlilik", changeFrequency: "yearly", priority: 0.3 },
   { path: "/cerez-politikasi", changeFrequency: "yearly", priority: 0.3 },

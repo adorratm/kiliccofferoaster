@@ -123,3 +123,17 @@ WHERE status IN ('paid','processing','shipped','delivered');
 | | local / staging / prod | | |
 
 Başarısız madde varsa issue/PR’a bağla; pazaryeri ve ödeme için ayrıntılı log + `conversationId` / `externalOrderId` ekle.
+
+---
+
+## Kod doğrulama notları (statik)
+
+Son tarama: çoğu madde kodda mevcut. Canlı credential gerektirenler (OAuth, iyzico sandbox, pazaryeri API, Resend) SKIP.
+
+Kalan riskler:
+
+1. Admin sipariş **kaynak** chip’i yalnızca mevcut sayfada client-side filtreler (API `source` param yok)
+2. Eski siparişlerde `stock_decremented` backfill SQL’si uygulanmamış olabilir
+3. OAuth `next` yalnızca `sessionStorage` — yeni sekmede kaybolabilir
+
+Düzeltildi (kod): header sepet badge hata → sessiz 0 yok; filtreli boş aramada demo öneri yok; `/siparis-sorgula` `noindex`.

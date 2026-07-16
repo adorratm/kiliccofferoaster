@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
         "/auth/",
         "/giris",
         "/kayit",
+        "/siparis-sorgula",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

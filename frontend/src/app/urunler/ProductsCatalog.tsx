@@ -119,9 +119,7 @@ export default function ProductsCatalog() {
           });
           suggested = fallback.items;
         }
-        if (!suggested.length) {
-          suggested = resolveProducts([], true);
-        }
+        // Demo ürün kullanma — API gerçekten boşsa öneri gösterme
         if (!cancelled) setSuggestions(suggested.slice(0, 6));
       }
 

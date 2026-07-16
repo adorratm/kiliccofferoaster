@@ -30,7 +30,9 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
     setAuthed(isAuthenticated());
     fetchCart()
       .then((cart) => setCount(cartItemCount(cart)))
-      .catch(() => setCount(0));
+      .catch(() => {
+        /* Önceki sayacı koru — hata durumunda sessizce 0 göstermeyiz */
+      });
   }, [pathname]);
 
   useEffect(() => {
