@@ -64,7 +64,7 @@ export default function AccountPage() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      router.replace("/giris");
+      router.replace("/giris?next=/hesabim");
       return;
     }
 
@@ -184,7 +184,7 @@ export default function AccountPage() {
         <p className="font-meta text-sm uppercase text-error">
           {error || "Yetkisiz erişim"}
         </p>
-        <Link href="/giris" className="btn-cta mt-8 inline-block px-8 py-4 text-xs">
+        <Link href="/giris?next=/hesabim" className="btn-cta mt-8 inline-block px-8 py-4 text-xs">
           Giriş Yap
         </Link>
       </div>

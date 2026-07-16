@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setToken } from "@/lib/auth";
+import { consumeAuthNext, setToken } from "@/lib/auth";
 import { fetchCart } from "@/lib/cart";
 
 function CallbackInner() {
@@ -13,9 +13,10 @@ function CallbackInner() {
     const token = params.get("token");
     if (token) {
       setToken(token);
+      const next = consumeAuthNext("/hesabim");
       void fetchCart()
         .catch(() => null)
-        .finally(() => router.replace("/hesabim"));
+        .finally(() => router.replace(next));
       return;
     }
     router.replace("/giris");

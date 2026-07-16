@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { oauthUrl } from "@/lib/api";
+import { loginPath, rememberAuthNext, safeNextPath } from "@/lib/auth";
 
 type AuthMode = "login" | "register";
 
@@ -11,10 +12,23 @@ type Props = {
   children: ReactNode;
   error?: string | null;
   title?: string;
+  nextPath?: string;
 };
 
-export function AuthShell({ mode, children, error, title }: Props) {
+export function AuthShell({
+  mode,
+  children,
+  error,
+  title,
+  nextPath,
+}: Props) {
   const isLogin = mode === "login";
+  const next = safeNextPath(nextPath, "/hesabim");
+  const registerHref =
+    next === "/hesabim"
+      ? "/kayit"
+      : `/kayit?next=${encodeURIComponent(next)}`;
+  const loginHref = loginPath(next === "/hesabim" ? null : next);
 
   return (
     <div className="page-shell mx-auto max-w-xl py-16 md:py-24">
@@ -30,26 +44,29 @@ export function AuthShell({ mode, children, error, title }: Props) {
         </p>
       </div>
 
-      <div className="mt-10 industrial-border bg-surface-container-low p-6 md:p-8 animate-fade-up" style={{ animationDelay: "160ms" }}>
+      <div
+        className="mt-10 industrial-border bg-surface-container-low p-6 md:p-8 animate-fade-up"
+        style={{ animationDelay: "160ms" }}
+      >
         {error ? (
           <div className="mb-6 border border-error/40 bg-error/10 px-4 py-3 font-meta text-xs uppercase text-error">
             {error}
           </div>
         ) : null}
         {children}
-        <OAuthLinks />
+        <OAuthLinks nextPath={next} />
         <p className="mt-8 font-meta text-[11px] uppercase text-secondary">
           {isLogin ? (
             <>
               Hesabınız yok mu?{" "}
-              <Link href="/kayit" className="text-primary underline">
+              <Link href={registerHref} className="text-primary underline">
                 Kayıt ol
               </Link>
             </>
           ) : (
             <>
               Zaten üye misiniz?{" "}
-              <Link href="/giris" className="text-primary underline">
+              <Link href={loginHref} className="text-primary underline">
                 Giriş yap
               </Link>
             </>
@@ -60,7 +77,8 @@ export function AuthShell({ mode, children, error, title }: Props) {
   );
 }
 
-export function OAuthLinks() {
+export function OAuthLinks({ nextPath }: { nextPath?: string }) {
+  const next = safeNextPath(nextPath, "/hesabim");
   const providers = [
     { id: "google" as const, label: "Google" },
     { id: "facebook" as const, label: "Facebook" },
@@ -77,6 +95,7 @@ export function OAuthLinks() {
           <a
             key={p.id}
             href={oauthUrl(p.id)}
+            onClick={() => rememberAuthNext(next)}
             className="oauth-chip border border-outline-variant/40 px-4 py-3 text-center font-meta text-[11px] uppercase tracking-widest text-secondary hover:border-primary hover:text-primary"
           >
             {p.label}

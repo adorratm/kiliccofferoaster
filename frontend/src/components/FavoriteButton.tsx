@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type MouseEvent } from "react";
+import { loginPath } from "@/lib/auth";
 import {
   ensureWishlistIds,
   subscribeWishlist,
@@ -39,7 +40,7 @@ export function FavoriteButton({
     try {
       const result = await toggleWishlistProduct(productId);
       if ("needsAuth" in result) {
-        router.push("/giris");
+        router.push(loginPath(window.location.pathname));
         return;
       }
       setActive(result.inWishlist);

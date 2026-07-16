@@ -22,7 +22,7 @@ export default function FavoritesPage() {
   async function load() {
     const token = getToken();
     if (!token) {
-      router.replace("/giris");
+      router.replace("/giris?next=/hesabim/favoriler");
       return;
     }
     setLoading(true);
@@ -48,7 +48,7 @@ export default function FavoritesPage() {
   async function remove(productId: string) {
     const token = getToken();
     if (!token) {
-      router.replace("/giris");
+      router.replace("/giris?next=/hesabim/favoriler");
       return;
     }
     try {

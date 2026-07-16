@@ -33,7 +33,11 @@ function resolveTitle(pathname: string): string {
   return TITLES[base] || 'Admin';
 }
 
-export function AdminHeader() {
+type Props = {
+  onMenuOpen?: () => void;
+};
+
+export function AdminHeader({ onMenuOpen }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const title = resolveTitle(pathname);
@@ -45,11 +49,23 @@ export function AdminHeader() {
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border-muted bg-background px-3 sm:gap-4 sm:px-6">
-      <div key={pathname} className="page-enter min-w-0 shrink">
-        <h1 className="truncate text-base font-medium text-foreground">{title}</h1>
-        <p className="mono hidden text-[10px] uppercase tracking-widest text-muted sm:block">
-          {pathname}
-        </p>
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onMenuOpen}
+          className="shrink-0 border border-border-muted px-2.5 py-1.5 text-muted hover:border-accent hover:text-accent lg:hidden"
+          aria-label="Menüyü aç"
+        >
+          <MenuIcon />
+        </button>
+        <div key={pathname} className="page-enter min-w-0 shrink">
+          <h1 className="truncate text-base font-medium text-foreground">
+            {title}
+          </h1>
+          <p className="mono hidden text-[10px] uppercase tracking-widest text-muted sm:block">
+            {pathname}
+          </p>
+        </div>
       </div>
       <AdminSearch />
       <button
@@ -60,5 +76,17 @@ export function AdminHeader() {
         Çıkış
       </button>
     </header>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 7h16M4 12h16M4 17h16"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+    </svg>
   );
 }

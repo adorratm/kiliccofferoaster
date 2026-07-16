@@ -438,6 +438,43 @@ body {
   animation: fade-up 0.28s var(--motion-ease) both;
 }
 
+.mobile-menu-backdrop {
+  animation: fade-in 0.22s var(--motion-ease) both;
+}
+
+.mobile-menu-panel {
+  animation: menu-slide-in 0.34s var(--motion-ease) both;
+}
+
+.mobile-menu-link,
+.mobile-menu-footer {
+  animation: fade-up 0.4s var(--motion-ease) both;
+}
+
+.search-palette-panel {
+  animation: fade-up 0.28s var(--motion-ease) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes menu-slide-in {
+  from {
+    opacity: 0;
+    transform: translate3d(16px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -449,6 +486,11 @@ body {
   .hero-enter > *,
   .page-enter > *,
   .menu-panel,
+  .mobile-menu-backdrop,
+  .mobile-menu-panel,
+  .mobile-menu-link,
+  .mobile-menu-footer,
+  .search-palette-panel,
   .banner-enter {
     animation: none !important;
   }

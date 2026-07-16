@@ -25,7 +25,7 @@ export default function OrderDetailPage() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      router.replace("/giris");
+      router.replace("/giris?next=/hesabim");
       return;
     }
     getOrderById(params.id, token)
