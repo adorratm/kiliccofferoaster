@@ -15,40 +15,39 @@ const CARDS = [
 export function PaymentCardLogos() {
   return (
     <div className="border-t border-outline-variant/15">
-      <div className="page-shell py-8 md:py-10">
-        <p className="mb-5 font-meta text-[10px] uppercase tracking-[0.2em] text-primary/60">
-          Güvenli ödeme · Desteklenen kartlar
-        </p>
-        <ul
-          className="flex flex-wrap items-center gap-3 md:gap-4"
-          aria-label="Kabul edilen kartlar"
-        >
-          {CARDS.map((card) => (
-            <li key={card.id}>
-              <span
-                className="inline-flex items-center gap-2.5 border border-outline-variant/25 bg-surface-container-low py-1.5 pl-1.5 pr-3"
-                title={card.label}
-              >
+      <div className="page-shell py-5 md:py-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <ul
+            className="flex flex-wrap items-center gap-1.5"
+            aria-label="Kabul edilen kartlar"
+          >
+            {CARDS.map((card) => (
+              <li key={card.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={card.src}
-                  alt={`${card.label} logosu`}
-                  width={56}
-                  height={36}
-                  className="h-8 w-12.5 shrink-0 object-contain bg-white sm:h-9 sm:w-14"
+                  alt={card.label}
+                  title={card.label}
+                  width={40}
+                  height={26}
+                  className="h-[22px] w-[34px] object-contain bg-white sm:h-6 sm:w-10"
                   loading="lazy"
                 />
-                <span className="font-meta text-[9px] uppercase tracking-widest text-secondary">
-                  {card.label}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 font-meta text-[9px] uppercase tracking-wider text-secondary/70">
-          PayTR altyapısı · 3D Secure · Advantage, Axess, Bankkart, Bonus,
-          CardFinans, Maximum, Paraf, World ve diğer banka kartları
-        </p>
+              </li>
+            ))}
+          </ul>
+          <p className="shrink-0 text-right font-meta text-[9px] uppercase tracking-wider text-secondary/70 sm:pb-0.5">
+            Developed By{" "}
+            <a
+              href="https://emrekilic.web.tr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="normal-case tracking-normal text-secondary underline decoration-outline-variant/40 underline-offset-2 hover:text-primary"
+            >
+              https://emrekilic.web.tr
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );
