@@ -149,7 +149,7 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
                 </div>
 
                 <p className="mt-6 font-meta text-[10px] uppercase tracking-widest text-secondary/50">
-                  Torbalı / İzmir
+                  {settings.contact.locationLabel || settings.brand.location}
                 </p>
               </div>
             </div>

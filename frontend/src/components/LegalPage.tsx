@@ -1,20 +1,28 @@
 import { Reveal } from "@/components/Reveal";
 import { getLegalDocument } from "@/lib/api";
-import { LEGAL_FALLBACK } from "@/lib/legal-content";
+import { getSiteSettings } from "@/lib/cms";
+import {
+  buildLegalFallback,
+  sellerFromSettings,
+} from "@/lib/legal-content";
 
 type Props = {
   slug: string;
 };
 
 export async function LegalPage({ slug }: Props) {
-  const doc = await getLegalDocument(slug);
-  const fallback = LEGAL_FALLBACK[slug] ?? {
+  const [doc, settings] = await Promise.all([
+    getLegalDocument(slug),
+    getSiteSettings(),
+  ]);
+
+  const fallbackMap = buildLegalFallback(sellerFromSettings(settings));
+  const fallback = fallbackMap[slug] ?? {
     title: slug,
     content: "Bu yasal metin yakında yayınlanacaktır.",
   };
 
   const title = doc?.title || fallback.title;
-  // Seed placeholder ise fallback; admin’de düzenlenen gerçek içerik her zaman öncelikli
   const apiContent = doc?.content?.trim() || "";
   const isPlaceholder =
     !apiContent || apiContent.includes("örnek içerik");

@@ -4,13 +4,16 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
+  const location =
+    settings.contact.locationLabel || settings.brand.location || "";
   return buildPageMetadata({
     title: "İletişim",
-    description:
-      "Kılıç Coffee Roaster ile iletişime geçin — Torbalı / İzmir atölye ve sipariş soruları.",
+    description: location
+      ? `${settings.brand.name} ile iletişime geçin — ${location} atölye ve sipariş soruları.`
+      : `${settings.brand.name} ile iletişime geçin — atölye ve sipariş soruları.`,
     path: "/iletisim",
     settings,
-    keywords: ["iletişim", "Torbalı", "kahve kavurma"],
+    keywords: ["iletişim", location, "kahve kavurma"].filter(Boolean),
   });
 }
 
