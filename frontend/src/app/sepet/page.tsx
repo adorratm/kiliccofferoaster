@@ -170,7 +170,7 @@ export default function CartPage() {
                           onClick={() => remove(item.id)}
                           className="font-meta text-[11px] uppercase text-error hover:underline"
                         >
-                          Remove_Unit
+                          Sil
                         </button>
                       </div>
                     </div>
