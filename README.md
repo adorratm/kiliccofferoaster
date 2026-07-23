@@ -1,4 +1,4 @@
-# Kılıç Coffee Roasters
+# Kılıç Coffee Roaster
 
 Monorepo: NestJS API + Next.js vitrin + Next.js admin.
 

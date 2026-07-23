@@ -23,7 +23,7 @@ export default function OpenGraphImage() {
           Torbalı · İzmir
         </div>
         <div style={{ fontSize: 72, lineHeight: 1.05, marginTop: 16, fontWeight: 700 }}>
-          Kılıç Coffee Roasters
+          Kılıç Coffee Roaster
         </div>
         <div style={{ fontSize: 28, marginTop: 20, color: "#dec0b9", maxWidth: 800 }}>
           Engineered Precision. Artisanal Depth.

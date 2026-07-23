@@ -48,8 +48,8 @@ Geliştirmede `synchronize: true` (NODE_ENV !== production). Production’da mig
 
 | Host | Servis |
 |------|--------|
-| `kiliccoffeeroasters.com.tr` | frontend :3000 |
-| `admin.kiliccoffeeroasters.com.tr` | admin :3001 |
-| `api.kiliccoffeeroasters.com.tr` | api :4000 |
+| `kiliccoffeeroaster.com.tr` | frontend :3000 |
+| `admin.kiliccoffeeroaster.com.tr` | admin :3001 |
+| `api.kiliccoffeeroaster.com.tr` | api :4000 |
 
 Mevcut `emrekilic.web.tr` ve `ttengamesstudio.com.tr` host bloklarının yanına eklenir.

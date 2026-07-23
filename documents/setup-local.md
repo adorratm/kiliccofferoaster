@@ -10,7 +10,7 @@
 1. Bağımlılıklar
 
 ```bash
-cd kiliccofferoasters
+cd kiliccofferoaster
 yarn install
 cp .env.example .env
 ```

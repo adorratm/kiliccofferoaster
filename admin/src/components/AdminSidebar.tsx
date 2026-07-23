@@ -69,7 +69,7 @@ function BrandBlock() {
       <p className="mt-1 text-lg font-semibold leading-tight text-foreground">
         Kılıç Coffee
       </p>
-      <p className="mono text-xs text-accent">ROASTERS</p>
+      <p className="mono text-xs text-accent">ROASTER</p>
     </div>
   );
 }
@@ -125,7 +125,7 @@ export function AdminSidebar({ mobileOpen = false, onMobileClose }: Props) {
                   <p className="mt-1 text-lg font-semibold leading-tight text-foreground">
                     Kılıç Coffee
                   </p>
-                  <p className="mono text-xs text-accent">ROASTERS</p>
+                  <p className="mono text-xs text-accent">ROASTER</p>
                 </div>
                 <button
                   type="button"

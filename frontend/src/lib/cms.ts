@@ -51,7 +51,7 @@ export type ContentSection = {
 
 export const DEFAULT_SETTINGS: SiteSettings = {
   brand: {
-    name: "Kılıç Coffee Roasters",
+    name: "Kılıç Coffee Roaster",
     slogan: "Engineered Precision. Artisanal Depth.",
     tagline:
       "Engineered Precision. Artisanal Depth. Seçkin profesyoneller için yüksek teknolojili kavrum.",
@@ -61,13 +61,13 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   contact: {
     address:
       "AYRANCILAR MAHALLESİ DEĞİRMEN CAD. NO:55A AYRANCILAR, 35870 Torbalı/İzmir",
-    email: "info@kiliccoffeeroasters.com.tr",
+    email: "info@kiliccoffeeroaster.com.tr",
     phone: "+90 232 000 00 00",
     hours: "Pzt — Cmt / 08:00 — 18:00",
     locationLabel: "Torbalı / İzmir",
   },
   seo: {
-    title: "Kılıç Coffee Roasters",
+    title: "Kılıç Coffee Roaster",
     description:
       "Engineered Precision. Artisanal Depth. Torbalı / İzmir özel kahve kavurucusu.",
     keywords: [
@@ -76,7 +76,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
       "specialty coffee",
       "Torbalı",
       "İzmir",
-      "Kılıç Coffee Roasters",
+      "Kılıç Coffee Roaster",
     ],
     ogImage:
       "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80",

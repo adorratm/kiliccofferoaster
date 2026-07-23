@@ -25,11 +25,11 @@
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1093.0",
-    "@bull-board/api": "^8.1.2",
-    "@bull-board/express": "^8.1.2",
-    "@bull-board/nestjs": "^8.1.2",
-    "@bull-board/ui": "^8.1.2",
+    "@aws-sdk/client-s3": "^3.1094.0",
+    "@bull-board/api": "^8.3.0",
+    "@bull-board/express": "^8.3.0",
+    "@bull-board/nestjs": "^8.3.0",
+    "@bull-board/ui": "^8.3.0",
     "@nestjs/bull-shared": "^11.0.4",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.1.28",
@@ -45,7 +45,7 @@
     "axios": "^1.18.1",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
-    "bullmq": "^5.80.10",
+    "bullmq": "^5.81.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
@@ -105,7 +105,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",
-    "webpack": "^5.108.4"
+    "webpack": "^5.109.0"
   },
   "jest": {
     "moduleFileExtensions": [

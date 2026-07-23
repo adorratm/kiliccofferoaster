@@ -33,7 +33,7 @@ export class N11Adapter implements IMarketplaceAdapter {
   private integrator(): string {
     return (
       this.config.get<string>('marketplace.n11.integrator') ||
-      'KilicCoffeeRoasters'
+      'KilicCoffeeRoaster'
     );
   }
 

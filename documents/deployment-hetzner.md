@@ -6,9 +6,9 @@ Bu proje `emrekilic.web.tr` ve `ttengamesstudio.com.tr` ile aynı VPS’e kurula
 
 ```bash
 # örnek dizin
-mkdir -p /opt/kiliccofferoasters
-cd /opt/kiliccofferoasters
-git clone https://github.com/adorratm/kiliccofferoasters.git .
+mkdir -p /opt/kiliccofferoaster
+cd /opt/kiliccofferoaster
+git clone https://github.com/adorratm/kiliccofferoaster.git .
 cp .env.example .env
 # .env içindeki secret, domain ve OAuth / iyzico değerlerini doldurun
 ```
@@ -40,10 +40,10 @@ docker compose run --rm api node -e "console.log('migrate via yarn in container'
 ## Nginx örnek (mevcut sitelerin yanına)
 
 ```nginx
-# kiliccoffeeroasters.com.tr
+# kiliccoffeeroaster.com.tr
 server {
   listen 443 ssl http2;
-  server_name kiliccoffeeroasters.com.tr www.kiliccoffeeroasters.com.tr;
+  server_name kiliccoffeeroaster.com.tr www.kiliccoffeeroaster.com.tr;
   # ssl_certificate ...;
   location / {
     proxy_pass http://127.0.0.1:3000;
@@ -56,7 +56,7 @@ server {
 
 server {
   listen 443 ssl http2;
-  server_name admin.kiliccoffeeroasters.com.tr;
+  server_name admin.kiliccoffeeroaster.com.tr;
   location / {
     proxy_pass http://127.0.0.1:3001;
     proxy_http_version 1.1;
@@ -68,7 +68,7 @@ server {
 
 server {
   listen 443 ssl http2;
-  server_name api.kiliccoffeeroasters.com.tr;
+  server_name api.kiliccoffeeroaster.com.tr;
   location / {
     proxy_pass http://127.0.0.1:4000;
     proxy_http_version 1.1;

@@ -215,7 +215,7 @@ async function seed() {
 <p>Profillerinizi tekrarlanabilir kılmak için crack zamanı, drop sıcaklığı ve airflow değerlerini birlikte okuyun — tek başına süre yetmez.</p>`,
       coverImageUrl:
         'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1400&q=80',
-      authorName: 'Kılıç Coffee Roasters',
+      authorName: 'Kılıç Coffee Roaster',
       tags: ['kavrum', 'teknik'],
       seoTitle: 'Birinci Crack Nedir? | Kavrum Tekniği',
       seoDescription:
@@ -231,7 +231,7 @@ async function seed() {
 <p>Yirgacheffe gibi light kavrumlarda biraz daha ince giderek floral notaları öne çıkarabilirsiniz; Brazil gibi gövdeli kahvelerde kaba tarafı tercih edin.</p>`,
       coverImageUrl:
         'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1400&q=80',
-      authorName: 'Kılıç Coffee Roasters',
+      authorName: 'Kılıç Coffee Roaster',
       tags: ['demleme', 'filtre'],
       seoTitle: 'Filtre Kahve Öğütme İpuçları',
       seoDescription:

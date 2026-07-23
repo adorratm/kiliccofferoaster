@@ -8,8 +8,8 @@ COPY .yarn ./.yarn
 COPY frontend ./frontend
 COPY api/package.json ./api/
 COPY admin/package.json ./admin/
-ARG NEXT_PUBLIC_API_URL=https://api.kiliccoffeeroasters.com.tr
-ARG NEXT_PUBLIC_SITE_URL=https://kiliccoffeeroasters.com.tr
+ARG NEXT_PUBLIC_API_URL=https://api.kiliccoffeeroaster.com.tr
+ARG NEXT_PUBLIC_SITE_URL=https://kiliccoffeeroaster.com.tr
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 RUN yarn install --immutable

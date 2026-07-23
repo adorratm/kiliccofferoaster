@@ -298,7 +298,7 @@ export class NotificationsService {
 
     try {
       const subject = 'Sepetinizde kahve sizi bekliyor';
-      const html = `<p>Merhaba ${name},</p><p>Sepetinizde <strong>${itemCount}</strong> ürün kaldı. Siparişinizi tamamlayın — taze kavrumlar tükenmeden.</p><p><a href="${cartUrl}">Sepete dön</a></p><p style="color:#888;font-size:12px;margin-top:24px">Kılıç Coffee Roasters · Torbalı / İzmir</p>`;
+      const html = `<p>Merhaba ${name},</p><p>Sepetinizde <strong>${itemCount}</strong> ürün kaldı. Siparişinizi tamamlayın — taze kavrumlar tükenmeden.</p><p><a href="${cartUrl}">Sepete dön</a></p><p style="color:#888;font-size:12px;margin-top:24px">Kılıç Coffee Roaster · Torbalı / İzmir</p>`;
       const text = `Merhaba ${name}, sepetinizde ${itemCount} ürün var: ${cartUrl}`;
       const result = await this.email.send({
         to: email,
@@ -363,7 +363,7 @@ export class NotificationsService {
 
     try {
       const subject = `Düşük stok: ${label} (${stock})`;
-      const html = `<p>Merhaba,</p><p><strong>${label}</strong> stok seviyesi eşik altına düştü.</p><ul><li>Stok: <strong>${stock}</strong></li>${sku ? `<li>SKU: ${sku}</li>` : ''}</ul><p><a href="${adminUrl}/urunler">Ürünleri yönet</a></p><p style="color:#888;font-size:12px;margin-top:24px">Kılıç Coffee Roasters · Admin uyarı</p>`;
+      const html = `<p>Merhaba,</p><p><strong>${label}</strong> stok seviyesi eşik altına düştü.</p><ul><li>Stok: <strong>${stock}</strong></li>${sku ? `<li>SKU: ${sku}</li>` : ''}</ul><p><a href="${adminUrl}/urunler">Ürünleri yönet</a></p><p style="color:#888;font-size:12px;margin-top:24px">Kılıç Coffee Roaster · Admin uyarı</p>`;
       const text = `Düşük stok: ${label} — kalan ${stock}${sku ? ` (SKU: ${sku})` : ''}. Yönet: ${adminUrl}/urunler`;
       const result = await this.email.send({
         to: email,

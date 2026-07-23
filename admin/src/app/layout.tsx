@@ -16,7 +16,7 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Kılıç Admin',
-  description: 'Kılıç Coffee Roasters yönetim paneli',
+  description: 'Kılıç Coffee Roaster yönetim paneli',
 };
 
 export default function RootLayout({

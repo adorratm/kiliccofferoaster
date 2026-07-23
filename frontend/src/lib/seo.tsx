@@ -187,7 +187,7 @@ export function buildBlogIndexMetadata(
   const tag = opts.tag?.trim();
   let title = "Blog";
   let description =
-    "Kavrum teknikleri, demleme notları ve Kılıç Coffee Roasters günlüklerinden yazılar.";
+    "Kavrum teknikleri, demleme notları ve Kılıç Coffee Roaster günlüklerinden yazılar.";
   let path = "/blog";
   const qs = new URLSearchParams();
   if (tag) {

@@ -53,7 +53,7 @@ export default async function BlogIndexPage({ searchParams }: Props) {
       <section className="relative min-h-[42vh] overflow-hidden border-b border-outline-variant/20">
         <Image
           src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1800&q=80"
-          alt="Kılıç Coffee Roasters blog"
+          alt="Kılıç Coffee Roaster blog"
           fill
           priority
           className="object-cover"

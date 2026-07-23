@@ -17,7 +17,7 @@ export default () => ({
     port: parseInt(process.env.DATABASE_PORT || '5432', 10),
     username: process.env.POSTGRES_USER || 'kilic',
     password: process.env.POSTGRES_PASSWORD || 'kilic_secret',
-    name: process.env.POSTGRES_DB || 'kiliccoffeeroasters',
+    name: process.env.POSTGRES_DB || 'kiliccoffeeroaster',
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -131,7 +131,7 @@ export default () => ({
     },
     n11: {
       baseUrl: process.env.N11_API_BASE_URL || 'https://api.n11.com',
-      integrator: process.env.N11_INTEGRATOR_NAME || 'KilicCoffeeRoasters',
+      integrator: process.env.N11_INTEGRATOR_NAME || 'KilicCoffeeRoaster',
     },
   },
   lowStock: {

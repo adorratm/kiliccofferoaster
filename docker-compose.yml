@@ -5,13 +5,13 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kilic_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroasters}
+      POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroaster}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "${DATABASE_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kiliccoffeeroasters}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-kiliccoffeeroaster}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -54,8 +54,8 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.kiliccoffeeroasters.com.tr}
-        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://kiliccoffeeroasters.com.tr}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.kiliccoffeeroaster.com.tr}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://kiliccoffeeroaster.com.tr}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -67,8 +67,8 @@ services:
       context: .
       dockerfile: docker/admin.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.kiliccoffeeroasters.com.tr}
-        NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL:-https://admin.kiliccoffeeroasters.com.tr}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.kiliccoffeeroaster.com.tr}
+        NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL:-https://admin.kiliccoffeeroaster.com.tr}
     restart: unless-stopped
     ports:
       - "3001:3001"

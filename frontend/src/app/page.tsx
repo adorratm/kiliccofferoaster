@@ -61,7 +61,7 @@ const FALLBACK_HERO: HeroContent = {
     "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=2000&q=80",
   eyebrow: "EST. 2024 / TORBALI · İZMİR",
   titleLine1: "Kılıç",
-  titleLine2: "Roasters",
+  titleLine2: "Roaster",
   description:
     "Engineered Precision. Artisanal Depth. Seçkin profesyoneller için yüksek teknolojili kavrum.",
   ctaPrimary: { label: "Koleksiyonu Keşfet", href: "/urunler" },

@@ -4,12 +4,12 @@
  */
 
 const SELLER = {
-  name: "Kılıç Coffee Roasters",
+  name: "Kılıç Coffee Roaster",
   address:
     "AYRANCILAR MAHALLESİ DEĞİRMEN CAD. NO:55A AYRANCILAR, 35870 Torbalı/İzmir",
-  email: "info@kiliccoffeeroasters.com.tr",
+  email: "info@kiliccoffeeroaster.com.tr",
   phone: "+90 232 000 00 00",
-  website: "https://kiliccoffeeroasters.com.tr",
+  website: "https://kiliccoffeeroaster.com.tr",
   taxOffice: "[Vergi Dairesi — güncellenecek]",
   taxNumber: "[Vergi No / TCKN — güncellenecek]",
   mersis: "[MERSİS No — güncellenecek]",

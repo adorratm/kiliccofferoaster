@@ -9,17 +9,17 @@ const LEGAL_META: Record<
   gizlilik: {
     title: "Gizlilik Politikası",
     description:
-      "Kılıç Coffee Roasters gizlilik politikası — kişisel verilerinizin korunması hakkında bilgilendirme.",
+      "Kılıç Coffee Roaster gizlilik politikası — kişisel verilerinizin korunması hakkında bilgilendirme.",
   },
   kvkk: {
     title: "KVKK",
     description:
-      "6698 sayılı KVKK kapsamında Kılıç Coffee Roasters veri işleme bilgilendirmesi.",
+      "6698 sayılı KVKK kapsamında Kılıç Coffee Roaster veri işleme bilgilendirmesi.",
   },
   "cerez-politikasi": {
     title: "Çerez Politikası",
     description:
-      "Kılıç Coffee Roasters web sitesinde kullanılan çerezler hakkında bilgilendirme.",
+      "Kılıç Coffee Roaster web sitesinde kullanılan çerezler hakkında bilgilendirme.",
   },
   "mesafeli-satis": {
     title: "Mesafeli Satış Sözleşmesi",
@@ -39,7 +39,7 @@ const LEGAL_META: Record<
   "musteri-memnuniyeti": {
     title: "Müşteri Memnuniyeti",
     description:
-      "Kılıç Coffee Roasters müşteri memnuniyeti politikası ve destek süreci.",
+      "Kılıç Coffee Roaster müşteri memnuniyeti politikası ve destek süreci.",
   },
   "guvenli-alisveris": {
     title: "Güvenli Alışveriş",

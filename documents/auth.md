@@ -26,8 +26,8 @@ JWT `Authorization: Bearer <token>` ile gönderilir. Frontend token’ı localSt
 2. Authorized redirect URIs:
    - `http://localhost:4000/auth/google/callback`
    - `http://localhost:4000/auth/google/admin/callback`
-   - Production: `https://api.kiliccoffeeroasters.com.tr/auth/google/callback`
-   - Production admin: `https://api.kiliccoffeeroasters.com.tr/auth/google/admin/callback`
+   - Production: `https://api.kiliccoffeeroaster.com.tr/auth/google/callback`
+   - Production admin: `https://api.kiliccoffeeroaster.com.tr/auth/google/admin/callback`
 3. `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` değerlerini `.env`’e yazın
 
 ## Facebook / Apple

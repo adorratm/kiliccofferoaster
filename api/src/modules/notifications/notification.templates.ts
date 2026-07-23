@@ -33,7 +33,7 @@ export function buildEmailContent(
   template: string,
   ctx: NotificationTemplateContext,
 ): { subject: string; html: string; text: string } {
-  const brand = 'Kılıç Coffee Roasters';
+  const brand = 'Kılıç Coffee Roaster';
   const orderNo = ctx.order.orderNumber;
   const name = ctx.order.customerName;
   const trackCode = ctx.shipment?.trackingNumber;

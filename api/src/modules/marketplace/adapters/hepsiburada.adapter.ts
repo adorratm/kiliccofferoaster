@@ -59,7 +59,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     return {
       merchantId: merchantId!,
       Authorization: basicAuthHeader(username!, password!),
-      'User-Agent': `${merchantId} - KilicCoffeeRoasters`,
+      'User-Agent': `${merchantId} - KilicCoffeeRoaster`,
     };
   }
 

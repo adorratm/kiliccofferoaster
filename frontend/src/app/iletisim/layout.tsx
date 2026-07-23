@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "İletişim",
     description:
-      "Kılıç Coffee Roasters ile iletişime geçin — Torbalı / İzmir atölye ve sipariş soruları.",
+      "Kılıç Coffee Roaster ile iletişime geçin — Torbalı / İzmir atölye ve sipariş soruları.",
     path: "/iletisim",
     settings,
     keywords: ["iletişim", "Torbalı", "kahve kavurma"],

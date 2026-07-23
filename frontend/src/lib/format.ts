@@ -35,4 +35,4 @@ export function productImage(url: string | null | undefined, seed = "coffee") {
 export const WORKSHOP_ADDRESS =
   "AYRANCILAR MAHALLESİ DEĞİRMEN CAD. NO:55A AYRANCILAR, 35870 Torbalı/İzmir";
 
-export const BRAND_NAME = "Kılıç Coffee Roasters";
+export const BRAND_NAME = "Kılıç Coffee Roaster";

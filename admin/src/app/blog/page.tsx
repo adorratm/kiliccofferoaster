@@ -30,7 +30,7 @@ const emptyForm = (): FormState => ({
   excerpt: '',
   content: '',
   coverImageUrl: '',
-  authorName: 'Kılıç Coffee Roasters',
+  authorName: 'Kılıç Coffee Roaster',
   tags: '',
   seoTitle: '',
   seoDescription: '',

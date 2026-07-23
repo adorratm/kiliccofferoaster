@@ -15,7 +15,7 @@ export const AppDataSource = new DataSource({
   port: Number(process.env.DATABASE_PORT || 5432),
   username: process.env.POSTGRES_USER || 'kilic',
   password: process.env.POSTGRES_PASSWORD || 'kilic_secret',
-  database: process.env.POSTGRES_DB || 'kiliccoffeeroasters',
+  database: process.env.POSTGRES_DB || 'kiliccoffeeroaster',
   entities: ALL_ENTITIES,
   migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
   synchronize: false,

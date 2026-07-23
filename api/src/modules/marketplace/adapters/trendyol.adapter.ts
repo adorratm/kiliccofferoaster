@@ -43,7 +43,7 @@ export class TrendyolAdapter implements IMarketplaceAdapter {
     );
     return {
       Authorization: basicAuthHeader(apiKey, apiSecret),
-      'User-Agent': `${sellerId} - KilicCoffeeRoasters`,
+      'User-Agent': `${sellerId} - KilicCoffeeRoaster`,
       storeFrontCode: this.storeFrontCode(credentials),
       sellerId,
     };
