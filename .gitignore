@@ -19,3 +19,7 @@ coverage
 .turbo
 uploads
 *.tsbuildinfo
+deploy/.env
+deploy/artifacts/*.sql
+deploy/artifacts/*.dump
+deploy/artifacts/*.tar.gz

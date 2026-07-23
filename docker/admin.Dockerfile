@@ -10,8 +10,12 @@ COPY api/package.json ./api/
 COPY frontend/package.json ./frontend/
 ARG NEXT_PUBLIC_API_URL=https://api.kiliccoffeeroaster.com.tr
 ARG NEXT_PUBLIC_ADMIN_URL=https://admin.kiliccoffeeroaster.com.tr
+ARG NEXT_PUBLIC_SITE_URL=https://kiliccoffeeroaster.com.tr
+ARG NEXT_PUBLIC_CDN_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_ADMIN_URL=$NEXT_PUBLIC_ADMIN_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_CDN_URL=$NEXT_PUBLIC_CDN_URL
 RUN yarn install --immutable
 WORKDIR /app/admin
 RUN yarn build

@@ -1,0 +1,139 @@
+# Kılıç Coffee Roaster — production (Hetzner, paylaşımlı VPS)
+# Host portları TTEN (3000/4000) ve Portfolio (3100–3102 / 5433 / 6380) ile çakışmaz.
+# Kullanım: docker compose -f docker-compose.prod.yml --env-file deploy/.env up -d --build
+#
+# TTEN ağı: compose ile DEĞİL, deploy/sync-tten-nginx.sh ile bağlanır.
+# Sebep: compose service adı "frontend" TTEN nginx upstream'i (frontend:3000) ile çakışır.
+
+name: kiliccoffee-prod
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: kiliccoffee-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kilic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroaster}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5434}:5432"
+    # PG18+: mount parent dir (data → /var/lib/postgresql/18/docker)
+    volumes:
+      - kiliccoffee_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || pg_isready -U $${POSTGRES_USER}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - kiliccoffee
+
+  redis:
+    image: redis:7-alpine
+    container_name: kiliccoffee-prod-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_HOST_PORT:-6381}:6379"
+    volumes:
+      - kiliccoffee_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - kiliccoffee
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: kiliccoffee-prod-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - deploy/.env
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-kilic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroaster}
+      REDIS_URL: redis://redis:6379
+      DATABASE_SYNCHRONIZE: ${DATABASE_SYNCHRONIZE:-false}
+    ports:
+      - "${API_HOST_PORT:-3202}:4000"
+    volumes:
+      - kiliccoffee_uploads:/app/api/uploads
+    networks:
+      - kiliccoffee
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL:-}
+        NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL:-}
+        NEXT_PUBLIC_GA4_ID: ${NEXT_PUBLIC_GA4_ID:-}
+        NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID:-}
+        NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-}
+        NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
+    container_name: kiliccoffee-prod-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${FRONTEND_HOST_PORT:-3200}:3000"
+    networks:
+      - kiliccoffee
+
+  admin:
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+        NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL:-}
+    container_name: kiliccoffee-prod-admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${ADMIN_HOST_PORT:-3201}:3001"
+    networks:
+      - kiliccoffee
+
+volumes:
+  kiliccoffee_postgres_data:
+  kiliccoffee_redis_data:
+  kiliccoffee_uploads:
+
+networks:
+  kiliccoffee:
+    driver: bridge

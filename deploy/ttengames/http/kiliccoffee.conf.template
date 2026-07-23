@@ -1,0 +1,62 @@
+# kiliccoffee-merge-boundary
+# Kılıç Coffee — HTTP only (SSL öncesi ACME + proxy)
+
+map $http_upgrade $kiliccoffee_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 80;
+    server_name kiliccoffeeroaster.com.tr www.kiliccoffeeroaster.com.tr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        proxy_pass http://@FRONTEND_HOST@:@FRONTEND_PORT@;
+        proxy_http_version 1.1;
+        proxy_set_header Host $${host};
+        proxy_set_header X-Real-IP $${remote_addr};
+        proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
+        proxy_set_header X-Forwarded-Proto $${scheme};
+    }
+}
+
+server {
+    listen 80;
+    server_name admin.kiliccoffeeroaster.com.tr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        proxy_pass http://@ADMIN_HOST@:@ADMIN_PORT@;
+        proxy_http_version 1.1;
+        proxy_set_header Host $${host};
+        proxy_set_header X-Real-IP $${remote_addr};
+        proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
+        proxy_set_header X-Forwarded-Proto $${scheme};
+    }
+}
+
+server {
+    listen 80;
+    server_name api.kiliccoffeeroaster.com.tr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        proxy_pass http://@API_HOST@:@API_PORT@;
+        proxy_http_version 1.1;
+        proxy_set_header Host $${host};
+        proxy_set_header X-Real-IP $${remote_addr};
+        proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
+        proxy_set_header X-Forwarded-Proto $${scheme};
+        proxy_read_timeout 86400;
+    }
+}

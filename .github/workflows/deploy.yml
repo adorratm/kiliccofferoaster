@@ -1,0 +1,145 @@
+name: Deploy Kılıç Coffee
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: kiliccoffee-deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Enable Yarn 4 (Corepack)
+        run: |
+          corepack enable
+          corepack prepare yarn@4.17.1 --activate
+          yarn --version
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Build API
+        run: yarn build:api
+
+      - name: Build frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://api.kiliccoffeeroaster.com.tr
+          NEXT_PUBLIC_SITE_URL: https://kiliccoffeeroaster.com.tr
+          NEXT_PUBLIC_ADMIN_URL: https://admin.kiliccoffeeroaster.com.tr
+        run: yarn build:frontend
+
+      - name: Build admin
+        env:
+          NEXT_PUBLIC_API_URL: https://api.kiliccoffeeroaster.com.tr
+          NEXT_PUBLIC_ADMIN_URL: https://admin.kiliccoffeeroaster.com.tr
+          NEXT_PUBLIC_SITE_URL: https://kiliccoffeeroaster.com.tr
+        run: yarn build:admin
+
+  deploy:
+    name: Deploy to Hetzner
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Upload project archive to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          tar czf /tmp/kiliccoffee-deploy.tar.gz \
+            --exclude='**/node_modules' \
+            --exclude='**/.next' \
+            --exclude='**/dist' \
+            --exclude='deploy/.env' \
+            --exclude='deploy/artifacts/*.sql' \
+            api frontend admin docker deploy \
+            docker-compose.prod.yml package.json yarn.lock .yarnrc.yml .yarn .dockerignore
+
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            "${SSH_USER}@${SSH_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+
+          scp -i ~/.ssh/deploy_key -P "$SSH_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=30 \
+            /tmp/kiliccoffee-deploy.tar.gz \
+            "${SSH_USER}@${SSH_HOST}:/tmp/kiliccoffee-deploy.tar.gz"
+
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" \
+            "cd '${DEPLOY_PATH}' && tar xzf /tmp/kiliccoffee-deploy.tar.gz && rm -f /tmp/kiliccoffee-deploy.tar.gz"
+
+      - name: Run deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 45m
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_PATH }}
+            chmod +x deploy/*.sh deploy/lib/*.sh
+            ./deploy/deploy.sh
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_PATH }}
+            API_PORT="$(grep '^API_HOST_PORT=' deploy/.env | cut -d= -f2)"
+            API_PORT="${API_PORT:-3202}"
+            FE_PORT="$(grep '^FRONTEND_HOST_PORT=' deploy/.env | cut -d= -f2)"
+            FE_PORT="${FE_PORT:-3200}"
+
+            for i in $(seq 1 20); do
+              if curl -fsS "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1; then
+                echo "==> API OK (${i}. deneme)"
+                curl -fsS "http://127.0.0.1:${API_PORT}/health"
+                echo ""
+                break
+              fi
+              if [[ "$i" -eq 20 ]]; then
+                echo "==> API logları:"
+                docker logs kiliccoffee-prod-api --tail 100 2>&1 || true
+                exit 1
+              fi
+              echo "Bekleniyor... (${i}/20)"
+              sleep 3
+            done
+
+            curl -fsS -o /dev/null -w "Frontend HTTP %{http_code}\n" "http://127.0.0.1:${FE_PORT}/" || true

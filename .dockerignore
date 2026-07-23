@@ -1,0 +1,17 @@
+node_modules
+.next
+dist
+.git
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/artifacts/*.sql
+deploy/artifacts/*.dump
+deploy/artifacts/*.tar.gz
+*.log
+coverage
+uploads
+.turbo
+*.tsbuildinfo
+.DS_Store

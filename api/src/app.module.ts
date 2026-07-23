@@ -57,7 +57,12 @@ import { WishlistModule } from '@modules/wishlist/wishlist.module';
         password: config.get<string>('database.password'),
         database: config.get<string>('database.name'),
         entities: ALL_ENTITIES,
-        synchronize: process.env.NODE_ENV !== 'production',
+        synchronize:
+          process.env.DATABASE_SYNCHRONIZE === 'true'
+            ? true
+            : process.env.DATABASE_SYNCHRONIZE === 'false'
+              ? false
+              : process.env.NODE_ENV !== 'production',
         logging: process.env.TYPEORM_LOGGING === 'true',
       }),
     }),
