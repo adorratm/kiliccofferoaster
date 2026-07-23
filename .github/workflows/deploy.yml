@@ -22,9 +22,14 @@ jobs:
 
       - name: Enable Yarn 4 (Corepack)
         run: |
+          # ubuntu-latest'te global Yarn 1.22 PATH'te olabilir; Corepack ile çakışır
+          sudo npm uninstall -g yarn 2>/dev/null || true
+          sudo rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg 2>/dev/null || true
           corepack enable
           corepack prepare yarn@4.17.1 --activate
+          hash -r
           yarn --version
+          test "$(yarn --version)" = "4.17.1"
 
       - name: Install
         run: yarn install --immutable
