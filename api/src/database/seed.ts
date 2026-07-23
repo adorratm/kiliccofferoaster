@@ -46,131 +46,145 @@ async function seed() {
     console.log('Admin allowlist:', adminEmail);
   }
 
-  let singleOrigin = await em.findOne(Category, {
-    where: { slug: 'single-origin' },
+  let turkCategory = await em.findOne(Category, {
+    where: { slug: 'turk-kahvesi' },
   });
-  if (!singleOrigin) {
-    singleOrigin = em.create(Category, {
-      slug: 'single-origin',
-      name: 'Single Origin',
-      description: 'Tek ülke / bölge kahveleri',
+  if (!turkCategory) {
+    turkCategory = em.create(Category, {
+      slug: 'turk-kahvesi',
+      name: 'Türk Kahvesi',
+      description: 'Geleneksel Türk kahvesi',
       sortOrder: 1,
       isActive: true,
     });
-    await em.save(singleOrigin);
+    await em.save(turkCategory);
+    console.log('Category: turk-kahvesi');
   }
 
-  let blends = await em.findOne(Category, { where: { slug: 'blends' } });
-  if (!blends) {
-    blends = em.create(Category, {
-      slug: 'blends',
-      name: 'Harmanlar',
-      description: 'Özenle harmanlanmış kavrulmuş kahveler',
-      sortOrder: 2,
-      isActive: true,
-    });
-    await em.save(blends);
+  // Eski specialty kategorilerini pasifle
+  for (const slug of ['single-origin', 'blends']) {
+    const cat = await em.findOne(Category, { where: { slug } });
+    if (cat && cat.isActive) {
+      cat.isActive = false;
+      await em.save(cat);
+      console.log('Category deactivated:', slug);
+    }
   }
 
-  const products = [
-    {
-      slug: 'ethiopia-yirgacheffe',
-      name: 'Ethiopia Yirgacheffe',
-      description:
-        'Çiçeksi aromalar, bergamot ve jasmine notalarıyla bilinen Etiyopya Yirgacheffe.',
-      shortDescription: 'Çiçeksi, bergamot, jasmine',
-      originCountry: 'Ethiopia',
-      originRegion: 'Yirgacheffe',
-      altitude: '1800-2200m',
-      process: 'Washed',
-      varietal: 'Heirloom',
-      roastLevel: 'Light',
-      flavorNotes: ['jasmine', 'bergamot', 'peach'],
-      basePrice: '450.00',
-      stock: 100,
-      isFeatured: true,
-      badge: 'Yeni Hasat',
-      categoryId: singleOrigin.id,
-    },
-    {
-      slug: 'colombia-huila',
-      name: 'Colombia Huila',
-      description:
-        'Karamel tatlılığı ve dengeli asiditeye sahip Kolombiya Huila.',
-      shortDescription: 'Karamel, fındık, kırmızı elma',
-      originCountry: 'Colombia',
-      originRegion: 'Huila',
-      altitude: '1600-1900m',
-      process: 'Washed',
-      varietal: 'Caturra, Castillo',
-      roastLevel: 'Medium',
-      flavorNotes: ['caramel', 'hazelnut', 'red apple'],
-      basePrice: '420.00',
-      stock: 120,
-      isFeatured: true,
-      badge: null,
-      categoryId: singleOrigin.id,
-    },
-    {
-      slug: 'brazil-cerrado',
-      name: 'Brazil Cerrado',
-      description:
-        'Çikolata ve fındık profiliyle espresso ve filtreye uygun Brezilya Cerrado.',
-      shortDescription: 'Çikolata, fındık, kakao',
-      originCountry: 'Brazil',
-      originRegion: 'Cerrado',
-      altitude: '900-1200m',
-      process: 'Natural',
-      varietal: 'Bourbon, Catuaí',
-      roastLevel: 'Medium-Dark',
-      flavorNotes: ['chocolate', 'nut', 'cocoa'],
-      basePrice: '380.00',
-      stock: 150,
-      isFeatured: false,
-      badge: 'Espresso',
-      categoryId: blends.id,
-    },
+  const turkKahvesiVariants = [
+    { sku: 'TK-100', weightLabel: '100gr', price: '100.00', stock: 100 },
+    { sku: 'TK-250', weightLabel: '250gr', price: '250.00', stock: 100 },
+    { sku: 'TK-500', weightLabel: '500gr', price: '500.00', stock: 80 },
+    { sku: 'TK-750', weightLabel: '750gr', price: '750.00', stock: 60 },
+    { sku: 'TK-1000', weightLabel: '1kg', price: '1000.00', stock: 50 },
   ];
 
-  for (const p of products) {
-    let product = await em.findOne(Product, { where: { slug: p.slug } });
-    if (!product) {
-      product = await em.save(
-        em.create(Product, {
-          ...p,
-          currency: 'TRY',
-          isActive: true,
-          gallery: [],
-        }),
-      );
-      console.log('Product:', p.slug);
-    }
+  let turkKahvesi = await em.findOne(Product, {
+    where: { slug: 'turk-kahvesi' },
+  });
+  if (!turkKahvesi) {
+    turkKahvesi = await em.save(
+      em.create(Product, {
+        slug: 'turk-kahvesi',
+        name: 'Türk Kahvesi',
+        description:
+          'Torbalı’da taze kavrulan geleneksel Türk kahvesi. Çekirdek veya öğütülmüş olarak, istediğiniz gramajda sipariş edin.',
+        shortDescription: 'Geleneksel · Taze kavrum · Çekirdek veya öğütülmüş',
+        originCountry: 'Türkiye',
+        originRegion: 'Torbalı / İzmir',
+        altitude: null,
+        process: null,
+        varietal: null,
+        roastLevel: 'Orta-Koyu',
+        flavorNotes: ['kakao', 'fındık', 'baharat'],
+        basePrice: turkKahvesiVariants[0].price,
+        stock: turkKahvesiVariants.reduce((s, v) => s + v.stock, 0),
+        currency: 'TRY',
+        isActive: true,
+        isFeatured: true,
+        badge: null,
+        gallery: [],
+        categoryId: turkCategory.id,
+      }),
+    );
+    console.log('Product: turk-kahvesi');
+  } else {
+    turkKahvesi.name = 'Türk Kahvesi';
+    turkKahvesi.isActive = true;
+    turkKahvesi.isFeatured = true;
+    turkKahvesi.categoryId = turkCategory.id;
+    turkKahvesi.basePrice = turkKahvesiVariants[0].price;
+    turkKahvesi.shortDescription =
+      turkKahvesi.shortDescription ||
+      'Geleneksel · Taze kavrum · Çekirdek veya öğütülmüş';
+    await em.save(turkKahvesi);
+    console.log('Product updated: turk-kahvesi');
+  }
 
-    const variantCount = await em.count(ProductVariant, {
-      where: { productId: product.id },
+  const existingVariants = await em.find(ProductVariant, {
+    where: { productId: turkKahvesi.id },
+  });
+  const desiredLabels = new Set(turkKahvesiVariants.map((v) => v.weightLabel));
+
+  for (const desired of turkKahvesiVariants) {
+    const match = existingVariants.find(
+      (v) =>
+        v.weightLabel === desired.weightLabel ||
+        v.sku === desired.sku ||
+        // Eski etiket uyumu (250g → 250gr)
+        v.weightLabel?.replace(/\s/g, '').toLowerCase() ===
+          desired.weightLabel.toLowerCase() ||
+        v.weightLabel?.replace(/g$/i, 'gr').toLowerCase() ===
+          desired.weightLabel.toLowerCase(),
+    );
+    if (!match) {
+      await em.save(
+        em.create(ProductVariant, {
+          productId: turkKahvesi.id,
+          sku: desired.sku,
+          weightLabel: desired.weightLabel,
+          price: desired.price,
+          stock: desired.stock,
+          isActive: true,
+        }),
+      );
+      console.log('Variant created:', desired.weightLabel);
+    } else {
+      match.sku = desired.sku;
+      match.weightLabel = desired.weightLabel;
+      match.price = desired.price;
+      match.isActive = true;
+      await em.save(match);
+      console.log('Variant updated:', desired.weightLabel, desired.price);
+    }
+  }
+
+  for (const v of existingVariants) {
+    if (!desiredLabels.has(v.weightLabel)) {
+      v.isActive = false;
+      await em.save(v);
+      console.log('Variant deactivated:', v.weightLabel);
+    }
+  }
+
+  // Diğer tüm ürünleri pasifle — katalogda yalnızca Türk Kahvesi kalsın
+  const allProducts = await em.find(Product, {});
+  for (const p of allProducts) {
+    if (p.slug === 'turk-kahvesi') continue;
+    if (p.isActive || p.isFeatured) {
+      p.isActive = false;
+      p.isFeatured = false;
+      await em.save(p);
+      console.log('Product deactivated:', p.slug);
+    }
+    const variants = await em.find(ProductVariant, {
+      where: { productId: p.id },
     });
-    if (variantCount === 0) {
-      await em.save(
-        em.create(ProductVariant, {
-          productId: product.id,
-          sku: `${p.slug}-250`.toUpperCase().slice(0, 80),
-          weightLabel: '250g',
-          price: p.basePrice,
-          stock: p.stock,
-          isActive: true,
-        }),
-      );
-      await em.save(
-        em.create(ProductVariant, {
-          productId: product.id,
-          sku: `${p.slug}-1000`.toUpperCase().slice(0, 80),
-          weightLabel: '1kg',
-          price: (Number(p.basePrice) * 3.6).toFixed(2),
-          stock: Math.max(10, Math.floor(p.stock / 2)),
-          isActive: true,
-        }),
-      );
-      console.log('Variants:', p.slug);
+    for (const v of variants) {
+      if (v.isActive) {
+        v.isActive = false;
+        await em.save(v);
+      }
     }
   }
 

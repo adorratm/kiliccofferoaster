@@ -12,6 +12,7 @@ import {
   fetchCart,
 } from "@/lib/cart";
 import { formatMoney, productImage } from "@/lib/format";
+import { grindLabel } from "@/lib/grind";
 import type { Cart } from "@/lib/types";
 
 export default function CartPage() {
@@ -105,16 +106,9 @@ export default function CartPage() {
                 item.product?.imageUrl,
                 item.product?.slug || item.productId,
               );
-              const grindMap: Record<string, string> = {
-                whole_bean: "Çekirdek",
-                filter: "Filtre",
-                espresso: "Espresso",
-                turkish: "Türk kahvesi",
-              };
               const meta = [
                 item.variant?.weightLabel,
-                grindMap[item.grindOption || "whole_bean"] ||
-                  item.grindOption,
+                grindLabel(item.grindOption),
                 item.product?.roastLevel,
               ]
                 .filter(Boolean)

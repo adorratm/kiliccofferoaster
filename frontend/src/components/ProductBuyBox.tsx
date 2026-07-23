@@ -33,7 +33,7 @@ export function ProductBuyBox({ product, demoMode = false }: Props) {
 
   return (
     <div className="space-y-6">
-      {variants.length > 1 ? (
+      {variants.length > 0 ? (
         <div>
           <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
             Ağırlık
@@ -63,7 +63,7 @@ export function ProductBuyBox({ product, demoMode = false }: Props) {
 
       <div>
         <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
-          Öğütme
+          Öğütme tercihi
         </p>
         <div className="flex flex-wrap gap-2">
           {GRIND_OPTIONS.map((g) => {

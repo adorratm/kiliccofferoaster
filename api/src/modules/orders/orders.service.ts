@@ -24,10 +24,7 @@ import { NotificationsService } from '@modules/notifications/notifications.servi
 import { statusLabel } from '@modules/notifications/notification.templates';
 import { CouponsService } from '@modules/coupons/coupons.service';
 import { InventoryService } from '@modules/catalog/inventory.service';
-import {
-  GRIND_LABELS,
-  isGrindOption,
-} from '@common/constants/grind-options';
+import { grindLabel } from '@common/constants/grind-options';
 import {
   paginateResult,
   PaginatedResult,
@@ -138,10 +135,7 @@ export class OrdersService {
       // Kupon kullanımı ödeme PAID olunca confirm edilir (başarısız ödemede yanmasın)
 
       const orderItems = cart!.items.map((item: CartItem) => {
-        const grind =
-          item.grindOption && isGrindOption(item.grindOption)
-            ? item.grindOption
-            : item.grindOption || 'whole_bean';
+        const grind = item.grindOption || 'whole_bean';
         return tx.create(OrderItem, {
           orderId: order.id,
           productId: item.productId,
@@ -149,7 +143,7 @@ export class OrdersService {
           productName: item.product?.name || 'Ürün',
           variantLabel: item.variant?.weightLabel ?? null,
           grindOption: grind,
-          grindLabel: isGrindOption(grind) ? GRIND_LABELS[grind] : grind,
+          grindLabel: grindLabel(grind),
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           lineTotal: (Number(item.unitPrice) * item.quantity).toFixed(2),

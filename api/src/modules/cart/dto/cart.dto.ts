@@ -6,7 +6,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GRIND_OPTIONS } from '@common/constants/grind-options';
+import { ACCEPTED_GRIND_OPTIONS } from '@common/constants/grind-options';
 
 export class AddCartItemDto {
   @ApiProperty()
@@ -18,9 +18,9 @@ export class AddCartItemDto {
   @IsUUID()
   variantId?: string;
 
-  @ApiPropertyOptional({ enum: GRIND_OPTIONS })
+  @ApiPropertyOptional({ enum: ACCEPTED_GRIND_OPTIONS })
   @IsOptional()
-  @IsIn([...GRIND_OPTIONS])
+  @IsIn([...ACCEPTED_GRIND_OPTIONS])
   grindOption?: string;
 
   @ApiProperty({ minimum: 1, default: 1 })
@@ -35,8 +35,8 @@ export class UpdateCartItemDto {
   @Min(1)
   quantity!: number;
 
-  @ApiPropertyOptional({ enum: GRIND_OPTIONS })
+  @ApiPropertyOptional({ enum: ACCEPTED_GRIND_OPTIONS })
   @IsOptional()
-  @IsIn([...GRIND_OPTIONS])
+  @IsIn([...ACCEPTED_GRIND_OPTIONS])
   grindOption?: string;
 }

@@ -8,7 +8,7 @@ const SELLER = {
   address:
     "AYRANCILAR MAHALLESİ DEĞİRMEN CAD. NO:55A AYRANCILAR, 35870 Torbalı/İzmir",
   email: "info@kiliccoffeeroaster.com.tr",
-  phone: "+90 232 000 00 00",
+  phone: "+90 541 214 79 63",
   website: "https://kiliccoffeeroaster.com.tr",
   taxOffice: "[Vergi Dairesi — güncellenecek]",
   taxNumber: "[Vergi No / TCKN — güncellenecek]",
