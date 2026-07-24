@@ -41,10 +41,9 @@ load_root_env() {
   if [[ ! -f "${ROOT_ENV}" ]]; then
     return 0
   fi
-  # shellcheck disable=SC1090
-  set -a
-  source "${ROOT_ENV}"
-  set +a
+  # shellcheck source=lib/load-env.sh
+  source "${ROOT_DIR}/deploy/lib/load-env.sh"
+  load_env_file "${ROOT_ENV}"
   LOCAL_PG_HOST="${LOCAL_PG_HOST:-${DATABASE_HOST:-localhost}}"
   LOCAL_PG_PORT="${LOCAL_PG_PORT:-${DATABASE_PORT:-5432}}"
   LOCAL_PG_USER="${LOCAL_PG_USER:-${POSTGRES_USER:-postgres}}"
@@ -57,10 +56,9 @@ load_prod_env() {
     echo "Hata: ${ENV_FILE} bulunamadı."
     exit 1
   fi
-  # shellcheck disable=SC1090
-  set -a
-  source "${ENV_FILE}"
-  set +a
+  # shellcheck source=lib/load-env.sh
+  source "${ROOT_DIR}/deploy/lib/load-env.sh"
+  load_env_file "${ENV_FILE}"
   POSTGRES_USER="${POSTGRES_USER:-kilic}"
   POSTGRES_DB="${POSTGRES_DB:-kiliccoffeeroaster}"
 }

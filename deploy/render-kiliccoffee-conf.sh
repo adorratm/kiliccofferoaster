@@ -3,15 +3,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/load-env.sh
+source "${ROOT_DIR}/deploy/lib/load-env.sh"
 ENV_FILE="${ROOT_DIR}/deploy/.env"
 TTEN_TPL="${TTEN_TEMPLATES:-/opt/ttengamesstudio/docker/nginx/templates}"
 SSL_MODE="${1:-https}"
 
 if [[ -f "${ENV_FILE}" ]]; then
-  # shellcheck disable=SC1090
-  set -a
-  source "${ENV_FILE}"
-  set +a
+  load_env_file "${ENV_FILE}"
 fi
 
 API_HOST="${KILIC_API_HOST:-kiliccoffee-prod-api}"

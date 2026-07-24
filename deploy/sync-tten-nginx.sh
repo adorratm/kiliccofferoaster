@@ -5,6 +5,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/nginx-merge-kilic.sh
 source "${ROOT_DIR}/deploy/lib/nginx-merge-kilic.sh"
+# shellcheck source=lib/load-env.sh
+source "${ROOT_DIR}/deploy/lib/load-env.sh"
 ENV_FILE="${ROOT_DIR}/deploy/.env"
 NGINX_CONTAINER="${NGINX_CONTAINER:-ttengamesstudio-nginx}"
 TTEN_TPL="${TTEN_TEMPLATES:-/opt/ttengamesstudio/docker/nginx/templates}"
@@ -12,10 +14,7 @@ TTEN_NET="${KILIC_TTEN_NETWORK:-ttengamesstudio_ttengamesstudio-network}"
 SSL_MODE="${1:-}"
 
 if [[ -f "${ENV_FILE}" ]]; then
-  # shellcheck disable=SC1090
-  set -a
-  source "${ENV_FILE}"
-  set +a
+  load_env_file "${ENV_FILE}"
   TTEN_NET="${KILIC_TTEN_NETWORK:-${TTEN_NET}}"
 fi
 
