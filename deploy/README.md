@@ -82,3 +82,21 @@ bash deploy/sync-tten-nginx.sh          # auto http/https
 bash deploy/sync-tten-nginx.sh https
 bash deploy/migrate-local-to-prod.sh export|import
 ```
+
+## Host nginx 404 (acil)
+
+Yanıt `Server: nginx/1.24.0 (Ubuntu)` ise Ubuntu host nginx 80/443’ü kapmıştır.
+Edge her zaman Docker `ttengamesstudio-nginx` olmalı:
+
+```bash
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+docker start ttengamesstudio-nginx
+# veya: cd /opt/ttengamesstudio && docker compose up -d
+
+curl -sI -H 'Host: ttengamesstudio.com.tr' http://127.0.0.1/ | head -5
+curl -sI -H 'Host: emrekilic.web.tr' http://127.0.0.1/tr | head -5
+
+cd /opt/portfolio && bash deploy/sync-tten-nginx.sh
+cd /opt/kiliccofferoaster && bash deploy/sync-tten-nginx.sh
+```

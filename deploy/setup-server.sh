@@ -32,8 +32,23 @@ if [[ ! -f "${ENV_FILE}" ]]; then
   echo "  Sonra bu scripti tekrar çalıştırın veya deploy/deploy.sh kullanın."
 fi
 
-mkdir -p deploy/artifacts
+mkdir -p deploy/artifacts /var/www/certbot
 chmod +x deploy/*.sh deploy/lib/*.sh 2>/dev/null || true
+
+# Host nginx (Ubuntu 1.24) 80/443'ü kaparsa TTEN/portfolio 404 verir — asla edge olmamalı
+if systemctl is-active --quiet nginx 2>/dev/null || ss -tlnp 2>/dev/null | grep -qE ':80 |:443 '; then
+  echo "==> Host nginx / 80-443 kontrolü..."
+  if systemctl list-unit-files nginx.service >/dev/null 2>&1; then
+    systemctl stop nginx 2>/dev/null || true
+    systemctl disable nginx 2>/dev/null || true
+    echo "  Host nginx durduruldu + disable."
+  fi
+fi
+
+if ! docker ps --format '{{.Names}}' | grep -qx "${NGINX_CONTAINER}"; then
+  echo "==> ${NGINX_CONTAINER} başlatılıyor..."
+  docker start "${NGINX_CONTAINER}" 2>/dev/null || true
+fi
 
 echo "==> HTTP nginx conf (ACME için)..."
 bash deploy/sync-tten-nginx.sh http || true
