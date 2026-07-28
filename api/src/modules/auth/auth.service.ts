@@ -110,13 +110,14 @@ export class AuthService {
 
   /**
    * Her zaman aynı yanıt — e-posta numaralandırmayı engeller.
-   * Yerel şifresi olmayan (yalnızca OAuth) hesaplara mail gönderilmez.
+   * Aktif hesaplara gönderilir (Google-only dahil): şifre yoksa ilk şifre belirleme,
+   * varsa sıfırlama. providerId korunur → Google + e-posta/şifre birlikte kullanılabilir.
    */
   async forgotPassword(dto: ForgotPasswordDto): Promise<{ ok: true }> {
     const email = dto.email.toLowerCase().trim();
     const user = await this.em.findOne(User, { where: { email } });
 
-    if (user?.isActive && user.passwordHash) {
+    if (user?.isActive) {
       const token = randomBytes(32).toString('hex');
       user.passwordResetTokenHash = this.hashToken(token);
       user.passwordResetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -134,6 +135,7 @@ export class AuthService {
           email: user.email,
           name: name || null,
           resetUrl,
+          isSetPassword: !user.passwordHash,
         });
       } catch (err) {
         this.logger.warn(
@@ -170,6 +172,7 @@ export class AuthService {
     user.passwordHash = await bcrypt.hash(dto.password, 12);
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
+    // providerId silinmez — Google ile giriş açık kalır
     user.provider = AuthProvider.LOCAL;
     await this.em.save(user);
     return { ok: true };
@@ -178,6 +181,7 @@ export class AuthService {
   /**
    * Yerel şifre varsa mevcut şifre doğrulanır.
    * Yalnızca Google ile kayıtlıysa (passwordHash yok) JWT yeterli — ilk şifre belirlenir.
+   * providerId korunur → Google + e-posta/şifre birlikte kullanılabilir.
    */
   async changePassword(
     userId: string,
@@ -203,7 +207,6 @@ export class AuthService {
     user.passwordHash = await bcrypt.hash(dto.newPassword, 12);
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
-    // Google bağlı kalsın; e-posta/şifre + Google birlikte kullanılabilir
     user.provider = AuthProvider.LOCAL;
     await this.em.save(user);
     return { ok: true, hasPassword: true };

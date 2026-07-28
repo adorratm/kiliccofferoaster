@@ -34,8 +34,9 @@ export default function ForgotPasswordPage() {
       {done ? (
         <div className="space-y-4">
           <p className="font-meta text-xs uppercase leading-relaxed text-secondary">
-            E-posta kayıtlıysa sıfırlama bağlantısı gönderildi. Gelen kutusu ve
-            spam klasörünü kontrol edin.
+            E-posta kayıtlıysa bağlantı gönderildi. Gelen kutusu ve spam
+            klasörünü kontrol edin. Google ile kayıt olduysanız bu bağlantıyla
+            şifre de belirleyebilirsiniz.
           </p>
           <Link href="/giris" className="btn-cta inline-block px-6 py-3 text-xs">
             Girişe dön
@@ -44,7 +45,8 @@ export default function ForgotPasswordPage() {
       ) : (
         <form onSubmit={onSubmit} className="space-y-5">
           <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
-            Hesabınıza bağlı e-postayı girin. Bağlantı 1 saat geçerlidir.
+            Hesabınıza bağlı e-postayı girin. Google hesabıysa şifre belirleme,
+            değilse sıfırlama bağlantısı gider. 1 saat geçerlidir.
           </p>
           <AuthField
             id="email"

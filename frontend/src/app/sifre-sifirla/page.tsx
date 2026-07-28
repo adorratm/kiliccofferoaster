@@ -46,7 +46,8 @@ function ResetInner() {
       {done ? (
         <div className="space-y-4">
           <p className="font-meta text-xs uppercase leading-relaxed text-secondary">
-            Şifreniz güncellendi. Yeni şifrenizle giriş yapabilirsiniz.
+            Şifreniz kaydedildi. Artık e-posta/şifre veya Google ile giriş
+            yapabilirsiniz.
           </p>
           <Link href="/giris" className="btn-cta inline-block px-6 py-3 text-xs">
             Giriş yap

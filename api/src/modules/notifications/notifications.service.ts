@@ -141,16 +141,18 @@ export class NotificationsService {
     }
   }
 
-  /** Şifre sıfırlama — kuyruk beklemeden doğrudan gönderilir */
+  /** Şifre sıfırlama / ilk şifre belirleme — kuyruk beklemeden doğrudan gönderilir */
   async sendPasswordResetEmail(input: {
     email: string;
     name?: string | null;
     resetUrl: string;
+    isSetPassword?: boolean;
   }): Promise<void> {
     const name = input.name?.trim() || 'Merhaba';
     const content = buildPasswordResetEmail({
       name,
       resetUrl: input.resetUrl,
+      isSetPassword: input.isSetPassword,
     });
     await this.email.send({
       to: input.email,

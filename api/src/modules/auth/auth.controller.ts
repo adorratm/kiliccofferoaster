@@ -43,7 +43,10 @@ export class AuthController {
 
   @Public()
   @Post('forgot-password')
-  @ApiOperation({ summary: 'Şifre sıfırlama e-postası gönder' })
+  @ApiOperation({
+    summary:
+      'Şifre sıfırlama / belirleme e-postası (Google hesapları dahil)',
+  })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
