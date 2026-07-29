@@ -16,7 +16,7 @@ type PageMetaInput = {
   keywords?: string[];
   image?: string | null;
   noIndex?: boolean;
-  ogType?: "website" | "article" | "product";
+  ogType?: "website" | "article";
 };
 
 function ogImages(
@@ -51,8 +51,7 @@ export function buildPageMetadata({
       ? { index: false, follow: false }
       : { index: true, follow: true },
     openGraph: {
-      // Next Metadata tipi "product" içermez; OG protokolü için cast.
-      type: ogType as "website",
+      type: ogType,
       locale: "tr_TR",
       url,
       siteName: settings.brand.name,
@@ -196,7 +195,9 @@ export function buildProductMetadata(
     alternates: { canonical: url },
     robots: { index: true, follow: true },
     openGraph: {
-      type: "product" as "website",
+      // Next Metadata yalnızca website|article|... kabul eder; "product" RSC'yi düşürür.
+      // Ürün sinyali Product JSON-LD ile verilir.
+      type: "website",
       locale: "tr_TR",
       url,
       siteName: settings.brand.name,
