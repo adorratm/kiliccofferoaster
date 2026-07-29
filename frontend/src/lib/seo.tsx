@@ -139,6 +139,9 @@ export function buildSiteMetadata(settings: SiteSettings): Metadata {
     },
     alternates: {
       canonical: SITE_URL,
+      types: {
+        "application/rss+xml": `${SITE_URL}/feed.xml`,
+      },
     },
     robots: {
       index: true,
@@ -237,7 +240,7 @@ export function buildBlogIndexMetadata(
   const query = qs.toString();
   if (query) path = `/blog?${query}`;
 
-  return buildPageMetadata({
+  const meta = buildPageMetadata({
     title,
     description,
     path,
@@ -247,6 +250,16 @@ export function buildBlogIndexMetadata(
     ),
     noIndex: Boolean(page || tag),
   });
+
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      types: {
+        "application/rss+xml": `${SITE_URL}/feed.xml`,
+      },
+    },
+  };
 }
 
 export function buildBlogPostMetadata(
@@ -492,6 +505,57 @@ export function faqJsonLd(
         text: item.answer,
       },
     })),
+  };
+}
+
+export function itemListJsonLd(
+  products: Pick<Product, "name" | "slug" | "imageUrl" | "shortDescription">[],
+  opts: { name: string; path: string },
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: opts.name,
+    url: `${SITE_URL}${opts.path}`,
+    numberOfItems: products.length,
+    itemListElement: products.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `${SITE_URL}/urunler/${product.slug}`,
+      name: product.name,
+      ...(product.imageUrl ? { image: product.imageUrl } : {}),
+      ...(product.shortDescription
+        ? { description: product.shortDescription }
+        : {}),
+    })),
+  };
+}
+
+export function aboutPageJsonLd(settings: SiteSettings) {
+  const { brand, contact, seo } = settings;
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: `Hakkımızda | ${brand.name}`,
+    url: `${SITE_URL}/hakkimizda`,
+    description:
+      seo.description ||
+      `${brand.name} — Torbalı / İzmir specialty coffee kavurucusu.`,
+    mainEntity: {
+      "@type": "CoffeeShop",
+      "@id": `${SITE_URL}/#organization`,
+      name: brand.name,
+      url: SITE_URL,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: contact.address,
+        addressLocality: "Torbalı",
+        addressRegion: "İzmir",
+        addressCountry: "TR",
+      },
+      telephone: contact.phone || undefined,
+      email: contact.email || undefined,
+    },
   };
 }
 

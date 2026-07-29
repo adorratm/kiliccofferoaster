@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getCategories } from "@/lib/api";
+import { getCategories, getProductsPaged } from "@/lib/api";
 import { getSiteSettings } from "@/lib/cms";
 import {
   buildCatalogMetadata,
   breadcrumbJsonLd,
+  itemListJsonLd,
   JsonLd,
 } from "@/lib/seo";
 import { categoryCatalogPath } from "@/lib/catalog-paths";
@@ -53,9 +54,23 @@ export default async function CategoryCatalogPage({ params }: Props) {
     },
   ];
 
+  const catalog = await getProductsPaged({
+    page: 1,
+    limit: 48,
+    categorySlug: category.slug,
+  }).catch(() => null);
+
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
+      {catalog?.items?.length ? (
+        <JsonLd
+          data={itemListJsonLd(catalog.items, {
+            name: category.name,
+            path: categoryCatalogPath(category.slug),
+          })}
+        />
+      ) : null}
       <Suspense
         fallback={
           <div className="page-shell py-24 font-meta text-sm uppercase text-secondary">

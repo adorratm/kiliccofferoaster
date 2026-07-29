@@ -9,7 +9,12 @@ type Props = {
 };
 
 export function SiteFooter({ settings = DEFAULT_SETTINGS }: Props) {
-  const { brand, contact, footer, navigation } = settings;
+  const { brand, contact, footer, navigation, social } = settings;
+  const socialLinks = [
+    { href: social.instagram, label: "Instagram" },
+    { href: social.facebook, label: "Facebook" },
+    { href: social.googleMaps, label: "Harita" },
+  ].filter((l) => l.href?.trim());
 
   return (
     <footer className="cv-auto mt-auto border-t border-outline-variant/20 bg-surface-container-lowest">
@@ -43,6 +48,21 @@ export function SiteFooter({ settings = DEFAULT_SETTINGS }: Props) {
               <p className="mt-1 font-meta text-[11px] uppercase text-secondary">
                 {contact.hours}
               </p>
+            ) : null}
+            {socialLinks.length ? (
+              <div className="mt-6 flex flex-wrap gap-4 font-meta text-[11px] uppercase tracking-widest">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-secondary underline hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
             ) : null}
           </div>
           <p className="mt-12 font-meta text-xs uppercase text-secondary">

@@ -83,6 +83,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   navigation: {
     header: [
       { href: "/urunler", label: "Kavrumlar" },
+      { href: "/hakkimizda", label: "Hakkımızda" },
       { href: "/blog", label: "Blog" },
       { href: "/iletisim", label: "İletişim" },
       { href: "/takip", label: "Takip" },
@@ -90,6 +91,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     ],
     footerNav: [
       { href: "/urunler", label: "Kavrumlar" },
+      { href: "/hakkimizda", label: "Hakkımızda" },
       { href: "/blog", label: "Blog" },
       { href: "/iletisim", label: "İletişim" },
       { href: "/siparis-sorgula", label: "Sipariş Sorgula" },

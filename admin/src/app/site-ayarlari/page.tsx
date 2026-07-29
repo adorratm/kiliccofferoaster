@@ -18,6 +18,12 @@ type Navigation = {
   footerLegal: NavLink[];
 };
 
+type Social = {
+  instagram: string;
+  facebook: string;
+  googleMaps: string;
+};
+
 function asNavLinks(value: unknown): NavLink[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -52,6 +58,11 @@ export default function SiteSettingsPage() {
     description: '',
     keywords: '',
     ogImage: '',
+  });
+  const [social, setSocial] = useState<Social>({
+    instagram: '',
+    facebook: '',
+    googleMaps: '',
   });
   const [footer, setFooter] = useState({
     description: '',
@@ -90,6 +101,8 @@ export default function SiteSettingsPage() {
             ogImage: String(s.ogImage || ''),
           });
         }
+        if (map.social)
+          setSocial((s) => ({ ...s, ...(map.social as typeof s) }));
         if (map.footer)
           setFooter((s) => ({ ...s, ...(map.footer as typeof s) }));
         if (map.navigation) {
@@ -132,6 +145,7 @@ export default function SiteSettingsPage() {
               },
               group: 'seo',
             },
+            { key: 'social', value: social, group: 'social' },
             { key: 'footer', value: footer, group: 'footer' },
             { key: 'navigation', value: navigation, group: 'navigation' },
           ],
@@ -152,8 +166,8 @@ export default function SiteSettingsPage() {
       <div>
         <h2 className="text-lg font-semibold">Site Ayarları</h2>
         <p className="text-sm text-muted">
-          Marka, iletişim, SEO ve navigasyon bilgileri frontend&apos;de dinamik
-          kullanılır.
+          Marka, iletişim, SEO, sosyal ve navigasyon bilgileri frontend&apos;de
+          dinamik kullanılır.
         </p>
       </div>
 
@@ -209,6 +223,36 @@ export default function SiteSettingsPage() {
               value={contact[key]}
               onChange={(e) =>
                 setContact((s) => ({ ...s, [key]: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset className="space-y-3 border border-border-muted p-4">
+        <legend className="mono px-2 text-xs uppercase text-muted">
+          Sosyal / sameAs
+        </legend>
+        <p className="text-xs text-muted">
+          Dolu URL&apos;ler schema.org sameAs ve footer&apos;da görünür. Maps
+          profil linki (işletme hazır olunca) yerel SEO için önemlidir.
+        </p>
+        {(
+          [
+            ['instagram', 'Instagram URL'],
+            ['facebook', 'Facebook URL'],
+            ['googleMaps', 'Google Maps / GBP URL'],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">{label}</span>
+            <input
+              type="url"
+              placeholder="https://"
+              value={social[key]}
+              onChange={(e) =>
+                setSocial((s) => ({ ...s, [key]: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />

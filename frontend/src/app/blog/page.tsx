@@ -6,6 +6,7 @@ import { getBlogPosts } from "@/lib/api";
 import { getSiteSettings } from "@/lib/cms";
 import { productImage } from "@/lib/format";
 import { buildBlogIndexMetadata } from "@/lib/seo";
+import { stockImage } from "@/lib/stock-images";
 
 type Props = {
   searchParams: Promise<{ page?: string; tag?: string }>;
@@ -52,7 +53,7 @@ export default async function BlogIndexPage({ searchParams }: Props) {
     <div>
       <section className="relative min-h-[42vh] overflow-hidden border-b border-outline-variant/20">
         <Image
-          src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1800&q=80"
+          src={stockImage("blog")}
           alt="Kılıç Coffee Roaster blog"
           fill
           priority

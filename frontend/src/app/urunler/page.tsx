@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { permanentRedirect } from "next/navigation";
+import { getProductsPaged } from "@/lib/api";
 import { getSiteSettings } from "@/lib/cms";
-import { buildCatalogMetadata, breadcrumbJsonLd, JsonLd } from "@/lib/seo";
+import {
+  buildCatalogMetadata,
+  breadcrumbJsonLd,
+  itemListJsonLd,
+  JsonLd,
+} from "@/lib/seo";
 import ProductsCatalog from "./ProductsCatalog";
 
 type Props = {
@@ -51,9 +57,20 @@ export default async function ProductsPage({ searchParams }: Props) {
     { name: "Kavrumlar", path: "/urunler" },
   ];
 
+  const catalog = await getProductsPaged({ page: 1, limit: 48 }).catch(() => null);
+  const listItems = catalog?.items ?? [];
+
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(crumbs)} />
+      {listItems.length ? (
+        <JsonLd
+          data={itemListJsonLd(listItems, {
+            name: "Kavrumlar",
+            path: "/urunler",
+          })}
+        />
+      ) : null}
       <Suspense
         fallback={
           <div className="page-shell py-24 font-meta text-sm uppercase text-secondary">

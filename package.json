@@ -16,7 +16,8 @@
     "build:admin": "yarn workspace @kilic/admin build",
     "migration:run": "yarn workspace @kilic/api migration:run",
     "migration:generate": "yarn workspace @kilic/api migration:generate",
-    "lint": "yarn workspaces foreach -Apt run lint"
+    "lint": "yarn workspaces foreach -Apt run lint",
+    "stock:upload": "node scripts/upload-stock-images.mjs"
   },
   "resolutions": {
     "qs": "^6.15.3",

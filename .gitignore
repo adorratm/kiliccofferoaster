@@ -18,6 +18,7 @@ coverage
 .DS_Store
 .turbo
 uploads
+scripts/.stock-cache
 *.tsbuildinfo
 deploy/.env
 deploy/artifacts/*.sql
