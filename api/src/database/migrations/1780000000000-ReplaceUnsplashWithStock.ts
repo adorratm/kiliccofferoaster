@@ -50,6 +50,10 @@ export class ReplaceUnsplashWithStock1780000000000
         'https://images.unsplash.com/photo-1610889556528-9a7707953b38?auto=format&fit=crop&w=1200&q=80',
         `${S3_BASE}/stock/product-5.jpg`,
       ],
+      [
+        'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80',
+        `${S3_BASE}/stock/product-5.jpg`,
+      ],
     ];
 
     for (const [from, to] of pairs) {

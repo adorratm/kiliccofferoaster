@@ -40,8 +40,15 @@ const STOCK = {
   "product-4":
     "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80",
   "product-5":
-    "https://images.unsplash.com/photo-1610889556528-9a7707953b38?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80",
 };
+
+/** Birincil URL 404 olursa yedekler */
+const FALLBACKS = [
+  "https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1200&q=80",
+];
 
 const outDir = join(root, "scripts", ".stock-cache");
 mkdirSync(outDir, { recursive: true });
@@ -63,14 +70,26 @@ const s3 =
       })
     : null;
 
-async function download(url, dest) {
+async function download(url, dest, extras = []) {
   if (existsSync(dest)) return dest;
-  const res = await fetch(url, {
-    headers: { "User-Agent": "kiliccofferoaster-stock-upload/1.0" },
-  });
-  if (!res.ok) throw new Error(`Download failed ${res.status}: ${url}`);
-  await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
-  return dest;
+  const candidates = [url, ...extras];
+  let lastErr = null;
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate, {
+        headers: { "User-Agent": "kiliccofferoaster-stock-upload/1.0" },
+      });
+      if (!res.ok) {
+        lastErr = new Error(`Download failed ${res.status}: ${candidate}`);
+        continue;
+      }
+      await pipeline(Readable.fromWeb(res.body), createWriteStream(dest));
+      return dest;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error(`Download failed: ${url}`);
 }
 
 async function upload(key, filePath) {
@@ -104,7 +123,7 @@ console.log(s3 ? `S3 → ${bucket}` : "S3 yok — api/uploads/ yerel kayıt");
 for (const [name, url] of Object.entries(STOCK)) {
   const file = join(outDir, `${name}.jpg`);
   process.stdout.write(`↓ ${name}… `);
-  await download(url, file);
+  await download(url, file, FALLBACKS);
   const key = `stock/${name}.jpg`;
   const uploaded = await upload(key, file);
   results[name] = uploaded.url;
