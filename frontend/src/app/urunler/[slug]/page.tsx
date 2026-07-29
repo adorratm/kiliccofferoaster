@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { AppImage as Image } from "@/components/AppImage";
 import { notFound } from "next/navigation";
 import { FlavorGeometry } from "@/components/FlavorGeometry";
 import { ProductBuyBox } from "@/components/ProductBuyBox";

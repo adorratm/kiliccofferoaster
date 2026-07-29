@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { AppImage as Image } from "@/components/AppImage";
 import Link from "next/link";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { formatMoney, productImage } from "@/lib/format";

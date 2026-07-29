@@ -5,6 +5,21 @@ function imageRemotePatterns() {
     {
       protocol: "https",
       hostname: "images.unsplash.com",
+      pathname: "/**",
+    },
+    // Tek * yalnızca 1 DNS etiketi eşler; S3 host'ları için ** gerekir.
+    // örn. bucket.s3.eu-north-1.amazonaws.com
+    {
+      protocol: "https",
+      hostname: "**.amazonaws.com",
+      pathname: "/**",
+    },
+    // Bilinen prod bucket (net eşleşme)
+    {
+      protocol: "https",
+      hostname:
+        "kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com",
+      pathname: "/**",
     },
   ];
 
@@ -15,23 +30,28 @@ function imageRemotePatterns() {
       patterns.push({
         protocol: protocol.replace(":", "") as "https" | "http",
         hostname,
+        pathname: "/**",
       });
     } catch {
       // ignore invalid CDN URL
     }
   }
 
-  const bucket = process.env.AWS_S3_BUCKET;
-  const region = process.env.AWS_REGION || "eu-central-1";
+  const bucket = process.env.AWS_S3_BUCKET?.trim();
+  const region = (process.env.AWS_REGION || "eu-north-1").trim();
   if (bucket) {
-    patterns.push({
-      protocol: "https",
-      hostname: `${bucket}.s3.${region}.amazonaws.com`,
-    });
-    patterns.push({
-      protocol: "https",
-      hostname: `${bucket}.s3.amazonaws.com`,
-    });
+    patterns.push(
+      {
+        protocol: "https",
+        hostname: `${bucket}.s3.${region}.amazonaws.com`,
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: `${bucket}.s3.amazonaws.com`,
+        pathname: "/**",
+      },
+    );
   }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -41,6 +61,7 @@ function imageRemotePatterns() {
       patterns.push({
         protocol: protocol.replace(":", "") as "https" | "http",
         hostname,
+        pathname: "/**",
       });
     } catch {
       // ignore
