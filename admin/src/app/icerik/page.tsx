@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { MediaUpload } from '@/components/MediaUpload';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type Section = {
   id: string;
@@ -16,6 +17,7 @@ type Section = {
 
 type LabelValue = { label: string; value: string };
 type Cta = { label: string; href: string };
+type FaqItem = { question: string; answer: string };
 
 type HeroForm = {
   imageUrl: string;
@@ -66,6 +68,34 @@ type ContactHeaderForm = {
   subtitle: string;
 };
 
+type FaqForm = {
+  title: string;
+  items: FaqItem[];
+};
+
+type AboutHeroForm = {
+  imageUrl: string;
+  title: string;
+  seoDescription: string;
+};
+
+type AboutBodyForm = {
+  titleLine1: string;
+  titleLine2: string;
+  paragraphs: string[];
+  ctaPrimary: Cta;
+  ctaSecondary: Cta;
+  showContactAside: boolean;
+};
+
+type AboutEthosForm = {
+  imageUrl: string;
+  eyebrow: string;
+  quote: string;
+  linkLabel: string;
+  linkHref: string;
+};
+
 type SectionForm =
   | { kind: 'hero'; data: HeroForm }
   | { kind: 'ethos'; data: EthosForm }
@@ -73,15 +103,24 @@ type SectionForm =
   | { kind: 'workshop'; data: WorkshopForm }
   | { kind: 'newsletter'; data: NewsletterForm }
   | { kind: 'contact-header'; data: ContactHeaderForm }
+  | { kind: 'faq'; data: FaqForm }
+  | { kind: 'about-hero'; data: AboutHeroForm }
+  | { kind: 'about-body'; data: AboutBodyForm }
+  | { kind: 'about-ethos'; data: AboutEthosForm }
   | { kind: 'generic'; data: Record<string, string> };
 
 const PAGE_OPTIONS = [
   { value: 'home', label: 'Ana Sayfa' },
+  { value: 'about', label: 'Hakkımızda' },
   { value: 'contact', label: 'İletişim' },
 ];
 
 function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
+}
+
+function asBoolean(value: unknown, fallback = false): boolean {
+  return typeof value === 'boolean' ? value : fallback;
 }
 
 function asCta(value: unknown): Cta {
@@ -109,6 +148,20 @@ function asLabelValues(value: unknown): LabelValue[] {
   });
 }
 
+function asFaqItems(value: unknown): FaqItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    if (item && typeof item === 'object') {
+      const row = item as { question?: unknown; answer?: unknown };
+      return {
+        question: asString(row.question),
+        answer: asString(row.answer),
+      };
+    }
+    return { question: '', answer: '' };
+  });
+}
+
 function asStringList(value: unknown, min = 1): string[] {
   if (Array.isArray(value) && value.every((v) => typeof v === 'string')) {
     return value.length >= min ? value : [...value, ...Array(min - value.length).fill('')];
@@ -118,6 +171,46 @@ function asStringList(value: unknown, min = 1): string[] {
 
 function toSectionForm(section: Section): SectionForm {
   const c = section.content || {};
+
+  if (section.page === 'about') {
+    switch (section.sectionKey) {
+      case 'hero':
+        return {
+          kind: 'about-hero',
+          data: {
+            imageUrl: asString(c.imageUrl),
+            title: asString(c.title, 'Hakkımızda'),
+            seoDescription: asString(c.seoDescription),
+          },
+        };
+      case 'body':
+        return {
+          kind: 'about-body',
+          data: {
+            titleLine1: asString(c.titleLine1),
+            titleLine2: asString(c.titleLine2),
+            paragraphs: asStringList(c.paragraphs, 1),
+            ctaPrimary: asCta(c.ctaPrimary),
+            ctaSecondary: asCta(c.ctaSecondary),
+            showContactAside: asBoolean(c.showContactAside, true),
+          },
+        };
+      case 'ethos':
+        return {
+          kind: 'about-ethos',
+          data: {
+            imageUrl: asString(c.imageUrl),
+            eyebrow: asString(c.eyebrow),
+            quote: asString(c.quote),
+            linkLabel: asString(c.linkLabel),
+            linkHref: asString(c.linkHref, '/blog'),
+          },
+        };
+      default:
+        break;
+    }
+  }
+
   switch (section.sectionKey) {
     case 'hero':
       return {
@@ -184,6 +277,14 @@ function toSectionForm(section: Section): SectionForm {
           description: asString(c.description),
         },
       };
+    case 'faq':
+      return {
+        kind: 'faq',
+        data: {
+          title: asString(c.title, 'Sıkça Sorulan Sorular'),
+          items: asFaqItems(c.items),
+        },
+      };
     case 'header':
       return {
         kind: 'contact-header',
@@ -205,16 +306,15 @@ function toSectionForm(section: Section): SectionForm {
 function fromSectionForm(form: SectionForm): Record<string, unknown> {
   switch (form.kind) {
     case 'hero':
-      return form.data;
     case 'ethos':
-      return form.data;
     case 'products':
-      return form.data;
     case 'workshop':
-      return form.data;
     case 'newsletter':
-      return form.data;
     case 'contact-header':
+    case 'faq':
+    case 'about-hero':
+    case 'about-body':
+    case 'about-ethos':
       return form.data;
     case 'generic':
       return form.data;
@@ -305,10 +405,12 @@ function StringListEditor({
   label,
   items,
   onChange,
+  multiline = false,
 }: {
   label: string;
   items: string[];
   onChange: (items: string[]) => void;
+  multiline?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -324,13 +426,24 @@ function StringListEditor({
       </div>
       {items.map((item, index) => (
         <div key={`${label}-${index}`} className="flex gap-2">
-          <input
-            value={item}
-            onChange={(e) =>
-              onChange(items.map((v, i) => (i === index ? e.target.value : v)))
-            }
-            className={inputClassName()}
-          />
+          {multiline ? (
+            <textarea
+              rows={3}
+              value={item}
+              onChange={(e) =>
+                onChange(items.map((v, i) => (i === index ? e.target.value : v)))
+              }
+              className={inputClassName()}
+            />
+          ) : (
+            <input
+              value={item}
+              onChange={(e) =>
+                onChange(items.map((v, i) => (i === index ? e.target.value : v)))
+              }
+              className={inputClassName()}
+            />
+          )}
           <button
             type="button"
             onClick={() => onChange(items.filter((_, i) => i !== index))}
@@ -340,6 +453,177 @@ function StringListEditor({
           </button>
         </div>
       ))}
+    </div>
+  );
+}
+
+function FaqItemsEditor({
+  items,
+  onChange,
+}: {
+  items: FaqItem[];
+  onChange: (items: FaqItem[]) => void;
+}) {
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+
+  function update(index: number, field: keyof FaqItem, value: string) {
+    onChange(
+      items.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
+    );
+  }
+
+  function move(index: number, direction: -1 | 1) {
+    const next = index + direction;
+    if (next < 0 || next >= items.length) return;
+    const copy = [...items];
+    const [row] = copy.splice(index, 1);
+    copy.splice(next, 0, row);
+    onChange(copy);
+  }
+
+  const pendingQuestion =
+    pendingIndex !== null ? items[pendingIndex]?.question : undefined;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="mono text-[10px] uppercase text-muted">
+          Soru & cevaplar
+        </span>
+        <button
+          type="button"
+          onClick={() =>
+            onChange([...items, { question: '', answer: '' }])
+          }
+          className="text-xs text-accent hover:underline"
+        >
+          + Soru ekle
+        </button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted">Henüz soru yok</p>
+      ) : (
+        items.map((item, index) => (
+          <div
+            key={`faq-${index}`}
+            className="space-y-3 border border-border-muted bg-background p-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="mono text-[10px] uppercase text-muted">
+                #{index + 1}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => move(index, -1)}
+                  disabled={index === 0}
+                  className="border border-border-muted px-2 py-1 text-xs disabled:opacity-30"
+                  aria-label="Yukarı"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(index, 1)}
+                  disabled={index === items.length - 1}
+                  className="border border-border-muted px-2 py-1 text-xs disabled:opacity-30"
+                  aria-label="Aşağı"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingIndex(index)}
+                  className="border border-danger/40 px-2 py-1 text-xs text-danger"
+                  aria-label="Sil"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <Field label="Soru">
+              <input
+                value={item.question}
+                onChange={(e) => update(index, 'question', e.target.value)}
+                className={inputClassName()}
+                placeholder="Örn. Kargo süresi ne kadar?"
+              />
+            </Field>
+            <Field label="Cevap">
+              <textarea
+                rows={3}
+                value={item.answer}
+                onChange={(e) => update(index, 'answer', e.target.value)}
+                className={inputClassName()}
+                placeholder="Cevabı buraya yazın…"
+              />
+            </Field>
+          </div>
+        ))
+      )}
+
+      <ConfirmDialog
+        open={pendingIndex !== null}
+        title="Soruyu kaldır?"
+        description={
+          pendingQuestion
+            ? `"${pendingQuestion}" listeden silinecek.`
+            : 'Bu soru listeden silinecek.'
+        }
+        confirmLabel="Kaldır"
+        onCancel={() => setPendingIndex(null)}
+        onConfirm={() => {
+          if (pendingIndex !== null) {
+            onChange(items.filter((_, i) => i !== pendingIndex));
+          }
+          setPendingIndex(null);
+        }}
+      />
+    </div>
+  );
+}
+
+function CtaFields({
+  primary,
+  secondary,
+  onPrimary,
+  onSecondary,
+}: {
+  primary: Cta;
+  secondary: Cta;
+  onPrimary: (cta: Cta) => void;
+  onSecondary: (cta: Cta) => void;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <Field label="Birincil CTA metin">
+        <input
+          value={primary.label}
+          onChange={(e) => onPrimary({ ...primary, label: e.target.value })}
+          className={inputClassName()}
+        />
+      </Field>
+      <Field label="Birincil CTA URL">
+        <input
+          value={primary.href}
+          onChange={(e) => onPrimary({ ...primary, href: e.target.value })}
+          className={inputClassName()}
+        />
+      </Field>
+      <Field label="İkincil CTA metin">
+        <input
+          value={secondary.label}
+          onChange={(e) => onSecondary({ ...secondary, label: e.target.value })}
+          className={inputClassName()}
+        />
+      </Field>
+      <Field label="İkincil CTA URL">
+        <input
+          value={secondary.href}
+          onChange={(e) => onSecondary({ ...secondary, href: e.target.value })}
+          className={inputClassName()}
+        />
+      </Field>
     </div>
   );
 }
@@ -405,7 +689,7 @@ export default function ContentPage() {
         <div>
           <h2 className="text-lg font-semibold">Sayfa İçerikleri</h2>
           <p className="text-sm text-muted">
-            Ana sayfa blokları ve iletişim başlığı
+            Ana sayfa, hakkımızda, SSS ve iletişim blokları
           </p>
         </div>
         <select
@@ -501,80 +785,19 @@ export default function ContentPage() {
                   className={inputClassName()}
                 />
               </Field>
-              <div className="grid gap-3 md:grid-cols-2">
-                <Field label="Birincil CTA metin">
-                  <input
-                    value={form.data.ctaPrimary.label}
-                    onChange={(e) =>
-                      setForm({
-                        kind: 'hero',
-                        data: {
-                          ...form.data,
-                          ctaPrimary: {
-                            ...form.data.ctaPrimary,
-                            label: e.target.value,
-                          },
-                        },
-                      })
-                    }
-                    className={inputClassName()}
-                  />
-                </Field>
-                <Field label="Birincil CTA URL">
-                  <input
-                    value={form.data.ctaPrimary.href}
-                    onChange={(e) =>
-                      setForm({
-                        kind: 'hero',
-                        data: {
-                          ...form.data,
-                          ctaPrimary: {
-                            ...form.data.ctaPrimary,
-                            href: e.target.value,
-                          },
-                        },
-                      })
-                    }
-                    className={inputClassName()}
-                  />
-                </Field>
-                <Field label="İkincil CTA metin">
-                  <input
-                    value={form.data.ctaSecondary.label}
-                    onChange={(e) =>
-                      setForm({
-                        kind: 'hero',
-                        data: {
-                          ...form.data,
-                          ctaSecondary: {
-                            ...form.data.ctaSecondary,
-                            label: e.target.value,
-                          },
-                        },
-                      })
-                    }
-                    className={inputClassName()}
-                  />
-                </Field>
-                <Field label="İkincil CTA URL">
-                  <input
-                    value={form.data.ctaSecondary.href}
-                    onChange={(e) =>
-                      setForm({
-                        kind: 'hero',
-                        data: {
-                          ...form.data,
-                          ctaSecondary: {
-                            ...form.data.ctaSecondary,
-                            href: e.target.value,
-                          },
-                        },
-                      })
-                    }
-                    className={inputClassName()}
-                  />
-                </Field>
-              </div>
+              <CtaFields
+                primary={form.data.ctaPrimary}
+                secondary={form.data.ctaSecondary}
+                onPrimary={(ctaPrimary) =>
+                  setForm({ kind: 'hero', data: { ...form.data, ctaPrimary } })
+                }
+                onSecondary={(ctaSecondary) =>
+                  setForm({
+                    kind: 'hero',
+                    data: { ...form.data, ctaSecondary },
+                  })
+                }
+              />
               <LabelValueListEditor
                 label="Yan bilgiler"
                 items={form.data.sidebar}
@@ -836,6 +1059,221 @@ export default function ContentPage() {
             </>
           ) : null}
 
+          {form.kind === 'faq' ? (
+            <>
+              <Field label="Bölüm başlığı">
+                <input
+                  value={form.data.title}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'faq',
+                      data: { ...form.data, title: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <p className="text-xs text-muted">
+                Bu SSS hem ana sayfada hem de /sss sayfasında görünür.
+              </p>
+              <FaqItemsEditor
+                items={form.data.items}
+                onChange={(items) =>
+                  setForm({ kind: 'faq', data: { ...form.data, items } })
+                }
+              />
+            </>
+          ) : null}
+
+          {form.kind === 'about-hero' ? (
+            <>
+              <MediaUpload
+                label="Hero görseli"
+                value={form.data.imageUrl}
+                onChange={(imageUrl) =>
+                  setForm({
+                    kind: 'about-hero',
+                    data: { ...form.data, imageUrl },
+                  })
+                }
+                folder="pages/about"
+              />
+              <Field label="Sayfa başlığı">
+                <input
+                  value={form.data.title}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'about-hero',
+                      data: { ...form.data, title: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <Field label="SEO açıklaması">
+                <textarea
+                  rows={3}
+                  value={form.data.seoDescription}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'about-hero',
+                      data: {
+                        ...form.data,
+                        seoDescription: e.target.value,
+                      },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <p className="text-xs text-muted">
+                Üst etiket ve slogan site ayarlarındaki marka bilgilerinden
+                alınır.
+              </p>
+            </>
+          ) : null}
+
+          {form.kind === 'about-body' ? (
+            <>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Başlık satır 1">
+                  <input
+                    value={form.data.titleLine1}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'about-body',
+                        data: { ...form.data, titleLine1: e.target.value },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+                <Field label="Başlık satır 2">
+                  <input
+                    value={form.data.titleLine2}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'about-body',
+                        data: { ...form.data, titleLine2: e.target.value },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+              </div>
+              <StringListEditor
+                label="Paragraflar"
+                items={form.data.paragraphs}
+                multiline
+                onChange={(paragraphs) =>
+                  setForm({
+                    kind: 'about-body',
+                    data: { ...form.data, paragraphs },
+                  })
+                }
+              />
+              <CtaFields
+                primary={form.data.ctaPrimary}
+                secondary={form.data.ctaSecondary}
+                onPrimary={(ctaPrimary) =>
+                  setForm({
+                    kind: 'about-body',
+                    data: { ...form.data, ctaPrimary },
+                  })
+                }
+                onSecondary={(ctaSecondary) =>
+                  setForm({
+                    kind: 'about-body',
+                    data: { ...form.data, ctaSecondary },
+                  })
+                }
+              />
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.data.showContactAside}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'about-body',
+                      data: {
+                        ...form.data,
+                        showContactAside: e.target.checked,
+                      },
+                    })
+                  }
+                />
+                <span>Sağda iletişim paneli göster (site ayarlarından)</span>
+              </label>
+            </>
+          ) : null}
+
+          {form.kind === 'about-ethos' ? (
+            <>
+              <MediaUpload
+                label="Arka plan görseli"
+                value={form.data.imageUrl}
+                onChange={(imageUrl) =>
+                  setForm({
+                    kind: 'about-ethos',
+                    data: { ...form.data, imageUrl },
+                  })
+                }
+                folder="pages/about"
+              />
+              <Field label="Üst etiket">
+                <input
+                  value={form.data.eyebrow}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'about-ethos',
+                      data: { ...form.data, eyebrow: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <Field label="Alıntı / mesaj">
+                <textarea
+                  rows={3}
+                  value={form.data.quote}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'about-ethos',
+                      data: { ...form.data, quote: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Link metni">
+                  <input
+                    value={form.data.linkLabel}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'about-ethos',
+                        data: { ...form.data, linkLabel: e.target.value },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+                <Field label="Link URL">
+                  <input
+                    value={form.data.linkHref}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'about-ethos',
+                        data: { ...form.data, linkHref: e.target.value },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+              </div>
+            </>
+          ) : null}
+
           {form.kind === 'contact-header' ? (
             <>
               <Field label="Başlık">
@@ -918,43 +1356,43 @@ export default function ContentPage() {
           sections.map((section) => {
             const selected = editing?.id === section.id;
             return (
-            <div
-              key={section.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => startEdit(section)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  startEdit(section);
-                }
-              }}
-              className={`row-motion flex cursor-pointer items-center justify-between border px-4 py-3 ${
-                selected
-                  ? 'border-accent bg-accent/15 ring-1 ring-inset ring-accent/40'
-                  : 'border-border-muted bg-surface hover:bg-surface-high'
-              }`}
-            >
-              <div>
-                <p className="font-medium">
-                  {section.title || section.sectionKey}
-                </p>
-                <p className="mono text-[10px] text-muted">
-                  {section.sectionKey} · sıra {section.sortOrder}
-                  {selected ? ' · düzenleniyor' : ''}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startEdit(section);
+              <div
+                key={section.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => startEdit(section)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    startEdit(section);
+                  }
                 }}
-                className="text-sm text-accent hover:underline"
+                className={`row-motion flex cursor-pointer items-center justify-between border px-4 py-3 ${
+                  selected
+                    ? 'border-accent bg-accent/15 ring-1 ring-inset ring-accent/40'
+                    : 'border-border-muted bg-surface hover:bg-surface-high'
+                }`}
               >
-                Düzenle
-              </button>
-            </div>
+                <div>
+                  <p className="font-medium">
+                    {section.title || section.sectionKey}
+                  </p>
+                  <p className="mono text-[10px] text-muted">
+                    {section.sectionKey} · sıra {section.sortOrder}
+                    {selected ? ' · düzenleniyor' : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEdit(section);
+                  }}
+                  className="text-sm text-accent hover:underline"
+                >
+                  Düzenle
+                </button>
+              </div>
             );
           })
         )}

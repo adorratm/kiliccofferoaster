@@ -203,4 +203,48 @@ export const DEFAULT_HOME_SECTIONS = [
       subtitle: 'Protokol mesajı gönderin veya atölyemizi ziyaret edin.',
     },
   },
+  {
+    page: 'about',
+    sectionKey: 'hero',
+    title: 'Hakkımızda Hero',
+    sortOrder: 1,
+    content: {
+      imageUrl: apiStockImage('workshop'),
+      title: 'Hakkımızda',
+      seoDescription:
+        'Torbalı / İzmir’de batch bazlı specialty coffee kavurucusu. Veriye dayalı profil, taze kavrum ve atölye deneyimi.',
+    },
+  },
+  {
+    page: 'about',
+    sectionKey: 'body',
+    title: 'Hakkımızda İçerik',
+    sortOrder: 2,
+    content: {
+      titleLine1: 'Torbalı’dan',
+      titleLine2: 'ölçülen kavrum',
+      paragraphs: [
+        'Kılıç Coffee Roaster, Ayrancılar / Torbalı merkezinde batch bazlı specialty coffee üretir. Her profil termal eğri, hava akışı ve drum hızı ile izlenir; tutarlılık veriye, derinlik ise tadım disiplinine dayanır.',
+        'Amacımız raflara stok kahve koymak değil; taze kavrulmuş, izlenebilir ve demlemeye hazır çekirdek sunmaktır. Ev baristasından kafeye, aynı kalite standardını koruruz.',
+        'Atölyemizi ziyaret etmek, toptan iş birliği veya kavrum profili konuşmak için iletişime geçebilirsiniz.',
+      ],
+      ctaPrimary: { label: 'Kavrumları İncele', href: '/urunler' },
+      ctaSecondary: { label: 'İletişim', href: '/iletisim' },
+      showContactAside: true,
+    },
+  },
+  {
+    page: 'about',
+    sectionKey: 'ethos',
+    title: 'Hakkımızda Ethos Bandı',
+    sortOrder: 3,
+    content: {
+      imageUrl: apiStockImage('ethos'),
+      eyebrow: 'The Roasting Ethos',
+      quote:
+        'Metodoloji veriye dayanır. Her batch için tutarlılık ölçülür.',
+      linkLabel: 'Blog notlarını oku →',
+      linkHref: '/blog',
+    },
+  },
 ];
