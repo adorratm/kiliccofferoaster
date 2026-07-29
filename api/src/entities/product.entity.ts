@@ -25,6 +25,12 @@ export class Product extends BaseEntity {
   @Column({ name: 'short_description', type: 'varchar', length: 400, nullable: true })
   shortDescription!: string | null;
 
+  @Column({ name: 'seo_title', type: 'varchar', length: 220, nullable: true })
+  seoTitle!: string | null;
+
+  @Column({ name: 'seo_description', type: 'text', nullable: true })
+  seoDescription!: string | null;
+
   @Column({ name: 'origin_country', type: 'varchar', length: 80, nullable: true })
   originCountry!: string | null;
 

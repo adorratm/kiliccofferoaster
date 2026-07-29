@@ -100,6 +100,17 @@ export class CreateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(220)
+  seoTitle?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  seoDescription?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   originCountry?: string;
 
   @ApiPropertyOptional()

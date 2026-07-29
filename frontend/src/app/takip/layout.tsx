@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     path: "/takip",
     settings,
     keywords: ["kargo takip", "sipariş takip"],
+    noIndex: true,
   });
 }
 

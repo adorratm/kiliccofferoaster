@@ -110,6 +110,10 @@ done
 echo "==> Uygulama container'ları..."
 "${COMPOSE[@]}" up -d --no-build --force-recreate api frontend admin
 
+echo "==> API migration (açılışta otomatik; DATABASE_SYNCHRONIZE=false iken)..."
+# API container migrationsRun ile bekleyen migration'ları uygular.
+# Kolon/şema değişiklikleri manuel SQL gerektirmez.
+
 echo "==> Frontend hazır bekleniyor..."
 FRONTEND_PORT="$(grep '^FRONTEND_HOST_PORT=' "${ENV_FILE}" | cut -d= -f2)"
 FRONTEND_PORT="${FRONTEND_PORT:-3200}"

@@ -74,6 +74,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroaster}
       REDIS_URL: redis://redis:6379
       DATABASE_SYNCHRONIZE: ${DATABASE_SYNCHRONIZE:-false}
+      DATABASE_MIGRATIONS_RUN: ${DATABASE_MIGRATIONS_RUN:-true}
     ports:
       - "${API_HOST_PORT:-3202}:4000"
     volumes:

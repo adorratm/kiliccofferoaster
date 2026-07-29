@@ -31,7 +31,7 @@ export const DEFAULT_SITE_SETTINGS: Record<
       'Kılıç Coffee Roaster',
     ],
     ogImage:
-      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80',
+      '',
   },
   navigation: {
     header: [
@@ -160,6 +160,37 @@ export const DEFAULT_HOME_SECTIONS = [
     content: {
       title: 'System Notifications',
       description: 'Drop uyarıları ve teknik loglar için ağa katılın',
+    },
+  },
+  {
+    page: 'home',
+    sectionKey: 'faq',
+    title: 'SSS',
+    sortOrder: 6,
+    content: {
+      title: 'Sıkça Sorulan Sorular',
+      items: [
+        {
+          question: 'Kahveler ne sıklıkla kavruluyor?',
+          answer:
+            'Sipariş ve taze stok dengesi için batch bazlı kavrum yapıyoruz. Çekirdekler mümkün olduğunca taze kavrulmuş olarak gönderilir.',
+        },
+        {
+          question: 'Öğütülmüş kahve sipariş edebilir miyim?',
+          answer:
+            'Varsayılan ürünlerimiz çekirdek olarak sunulur. Öğütme tercihinizi sipariş notunda belirtirseniz uygun öğütmeye göre hazırlarız.',
+        },
+        {
+          question: 'Kargo süresi ne kadar?',
+          answer:
+            'Ödeme onayı sonrası siparişler genellikle 1–3 iş günü içinde kargoya verilir. Takip kodunu sipariş bildirimiyle paylaşıyoruz.',
+        },
+        {
+          question: 'Atölyeyi ziyaret edebilir miyim?',
+          answer:
+            'Torbalı / İzmir atölyemizi ziyaret etmek için iletişim formundan veya telefonla randevu alabilirsiniz.',
+        },
+      ],
     },
   },
   {

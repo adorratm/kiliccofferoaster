@@ -6,6 +6,7 @@ import { BullModule } from '@nestjs/bullmq';
 import * as pg from 'pg';
 import configuration from '@config/configuration';
 import { ALL_ENTITIES } from '@database/entities';
+import { ALL_MIGRATIONS } from '@database/migrations';
 import { JwtAuthGuard, RolesGuard } from '@common/guards/auth.guards';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
@@ -32,6 +33,21 @@ import { CampaignsModule } from '@modules/campaigns/campaigns.module';
 import { ReviewsModule } from '@modules/reviews/reviews.module';
 import { WishlistModule } from '@modules/wishlist/wishlist.module';
 
+const shouldSynchronize =
+  process.env.DATABASE_SYNCHRONIZE === 'true'
+    ? true
+    : process.env.DATABASE_SYNCHRONIZE === 'false'
+      ? false
+      : process.env.NODE_ENV !== 'production';
+
+/** Prod'da synchronize kapalıyken bekleyen migration'ları API açılışında uygula. */
+const shouldRunMigrations =
+  process.env.DATABASE_MIGRATIONS_RUN === 'true'
+    ? true
+    : process.env.DATABASE_MIGRATIONS_RUN === 'false'
+      ? false
+      : !shouldSynchronize;
+
 @Module({
   imports: [
     HealthModule,
@@ -57,12 +73,9 @@ import { WishlistModule } from '@modules/wishlist/wishlist.module';
         password: config.get<string>('database.password'),
         database: config.get<string>('database.name'),
         entities: ALL_ENTITIES,
-        synchronize:
-          process.env.DATABASE_SYNCHRONIZE === 'true'
-            ? true
-            : process.env.DATABASE_SYNCHRONIZE === 'false'
-              ? false
-              : process.env.NODE_ENV !== 'production',
+        migrations: ALL_MIGRATIONS,
+        migrationsRun: shouldRunMigrations,
+        synchronize: shouldSynchronize,
         logging: process.env.TYPEORM_LOGGING === 'true',
       }),
     }),

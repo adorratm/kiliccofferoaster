@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getBlogSlugs, getCategories, getProductsPaged } from "@/lib/api";
+import { categoryCatalogPath } from "@/lib/catalog-paths";
 import { SITE_URL } from "@/lib/seo";
 import type { Product } from "@/lib/types";
 
@@ -12,7 +13,6 @@ const STATIC_ROUTES: {
   { path: "/urunler", changeFrequency: "daily", priority: 0.9 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.85 },
   { path: "/iletisim", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/takip", changeFrequency: "monthly", priority: 0.5 },
   { path: "/kvkk", changeFrequency: "yearly", priority: 0.3 },
   { path: "/gizlilik", changeFrequency: "yearly", priority: 0.3 },
   { path: "/cerez-politikasi", changeFrequency: "yearly", priority: 0.3 },
@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const categoryEntries: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${SITE_URL}/urunler?category=${encodeURIComponent(cat.slug)}`,
+    url: `${SITE_URL}${categoryCatalogPath(cat.slug)}`,
     lastModified: now,
     changeFrequency: "weekly",
     priority: 0.75,

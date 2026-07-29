@@ -78,8 +78,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
       "İzmir",
       "Kılıç Coffee Roaster",
     ],
-    ogImage:
-      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80",
+    ogImage: "",
   },
   navigation: {
     header: [

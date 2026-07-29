@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import * as pg from 'pg';
 import { ALL_ENTITIES } from '@database/entities';
+import { ALL_MIGRATIONS } from '@database/migrations';
 
 config({ path: join(process.cwd(), '..', '.env') });
 config();
@@ -17,7 +18,7 @@ export const AppDataSource = new DataSource({
   password: process.env.POSTGRES_PASSWORD || 'kilic_secret',
   database: process.env.POSTGRES_DB || 'kiliccoffeeroaster',
   entities: ALL_ENTITIES,
-  migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+  migrations: ALL_MIGRATIONS,
   synchronize: false,
   logging: process.env.TYPEORM_LOGGING === 'true',
 });

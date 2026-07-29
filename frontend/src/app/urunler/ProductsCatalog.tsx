@@ -5,9 +5,15 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
 import { getCategories, getProductsPaged } from "@/lib/api";
+import { categoryCatalogPath } from "@/lib/catalog-paths";
 import type { Category, Paginated, Product } from "@/lib/types";
 
 type SortKey = "name" | "price" | "createdAt" | "stock";
+
+function categorySlugFromPath(pathname: string) {
+  const match = pathname.match(/^\/urunler\/kategori\/([^/]+)\/?$/);
+  return match ? decodeURIComponent(match[1]) : "";
+}
 
 export default function ProductsCatalog() {
   const router = useRouter();
@@ -16,7 +22,8 @@ export default function ProductsCatalog() {
   const [pending, startTransition] = useTransition();
 
   const q = searchParams.get("q") || "";
-  const categorySlug = searchParams.get("category") || "";
+  const categorySlug =
+    categorySlugFromPath(pathname) || searchParams.get("category") || "";
   const originCountry = searchParams.get("origin") || "";
   const roastLevel = searchParams.get("roast") || "";
   const sort = (searchParams.get("sort") as SortKey) || "name";
@@ -108,25 +115,55 @@ export default function ProductsCatalog() {
     return () => {
       cancelled = true;
     };
-  }, [q, categorySlug, originCountry, roastLevel, sort, order, page, hasActiveFilters]);
+  }, [
+    q,
+    categorySlug,
+    originCountry,
+    roastLevel,
+    sort,
+    order,
+    page,
+    hasActiveFilters,
+  ]);
 
-  function patchParams(next: Record<string, string | null>) {
+  function navigateCatalog(
+    nextCategory: string | null,
+    next: Record<string, string | null>,
+  ) {
     const sp = new URLSearchParams(searchParams.toString());
+    sp.delete("category");
     for (const [key, value] of Object.entries(next)) {
       if (!value) sp.delete(key);
       else sp.set(key, value);
     }
     if (!("page" in next)) sp.delete("page");
+    const base = nextCategory
+      ? categoryCatalogPath(nextCategory)
+      : "/urunler";
+    const qs = sp.toString();
     startTransition(() => {
-      const qs = sp.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
+      router.push(qs ? `${base}?${qs}` : base);
     });
+  }
+
+  function patchParams(next: Record<string, string | null>) {
+    if ("category" in next) {
+      navigateCatalog(next.category, {
+        ...next,
+        category: null,
+      });
+      return;
+    }
+    navigateCatalog(categorySlug || null, next);
   }
 
   const summary = useMemo(() => {
     if (loading || pending) return "Yükleniyor…";
     return `${paged.total} ürün · sayfa ${paged.page}/${paged.totalPages}`;
   }, [loading, pending, paged]);
+
+  const activeCategoryName =
+    categories.find((c) => c.slug === categorySlug)?.name || null;
 
   return (
     <div className="page-shell py-16 md:py-24">
@@ -135,10 +172,12 @@ export default function ProductsCatalog() {
           Catalog / Specimens
         </div>
         <h1 className="font-display text-4xl leading-none md:text-6xl">
-          Ürünler
+          {activeCategoryName || "Ürünler"}
         </h1>
         <p className="mt-4 max-w-xl font-meta text-xs uppercase tracking-widest text-secondary">
-          Arama, filtre ve sıralama ile katalog
+          {activeCategoryName
+            ? `${activeCategoryName} kategorisindeki kavrumlar`
+            : "Arama, filtre ve sıralama ile katalog"}
         </p>
       </Reveal>
 

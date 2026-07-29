@@ -175,6 +175,8 @@ export class ProductsService {
       name: productFields.name,
       description: productFields.description,
       shortDescription: productFields.shortDescription ?? null,
+      seoTitle: productFields.seoTitle ?? null,
+      seoDescription: productFields.seoDescription ?? null,
       originCountry: productFields.originCountry ?? null,
       originRegion: productFields.originRegion ?? null,
       altitude: productFields.altitude ?? null,
@@ -220,6 +222,12 @@ export class ProductsService {
         rest.shortDescription !== undefined
           ? rest.shortDescription
           : product.shortDescription,
+      seoTitle:
+        rest.seoTitle !== undefined ? rest.seoTitle || null : product.seoTitle,
+      seoDescription:
+        rest.seoDescription !== undefined
+          ? rest.seoDescription || null
+          : product.seoDescription,
       categoryId:
         rest.categoryId !== undefined ? rest.categoryId : product.categoryId,
     });

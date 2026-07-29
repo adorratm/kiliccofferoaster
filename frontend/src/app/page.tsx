@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
@@ -10,6 +11,7 @@ import {
   getSiteSettings,
   sectionContent,
 } from "@/lib/cms";
+import { buildHomeMetadata, faqJsonLd, JsonLd } from "@/lib/seo";
 
 type HeroContent = {
   imageUrl: string;
@@ -55,6 +57,11 @@ type NewsletterContent = {
   description: string;
 };
 
+type FaqContent = {
+  title: string;
+  items: { question: string; answer: string }[];
+};
+
 const FALLBACK_HERO: HeroContent = {
   imageUrl:
     "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=2000&q=80",
@@ -71,6 +78,37 @@ const FALLBACK_HERO: HeroContent = {
     { label: "Grid", value: "Torbalı / İzmir" },
   ],
 };
+
+const FALLBACK_FAQ: FaqContent = {
+  title: "Sıkça Sorulan Sorular",
+  items: [
+    {
+      question: "Kahveler ne sıklıkla kavruluyor?",
+      answer:
+        "Sipariş ve taze stok dengesi için batch bazlı kavrum yapıyoruz. Çekirdekler mümkün olduğunca taze kavrulmuş olarak gönderilir.",
+    },
+    {
+      question: "Öğütülmüş kahve sipariş edebilir miyim?",
+      answer:
+        "Varsayılan ürünlerimiz çekirdek olarak sunulur. Öğütme tercihinizi sipariş notunda belirtirseniz uygun öğütmeye göre hazırlarız.",
+    },
+    {
+      question: "Kargo süresi ne kadar?",
+      answer:
+        "Ödeme onayı sonrası siparişler genellikle 1–3 iş günü içinde kargoya verilir. Takip kodunu sipariş bildirimiyle paylaşıyoruz.",
+    },
+    {
+      question: "Atölyeyi ziyaret edebilir miyim?",
+      answer:
+        "Torbalı / İzmir atölyemizi ziyaret etmek için iletişim formundan veya telefonla randevu alabilirsiniz.",
+    },
+  ],
+};
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return buildHomeMetadata(settings);
+}
 
 export default async function HomePage() {
   const [sections, settings, apiProducts] = await Promise.all([
@@ -125,6 +163,12 @@ export default async function HomePage() {
     description: "Drop uyarıları ve teknik loglar için ağa katılın",
   } satisfies NewsletterContent);
 
+  const faq = sectionContent(sections, "faq", FALLBACK_FAQ);
+  const faqItems = (faq.items || []).filter(
+    (item) => item.question?.trim() && item.answer?.trim(),
+  );
+  const faqSchema = faqJsonLd(faqItems);
+
   const featuredPool = apiProducts.filter((p) => p.isFeatured);
   const featured = (featuredPool.length ? featuredPool : apiProducts).slice(
     0,
@@ -134,6 +178,7 @@ export default async function HomePage() {
 
   return (
     <>
+      {faqSchema ? <JsonLd data={faqSchema} /> : null}
       <section className="relative flex h-[90vh] flex-col items-center justify-center overflow-hidden border-b border-outline-variant">
         <div className="absolute inset-0 z-0">
           <Image
@@ -350,6 +395,33 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {faqItems.length ? (
+        <section className="cv-auto page-shell py-section">
+          <Reveal className="mb-12 max-w-2xl">
+            <p className="mb-3 font-meta text-xs uppercase tracking-widest text-primary">
+              FAQ
+            </p>
+            <h2 className="font-display text-4xl md:text-5xl">{faq.title}</h2>
+          </Reveal>
+          <div className="mx-auto max-w-3xl space-y-0 border-t border-outline-variant/30">
+            {faqItems.map((item, i) => (
+              <Reveal
+                key={item.question}
+                delay={Math.min(i, 5) * 50}
+                className="border-b border-outline-variant/30 py-6"
+              >
+                <h3 className="font-display text-xl md:text-2xl">
+                  {item.question}
+                </h3>
+                <p className="mt-3 font-sans text-base leading-7 text-secondary">
+                  {item.answer}
+                </p>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="cv-auto page-shell bg-surface-container-low py-section text-center">
         <Reveal className="relative mx-auto max-w-4xl overflow-hidden border border-primary/20 p-8 md:p-16">

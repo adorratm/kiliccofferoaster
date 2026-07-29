@@ -16,6 +16,8 @@ export default function robots(): MetadataRoute.Robots {
         "/giris",
         "/kayit",
         "/siparis-sorgula",
+        "/takip",
+        "/takip/",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

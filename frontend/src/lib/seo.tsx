@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { categoryCatalogPath } from "@/lib/catalog-paths";
 import type { SiteSettings } from "@/lib/cms";
 import type { BlogPost, Product } from "@/lib/types";
+
+export { categoryCatalogPath };
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -13,6 +16,7 @@ type PageMetaInput = {
   keywords?: string[];
   image?: string | null;
   noIndex?: boolean;
+  ogType?: "website" | "article" | "product";
 };
 
 function ogImages(
@@ -31,6 +35,7 @@ export function buildPageMetadata({
   keywords,
   image,
   noIndex,
+  ogType = "website",
 }: PageMetaInput): Metadata {
   const url = `${SITE_URL}${path}`;
   const ogImage = image || settings.seo.ogImage;
@@ -46,7 +51,8 @@ export function buildPageMetadata({
       ? { index: false, follow: false }
       : { index: true, follow: true },
     openGraph: {
-      type: "website",
+      // Next Metadata tipi "product" içermez; OG protokolü için cast.
+      type: ogType as "website",
       locale: "tr_TR",
       url,
       siteName: settings.brand.name,
@@ -85,7 +91,7 @@ export function buildCatalogMetadata(
     description =
       categoryDescription?.trim() ||
       `${categoryName} kategorisindeki kavrumlar — ${settings.brand.name}.`;
-    path = `/urunler?category=${encodeURIComponent(categorySlug)}`;
+    path = categoryCatalogPath(categorySlug);
   } else if (query) {
     title = `Arama: ${query}`;
     description = `“${query}” için kavrum sonuçları — ${settings.brand.name}.`;
@@ -145,11 +151,39 @@ export function buildSiteMetadata(settings: SiteSettings): Metadata {
   };
 }
 
+/** Ana sayfa için açık metadata (layout default’unu sayfa düzeyinde sabitler). */
+export function buildHomeMetadata(settings: SiteSettings): Metadata {
+  const { seo, brand } = settings;
+  return {
+    title: { absolute: seo.title || brand.name },
+    description: seo.description,
+    keywords: seo.keywords,
+    alternates: { canonical: SITE_URL },
+    openGraph: {
+      type: "website",
+      locale: "tr_TR",
+      url: SITE_URL,
+      siteName: brand.name,
+      title: seo.title || brand.name,
+      description: seo.description,
+      images: ogImages(seo.ogImage, brand.name),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.title || brand.name,
+      description: seo.description,
+      images: seo.ogImage ? [seo.ogImage] : undefined,
+    },
+  };
+}
+
 export function buildProductMetadata(
   product: Product,
   settings: SiteSettings,
 ): Metadata {
+  const title = product.seoTitle || product.name;
   const description =
+    product.seoDescription ||
     product.shortDescription ||
     product.description?.slice(0, 160) ||
     settings.seo.description;
@@ -157,22 +191,22 @@ export function buildProductMetadata(
   const url = `${SITE_URL}/urunler/${product.slug}`;
 
   return {
-    title: product.name,
+    title,
     description,
     alternates: { canonical: url },
     robots: { index: true, follow: true },
     openGraph: {
-      type: "website",
+      type: "product" as "website",
       locale: "tr_TR",
       url,
       siteName: settings.brand.name,
-      title: product.name,
+      title,
       description,
       images: ogImages(image, product.name),
     },
     twitter: {
       card: "summary_large_image",
-      title: product.name,
+      title,
       description,
       images: image ? [image] : undefined,
     },
@@ -274,11 +308,42 @@ export function websiteJsonLd(settings: SiteSettings) {
   };
 }
 
+function parseOpeningHours(hours: string | undefined | null) {
+  if (!hours?.trim()) return undefined;
+  const match = hours.match(
+    /(\d{1,2})[:.](\d{2})\s*[—–\-]\s*(\d{1,2})[:.](\d{2})/,
+  );
+  if (!match) return undefined;
+  const opens = `${match[1].padStart(2, "0")}:${match[2]}`;
+  const closes = `${match[3].padStart(2, "0")}:${match[4]}`;
+  return {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ],
+    opens,
+    closes,
+  };
+}
+
+function parsePostalCode(address: string | undefined | null) {
+  const match = address?.match(/\b(\d{5})\b/);
+  return match?.[1];
+}
+
 export function organizationJsonLd(settings: SiteSettings) {
   const { brand, contact, social, seo } = settings;
   const sameAs = [social.instagram, social.facebook, social.googleMaps]
     .map((u) => u?.trim())
     .filter(Boolean) as string[];
+  const openingHoursSpecification = parseOpeningHours(contact.hours);
+  const postalCode = parsePostalCode(contact.address);
 
   return {
     "@context": "https://schema.org",
@@ -287,6 +352,7 @@ export function organizationJsonLd(settings: SiteSettings) {
     name: brand.name,
     description: brand.tagline || seo.description,
     url: SITE_URL,
+    priceRange: "₺₺",
     logo: seo.ogImage
       ? { "@type": "ImageObject", url: seo.ogImage }
       : undefined,
@@ -296,11 +362,17 @@ export function organizationJsonLd(settings: SiteSettings) {
       streetAddress: contact.address,
       addressLocality: "Torbalı",
       addressRegion: "İzmir",
+      postalCode: postalCode || undefined,
       addressCountry: "TR",
+    },
+    areaServed: {
+      "@type": "AdministrativeArea",
+      name: "İzmir",
     },
     email: contact.email || undefined,
     telephone: contact.phone || undefined,
     openingHours: contact.hours || undefined,
+    ...(openingHoursSpecification ? { openingHoursSpecification } : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };
 }
@@ -331,12 +403,16 @@ export function productJsonLd(product: Product, settings: SiteSettings) {
     product.imageUrl,
     ...(product.gallery || []),
   ].filter(Boolean) as string[];
+  const description =
+    product.seoDescription ||
+    product.shortDescription ||
+    product.description;
 
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name,
-    description: product.shortDescription || product.description,
+    name: product.seoTitle || product.name,
+    description,
     image: images.length ? images : settings.seo.ogImage || undefined,
     sku: product.batchId || product.slug,
     brand: {
@@ -397,6 +473,24 @@ export function blogPostJsonLd(post: BlogPost, settings: SiteSettings) {
     },
     keywords: post.tags?.join(", ") || undefined,
     inLanguage: post.locale || "tr",
+  };
+}
+
+export function faqJsonLd(
+  items: { question: string; answer: string }[],
+) {
+  if (!items.length) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
   };
 }
 

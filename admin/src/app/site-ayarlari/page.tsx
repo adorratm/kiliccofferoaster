@@ -252,7 +252,7 @@ export default function SiteSettingsPage() {
           />
         </label>
         <MediaUpload
-          label="OG görseli"
+          label="OG görseli (boşsa marka opengraph-image kullanılır)"
           value={seo.ogImage}
           onChange={(url) => setSeo((s) => ({ ...s, ogImage: url }))}
           folder="seo"

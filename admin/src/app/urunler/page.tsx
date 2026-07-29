@@ -42,6 +42,8 @@ type FormState = {
   slug: string;
   description: string;
   shortDescription: string;
+  seoTitle: string;
+  seoDescription: string;
   basePrice: string;
   stock: string;
   roastLevel: string;
@@ -103,6 +105,8 @@ const emptyForm = (): FormState => ({
   slug: '',
   description: '',
   shortDescription: '',
+  seoTitle: '',
+  seoDescription: '',
   basePrice: '',
   stock: '0',
   roastLevel: '',
@@ -268,6 +272,8 @@ function ProductsPageInner() {
       slug: p.slug,
       description: p.description || '',
       shortDescription: p.shortDescription || '',
+      seoTitle: p.seoTitle || '',
+      seoDescription: p.seoDescription || '',
       basePrice: String(p.basePrice ?? ''),
       stock: String(p.stock ?? 0),
       roastLevel: p.roastLevel || '',
@@ -320,6 +326,8 @@ function ProductsPageInner() {
       slug: form.slug || slugify(form.name),
       description: form.description,
       shortDescription: form.shortDescription || null,
+      seoTitle: form.seoTitle || null,
+      seoDescription: form.seoDescription || null,
       basePrice: String(form.basePrice),
       stock: Number(form.stock),
       roastLevel: form.roastLevel || null,
@@ -488,6 +496,46 @@ function ProductsPageInner() {
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm md:col-span-2">
+            <span className="mono text-[10px] uppercase text-muted">
+              Kısa açıklama
+            </span>
+            <input
+              value={form.shortDescription}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, shortDescription: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              maxLength={400}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              SEO başlık
+            </span>
+            <input
+              value={form.seoTitle}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, seoTitle: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              maxLength={220}
+              placeholder="Boşsa ürün adı kullanılır"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              SEO açıklama
+            </span>
+            <input
+              value={form.seoDescription}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, seoDescription: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              placeholder="Boşsa kısa açıklama kullanılır"
             />
           </label>
           <label className="block text-sm">

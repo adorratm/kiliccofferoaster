@@ -14,6 +14,8 @@ export type Product = {
   name: string;
   description: string;
   shortDescription: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   originCountry: string | null;
   originRegion: string | null;
   altitude: string | null;
