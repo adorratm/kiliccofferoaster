@@ -19,6 +19,7 @@ export function formatMoney(
 export function productImage(url: string | null | undefined, seed = "coffee") {
   if (
     url &&
+    !url.includes("unsplash.com") &&
     !url.includes("aida-public") &&
     !url.includes("lh3.googleusercontent.com/aida")
   ) {

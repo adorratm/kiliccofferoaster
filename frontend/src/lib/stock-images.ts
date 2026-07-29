@@ -1,15 +1,34 @@
 /**
- * Geçici stok görselleri — Unsplash kaynaklı, S3/CDN'e taşındıktan sonra
- * NEXT_PUBLIC_CDN_URL altında /stock/... yolu tercih edilir.
- *
- * Yükleme: yarn stock:upload (kök scripts/upload-stock-images.mjs)
+ * S3 stok görselleri — Unsplash yok.
+ * Key path: stock/{key}.jpg  (yarn stock:upload)
  */
 
-const CDN = (
-  process.env.NEXT_PUBLIC_CDN_URL ||
-  process.env.AWS_CDN_URL ||
-  ""
-).replace(/\/$/, "");
+function mediaBase(): string {
+  const cdn = (
+    process.env.NEXT_PUBLIC_CDN_URL ||
+    process.env.AWS_CDN_URL ||
+    ""
+  ).replace(/\/$/, "");
+  if (cdn) return cdn;
+
+  const bucket = (
+    process.env.NEXT_PUBLIC_S3_BUCKET ||
+    process.env.AWS_S3_BUCKET ||
+    ""
+  ).trim();
+  const region = (
+    process.env.NEXT_PUBLIC_S3_REGION ||
+    process.env.AWS_REGION ||
+    "eu-north-1"
+  ).trim();
+
+  if (bucket) {
+    return `https://${bucket}.s3.${region}.amazonaws.com`;
+  }
+
+  // Bilinen prod bucket (env yoksa — build/SSR fallback)
+  return "https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com";
+}
 
 export const STOCK_IMAGE_KEYS = [
   "hero",
@@ -26,30 +45,8 @@ export const STOCK_IMAGE_KEYS = [
 
 export type StockImageKey = (typeof STOCK_IMAGE_KEYS)[number];
 
-/** Unsplash kaynakları (yalnızca CDN yokken / script indirmesinde). */
-export const STOCK_UNSPLASH_SOURCES: Record<StockImageKey, string> = {
-  hero: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=2000&q=80",
-  ethos:
-    "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80",
-  workshop:
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80",
-  blog: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1800&q=80",
-  og: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80",
-  "product-1":
-    "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80",
-  "product-2":
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80",
-  "product-3":
-    "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1200&q=80",
-  "product-4":
-    "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80",
-  "product-5":
-    "https://images.unsplash.com/photo-1610889556528-9a7707953b38?auto=format&fit=crop&w=1200&q=80",
-};
-
 export function stockImage(key: StockImageKey): string {
-  if (CDN) return `${CDN}/stock/${key}.jpg`;
-  return STOCK_UNSPLASH_SOURCES[key];
+  return `${mediaBase()}/stock/${key}.jpg`;
 }
 
 export function stockProductFallback(seed: string): string {
@@ -65,4 +62,17 @@ export function stockProductFallback(seed: string): string {
     hash = (hash + seed.charCodeAt(i) * (i + 1)) % keys.length;
   }
   return stockImage(keys[hash]);
+}
+
+/** Unsplash / eski harici stok URL’lerini S3 stok ile değiştir. */
+export function replaceUnsplashUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (!/unsplash\.com/i.test(url)) return url;
+
+  if (url.includes("photo-1447933601403")) return stockImage("ethos");
+  if (url.includes("photo-1495474472287")) return stockImage("workshop");
+  if (url.includes("photo-1559056199")) return stockImage("product-4");
+  if (url.includes("photo-1610889556528")) return stockImage("product-5");
+  if (url.includes("photo-1514432324607")) return stockImage("hero");
+  return stockImage("og");
 }

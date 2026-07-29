@@ -1,3 +1,5 @@
+import { apiStockImage } from '../common/stock-images';
+
 export const DEFAULT_SITE_SETTINGS: Record<
   string,
   Record<string, unknown>
@@ -30,8 +32,7 @@ export const DEFAULT_SITE_SETTINGS: Record<
       'İzmir',
       'Kılıç Coffee Roaster',
     ],
-    ogImage:
-      '',
+    ogImage: apiStockImage('og'),
   },
   navigation: {
     header: [
@@ -83,8 +84,7 @@ export const DEFAULT_HOME_SECTIONS = [
     title: 'Hero',
     sortOrder: 1,
     content: {
-      imageUrl:
-        'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=2000&q=80',
+      imageUrl: apiStockImage('hero'),
       eyebrow: 'EST. 2026 / TORBALI · İZMİR',
       titleLine1: 'Kılıç Coffee',
       titleLine2: 'Roaster',
@@ -112,8 +112,7 @@ export const DEFAULT_HOME_SECTIONS = [
         { label: 'Drum Speed', value: '54 RPM' },
         { label: 'Airflow', value: '82%' },
       ],
-      imageUrl:
-        'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80',
+      imageUrl: apiStockImage('ethos'),
       telemetry: {
         profile: 'KRC-74-Alpha',
         feed: 'Live_Feed: Active',
@@ -148,8 +147,7 @@ export const DEFAULT_HOME_SECTIONS = [
       titleLines: ['Visit The', 'Workshop'],
       description:
         'Hassasiyeti deneyimleyin. Torbalı merkezimizde tadım laboratuvarı ve endüstriyel kavrum hattı bir arada.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+      imageUrl: apiStockImage('workshop'),
       ctaLabel: 'İletişime Geç',
       ctaHref: '/iletisim',
     },

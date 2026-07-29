@@ -2,19 +2,12 @@ import type { NextConfig } from "next";
 
 function imageRemotePatterns() {
   const patterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
-    {
-      protocol: "https",
-      hostname: "images.unsplash.com",
-      pathname: "/**",
-    },
-    // Tek * yalnızca 1 DNS etiketi eşler; S3 host'ları için ** gerekir.
-    // örn. bucket.s3.eu-north-1.amazonaws.com
+    // S3 / CDN — Unsplash kullanılmıyor
     {
       protocol: "https",
       hostname: "**.amazonaws.com",
       pathname: "/**",
     },
-    // Bilinen prod bucket (net eşleşme)
     {
       protocol: "https",
       hostname:

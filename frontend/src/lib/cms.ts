@@ -1,4 +1,5 @@
 import { getApiBase } from "@/lib/api";
+import { stockImage } from "@/lib/stock-images";
 
 export type NavLink = { href: string; label: string };
 
@@ -78,7 +79,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
       "İzmir",
       "Kılıç Coffee Roaster",
     ],
-    ogImage: "",
+    ogImage: stockImage("og"),
   },
   navigation: {
     header: [
@@ -189,7 +190,11 @@ export function sectionContent<T extends Record<string, unknown>>(
 
 export function cmsImageUrl(url: string | null | undefined, fallback: string) {
   if (!url) return fallback;
-  if (url.includes("aida-public") || url.includes("lh3.googleusercontent.com/aida")) {
+  if (
+    url.includes("unsplash.com") ||
+    url.includes("aida-public") ||
+    url.includes("lh3.googleusercontent.com/aida")
+  ) {
     return fallback;
   }
   return url;

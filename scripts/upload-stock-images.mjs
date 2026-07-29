@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 /**
- * Unsplash stok görsellerini indirip S3'e (veya yerel uploads/) yükler.
+ * Stok görsellerini Unsplash’tan indirip S3’e yükler (yalnızca kaynak; sitede Unsplash yok).
  *
- * Kullanım (kök dizinden, AWS env dolu olmalı):
+ * Kullanım (kök, AWS env dolu):
  *   yarn stock:upload
  *
- * Gerekli env: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
- *              AWS_S3_BUCKET, AWS_CDN_URL (önerilir)
- *
- * Çıktı: stock/*.jpg URL listesi — admin'de OG / ana sayfa / ürün görsellerine yapıştırın.
+ * Sonra deploy — migration Unsplash URL’lerini stock/* ile değiştirir.
  */
 
 import { createWriteStream, mkdirSync, readFileSync, existsSync } from "fs";

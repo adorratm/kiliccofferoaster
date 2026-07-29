@@ -18,6 +18,7 @@ import {
   DEFAULT_SITE_SETTINGS,
 } from '@database/cms-defaults';
 import { LEGAL_DEFAULTS } from '@database/legal-defaults';
+import { apiStockImage } from '../common/stock-images';
 
 config({ path: join(process.cwd(), '..', '.env') });
 config();
@@ -227,8 +228,7 @@ async function seed() {
       content: `<p>Birinci crack, çekirdeğin içinde biriken buharın hücre duvarlarını aşmasıyla duyulan fiziksel kırılmadır. Bu an, kavrumun “geliştirme” fazına giriş kapısıdır.</p>
 <p>Çok erken drop yapmak asiditeyi canlı bırakır; fazla uzatmak gövdeyi artırırken çiçeksi notaları baskılar. Torbalı’daki kavurularımızda crack zamanlamasını batch bazında log’larız.</p>
 <p>Profillerinizi tekrarlanabilir kılmak için crack zamanı, drop sıcaklığı ve airflow değerlerini birlikte okuyun — tek başına süre yetmez.</p>`,
-      coverImageUrl:
-        'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1400&q=80',
+      coverImageUrl: apiStockImage('ethos'),
       authorName: 'Kılıç Coffee Roaster',
       tags: ['kavrum', 'teknik'],
       seoTitle: 'Birinci Crack Nedir? | Kavrum Tekniği',
@@ -243,8 +243,7 @@ async function seed() {
       content: `<p>Filtre demlemede öğütme, sıcaklık ve oran kadar belirleyicidir. Çok ince öğütme acılaştırır; çok kalın öğütme ise ekşi ve zayıf bir fincan üretir.</p>
 <p>Önerilen başlangıç: V60 için orta-ince, batch brew için biraz daha kaba. Aynı kahveyi farklı ekipmanlarda kullanırken önce oranları sabitleyin, sonra öğütmeyi ince ayarlayın.</p>
 <p>Yirgacheffe gibi light kavrumlarda biraz daha ince giderek floral notaları öne çıkarabilirsiniz; Brazil gibi gövdeli kahvelerde kaba tarafı tercih edin.</p>`,
-      coverImageUrl:
-        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1400&q=80',
+      coverImageUrl: apiStockImage('blog'),
       authorName: 'Kılıç Coffee Roaster',
       tags: ['demleme', 'filtre'],
       seoTitle: 'Filtre Kahve Öğütme İpuçları',
@@ -265,6 +264,13 @@ async function seed() {
         }),
       );
       console.log('Blog:', post.slug);
+    } else if (
+      !exists.coverImageUrl ||
+      exists.coverImageUrl.includes('unsplash.com')
+    ) {
+      exists.coverImageUrl = post.coverImageUrl;
+      await em.save(exists);
+      console.log('Blog cover updated:', post.slug);
     }
   }
 
@@ -405,6 +411,20 @@ async function seed() {
         }),
       );
       console.log('Content section:', section.page, section.sectionKey);
+    } else {
+      const raw = JSON.stringify(exists.content || {});
+      if (raw.includes('unsplash.com')) {
+        exists.content = {
+          ...(exists.content as object),
+          ...section.content,
+        } as Record<string, unknown>;
+        await em.save(exists);
+        console.log(
+          'Content section unsplash cleared:',
+          section.page,
+          section.sectionKey,
+        );
+      }
     }
   }
 

@@ -46,8 +46,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getSiteSettings();
-  const cdnUrl =
-    process.env.NEXT_PUBLIC_CDN_URL || process.env.AWS_CDN_URL || "";
+  const mediaBase =
+    (process.env.NEXT_PUBLIC_CDN_URL || process.env.AWS_CDN_URL || "").replace(
+      /\/$/,
+      "",
+    ) ||
+    (process.env.NEXT_PUBLIC_S3_BUCKET
+      ? `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_S3_REGION || process.env.AWS_REGION || "eu-north-1"}.amazonaws.com`
+      : "https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com");
 
   return (
     <html
@@ -56,8 +62,7 @@ export default async function RootLayout({
       className={`${anton.variable} ${inter.variable} ${jetbrains.variable} h-full`}
     >
       <head>
-        {cdnUrl ? <link rel="preconnect" href={cdnUrl} /> : null}
-        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="preconnect" href={mediaBase} />
       </head>
       <body className="flex min-h-full flex-col bg-background text-on-background antialiased">
         <JsonLd data={organizationJsonLd(settings)} />

@@ -5,6 +5,7 @@ import { PasswordResetAndReturnRequests1776000000000 } from './1776000000000-Pas
 import { GuestCartDeliveredAtReminders1777000000000 } from './1777000000000-GuestCartDeliveredAtReminders';
 import { CampaignsAndRefundAmount1778000000000 } from './1778000000000-CampaignsAndRefundAmount';
 import { ProductSeoAndHomeFaq1779000000000 } from './1779000000000-ProductSeoAndHomeFaq';
+import { ReplaceUnsplashWithStock1780000000000 } from './1780000000000-ReplaceUnsplashWithStock';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -18,4 +19,5 @@ export const ALL_MIGRATIONS = [
   GuestCartDeliveredAtReminders1777000000000,
   CampaignsAndRefundAmount1778000000000,
   ProductSeoAndHomeFaq1779000000000,
+  ReplaceUnsplashWithStock1780000000000,
 ];
