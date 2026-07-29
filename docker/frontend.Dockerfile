@@ -9,6 +9,7 @@ ENV YARN_NETWORK_CONCURRENCY=2
 ENV YARN_ENABLE_GLOBAL_CACHE=false
 
 COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/patches ./.yarn/patches
 COPY frontend ./frontend
 COPY api/package.json ./api/
 COPY admin/package.json ./admin/
