@@ -12,14 +12,16 @@ export class ShippingPollScheduler implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.pollQueue.add(
-      'poll-open-shipments',
-      { reason: 'repeat' },
+    await this.pollQueue.upsertJobScheduler(
+      'shipping-poll-repeat',
+      { every: 15 * 60 * 1000 },
       {
-        repeat: { every: 15 * 60 * 1000 },
-        jobId: 'shipping-poll-repeat',
-        removeOnComplete: 20,
-        removeOnFail: 50,
+        name: 'poll-open-shipments',
+        data: { reason: 'repeat' },
+        opts: {
+          removeOnComplete: 20,
+          removeOnFail: 50,
+        },
       },
     );
     this.logger.log('Scheduled shipping-poll every 15 minutes');

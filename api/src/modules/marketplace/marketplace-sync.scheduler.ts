@@ -26,14 +26,16 @@ export class MarketplaceSyncScheduler implements OnModuleInit {
     );
     const every = minutes * 60 * 1000;
 
-    await this.queue.add(
-      'sync-enabled-accounts',
-      { reason: 'repeat', mode: 'all' },
+    await this.queue.upsertJobScheduler(
+      'marketplace-sync-repeat',
+      { every },
       {
-        repeat: { every },
-        jobId: 'marketplace-sync-repeat',
-        removeOnComplete: 20,
-        removeOnFail: 50,
+        name: 'sync-enabled-accounts',
+        data: { reason: 'repeat', mode: 'all' },
+        opts: {
+          removeOnComplete: 20,
+          removeOnFail: 50,
+        },
       },
     );
     this.logger.log(`Scheduled marketplace sync every ${minutes} minutes`);

@@ -19,14 +19,16 @@ export class LowStockScheduler implements OnModuleInit {
       Number(this.config.get<number>('lowStock.scanIntervalHours') ?? 24),
     );
     const every = hours * 60 * 60 * 1000;
-    await this.queue.add(
-      'scan-low-stock',
-      { reason: 'repeat' },
+    await this.queue.upsertJobScheduler(
+      'low-stock-repeat',
+      { every },
       {
-        repeat: { every },
-        jobId: 'low-stock-repeat',
-        removeOnComplete: 20,
-        removeOnFail: 50,
+        name: 'scan-low-stock',
+        data: { reason: 'repeat' },
+        opts: {
+          removeOnComplete: 20,
+          removeOnFail: 50,
+        },
       },
     );
     this.logger.log(`Scheduled low-stock scan every ${hours}h`);

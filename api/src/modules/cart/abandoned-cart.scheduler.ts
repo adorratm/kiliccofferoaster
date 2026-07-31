@@ -12,14 +12,16 @@ export class AbandonedCartScheduler implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.queue.add(
-      'scan-abandoned-carts',
-      { reason: 'repeat' },
+    await this.queue.upsertJobScheduler(
+      'abandoned-cart-repeat',
+      { every: 60 * 60 * 1000 },
       {
-        repeat: { every: 60 * 60 * 1000 },
-        jobId: 'abandoned-cart-repeat',
-        removeOnComplete: 20,
-        removeOnFail: 50,
+        name: 'scan-abandoned-carts',
+        data: { reason: 'repeat' },
+        opts: {
+          removeOnComplete: 20,
+          removeOnFail: 50,
+        },
       },
     );
     this.logger.log('Scheduled abandoned-cart scan every 60 minutes');
