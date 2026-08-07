@@ -1,6 +1,6 @@
-FROM node:25-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 WORKDIR /app
-RUN corepack enable
+RUN npm install -g corepack@latest --force && corepack enable
 
 FROM base AS build
 ENV NODE_OPTIONS=--max-old-space-size=1536
@@ -16,10 +16,9 @@ RUN yarn workspaces focus @kilic/api
 WORKDIR /app/api
 RUN yarn build
 
-FROM node:25-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN corepack enable
 COPY --from=build /app/package.json /app/yarn.lock /app/.yarnrc.yml ./
 COPY --from=build /app/api/package.json ./api/package.json
 COPY --from=build /app/api/dist ./api/dist

@@ -1,6 +1,6 @@
-FROM node:25-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 WORKDIR /app
-RUN corepack enable
+RUN npm install -g corepack@latest --force && corepack enable
 
 FROM base AS build
 # Paylaşımlı VPS — OOM (exit 137) önleme
@@ -41,7 +41,7 @@ RUN yarn workspaces focus @kilic/frontend
 WORKDIR /app/frontend
 RUN yarn build
 
-FROM node:25-bookworm-slim AS runner
+FROM node:26-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

@@ -84,7 +84,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/passport-jwt": "^4.0.1",
-    "@types/pg": "^8.20.4",
+    "@types/pg": "^8.21.0",
     "@types/supertest": "^7.2.1",
     "@types/uuid": "^11.0.0",
     "eslint": "^10.8.0",
@@ -120,5 +120,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "volta": {
+    "node": "26.7.0"
   }
 }

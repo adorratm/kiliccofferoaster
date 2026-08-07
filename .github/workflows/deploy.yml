@@ -16,17 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 26
           # v5 varsayılan true: packageManager=yarn görünce Yarn 1.22 ile cache kurmaya çalışır
           package-manager-cache: false
 
-      - name: Activate Yarn 4
+      # Node 25+ corepack'i paketlemiyor
+      - name: Install Corepack & Yarn 4
         run: |
+          npm install -g corepack@latest --force
+          corepack enable
           corepack prepare yarn@4.17.1 --activate
           corepack yarn --version
 
