@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 const S3_BASE =
-  'https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com';
+  'https://kilic-coffee-roaster.s3.eu-central-1.amazonaws.com';
 
 /**
  * Hakkımızda sayfası için CMS content_sections kayıtları (yoksa ekler).

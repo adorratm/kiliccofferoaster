@@ -19,7 +19,7 @@ function mediaBase(): string {
   const region = (
     process.env.NEXT_PUBLIC_S3_REGION ||
     process.env.AWS_REGION ||
-    "eu-north-1"
+    "eu-central-1"
   ).trim();
 
   if (bucket) {
@@ -27,7 +27,7 @@ function mediaBase(): string {
   }
 
   // Bilinen prod bucket (env yoksa — build/SSR fallback)
-  return "https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com";
+  return "https://kilic-coffee-roaster.s3.eu-central-1.amazonaws.com";
 }
 
 export const STOCK_IMAGE_KEYS = [

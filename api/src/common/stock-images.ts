@@ -8,12 +8,12 @@ function mediaBase(): string {
   if (cdn) return cdn;
 
   const bucket = (process.env.AWS_S3_BUCKET || '').trim();
-  const region = (process.env.AWS_REGION || 'eu-north-1').trim();
+  const region = (process.env.AWS_REGION || 'eu-central-1').trim();
   if (bucket) {
     return `https://${bucket}.s3.${region}.amazonaws.com`;
   }
 
-  return 'https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com';
+  return 'https://kilic-coffee-roaster.s3.eu-central-1.amazonaws.com';
 }
 
 export type ApiStockImageKey =

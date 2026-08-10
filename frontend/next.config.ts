@@ -11,7 +11,7 @@ function imageRemotePatterns() {
     {
       protocol: "https",
       hostname:
-        "kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com",
+        "kilic-coffee-roaster.s3.eu-central-1.amazonaws.com",
       pathname: "/**",
     },
   ];
@@ -31,7 +31,7 @@ function imageRemotePatterns() {
   }
 
   const bucket = process.env.AWS_S3_BUCKET?.trim();
-  const region = (process.env.AWS_REGION || "eu-north-1").trim();
+  const region = (process.env.AWS_REGION || "eu-central-1").trim();
   if (bucket) {
     patterns.push(
       {

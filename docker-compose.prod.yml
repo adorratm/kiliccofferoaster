@@ -96,7 +96,7 @@ services:
         NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-}
         NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION:-}
         AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
-        AWS_REGION: ${AWS_REGION:-eu-north-1}
+        AWS_REGION: ${AWS_REGION:-eu-central-1}
         AWS_CDN_URL: ${AWS_CDN_URL:-}
     container_name: kiliccoffee-prod-frontend
     restart: unless-stopped

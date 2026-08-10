@@ -52,8 +52,8 @@ export default async function RootLayout({
       "",
     ) ||
     (process.env.NEXT_PUBLIC_S3_BUCKET
-      ? `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_S3_REGION || process.env.AWS_REGION || "eu-north-1"}.amazonaws.com`
-      : "https://kiliccoffeeroaster-390403895418-eu-north-1-an.s3.eu-north-1.amazonaws.com");
+      ? `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_S3_REGION || process.env.AWS_REGION || "eu-central-1"}.amazonaws.com`
+      : "https://kilic-coffee-roaster.s3.eu-central-1.amazonaws.com");
 
   return (
     <html
