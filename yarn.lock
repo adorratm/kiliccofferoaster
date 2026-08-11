@@ -105,9 +105,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:^3.1106.0":
-  version: 3.1106.0
-  resolution: "@aws-sdk/client-s3@npm:3.1106.0"
+"@aws-sdk/client-s3@npm:^3.1107.0":
+  version: 3.1107.0
+  resolution: "@aws-sdk/client-s3@npm:3.1107.0"
   dependencies:
     "@aws-sdk/checksums": "npm:^3.1000.26"
     "@aws-sdk/core": "npm:^3.977.6"
@@ -120,7 +120,7 @@ __metadata:
     "@smithy/node-http-handler": "npm:^4.9.13"
     "@smithy/types": "npm:^4.16.1"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/5416261ca593f79888204269f759ee1c30ad8213239ccdee712138dbd8100c6b23c4a56e6cc4deffdf7fa0667ee26e95a97d28926c38daed04f65b021c31fae6
+  checksum: 10c0/eae0c02ea098952fa637be6979522b14cdc6224d75a117444e78ce99e7ea7d2fbc63114b6a99f19a1eca9a425350234cefc62604e088381a23c5ef05c62ebfb9
   languageName: node
   linkType: hard
 
@@ -1905,7 +1905,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kilic/api@workspace:api"
   dependencies:
-    "@aws-sdk/client-s3": "npm:^3.1106.0"
+    "@aws-sdk/client-s3": "npm:^3.1107.0"
     "@bull-board/api": "npm:^8.6.0"
     "@bull-board/express": "npm:^8.6.0"
     "@bull-board/nestjs": "npm:^8.6.0"
@@ -1945,7 +1945,7 @@ __metadata:
     axios: "npm:^1.19.0"
     bcrypt: "npm:^6.0.0"
     bcryptjs: "npm:^3.0.3"
-    bullmq: "npm:^6.0.10"
+    bullmq: "npm:^6.0.11"
     class-transformer: "npm:^0.5.1"
     class-validator: "npm:^0.15.1"
     dotenv: "npm:^17.4.2"
@@ -4735,11 +4735,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bullmq@npm:^6.0.10":
-  version: 6.0.10
-  resolution: "bullmq@npm:6.0.10"
+"bullmq@npm:^6.0.11":
+  version: 6.0.11
+  resolution: "bullmq@npm:6.0.11"
   dependencies:
-    cron-parser: "npm:5.7.0"
+    cron-parser: "npm:5.8.1"
     msgpackr: "npm:2.0.5"
     node-abort-controller: "npm:3.1.1"
     semver: "npm:7.8.5"
@@ -4758,7 +4758,7 @@ __metadata:
       optional: true
     redis:
       optional: true
-  checksum: 10c0/e22b1afb4773d6124e9187aeaff7d277e2f97bd4b1725e5c0e80fbded312ca7f1fc463afb9d25b76ddb0e097c00f3e75429010aeffb30ae00c4d87f37fb45e99
+  checksum: 10c0/59a5296efc571784fc6d6c8916b13eb686cb9814a0f624927baaab8e44a37f09f5f51120353434c5a508f7dda06ad54cd7506a6d8cde6c1923ea5bdbdfa17f79
   languageName: node
   linkType: hard
 
@@ -5201,12 +5201,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cron-parser@npm:5.7.0":
-  version: 5.7.0
-  resolution: "cron-parser@npm:5.7.0"
+"cron-parser@npm:5.8.1":
+  version: 5.8.1
+  resolution: "cron-parser@npm:5.8.1"
   dependencies:
     luxon: "npm:^3.7.2"
-  checksum: 10c0/866adc2b3fdb48236e40504efb3156a98da0e5d1c31dd38332362e36a41a02303a011b12498290dfb933a5d7d83880a0ea06bf9629b98cb3c685cebda541d7dd
+  checksum: 10c0/823d74248b99a0a5fc9e25263da5159d7616c3b6c67f93081e4f102584cd1739de89c30832502690dd9a3419427f94cfc33aad6e7456535e51391a080b4f7565
   languageName: node
   linkType: hard
 
