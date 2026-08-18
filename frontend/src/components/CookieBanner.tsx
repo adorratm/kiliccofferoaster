@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { logCookieConsent } from "@/lib/api";
 import { getCartSessionId } from "@/lib/cart";
+import { isInAppShell } from "@/lib/downloads";
 import {
   COOKIE_CONSENT_KEY,
   readCookieConsent,
@@ -17,6 +18,7 @@ export function CookieBanner() {
   const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
+    if (isInAppShell()) return;
     const existing = window.localStorage.getItem(COOKIE_CONSENT_KEY);
     if (!existing) setVisible(true);
   }, []);

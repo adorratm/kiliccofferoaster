@@ -104,6 +104,9 @@ export default function App() {
                   <Pressable onPress={() => navigation.navigate('Search')} style={{ marginRight: 12 }}>
                     <Text style={{ color: '#ffb4a2' }}>Ara</Text>
                   </Pressable>
+                  <Pressable onPress={() => navigation.navigate('Shop')}>
+                    <Text style={{ color: '#ffb4a2' }}>Mağaza</Text>
+                  </Pressable>
                 </View>
               ),
             })}

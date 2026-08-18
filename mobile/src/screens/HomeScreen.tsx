@@ -2,6 +2,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { RootStack } from '../../App';
+import { AppDock } from '../components/AppDock';
 import { EChart } from '../components/EChart';
 import { InboxRuntime } from '../components/InboxRuntime';
 import { api, isOpsRole, setToken } from '../lib/api';
@@ -87,6 +88,7 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <>
       <InboxRuntime />
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView style={{ flex: 1, backgroundColor: colors.bg, padding: 20 }}>
       <Pressable onPress={() => navigation.navigate('Search')} style={card}>
         <Text style={{ color: colors.accentSoft }}>Ara… ürün, sipariş, müşteri</Text>
@@ -142,13 +144,19 @@ export function HomeScreen({ navigation }: Props) {
         onPress={async () => {
           await unregisterPushToken().catch(() => undefined);
           await setToken(null);
-          navigation.replace('Shop');
+          navigation.navigate('Shop');
         }}
         style={{ marginTop: 16, marginBottom: 40 }}
       >
-        <Text style={{ color: colors.muted, textAlign: 'center' }}>Çıkış</Text>
+        <Text style={{ color: colors.muted, textAlign: 'center' }}>Oturumu kapat</Text>
       </Pressable>
     </ScrollView>
+      <AppDock
+        active="staff"
+        onShop={() => navigation.navigate('Shop')}
+        onStaff={() => undefined}
+      />
+      </View>
     </>
   );
 }

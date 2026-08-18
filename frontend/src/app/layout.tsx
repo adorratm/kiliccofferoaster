@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Inter, JetBrains_Mono } from "next/font/google";
 import { CookieBanner } from "@/components/CookieBanner";
+import { AppShellMark } from "@/components/AppShellMark";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -63,10 +64,16 @@ export default async function RootLayout({
     >
       <head>
         <link rel="preconnect" href={mediaBase} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if(/KilicCoffee\\//i.test(navigator.userAgent))document.documentElement.classList.add('kilic-native-app')`,
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col bg-background text-on-background antialiased">
         <JsonLd data={organizationJsonLd(settings)} />
         <JsonLd data={websiteJsonLd(settings)} />
+        <AppShellMark />
         <SiteHeader settings={settings} />
         <main className="flex-1 pt-20">{children}</main>
         <SiteFooter settings={settings} />

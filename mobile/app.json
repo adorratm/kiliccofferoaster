@@ -22,7 +22,8 @@
           "color": "#cc5b3e",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "ios": {
       "supportsTablet": true,

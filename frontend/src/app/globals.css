@@ -556,6 +556,14 @@ body {
   padding-right: var(--margin-mobile);
 }
 
+html.kilic-native-app footer {
+  display: none !important;
+}
+
+html.kilic-native-app .banner-enter {
+  display: none !important;
+}
+
 @media (min-width: 768px) {
   .page-shell {
     padding-left: var(--margin-desktop);

@@ -26,6 +26,22 @@ export async function setToken(token: string | null): Promise<void> {
   else await AsyncStorage.setItem(TOKEN_KEY, token);
 }
 
+export async function restoreOpsSession(): Promise<boolean> {
+  const token = await getToken();
+  if (!token) return false;
+  try {
+    const me = await api<{ role: string }>('/auth/me');
+    if (!isOpsRole(me.role)) {
+      await setToken(null);
+      return false;
+    }
+    return true;
+  } catch {
+    await setToken(null);
+    return false;
+  }
+}
+
 function messageFromBody(text: string): string {
   try {
     const json = JSON.parse(text) as { message?: string | string[] };

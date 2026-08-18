@@ -5,22 +5,28 @@ import {
   BackHandler,
   Linking,
   Platform,
-  Pressable,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import type { RootStack } from '../../App';
-import { SHOP_URL } from '../lib/api';
+import { AppDock } from '../components/AppDock';
+import { restoreOpsSession, SHOP_URL } from '../lib/api';
 import { colors } from '../ui';
 
 type Props = NativeStackScreenProps<RootStack, 'Shop'>;
 
 const SHOP_UA =
-  Platform.OS === 'android'
-    ? 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 KilicCoffee/1.0 Mobile'
-    : undefined;
+  Platform.OS === 'ios'
+    ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1 KilicCoffee/1.0 Mobile'
+    : 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 KilicCoffee/1.0 Mobile';
+
+const INJECT_APP_SHELL = `
+(function () {
+  document.documentElement.classList.add('kilic-native-app');
+})();
+true;
+`;
 
 function isExternalScheme(url: string): boolean {
   return /^(tel|mailto|sms|whatsapp|intent):/i.test(url);
@@ -52,31 +58,13 @@ export function ShopScreen({ navigation }: Props) {
     return true;
   }
 
+  async function openStaff() {
+    const ok = await restoreOpsSession();
+    navigation.navigate(ok ? 'Home' : 'StaffLogin');
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        }}
-      >
-        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>
-          Kılıç Coffee
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <Pressable onPress={() => view.current?.reload()}>
-            <Text style={{ color: colors.accentSoft, fontSize: 13 }}>Yenile</Text>
-          </Pressable>
-          <Pressable onPress={() => navigation.navigate('StaffLogin')}>
-            <Text style={{ color: colors.muted, fontSize: 13 }}>Personel</Text>
-          </Pressable>
-        </View>
-      </View>
       <View style={{ flex: 1 }}>
         {Platform.OS === 'web'
           ? createElement('iframe', {
@@ -92,9 +80,15 @@ export function ShopScreen({ navigation }: Props) {
           applicationNameForUserAgent="KilicCoffee/1.0 Mobile"
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
+          cacheEnabled
+          pullToRefreshEnabled
+          allowsBackForwardNavigationGestures
+          decelerationRate="normal"
           javaScriptCanOpenWindowsAutomatically
           setSupportMultipleWindows
           originWhitelist={['https://*', 'http://*', 'about:*']}
+          injectedJavaScriptBeforeContentLoaded={INJECT_APP_SHELL}
+          injectedJavaScript={INJECT_APP_SHELL}
           onShouldStartLoadWithRequest={onShouldStart}
           onOpenWindow={(event) => {
             const target = event.nativeEvent.targetUrl;
@@ -130,6 +124,11 @@ export function ShopScreen({ navigation }: Props) {
           </View>
         ) : null}
       </View>
+      <AppDock
+        active="shop"
+        onShop={() => undefined}
+        onStaff={() => void openStaff()}
+      />
     </SafeAreaView>
   );
 }
