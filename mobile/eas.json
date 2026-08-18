@@ -1,14 +1,16 @@
 {
   "cli": {
     "version": ">= 16.0.0",
-    "appVersionSource": "appconfig"
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
+      "corepack": true,
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
+      "corepack": true,
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
@@ -17,6 +19,8 @@
       }
     },
     "production": {
+      "corepack": true,
+      "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.kiliccoffeeroaster.com.tr",

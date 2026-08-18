@@ -22,6 +22,10 @@ async function unzip(zipPath, dest) {
 }
 
 async function main() {
+  if (process.env.EAS_BUILD) {
+    console.log('Skipping Electron download on EAS Build');
+    return;
+  }
   if (fs.existsSync(exePath) && fs.existsSync(path.join(electronDir, 'path.txt'))) {
     console.log('Electron binary already present');
     return;
