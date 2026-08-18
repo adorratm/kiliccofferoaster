@@ -1,9 +1,41 @@
 import { createNavigationContainerRef } from '@react-navigation/native';
+import type { RootTabParamList, StaffStackParamList } from '../navigation/types';
 
-export const navigationRef = createNavigationContainerRef();
+export const navigationRef = createNavigationContainerRef<RootTabParamList>();
+
+const STAFF_SCREENS = new Set<keyof StaffStackParamList>([
+  'StaffLogin',
+  'Home',
+  'Parties',
+  'Invoices',
+  'Cash',
+  'Reports',
+  'Products',
+  'ProductEdit',
+  'Categories',
+  'ShopOrders',
+  'Returns',
+  'Coupons',
+  'Campaigns',
+  'Reviews',
+  'Shipping',
+  'Messages',
+  'Newsletter',
+  'Search',
+  'Customers',
+  'CustomerDetail',
+  'Notifications',
+]);
 
 export function navigate(name: string, params?: object) {
   if (!navigationRef.isReady()) return;
+  if (STAFF_SCREENS.has(name as keyof StaffStackParamList)) {
+    navigationRef.navigate('StaffTab', {
+      screen: name as keyof StaffStackParamList,
+      params,
+    } as never);
+    return;
+  }
   const nav = navigationRef as unknown as {
     navigate: (route: string, p?: object) => void;
   };

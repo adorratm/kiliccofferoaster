@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
 import AsyncStorage from './storage';
 
-const TOKEN_KEY = 'ops_token';
+const OPS_TOKEN_KEY = 'ops_token';
+const SHOP_TOKEN_KEY = 'shop_token';
+const SHOP_SESSION_KEY = 'shop_session';
 
 const defaultHost =
   Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
@@ -18,19 +20,43 @@ export function isOpsRole(role: string | undefined): boolean {
 }
 
 export async function getToken(): Promise<string | null> {
-  return AsyncStorage.getItem(TOKEN_KEY);
+  return AsyncStorage.getItem(OPS_TOKEN_KEY);
 }
 
 export async function setToken(token: string | null): Promise<void> {
-  if (!token) await AsyncStorage.removeItem(TOKEN_KEY);
-  else await AsyncStorage.setItem(TOKEN_KEY, token);
+  if (!token) await AsyncStorage.removeItem(OPS_TOKEN_KEY);
+  else await AsyncStorage.setItem(OPS_TOKEN_KEY, token);
+}
+
+export async function getShopToken(): Promise<string | null> {
+  return AsyncStorage.getItem(SHOP_TOKEN_KEY);
+}
+
+export async function setShopToken(token: string | null): Promise<void> {
+  if (!token) await AsyncStorage.removeItem(SHOP_TOKEN_KEY);
+  else await AsyncStorage.setItem(SHOP_TOKEN_KEY, token);
+}
+
+function randomSessionId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export async function getShopSessionId(): Promise<string> {
+  const existing = await AsyncStorage.getItem(SHOP_SESSION_KEY);
+  if (existing) return existing;
+  const id = randomSessionId();
+  await AsyncStorage.setItem(SHOP_SESSION_KEY, id);
+  return id;
 }
 
 export async function restoreOpsSession(): Promise<boolean> {
   const token = await getToken();
   if (!token) return false;
   try {
-    const me = await api<{ role: string }>('/auth/me');
+    const me = await api<{ role: string }>('/auth/me', { auth: 'ops' });
     if (!isOpsRole(me.role)) {
       await setToken(null);
       return false;
@@ -38,6 +64,18 @@ export async function restoreOpsSession(): Promise<boolean> {
     return true;
   } catch {
     await setToken(null);
+    return false;
+  }
+}
+
+export async function restoreShopSession(): Promise<boolean> {
+  const token = await getShopToken();
+  if (!token) return false;
+  try {
+    await api<{ id: string }>('/auth/me', { auth: 'shop' });
+    return true;
+  } catch {
+    await setShopToken(null);
     return false;
   }
 }
@@ -53,16 +91,28 @@ function messageFromBody(text: string): string {
   return text;
 }
 
+export type ApiOptions = {
+  method?: string;
+  body?: unknown;
+  auth?: 'ops' | 'shop' | 'none';
+  session?: boolean;
+};
+
 export async function api<T>(
   path: string,
-  options: { method?: string; body?: unknown } = {},
+  options: ApiOptions = {},
 ): Promise<T> {
-  const token = await getToken();
+  const auth = options.auth ?? 'ops';
+  let token: string | null = null;
+  if (auth === 'ops') token = await getToken();
+  if (auth === 'shop') token = await getShopToken();
+  const sessionId = options.session ? await getShopSessionId() : null;
   const res = await fetch(`${API_URL}${path}`, {
     method: options.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(sessionId ? { 'X-Session-Id': sessionId } : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
@@ -82,4 +132,17 @@ export function asArray<T>(data: unknown): T[] {
     }
   }
   return [];
+}
+
+export function toQuery(
+  params?: Record<string, string | number | boolean | undefined>,
+): string {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === '' || value === null) continue;
+    sp.set(key, String(value));
+  }
+  const qs = sp.toString();
+  return qs ? `?${qs}` : '';
 }

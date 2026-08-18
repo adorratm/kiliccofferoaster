@@ -2,18 +2,18 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { RootStack } from '../../App';
-import { AppDock } from '../components/AppDock';
 import { EChart } from '../components/EChart';
 import { InboxRuntime } from '../components/InboxRuntime';
 import { api, isOpsRole, setToken } from '../lib/api';
 import { revenueSeriesOption, statusPieOption } from '../lib/charts';
+import { openShopTab } from '../lib/nav';
 import { unregisterPushToken } from '../lib/push';
 import { flushOutbox, pendingCount } from '../lib/sync';
 import { btn, btnText, card, colors, muted } from '../ui';
 
 type Props = NativeStackScreenProps<RootStack, 'Home'>;
 
-const GROUPS: { title: string; links: { label: string; to: Exclude<keyof RootStack, 'StaffLogin' | 'CustomerDetail' | 'ProductEdit' | 'Shop'> }[] }[] = [
+const GROUPS: { title: string; links: { label: string; to: Exclude<keyof RootStack, 'StaffLogin' | 'CustomerDetail' | 'ProductEdit'> }[] }[] = [
   {
     title: 'Muhasebe',
     links: [
@@ -63,7 +63,8 @@ export function HomeScreen({ navigation }: Props) {
         const me = await api<{ role: string }>('/auth/me');
         if (!isOpsRole(me.role)) {
           await setToken(null);
-          navigation.replace('Shop');
+          openShopTab(navigation);
+          navigation.replace('StaffLogin');
         }
       } catch {
         navigation.replace('StaffLogin');
@@ -144,18 +145,14 @@ export function HomeScreen({ navigation }: Props) {
         onPress={async () => {
           await unregisterPushToken().catch(() => undefined);
           await setToken(null);
-          navigation.navigate('Shop');
+          navigation.replace('StaffLogin');
+          openShopTab(navigation);
         }}
         style={{ marginTop: 16, marginBottom: 40 }}
       >
         <Text style={{ color: colors.muted, textAlign: 'center' }}>Oturumu kapat</Text>
       </Pressable>
     </ScrollView>
-      <AppDock
-        active="staff"
-        onShop={() => navigation.navigate('Shop')}
-        onStaff={() => undefined}
-      />
       </View>
     </>
   );

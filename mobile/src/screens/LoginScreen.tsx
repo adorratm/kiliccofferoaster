@@ -2,7 +2,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import type { RootStack } from '../../App';
-import { AppDock } from '../components/AppDock';
 import { api, restoreOpsSession, setToken } from '../lib/api';
 import { errorFromUrl, loginWithGoogle, tokenFromUrl } from '../lib/google-login';
 import { registerPushToken } from '../lib/push';
@@ -110,7 +109,7 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-    <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 24, paddingBottom: 48 }}>
       <Text style={{ color: '#a58b84', letterSpacing: 2, fontSize: 10 }}>AUTH_PROTOCOL // OPS</Text>
       <Text style={{ color: '#e5e2e1', fontSize: 28, marginTop: 8 }}>Personel girişi</Text>
       <Pressable
@@ -159,11 +158,6 @@ export function LoginScreen({ navigation }: Props) {
         <Text style={{ color: '#fff', textAlign: 'center' }}>Şifre ile giriş</Text>
       </Pressable>
     </View>
-    <AppDock
-      active="staff"
-      onShop={() => navigation.navigate('Shop')}
-      onStaff={() => undefined}
-    />
     </View>
   );
 }
