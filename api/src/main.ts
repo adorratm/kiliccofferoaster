@@ -39,8 +39,24 @@ async function bootstrap() {
     index: false,
   });
 
+  const desktopUrl = config.get<string>('desktopUrl') || 'http://localhost:5173';
+
   app.enableCors({
-    origin: [frontendUrl, adminUrl],
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin === frontendUrl ||
+        origin === adminUrl ||
+        origin === desktopUrl ||
+        origin.startsWith('file://') ||
+        origin.startsWith('app://') ||
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
     credentials: true,
   });
 

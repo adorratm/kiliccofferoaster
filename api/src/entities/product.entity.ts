@@ -70,6 +70,17 @@ export class Product extends BaseEntity {
   @Column({ name: 'badge', type: 'varchar', length: 80, nullable: true })
   badge!: string | null;
 
+  /** Katalog türü: kahve, lokum, baharat vb. Kahve meta alanları yalnız kahve türlerinde doldurulur. */
+  @Column({ name: 'kind', type: 'varchar', length: 40, default: 'other' })
+  kind!: string;
+
+  @Column({ name: 'unit', type: 'varchar', length: 20, default: 'adet' })
+  unit!: string;
+
+  /** Satır KDV oranı (%). Varsayılan 20. */
+  @Column({ name: 'vat_rate', type: 'decimal', precision: 5, scale: 2, default: 20 })
+  vatRate!: string;
+
   @Column({ name: 'base_price', type: 'decimal', precision: 12, scale: 2 })
   basePrice!: string;
 

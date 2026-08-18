@@ -15,6 +15,7 @@ import {
   User,
   AuthProvider,
   UserRole,
+  OPS_ROLES,
 } from '@entities/user.entity';
 import { AdminAllowlist } from '@entities/admin-allowlist.entity';
 import {
@@ -106,6 +107,41 @@ export class AuthService {
       throw new UnauthorizedException('Hesap pasif');
     }
     return this.buildAuthResponse(user);
+  }
+
+  async opsLogin(dto: LoginDto): Promise<AuthTokens> {
+    const result = await this.login(dto);
+    if (!OPS_ROLES.includes(result.user.role)) {
+      throw new ForbiddenException('Bu hesap ön muhasebe için yetkili değil');
+    }
+    return result;
+  }
+
+  async createOpsUser(dto: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    role: UserRole.STAFF | UserRole.ACCOUNTANT;
+  }): Promise<PublicUser> {
+    const email = dto.email.toLowerCase().trim();
+    const existing = await this.em.findOne(User, { where: { email } });
+    if (existing) {
+      throw new ConflictException('Bu e-posta zaten kayıtlı');
+    }
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const user = this.em.create(User, {
+      email,
+      passwordHash,
+      firstName: dto.firstName ?? null,
+      lastName: dto.lastName ?? null,
+      provider: AuthProvider.LOCAL,
+      role: dto.role,
+      emailVerified: true,
+      isActive: true,
+    });
+    await this.em.save(user);
+    return this.sanitize(user);
   }
 
   /**
@@ -220,6 +256,35 @@ export class AuthService {
       throw new UnauthorizedException('Kullanıcı bulunamadı');
     }
     return this.sanitize(user);
+  }
+
+  async deleteAccount(userId: string): Promise<{ ok: true }> {
+    const user = await this.em.findOne(User, { where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Kullanıcı bulunamadı');
+    }
+    if (OPS_ROLES.includes(user.role)) {
+      throw new ForbiddenException(
+        'Personel hesabı bu ekrandan silinmez. Yöneticinize yazın.',
+      );
+    }
+    user.email = `deleted-${user.id}@deleted.local`;
+    user.passwordHash = null;
+    user.firstName = null;
+    user.lastName = null;
+    user.phone = null;
+    user.avatarUrl = null;
+    user.providerId = null;
+    user.isActive = false;
+    user.emailVerified = false;
+    await this.em.save(user);
+    await this.em
+      .createQueryBuilder()
+      .delete()
+      .from('device_push_tokens')
+      .where('user_id = :id', { id: user.id })
+      .execute();
+    return { ok: true };
   }
 
   /**

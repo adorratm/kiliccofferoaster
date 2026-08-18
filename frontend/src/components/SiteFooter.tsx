@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
+import { AppDownloadLink } from "@/components/AppDownloadLink";
+import { FooterNavLinks } from "@/components/FooterNavLinks";
 import { PaymentCardLogos } from "@/components/PaymentCardLogos";
 import type { SiteSettings } from "@/lib/cms";
 import { DEFAULT_SETTINGS } from "@/lib/cms";
@@ -72,15 +74,13 @@ export function SiteFooter({ settings = DEFAULT_SETTINGS }: Props) {
 
         <Reveal className="md:col-span-3 flex flex-col gap-3 font-meta text-xs uppercase tracking-widest" delay={80} variant="left">
           <span className="mb-2 text-primary/50">Navigasyon</span>
-          {navigation.footerNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-secondary underline hover:text-primary"
-            >
-              {item.label}
-            </Link>
-          ))}
+          <FooterNavLinks
+            items={navigation.footerNav}
+            className="text-secondary underline hover:text-primary"
+          />
+          {navigation.footerNav.some((item) => item.href === "/indir") ? null : (
+            <AppDownloadLink className="text-secondary underline hover:text-primary" />
+          )}
         </Reveal>
 
         <Reveal className="md:col-span-3 flex flex-col gap-3 font-meta text-xs uppercase tracking-widest" delay={140} variant="right">

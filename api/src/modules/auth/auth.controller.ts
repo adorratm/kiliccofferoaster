@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Req,
   Res,
@@ -13,11 +14,16 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '@modules/auth/auth.service';
-import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto } from '@modules/auth/dto/auth.dto';
+import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, CreateOpsUserDto } from '@modules/auth/dto/auth.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
-import { User } from '@entities/user.entity';
+import { User, UserRole } from '@entities/user.entity';
+import { Roles } from '@common/decorators/roles.decorator';
 import { GoogleAdminOauthFilter } from '@modules/auth/filters/google-admin-oauth.filter';
+import {
+  oauthSuccessUrl,
+  parseOauthClient,
+} from '@modules/auth/oauth-redirect';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,6 +45,24 @@ export class AuthController {
   @ApiOperation({ summary: 'E-posta/şifre ile giriş' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Post('ops-login')
+  @ApiOperation({ summary: 'Masaüstü / ops e-posta girişi (staff, accountant, admin)' })
+  opsLogin(@Body() dto: LoginDto) {
+    return this.authService.opsLogin(dto);
+  }
+
+  @Post('ops-users')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: staff / accountant hesabı oluştur' })
+  createOpsUser(@Body() dto: CreateOpsUserDto) {
+    return this.authService.createOpsUser({
+      ...dto,
+      role: dto.role === 'accountant' ? UserRole.ACCOUNTANT : UserRole.STAFF,
+    });
   }
 
   @Public()
@@ -75,6 +99,13 @@ export class AuthController {
     return this.authService.me(user.id);
   }
 
+  @Delete('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Müşteri hesabını kapat (KVKK / mağaza şartı)' })
+  deleteMe(@CurrentUser() user: User) {
+    return this.authService.deleteAccount(user.id);
+  }
+
   @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -108,18 +139,23 @@ export class AuthController {
     if (res.headersSent) {
       return;
     }
-    this.redirectWithToken(req.user as User, res, 'admin');
+    const client = parseOauthClient(req.query?.state);
+    this.redirectWithToken(req.user as User, res, client === 'admin' ? 'admin' : client);
   }
 
   private redirectWithToken(
     user: User,
     res: Response,
-    target: 'frontend' | 'admin',
+    target: 'frontend' | 'admin' | 'mobile' | 'web',
   ): void {
     if (res.headersSent) {
       return;
     }
     const { accessToken } = this.authService.buildAuthResponse(user);
+    if (target === 'mobile' || target === 'web') {
+      res.redirect(oauthSuccessUrl(this.config, target, accessToken));
+      return;
+    }
     const base =
       target === 'admin'
         ? this.config.get<string>('adminUrl') || 'http://localhost:3001'

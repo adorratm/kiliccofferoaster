@@ -2,11 +2,11 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminService } from '@modules/admin/admin.service';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 
 @ApiTags('admin')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN)
+@Roles(...OPS_ROLES)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}

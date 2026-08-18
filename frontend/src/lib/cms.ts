@@ -99,6 +99,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
       { href: "/takip", label: "Kargo Takip" },
       { href: "/sepet", label: "Sepet" },
       { href: "/hesabim", label: "Hesabım" },
+      { href: "/indir", label: "Uygulamalar" },
     ],
     footerLegal: [
       { href: "/kvkk", label: "KVKK" },

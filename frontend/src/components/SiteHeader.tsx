@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppDownloadLink } from "@/components/AppDownloadLink";
 import { SiteSearch } from "@/components/SiteSearch";
+import { NotificationBell } from "@/components/NotificationBell";
 import { isAuthenticated, loginPath } from "@/lib/auth";
 import { cartItemCount, fetchCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/cms";
@@ -147,6 +149,7 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
                     {authed ? "Hesabım" : "Giriş"}
                   </Link>
                 </div>
+                <AppDownloadLink className="mt-4 font-meta text-[11px] uppercase tracking-widest text-secondary underline hover:text-primary" />
 
                 <p className="mt-6 font-meta text-[10px] uppercase tracking-widest text-secondary/50">
                   {settings.contact.locationLabel || settings.brand.location}
@@ -193,7 +196,9 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-5">
+          <AppDownloadLink />
           <SiteSearch />
+          {authed ? <NotificationBell /> : null}
           <Link
             href="/sepet"
             className="flex items-center gap-2 font-meta text-xs uppercase tracking-widest text-primary"

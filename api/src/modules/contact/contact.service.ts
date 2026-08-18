@@ -8,10 +8,14 @@ import {
   MarkContactReadDto,
   NewsletterSubscribeDto,
 } from '@modules/contact/dto/contact.dto';
+import { InboxService } from '@modules/notifications/inbox.service';
 
 @Injectable()
 export class ContactService {
-  constructor(@InjectEntityManager() private readonly em: EntityManager) {}
+  constructor(
+    @InjectEntityManager() private readonly em: EntityManager,
+    private readonly inbox: InboxService,
+  ) {}
 
   async createMessage(dto: CreateContactMessageDto): Promise<ContactMessage> {
     const msg = this.em.create(ContactMessage, {
@@ -21,7 +25,9 @@ export class ContactService {
       message: dto.message,
       isRead: false,
     });
-    return this.em.save(msg);
+    const saved = await this.em.save(msg);
+    void this.inbox.notifyContactMessage(saved.senderName);
+    return saved;
   }
 
   async listMessages(): Promise<ContactMessage[]> {

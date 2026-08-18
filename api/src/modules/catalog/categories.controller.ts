@@ -15,7 +15,7 @@ import {
 } from '@modules/catalog/dto/catalog.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -30,7 +30,7 @@ export class CategoriesController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/all')
   @ApiOperation({ summary: 'Admin: tüm kategoriler' })
   findAllAdmin() {
@@ -38,7 +38,7 @@ export class CategoriesController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Post()
   @ApiOperation({ summary: 'Admin: kategori oluştur' })
   create(@Body() dto: CreateCategoryDto) {
@@ -46,7 +46,7 @@ export class CategoriesController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch(':id')
   @ApiOperation({ summary: 'Admin: kategori güncelle' })
   update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
@@ -54,7 +54,7 @@ export class CategoriesController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Delete(':id')
   @ApiOperation({ summary: 'Admin: kategori sil' })
   remove(@Param('id') id: string) {

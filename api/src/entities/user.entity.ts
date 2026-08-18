@@ -14,6 +14,18 @@ export enum AuthProvider {
 export enum UserRole {
   CUSTOMER = 'customer',
   ADMIN = 'admin',
+  STAFF = 'staff',
+  ACCOUNTANT = 'accountant',
+}
+
+export const OPS_ROLES: UserRole[] = [
+  UserRole.ADMIN,
+  UserRole.STAFF,
+  UserRole.ACCOUNTANT,
+];
+
+export function isOpsRole(role: UserRole | string): boolean {
+  return OPS_ROLES.includes(role as UserRole);
 }
 
 @Entity('users')

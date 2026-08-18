@@ -205,6 +205,28 @@ export class CreateProductDto {
   @IsUUID()
   categoryId?: string;
 
+  @ApiPropertyOptional({
+    example: 'coffee_turkish',
+    description: 'Ürün türü (kahve / lokum / baharat vb.)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  kind?: string;
+
+  @ApiPropertyOptional({ example: 'g' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  unit?: string;
+
+  @ApiPropertyOptional({ example: 20 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  vatRate?: number;
+
   @ApiPropertyOptional({ type: [ProductVariantDto] })
   @IsOptional()
   @IsArray()
@@ -241,6 +263,12 @@ export class ProductQueryDto {
   @IsOptional()
   @IsString()
   originCountry?: string;
+
+  @ApiPropertyOptional({ description: 'Ürün türü filtresi' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  kind?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

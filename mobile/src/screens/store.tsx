@@ -1,0 +1,398 @@
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { api, asArray } from '../lib/api';
+import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
+import { Switch } from '../components/Switch';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+
+type Category = { id: string; name: string; slug: string; isActive: boolean };
+type Order = { id: string; orderNumber: string; status: string; customerName: string; total: string | number };
+type ReturnReq = {
+  id: string;
+  type: string;
+  status: string;
+  reason: string;
+  order?: { orderNumber: string; customerName: string };
+};
+type Coupon = { id: string; code: string; type: string; value: number; isActive: boolean };
+type Campaign = { id: string; name: string; discountPercent: number; isActive: boolean };
+type Review = { id: string; rating: number; body: string; title?: string | null; product?: { name: string } };
+type Provider = { id: string; provider: string; displayName: string; isEnabled: boolean };
+type Message = { id: string; name: string; email: string; message: string; isRead?: boolean };
+type Sub = { id: string; email: string };
+
+export function CategoriesScreen() {
+  const [items, setItems] = useState<Category[]>([]);
+  const [name, setName] = useState('');
+
+  async function load() {
+    setItems(asArray<Category>(await api('/categories/admin/all')));
+  }
+  useEffect(() => { void load(); }, []);
+
+  async function create() {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    await api('/categories', { method: 'POST', body: { name, slug, isActive: true } });
+    setName('');
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Kategoriler</Text>
+      <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={name} onChangeText={setName} style={input} />
+      <Pressable onPress={() => void create()} style={btn}><Text style={btnText}>Oluştur</Text></Pressable>
+      {items.map((c) => (
+        <View key={c.id} style={card}>
+          <Text style={{ color: colors.text }}>{c.name}</Text>
+          <Text style={muted}>{c.slug}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+export function ShopOrdersScreen() {
+  const [items, setItems] = useState<Order[]>([]);
+  const [selected, setSelected] = useState<Order | null>(null);
+
+  async function load() {
+    setItems(asArray<Order>(await api('/orders/admin/all?limit=40')));
+  }
+  useEffect(() => { void load(); }, []);
+
+  async function open(id: string) {
+    setSelected(await api<Order>(`/orders/${id}`));
+  }
+
+  async function setStatus(status: string) {
+    if (!selected) return;
+    await api(`/orders/${selected.id}/status`, { method: 'PATCH', body: { status } });
+    await open(selected.id);
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Siparişler</Text>
+      {items.map((o) => (
+        <Pressable key={o.id} onPress={() => void open(o.id)} style={card}>
+          <Text style={{ color: colors.accentSoft }}>{o.orderNumber}</Text>
+          <Text style={{ color: colors.text }}>{o.customerName}</Text>
+          <Text style={muted}>{o.status} · {o.total} ₺</Text>
+        </Pressable>
+      ))}
+      {selected ? (
+        <View style={card}>
+          <Text style={{ color: colors.text }}>{selected.orderNumber}</Text>
+          {['paid', 'processing', 'shipped', 'delivered', 'cancelled'].map((s) => (
+            <Pressable key={s} onPress={() => void setStatus(s)} style={{ marginTop: 8 }}>
+              <Text style={{ color: selected.status === s ? colors.accent : colors.muted }}>{s}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </ScrollView>
+  );
+}
+
+export function ReturnsScreen() {
+  const [items, setItems] = useState<ReturnReq[]>([]);
+  const [pending, setPending] = useState<{ id: string; status: 'approved' | 'rejected' } | null>(null);
+  useEffect(() => {
+    void api('/orders/admin/return-requests?status=requested')
+      .then((d) => setItems(asArray<ReturnReq>(d)));
+  }, []);
+
+  async function review() {
+    if (!pending) return;
+    await api(`/orders/admin/return-requests/${pending.id}`, {
+      method: 'PATCH',
+      body: { status: pending.status },
+    });
+    setItems((rows) => rows.filter((r) => r.id !== pending.id));
+    setPending(null);
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>İadeler</Text>
+      {items.map((r) => (
+        <View key={r.id} style={card}>
+          <Text style={{ color: colors.text }}>{r.order?.orderNumber} · {r.type}</Text>
+          <Text style={muted}>{r.reason}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <Pressable onPress={() => setPending({ id: r.id, status: 'approved' })} style={[btn, { flex: 1, marginTop: 0 }]}>
+              <Text style={btnText}>Onay</Text>
+            </Pressable>
+            <Pressable onPress={() => setPending({ id: r.id, status: 'rejected' })} style={[btn, { flex: 1, marginTop: 0, backgroundColor: colors.border }]}>
+              <Text style={btnText}>Red</Text>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title={pending?.status === 'approved' ? 'Talebi onayla?' : 'Talebi reddet?'}
+        confirmLabel={pending?.status === 'approved' ? 'Onayla' : 'Reddet'}
+        danger={pending?.status === 'rejected'}
+        onCancel={() => setPending(null)}
+        onConfirm={() => void review()}
+      />
+    </ScrollView>
+  );
+}
+
+export function CouponsScreen() {
+  const [items, setItems] = useState<Coupon[]>([]);
+  const [code, setCode] = useState('');
+  const [value, setValue] = useState('10');
+  const [pending, setPending] = useState<Coupon | null>(null);
+  async function load() {
+    setItems(asArray<Coupon>(await api('/coupons/admin/all')));
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function create() {
+    await api('/coupons', {
+      method: 'POST',
+      body: { code: code.toUpperCase(), type: 'percent', value: Number(value), isActive: true },
+    });
+    setCode('');
+    await load();
+  }
+
+  async function applyToggle(c: Coupon) {
+    await api(`/coupons/${c.id}`, { method: 'PATCH', body: { isActive: !c.isActive } });
+    setPending(null);
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Kuponlar</Text>
+      <TextInput placeholder="Kod" placeholderTextColor={colors.muted} value={code} onChangeText={setCode} style={input} autoCapitalize="characters" />
+      <TextInput placeholder="%" placeholderTextColor={colors.muted} value={value} onChangeText={setValue} style={input} keyboardType="number-pad" />
+      <Pressable onPress={() => void create()} style={btn}><Text style={btnText}>Oluştur</Text></Pressable>
+      {items.map((c) => (
+        <View key={c.id} style={card}>
+          <Text style={{ color: colors.text }}>{c.code}</Text>
+          <Text style={muted}>{c.type} {c.value}</Text>
+          <View style={{ marginTop: 10 }}>
+            <Switch
+              checked={c.isActive}
+              label="Aktif"
+              onChange={(next) => {
+                if (c.isActive && !next) setPending(c);
+                else void applyToggle(c);
+              }}
+            />
+          </View>
+        </View>
+      ))}
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title="Kuponu pasifleştir?"
+        description={pending?.code}
+        confirmLabel="Pasifleştir"
+        onCancel={() => setPending(null)}
+        onConfirm={() => pending && void applyToggle(pending)}
+      />
+    </ScrollView>
+  );
+}
+
+export function CampaignsScreen() {
+  const [items, setItems] = useState<Campaign[]>([]);
+  const [name, setName] = useState('');
+  const [pct, setPct] = useState('15');
+  const [pending, setPending] = useState<Campaign | null>(null);
+  async function load() {
+    setItems(asArray<Campaign>(await api('/campaigns/admin/all')));
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function create() {
+    await api('/campaigns', {
+      method: 'POST',
+      body: { name, discountPercent: Number(pct), isActive: true },
+    });
+    setName('');
+    await load();
+  }
+
+  async function applyToggle(c: Campaign) {
+    await api(`/campaigns/${c.id}`, { method: 'PATCH', body: { isActive: !c.isActive } });
+    setPending(null);
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Kampanyalar</Text>
+      <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={name} onChangeText={setName} style={input} />
+      <TextInput placeholder="İndirim %" placeholderTextColor={colors.muted} value={pct} onChangeText={setPct} style={input} keyboardType="number-pad" />
+      <Pressable onPress={() => void create()} style={btn}><Text style={btnText}>Oluştur</Text></Pressable>
+      {items.map((c) => (
+        <View key={c.id} style={card}>
+          <Text style={{ color: colors.text }}>{c.name}</Text>
+          <Text style={muted}>%{c.discountPercent}</Text>
+          <View style={{ marginTop: 10 }}>
+            <Switch
+              checked={c.isActive}
+              label="Aktif"
+              onChange={(next) => {
+                if (c.isActive && !next) setPending(c);
+                else void applyToggle(c);
+              }}
+            />
+          </View>
+        </View>
+      ))}
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title="Kampanyayı pasifleştir?"
+        description={pending?.name}
+        confirmLabel="Pasifleştir"
+        onCancel={() => setPending(null)}
+        onConfirm={() => pending && void applyToggle(pending)}
+      />
+    </ScrollView>
+  );
+}
+
+export function ReviewsScreen() {
+  const [items, setItems] = useState<Review[]>([]);
+  const [pending, setPending] = useState<{ id: string; isApproved: boolean } | null>(null);
+  async function load() {
+    setItems(asArray<Review>(await api('/reviews/admin/all?status=pending&limit=40')));
+  }
+  useEffect(() => { void load(); }, []);
+
+  async function moderate() {
+    if (!pending) return;
+    await api(`/reviews/${pending.id}/moderate`, { method: 'PATCH', body: { isApproved: pending.isApproved } });
+    setPending(null);
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Yorumlar</Text>
+      {items.map((r) => (
+        <View key={r.id} style={card}>
+          <Text style={{ color: colors.text }}>{r.product?.name || 'Ürün'} · {r.rating}/5</Text>
+          <Text style={muted}>{r.body}</Text>
+          <Pressable onPress={() => setPending({ id: r.id, isApproved: true })} style={btn}>
+            <Text style={btnText}>Onayla</Text>
+          </Pressable>
+        </View>
+      ))}
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title="Yorumu yayınla?"
+        confirmLabel="Yayınla"
+        danger={false}
+        onCancel={() => setPending(null)}
+        onConfirm={() => void moderate()}
+      />
+    </ScrollView>
+  );
+}
+
+export function ShippingScreen() {
+  const [rows, setRows] = useState<Provider[]>([]);
+  const [pending, setPending] = useState<Provider | null>(null);
+  async function load() {
+    setRows(asArray<Provider>(await api('/shipping/providers')));
+  }
+  useEffect(() => { void load(); }, []);
+
+  async function applyToggle(row: Provider) {
+    await api(`/shipping/providers/${encodeURIComponent(row.provider)}`, {
+      method: 'PATCH',
+      body: { isEnabled: !row.isEnabled },
+    });
+    setPending(null);
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Kargo</Text>
+      {rows.map((r) => (
+        <View key={r.id} style={card}>
+          <Text style={{ color: colors.text }}>{r.displayName}</Text>
+          <View style={{ marginTop: 10 }}>
+            <Switch
+              checked={r.isEnabled}
+              label="Açık"
+              onChange={(next) => {
+                if (r.isEnabled && !next) setPending(r);
+                else void applyToggle(r);
+              }}
+            />
+          </View>
+        </View>
+      ))}
+      <ConfirmDialog
+        open={Boolean(pending)}
+        title="Kargo sağlayıcısını kapat?"
+        description={pending?.displayName}
+        confirmLabel="Kapat"
+        onCancel={() => setPending(null)}
+        onConfirm={() => pending && void applyToggle(pending)}
+      />
+    </ScrollView>
+  );
+}
+
+export function MessagesScreen() {
+  const [items, setItems] = useState<Message[]>([]);
+  async function load() {
+    setItems(asArray<Message>(await api('/contact/admin')));
+  }
+  useEffect(() => { void load(); }, []);
+
+  async function mark(id: string) {
+    await api(`/contact/admin/${id}/read`, { method: 'PATCH', body: { isRead: true } });
+    await load();
+  }
+
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Mesajlar</Text>
+      {items.map((m) => (
+        <View key={m.id} style={card}>
+          <Text style={{ color: colors.text }}>{m.name}</Text>
+          <Text style={muted}>{m.email}</Text>
+          <Text style={{ color: colors.muted, marginTop: 6 }}>{m.message}</Text>
+          {!m.isRead ? (
+            <Pressable onPress={() => void mark(m.id)} style={btn}><Text style={btnText}>Okundu</Text></Pressable>
+          ) : null}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+export function NewsletterScreen() {
+  const [items, setItems] = useState<Sub[]>([]);
+  useEffect(() => {
+    void api('/newsletter/subscribers').then((d) => setItems(asArray<Sub>(d)));
+  }, []);
+  return (
+    <ScrollView style={screen}>
+      <Text style={title}>Bülten</Text>
+      {items.map((s) => (
+        <View key={s.id} style={card}>
+          <Text style={{ color: colors.text }}>{s.email}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}

@@ -23,12 +23,23 @@ import { MediaAsset } from '@entities/media-asset.entity';
 import { SiteSetting } from '@entities/site-setting.entity';
 import { ContentSection } from '@entities/content-section.entity';
 import { NotificationLog } from '@entities/notification-log.entity';
+import { InAppNotification } from '@entities/in-app-notification.entity';
+import { NotificationPreference } from '@entities/notification-preference.entity';
+import { DevicePushToken } from '@entities/device-push-token.entity';
 import { BlogPost } from '@entities/blog-post.entity';
 import { Coupon } from '@entities/coupon.entity';
 import { CouponRedemption } from '@entities/coupon-redemption.entity';
 import { ProductReview } from '@entities/product-review.entity';
 import { WishlistItem } from '@entities/wishlist-item.entity';
 import { Campaign } from '@entities/campaign.entity';
+import { Party } from '@entities/party.entity';
+import { Invoice } from '@entities/invoice.entity';
+import { InvoiceLine } from '@entities/invoice-line.entity';
+import { CashAccount } from '@entities/cash-account.entity';
+import { CashEntry } from '@entities/cash-entry.entity';
+import { StockMovement } from '@entities/stock-movement.entity';
+import { OkcSale } from '@entities/okc-sale.entity';
+import { AccountingSettings } from '@entities/accounting-settings.entity';
 
 export const ALL_ENTITIES = [
   User,
@@ -56,10 +67,21 @@ export const ALL_ENTITIES = [
   SiteSetting,
   ContentSection,
   NotificationLog,
+  InAppNotification,
+  NotificationPreference,
+  DevicePushToken,
   BlogPost,
   Coupon,
   CouponRedemption,
   ProductReview,
   WishlistItem,
   Campaign,
+  Party,
+  Invoice,
+  InvoiceLine,
+  CashAccount,
+  CashEntry,
+  StockMovement,
+  OkcSale,
+  AccountingSettings,
 ];

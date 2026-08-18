@@ -4,12 +4,21 @@
   "workspaces": [
     "api",
     "frontend",
-    "admin"
+    "admin",
+    "desktop",
+    "mobile",
+    "packages/*"
   ],
   "scripts": {
     "dev:api": "yarn workspace @kilic/api start:dev",
     "dev:frontend": "yarn workspace @kilic/frontend dev",
     "dev:admin": "yarn workspace @kilic/admin dev",
+    "dev:desktop": "yarn workspace @kilic/desktop dev",
+    "dev:mobile": "yarn workspace @kilic/mobile start",
+    "dev:mobile:web": "yarn workspace @kilic/mobile web",
+    "dev:mobile:android": "yarn workspace @kilic/mobile android",
+    "pack:desktop:win": "yarn workspace @kilic/desktop pack:win",
+    "pack:desktop:mac": "yarn workspace @kilic/desktop pack:mac",
     "build": "yarn workspaces foreach -Apt run build",
     "build:api": "yarn workspace @kilic/api build",
     "build:frontend": "yarn workspace @kilic/frontend build",
@@ -33,7 +42,19 @@
     "js-yaml@npm:^4.3.0": "4.3.1",
     "js-yaml@npm:5.2.1": "5.2.3",
     "js-yaml@npm:5.2.2": "5.2.3",
-    "brace-expansion": "patch:brace-expansion@npm%3A5.0.9#~/.yarn/patches/brace-expansion-npm-5.0.9-2717df6b49.patch"
+    "brace-expansion": "patch:brace-expansion@npm%3A5.0.9#~/.yarn/patches/brace-expansion-npm-5.0.9-2717df6b49.patch",
+    "react-native": "0.79.5",
+    "metro": "0.82.5",
+    "metro-config": "0.82.5",
+    "metro-core": "0.82.5",
+    "metro-runtime": "0.82.5",
+    "metro-resolver": "0.82.5",
+    "metro-cache": "0.82.5",
+    "metro-cache-key": "0.82.5",
+    "metro-source-map": "0.82.5",
+    "metro-babel-transformer": "0.82.5",
+    "metro-transform-worker": "0.82.5",
+    "pretty-format": "29.7.0"
   },
   "volta": {
     "node": "26.7.0",

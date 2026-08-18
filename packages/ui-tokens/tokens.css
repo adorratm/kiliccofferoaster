@@ -1,0 +1,21 @@
+:root {
+  --background: #131313;
+  --foreground: #e5e2e1;
+  --surface: #1c1b1b;
+  --surface-high: #2a2a2a;
+  --surface-highest: #353534;
+  --border: #57423d;
+  --border-muted: #3a3939;
+  --muted: #a58b84;
+  --accent: #cc5b3e;
+  --accent-hover: #e46d4f;
+  --accent-text: #ffdbd2;
+  --primary: #ffb4a2;
+  --success: #6b9f7a;
+  --warning: #c9a227;
+  --danger: #c45c5c;
+  --radius: 0;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 160ms;
+  --motion-base: 420ms;
+}

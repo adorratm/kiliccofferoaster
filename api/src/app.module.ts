@@ -28,10 +28,13 @@ import { AddressesModule } from '@modules/addresses/addresses.module';
 import { SearchModule } from '@modules/search/search.module';
 import { BlogModule } from '@modules/blog/blog.module';
 import { AdminModule } from '@modules/admin/admin.module';
+import { CustomersModule } from '@modules/customers/customers.module';
 import { CouponsModule } from '@modules/coupons/coupons.module';
 import { CampaignsModule } from '@modules/campaigns/campaigns.module';
 import { ReviewsModule } from '@modules/reviews/reviews.module';
 import { WishlistModule } from '@modules/wishlist/wishlist.module';
+import { AccountingModule } from '@modules/accounting/accounting.module';
+import { EinvoiceModule } from '@modules/einvoice/einvoice.module';
 
 const shouldSynchronize =
   process.env.DATABASE_SYNCHRONIZE === 'true'
@@ -52,10 +55,13 @@ const shouldRunMigrations =
   imports: [
     HealthModule,
     AdminModule,
+    CustomersModule,
     CouponsModule,
     CampaignsModule,
     ReviewsModule,
     WishlistModule,
+    AccountingModule,
+    EinvoiceModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],

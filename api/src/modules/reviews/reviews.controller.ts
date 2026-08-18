@@ -18,7 +18,7 @@ import {
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
-import { User, UserRole } from '@entities/user.entity';
+import { OPS_ROLES, User } from '@entities/user.entity';
 
 @ApiTags('reviews')
 @Controller('reviews')
@@ -47,21 +47,21 @@ export class ReviewsController {
     return this.reviewsService.create(user, dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/all')
   @ApiBearerAuth()
   listAdmin(@Query() query: ListReviewsQueryDto) {
     return this.reviewsService.listAdmin(query);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch(':id/moderate')
   @ApiBearerAuth()
   moderate(@Param('id') id: string, @Body() dto: ModerateReviewDto) {
     return this.reviewsService.moderate(id, dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Delete(':id')
   @ApiBearerAuth()
   remove(@Param('id') id: string) {

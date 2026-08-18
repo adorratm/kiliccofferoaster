@@ -26,6 +26,7 @@ import {
   resolveFrontendUrl,
   statusLabel,
 } from '@modules/notifications/notification.templates';
+import { InboxService } from '@modules/notifications/inbox.service';
 import { ConfigService } from '@nestjs/config';
 import { normalizePhoneE164 } from '@common/utils/phone';
 
@@ -44,6 +45,7 @@ export class NotificationsService {
     private readonly email: EmailProvider,
     private readonly whatsapp: WhatsAppProviderRouter,
     private readonly config: ConfigService,
+    private readonly inbox: InboxService,
   ) {}
 
   async enqueueOrderStatus(
@@ -94,6 +96,7 @@ export class NotificationsService {
     name?: string | null;
     itemCount: number;
     reminder?: 1 | 2;
+    userId?: string | null;
   }) {
     const reminder = input.reminder === 2 ? 2 : 1;
     const template =
@@ -104,6 +107,7 @@ export class NotificationsService {
       channels: ['email'],
       recipientEmail: input.email,
       recipientName: input.name || undefined,
+      userId: input.userId || undefined,
       context: { itemCount: input.itemCount, reminder },
     };
     await this.notifyQueue.add(template, payload, {
@@ -125,6 +129,10 @@ export class NotificationsService {
     },
     emails: string[],
   ) {
+    void this.inbox.notifyLowStock(
+      row.weightLabel ? `${row.name} · ${row.weightLabel}` : row.name,
+      row.stock,
+    );
     for (const email of emails) {
       const payload: NotificationJobPayload = {
         template: 'low_stock',
@@ -223,6 +231,13 @@ export class NotificationsService {
         await this.sendWhatsApp(order, shipment, payload.template, ctx);
       }
     }
+
+    await this.inbox.fromOrderTemplate(
+      payload.template,
+      order,
+      shipment,
+      ctx.statusLabel,
+    );
   }
 
   private async sendEmail(
@@ -355,6 +370,7 @@ export class NotificationsService {
       log.status = NotificationStatus.SENT;
       log.providerMessageId = result.id ?? null;
       await this.em.save(log);
+      await this.inbox.notifyAbandonedCart(payload.userId || null, itemCount);
     } catch (err) {
       log.status = NotificationStatus.FAILED;
       log.errorMessage = err instanceof Error ? err.message : String(err);

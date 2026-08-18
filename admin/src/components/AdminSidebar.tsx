@@ -14,6 +14,7 @@ export const ADMIN_NAV = [
   { href: '/site-ayarlari', label: 'Site Ayarları', code: '06' },
   { href: '/medya', label: 'Medya', code: '07' },
   { href: '/siparisler', label: 'Siparişler', code: '08' },
+  { href: '/musteriler', label: 'Müşteriler', code: '08c' },
   { href: '/iadeler', label: 'İade Talepleri', code: '08b' },
   { href: '/kuponlar', label: 'Kuponlar', code: '09' },
   { href: '/kampanyalar', label: 'Kampanyalar', code: '09b' },
@@ -23,6 +24,7 @@ export const ADMIN_NAV = [
   { href: '/sozlesmeler', label: 'Sözleşmeler', code: '13' },
   { href: '/mesajlar', label: 'Mesajlar', code: '14' },
   { href: '/bulten', label: 'Bülten', code: '15' },
+  { href: '/bildirimler', label: 'Bildirimler', code: '15b' },
   { href: '/kuyruklar', label: 'Kuyruklar', code: '16' },
 ];
 

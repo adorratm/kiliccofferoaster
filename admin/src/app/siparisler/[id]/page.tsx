@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import {
@@ -203,6 +204,14 @@ export default function OrderDetailPage() {
           <p className="text-sm font-medium">{order.customerName}</p>
           <p className="text-sm text-muted">{order.customerEmail}</p>
           <p className="text-sm text-muted">{order.customerPhone}</p>
+          {order.userId ? (
+            <Link
+              href={`/musteriler/${order.userId}`}
+              className="inline-block text-sm text-accent hover:underline"
+            >
+              Kayıtlı müşteri kartı →
+            </Link>
+          ) : null}
           {addressLines.length ? (
             <div className="mt-2 border-t border-border-muted pt-3 text-sm text-muted">
               <p className="mono mb-1 text-[10px] uppercase">Teslimat</p>

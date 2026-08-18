@@ -64,6 +64,7 @@ export class AbandonedCartService {
         name: this.resolveName(cart),
         itemCount: cart.items.reduce((n, i) => n + i.quantity, 0),
         reminder: 1,
+        userId: cart.userId,
       });
 
       cart.abandonedReminderAt = new Date();
@@ -109,6 +110,7 @@ export class AbandonedCartService {
         name: this.resolveName(cart),
         itemCount: cart.items.reduce((n, i) => n + i.quantity, 0),
         reminder: 2,
+        userId: cart.userId,
       });
 
       cart.abandonedReminder2At = new Date();

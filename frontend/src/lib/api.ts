@@ -354,6 +354,10 @@ export async function getMe(token: string) {
   return apiFetch<User>("/auth/me", { token });
 }
 
+export async function deleteMyAccount(token: string) {
+  return apiFetch<{ ok: boolean }>("/auth/me", { method: "DELETE", token });
+}
+
 export async function getMyAddresses(token: string): Promise<Address[]> {
   try {
     return await apiFetch<Address[]>("/addresses", { token });
@@ -680,4 +684,77 @@ export async function logCookieConsent(payload: {
   } catch {
     return { ok: false };
   }
+}
+
+export type InboxItem = {
+  id: string;
+  title: string;
+  body: string;
+  href: string | null;
+  type: string;
+  category: string;
+  audience: string;
+  orderId?: string | null;
+  readAt?: string | null;
+  createdAt?: string;
+};
+
+export type NotificationPrefs = {
+  inAppEnabled: boolean;
+  pushEnabled: boolean;
+  ordersEnabled: boolean;
+  shippingEnabled: boolean;
+  returnsEnabled: boolean;
+  accountEnabled: boolean;
+  marketingEnabled: boolean;
+  opsOrdersEnabled: boolean;
+  opsReturnsEnabled: boolean;
+  opsMessagesEnabled: boolean;
+  opsReviewsEnabled: boolean;
+  opsStockEnabled: boolean;
+};
+
+export async function fetchInbox(token: string, page = 1) {
+  return apiFetch<{
+    items: InboxItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>(`/notifications/inbox?page=${page}&limit=30`, { token });
+}
+
+export async function fetchUnreadCount(token: string) {
+  return apiFetch<{ count: number }>("/notifications/inbox/unread-count", {
+    token,
+  });
+}
+
+export async function markInboxRead(token: string, id: string) {
+  return apiFetch<InboxItem>(`/notifications/inbox/${id}/read`, {
+    method: "PATCH",
+    token,
+  });
+}
+
+export async function markInboxAllRead(token: string) {
+  return apiFetch<{ updated: number }>("/notifications/inbox/read-all", {
+    method: "PATCH",
+    token,
+  });
+}
+
+export async function fetchNotificationPrefs(token: string) {
+  return apiFetch<NotificationPrefs>("/notifications/preferences", { token });
+}
+
+export async function updateNotificationPrefs(
+  token: string,
+  body: Partial<NotificationPrefs>,
+) {
+  return apiFetch<NotificationPrefs>("/notifications/preferences", {
+    method: "PATCH",
+    token,
+    json: body,
+  });
 }

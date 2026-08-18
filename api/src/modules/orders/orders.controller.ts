@@ -27,7 +27,7 @@ import {
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
-import { User, UserRole } from '@entities/user.entity';
+import { isOpsRole, OPS_ROLES, User } from '@entities/user.entity';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -61,7 +61,7 @@ export class OrdersController {
     return this.ordersService.listForUser(user.id);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: sipariş listesi' })
@@ -69,7 +69,7 @@ export class OrdersController {
     return this.ordersService.listAllAdmin(query);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/all')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: sipariş listesi' })
@@ -77,7 +77,7 @@ export class OrdersController {
     return this.ordersService.listAllAdmin(query);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/return-requests')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: iade/iptal talepleri' })
@@ -85,7 +85,7 @@ export class OrdersController {
     return this.ordersService.listReturnRequestsAdmin(status);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch('admin/return-requests/:requestId')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: iade/iptal talebini onayla veya reddet' })
@@ -97,7 +97,7 @@ export class OrdersController {
     return this.ordersService.reviewReturnRequest(requestId, user.id, dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch(':id/status')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: sipariş durumu güncelle' })
@@ -126,7 +126,7 @@ export class OrdersController {
     return this.ordersService.listReturnRequestsForOrder(
       id,
       user.id,
-      user.role === UserRole.ADMIN,
+      isOpsRole(user.role),
     );
   }
 
@@ -135,7 +135,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'Sipariş detay' })
   async findOne(@Param('id') id: string, @CurrentUser() user: User) {
     const order = await this.ordersService.findById(id);
-    if (user.role !== UserRole.ADMIN && order.userId !== user.id) {
+    if (!isOpsRole(user.role) && order.userId !== user.id) {
       throw new ForbiddenException('Bu siparişe erişim yok');
     }
     return order;

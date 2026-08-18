@@ -1,0 +1,26 @@
+appId: tr.kiliccoffeeroaster.desktop
+productName: Kilic Coffee Roaster
+directories:
+  output: release
+files:
+  - out/**/*
+extraResources:
+  - from: resources
+    to: resources
+asarUnpack:
+  - node_modules/sql.js/**/*
+win:
+  target: nsis
+  icon: resources/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: KilicCoffee-Setup.${ext}
+mac:
+  category: public.app-category.shopping
+  target:
+    - target: dmg
+      arch:
+        - universal
+  icon: resources/icon.png
+  artifactName: KilicCoffee.${ext}

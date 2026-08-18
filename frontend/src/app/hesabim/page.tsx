@@ -11,6 +11,7 @@ import {
   changePassword,
   createAddress,
   deleteAddress,
+  deleteMyAccount,
   getMe,
   getMyAddresses,
   getMyOrders,
@@ -57,6 +58,9 @@ export default function AccountPage() {
   const [pwBusy, setPwBusy] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwOk, setPwOk] = useState<string | null>(null);
+  const [closeAccountOpen, setCloseAccountOpen] = useState(false);
+  const [closingAccount, setClosingAccount] = useState(false);
+  const [closeAccountError, setCloseAccountError] = useState<string | null>(null);
 
   async function reload(token: string) {
     const [me, myOrders, myAddresses] = await Promise.all([
@@ -125,6 +129,25 @@ export default function AccountPage() {
       );
     } finally {
       setPwBusy(false);
+    }
+  }
+
+  async function confirmCloseAccount() {
+    const token = getToken();
+    if (!token) return;
+    setClosingAccount(true);
+    setCloseAccountError(null);
+    try {
+      await deleteMyAccount(token);
+      clearToken();
+      clearWishlistCache();
+      router.replace("/");
+    } catch (err) {
+      setCloseAccountError(
+        err instanceof ApiError ? err.message : "Hesap kapatılamadı",
+      );
+    } finally {
+      setClosingAccount(false);
     }
   }
 
@@ -272,6 +295,12 @@ export default function AccountPage() {
           Favorilerim
         </Link>
         <Link
+          href="/hesabim/bildirimler"
+          className="border border-outline-variant/40 px-5 py-3 font-meta text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary"
+        >
+          Bildirimler
+        </Link>
+        <Link
           href="/urunler"
           className="border border-outline-variant/40 px-5 py-3 font-meta text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary"
         >
@@ -342,6 +371,30 @@ export default function AccountPage() {
                   : "Şifreyi belirle"}
             </button>
           </form>
+        </Reveal>
+      </section>
+
+      <section className="mt-12 max-w-xl">
+        <Reveal>
+          <h2 className="mb-4 font-display text-2xl">Hesabı kapat</h2>
+        </Reveal>
+        <Reveal delay={40}>
+          <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
+            Hesabınız pasife alınır, kişisel verileriniz anonimleştirilir. Geçmiş
+            sipariş kayıtları yasal saklama için durur. Bu işlem geri alınamaz.
+          </p>
+          {closeAccountError ? (
+            <p className="mt-3 font-meta text-[11px] uppercase text-error">
+              {closeAccountError}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setCloseAccountOpen(true)}
+            className="mt-6 border border-error/50 px-6 py-3 font-meta text-xs uppercase tracking-widest text-error hover:bg-error hover:text-deep-carbon"
+          >
+            Hesabımı sil
+          </button>
         </Reveal>
       </section>
 
@@ -661,6 +714,48 @@ export default function AccountPage() {
                 className="bg-error px-6 py-3 font-meta text-xs uppercase text-deep-carbon disabled:opacity-50"
               >
                 {deleting ? "Siliniyor…" : "Sil"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {closeAccountOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Kapat"
+            className="absolute inset-0 bg-deep-carbon/80"
+            onClick={() => setCloseAccountOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative w-full max-w-md border border-outline-variant/40 bg-surface-container-high p-6"
+          >
+            <p className="font-meta text-[10px] uppercase tracking-widest text-secondary">
+              Onay
+            </p>
+            <h3 className="mt-2 font-display text-2xl">Hesabı sil?</h3>
+            <p className="mt-3 font-meta text-xs leading-relaxed text-secondary">
+              Giriş yapamazsınız. Sipariş geçmişi mağaza kayıtlarında yasal süre
+              boyunca kalır.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCloseAccountOpen(false)}
+                disabled={closingAccount}
+                className="btn-ghost px-6 py-3 text-xs"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmCloseAccount()}
+                disabled={closingAccount}
+                className="bg-error px-6 py-3 font-meta text-xs uppercase text-deep-carbon disabled:opacity-50"
+              >
+                {closingAccount ? "Kapatılıyor…" : "Hesabı sil"}
               </button>
             </div>
           </div>

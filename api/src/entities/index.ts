@@ -1,5 +1,5 @@
 export { BaseEntity } from '@entities/base.entity';
-export { User, AuthProvider, UserRole } from '@entities/user.entity';
+export { User, AuthProvider, UserRole, OPS_ROLES, isOpsRole } from '@entities/user.entity';
 export { AdminAllowlist } from '@entities/admin-allowlist.entity';
 export { Address } from '@entities/address.entity';
 export { Category } from '@entities/category.entity';
@@ -39,4 +39,30 @@ export {
   NotificationChannel,
   NotificationStatus,
 } from '@entities/notification-log.entity';
+export {
+  InAppNotification,
+  InboxAudience,
+  InboxCategory,
+} from '@entities/in-app-notification.entity';
+export { NotificationPreference } from '@entities/notification-preference.entity';
+export {
+  DevicePushToken,
+  PushPlatform,
+} from '@entities/device-push-token.entity';
 export { Campaign } from '@entities/campaign.entity';
+export { Party, PartyType } from '@entities/party.entity';
+export {
+  Invoice,
+  InvoiceDirection,
+  InvoiceStatus,
+  EDocumentType,
+} from '@entities/invoice.entity';
+export { InvoiceLine } from '@entities/invoice-line.entity';
+export { CashAccount, CashAccountKind } from '@entities/cash-account.entity';
+export { CashEntry, CashEntryType } from '@entities/cash-entry.entity';
+export {
+  StockMovement,
+  StockMovementType,
+} from '@entities/stock-movement.entity';
+export { OkcSale } from '@entities/okc-sale.entity';
+export { AccountingSettings } from '@entities/accounting-settings.entity';

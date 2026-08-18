@@ -10,6 +10,10 @@ import { Order, OrderStatus } from '@entities/order.entity';
 import { OrderItem } from '@entities/order-item.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
+import {
+  StockMovement,
+  StockMovementType,
+} from '@entities/stock-movement.entity';
 import { LowStockService } from '@modules/catalog/low-stock.service';
 
 const TERMINAL_RESTOCK = new Set<OrderStatus>([
@@ -95,6 +99,17 @@ export class InventoryService {
           }
           variant.stock = Math.max(0, variant.stock - item.quantity);
           await tx.save(variant);
+          await tx.save(
+            tx.create(StockMovement, {
+              productId: variant.productId,
+              variantId: variant.id,
+              type: StockMovementType.SALE,
+              quantity: -item.quantity,
+              balanceAfter: variant.stock,
+              source: 'order',
+              sourceId: orderId,
+            }),
+          );
           touchedProductIds.add(variant.productId);
         } else if (item.productId) {
           const product = await tx.findOne(Product, {
@@ -109,6 +124,16 @@ export class InventoryService {
           }
           product.stock = Math.max(0, product.stock - item.quantity);
           await tx.save(product);
+          await tx.save(
+            tx.create(StockMovement, {
+              productId: product.id,
+              type: StockMovementType.SALE,
+              quantity: -item.quantity,
+              balanceAfter: product.stock,
+              source: 'order',
+              sourceId: orderId,
+            }),
+          );
           touchedProductIds.add(product.id);
         }
       }
@@ -166,6 +191,17 @@ export class InventoryService {
           }
           variant.stock += item.quantity;
           await tx.save(variant);
+          await tx.save(
+            tx.create(StockMovement, {
+              productId: variant.productId,
+              variantId: variant.id,
+              type: StockMovementType.RETURN,
+              quantity: item.quantity,
+              balanceAfter: variant.stock,
+              source: 'order',
+              sourceId: orderId,
+            }),
+          );
         } else if (item.productId) {
           const product = await tx.findOne(Product, {
             where: { id: item.productId },
@@ -179,6 +215,16 @@ export class InventoryService {
           }
           product.stock += item.quantity;
           await tx.save(product);
+          await tx.save(
+            tx.create(StockMovement, {
+              productId: product.id,
+              type: StockMovementType.RETURN,
+              quantity: item.quantity,
+              balanceAfter: product.stock,
+              source: 'order',
+              sourceId: orderId,
+            }),
+          );
         }
       }
 

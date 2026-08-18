@@ -16,6 +16,7 @@ import {
   ModerateReviewDto,
 } from '@modules/reviews/dto/reviews.dto';
 import { paginateResult } from '@common/utils/pagination';
+import { InboxService } from '@modules/notifications/inbox.service';
 
 const VERIFIED_STATUSES = [
   OrderStatus.PAID,
@@ -26,7 +27,10 @@ const VERIFIED_STATUSES = [
 
 @Injectable()
 export class ReviewsService {
-  constructor(@InjectEntityManager() private readonly em: EntityManager) {}
+  constructor(
+    @InjectEntityManager() private readonly em: EntityManager,
+    private readonly inbox: InboxService,
+  ) {}
 
   async listPublicBySlug(slug: string, page = 1, limit = 20) {
     const product = await this.em.findOne(Product, { where: { slug } });
@@ -98,7 +102,9 @@ export class ReviewsService {
       isApproved: false,
       isVerifiedPurchase: verified,
     });
-    return this.em.save(review);
+    const saved = await this.em.save(review);
+    void this.inbox.notifyReviewPending(product.name, authorName);
+    return saved;
   }
 
   async moderate(id: string, dto: ModerateReviewDto): Promise<ProductReview> {
@@ -107,6 +113,14 @@ export class ReviewsService {
     review.isApproved = dto.isApproved;
     await this.em.save(review);
     await this.recalculateProductRating(review.productId);
+    const product = await this.em.findOne(Product, {
+      where: { id: review.productId },
+    });
+    void this.inbox.notifyReviewModerated(
+      review.userId,
+      dto.isApproved,
+      product?.name || 'Ürün',
+    );
     return review;
   }
 

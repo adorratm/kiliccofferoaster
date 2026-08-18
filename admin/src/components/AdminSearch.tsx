@@ -27,6 +27,7 @@ type SearchResponse = {
 const SEE_ALL: Record<string, (q: string) => string> = {
   products: (q) => `/urunler?q=${encodeURIComponent(q)}`,
   orders: (q) => `/siparisler?q=${encodeURIComponent(q)}`,
+  customers: (q) => `/musteriler?q=${encodeURIComponent(q)}`,
   categories: (q) => `/kategoriler?q=${encodeURIComponent(q)}`,
   messages: (q) => `/mesajlar?q=${encodeURIComponent(q)}`,
   media: (q) => `/medya?q=${encodeURIComponent(q)}`,

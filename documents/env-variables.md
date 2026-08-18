@@ -23,6 +23,18 @@ Kök `.env` (örnek: `.env.example`).
 | `FRONTEND_URL` | CORS + OAuth yönlendirme |
 | `ADMIN_URL` | CORS + admin redirect |
 | `ADMIN_ALLOWLIST` | Virgülle e-postalar |
+| `DESKTOP_DEV_URL` | Electron Vite origin (CORS) |
+
+## Ön muhasebe / e-belge
+
+| Değişken | Açıklama |
+|----------|----------|
+| `OPS_STAFF_EMAIL` | Seed staff e-posta |
+| `OPS_STAFF_PASSWORD` | Seed staff şifre |
+| `TURKCELL_ESIRKET_API_KEY` | Turkcell e-Şirket API anahtarı |
+| `TURKCELL_ESIRKET_BASE_URL` | REST taban URL |
+| `TURKCELL_ESIRKET_MOCK` | `true`/`false`; boşsa anahtar yoksa mock |
+| `EXPO_PUBLIC_API_URL` | Mobil API adresi |
 
 ## OAuth
 

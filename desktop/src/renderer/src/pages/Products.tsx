@@ -1,0 +1,562 @@
+import { FormEvent, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Switch } from '../components/Switch';
+import { api } from '../lib/api';
+import { asArray, asPaged, formatMoney, inputClass, slugify } from '../lib/format';
+
+type Category = { id: string; name: string };
+
+type ProductVariant = {
+  id?: string;
+  sku: string;
+  weightLabel: string;
+  price: string | number;
+  stock: number;
+  isActive?: boolean;
+};
+
+type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  basePrice: string | number;
+  stock: number;
+  isActive: boolean;
+  isFeatured?: boolean;
+  categoryId?: string | null;
+  kind?: string;
+  unit?: string;
+  vatRate?: string | number;
+  variants?: ProductVariant[];
+};
+
+type VariantForm = {
+  id?: string;
+  sku: string;
+  weightLabel: string;
+  price: string;
+  stock: string;
+  isActive: boolean;
+};
+
+type FormState = {
+  name: string;
+  slug: string;
+  description: string;
+  basePrice: string;
+  stock: string;
+  categoryId: string;
+  kind: string;
+  unit: string;
+  vatRate: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  variants: VariantForm[];
+};
+
+const KINDS = [
+  { value: 'coffee_turkish', label: 'Türk Kahvesi' },
+  { value: 'coffee_filter', label: 'Filtre Kahve' },
+  { value: 'coffee_espresso', label: 'Espresso' },
+  { value: 'lokum', label: 'Lokum' },
+  { value: 'draje', label: 'Draje' },
+  { value: 'nuts', label: 'Kuruyemiş' },
+  { value: 'herbal_tea', label: 'Bitki Çayı' },
+  { value: 'spice', label: 'Baharat' },
+  { value: 'beverage', label: 'Meşrubat' },
+  { value: 'tea', label: 'Çay' },
+  { value: 'other', label: 'Diğer' },
+];
+
+const UNITS = ['g', 'kg', 'adet', 'paket', 'lt'];
+
+function emptyVariant(): VariantForm {
+  return {
+    sku: '',
+    weightLabel: '250g',
+    price: '',
+    stock: '0',
+    isActive: true,
+  };
+}
+
+function emptyForm(): FormState {
+  return {
+    name: '',
+    slug: '',
+    description: '',
+    basePrice: '',
+    stock: '0',
+    categoryId: '',
+    kind: 'other',
+    unit: 'adet',
+    vatRate: '20',
+    isActive: true,
+    isFeatured: false,
+    variants: [emptyVariant()],
+  };
+}
+
+function formFromProduct(p: Product): FormState {
+  const variants =
+    p.variants && p.variants.length
+      ? p.variants.map((v) => ({
+          id: v.id,
+          sku: v.sku || '',
+          weightLabel: v.weightLabel || '',
+          price: String(v.price ?? ''),
+          stock: String(v.stock ?? 0),
+          isActive: v.isActive !== false,
+        }))
+      : [emptyVariant()];
+  return {
+    name: p.name,
+    slug: p.slug,
+    description: p.description || '',
+    basePrice: String(p.basePrice ?? ''),
+    stock: String(p.stock ?? 0),
+    categoryId: p.categoryId || '',
+    kind: p.kind || 'other',
+    unit: p.unit || 'adet',
+    vatRate: String(p.vatRate ?? '20'),
+    isActive: p.isActive,
+    isFeatured: Boolean(p.isFeatured),
+    variants,
+  };
+}
+
+function variantCount(p: Product): number {
+  return p.variants?.length ?? 0;
+}
+
+export function ProductsPage() {
+  const { id: routeId } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
+  const [items, setItems] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteVariantIndex, setDeleteVariantIndex] = useState<number | null>(null);
+
+  async function load() {
+    const params = new URLSearchParams({
+      limit: '100',
+      includeInactive: 'true',
+      sort: 'name',
+      order: 'asc',
+    });
+    if (q.trim()) params.set('q', q.trim());
+    const [products, cats] = await Promise.all([
+      api<unknown>(`/products/admin/all?${params}`),
+      api<unknown>('/categories/admin/all'),
+    ]);
+    setItems(asPaged<Product>(products).items);
+    setCategories(asArray<Category>(cats));
+  }
+
+  useEffect(() => {
+    void load().catch(() => setError('Ürünler yüklenemedi'));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!routeId) {
+      setEditId(null);
+      setForm(emptyForm());
+      return;
+    }
+    void (async () => {
+      setError(null);
+      let product: Product | undefined;
+      try {
+        product = await api<Product>(`/products/admin/${routeId}`);
+      } catch {
+        const data = await api<unknown>('/products/admin/all?limit=100&includeInactive=true');
+        product = asPaged<Product>(data).items.find((p) => p.id === routeId);
+      }
+      if (cancelled) return;
+      if (!product) {
+        setError('Ürün bulunamadı');
+        setEditId(null);
+        setForm(emptyForm());
+        return;
+      }
+      setEditId(product.id);
+      setForm(formFromProduct(product));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [routeId]);
+
+  function updateVariant(index: number, patch: Partial<VariantForm>) {
+    setForm((f) => {
+      const variants = [...f.variants];
+      variants[index] = { ...variants[index], ...patch };
+      return { ...f, variants };
+    });
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const variants = form.variants
+      .filter((v) => v.weightLabel.trim() && v.price.trim())
+      .map((v, i) => ({
+        ...(v.id ? { id: v.id } : {}),
+        sku:
+          v.sku.trim() ||
+          `${slugify(form.name) || 'urun'}-${slugify(v.weightLabel) || i + 1}`.toUpperCase(),
+        weightLabel: v.weightLabel.trim(),
+        price: String(v.price),
+        stock: Number(v.stock) || 0,
+        isActive: v.isActive,
+      }));
+    const body = {
+      name: form.name.trim(),
+      slug: form.slug.trim() || slugify(form.name),
+      description: form.description.trim() || form.name.trim(),
+      basePrice: String(form.basePrice),
+      stock: Number(form.stock) || 0,
+      categoryId: form.categoryId || null,
+      kind: form.kind || 'other',
+      unit: form.unit || 'adet',
+      vatRate: Number(form.vatRate) || 20,
+      isActive: form.isActive,
+      isFeatured: form.isFeatured,
+      variants,
+    };
+    setSaving(true);
+    try {
+      if (editId) await api(`/products/${editId}`, { method: 'PATCH', body });
+      else await api('/products', { method: 'POST', body });
+      setForm(emptyForm());
+      setEditId(null);
+      if (routeId) navigate('/urunler');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kayıt hatası');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeProduct() {
+    if (!editId) return;
+    try {
+      await api(`/products/${editId}`, { method: 'DELETE' });
+      setDeleteOpen(false);
+      navigate('/urunler');
+      await load();
+    } catch (err) {
+      setDeleteOpen(false);
+      setError(err instanceof Error ? err.message : 'Silinemedi');
+    }
+  }
+
+  const pendingVariant = deleteVariantIndex !== null ? form.variants[deleteVariantIndex] : null;
+
+  return (
+    <div className="grid grid-cols-5 gap-6">
+      <div className="col-span-3">
+        <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">08 // Ürünler</p>
+        <h1 className="mt-1 text-2xl font-semibold">Katalog</h1>
+        <div className="mt-4 flex gap-2">
+          <input
+            placeholder="Ad, slug, SKU…"
+            className={`${inputClass} mt-0`}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void load().catch(() => setError('Ürünler yüklenemedi'));
+            }}
+          />
+          <button
+            type="button"
+            className="border border-border-muted px-4 py-2 text-sm"
+            onClick={() => void load().catch(() => setError('Ürünler yüklenemedi'))}
+          >
+            Ara
+          </button>
+          <button
+            type="button"
+            className="bg-accent px-4 py-2 text-sm text-white"
+            onClick={() => {
+              setError(null);
+              setEditId(null);
+              setForm(emptyForm());
+              if (routeId) navigate('/urunler');
+            }}
+          >
+            Yeni
+          </button>
+        </div>
+        <table className="mt-4 w-full text-sm">
+          <thead>
+            <tr className="border-b border-border-muted text-left text-muted">
+              <th className="py-2">Ad</th>
+              <th>Varyant</th>
+              <th>Fiyat</th>
+              <th>Stok</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((p) => (
+              <tr
+                key={p.id}
+                className={`cursor-pointer border-b border-border-muted/40 hover:bg-surface ${
+                  editId === p.id ? 'bg-surface' : ''
+                }`}
+                onClick={() => navigate(`/urunler/${p.id}`)}
+              >
+                <td className="py-2">
+                  <div>{p.name}</div>
+                  <div className="mono text-[10px] text-muted">{p.slug}</div>
+                </td>
+                <td className="text-muted">{variantCount(p) || '—'}</td>
+                <td>{formatMoney(p.basePrice)}</td>
+                <td>{p.stock}</td>
+                <td>{p.isActive ? 'Aktif' : 'Pasif'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <form
+        onSubmit={onSubmit}
+        className="col-span-2 max-h-[calc(100vh-8rem)] overflow-y-auto border border-border-muted bg-surface p-4"
+      >
+        <p className="mono text-[10px] uppercase text-muted">{editId ? 'Düzenle' : 'Yeni ürün'}</p>
+        <input
+          required
+          placeholder="Ad"
+          className={inputClass}
+          value={form.name}
+          onChange={(e) =>
+            setForm((f) => ({
+              ...f,
+              name: e.target.value,
+              slug: editId ? f.slug : slugify(e.target.value),
+            }))
+          }
+        />
+        <input
+          placeholder="Slug"
+          className={inputClass}
+          value={form.slug}
+          onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+        />
+        <textarea
+          required
+          placeholder="Açıklama"
+          className={`${inputClass} min-h-24`}
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            required
+            placeholder="Fiyat"
+            className={inputClass}
+            value={form.basePrice}
+            onChange={(e) => setForm((f) => ({ ...f, basePrice: e.target.value }))}
+          />
+          <input
+            placeholder="Toplam stok"
+            className={inputClass}
+            value={form.stock}
+            onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
+          />
+          <input
+            placeholder="KDV %"
+            className={inputClass}
+            value={form.vatRate}
+            onChange={(e) => setForm((f) => ({ ...f, vatRate: e.target.value }))}
+          />
+          <select
+            className={inputClass}
+            value={form.unit}
+            onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
+          >
+            {UNITS.map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </select>
+        </div>
+        <select
+          className={inputClass}
+          value={form.kind}
+          onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}
+        >
+          {KINDS.map((k) => (
+            <option key={k.value} value={k.value}>
+              {k.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className={inputClass}
+          value={form.categoryId}
+          onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+        >
+          <option value="">Kategori yok</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <div className="mt-3 space-y-2">
+          <Switch
+            id="product-active"
+            checked={form.isActive}
+            onChange={(checked) => setForm((f) => ({ ...f, isActive: checked }))}
+            label="Aktif"
+            description="Mağazada listelenir"
+          />
+          <Switch
+            id="product-featured"
+            checked={form.isFeatured}
+            onChange={(checked) => setForm((f) => ({ ...f, isFeatured: checked }))}
+            label="Öne çıkan"
+          />
+        </div>
+
+        <div className="mt-4 border border-border-muted p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="mono text-[10px] uppercase text-muted">Varyantlar</p>
+            <button
+              type="button"
+              className="text-xs text-accent hover:underline"
+              onClick={() =>
+                setForm((f) => ({
+                  ...f,
+                  variants: [
+                    ...f.variants,
+                    {
+                      ...emptyVariant(),
+                      sku: f.name ? `${slugify(f.name)}-${f.variants.length + 1}`.toUpperCase() : '',
+                    },
+                  ],
+                }))
+              }
+            >
+              + Varyant
+            </button>
+          </div>
+          {form.variants.map((v, i) => (
+            <div key={v.id || `new-${i}`} className="mt-2 border border-border-muted/60 p-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  placeholder="SKU"
+                  className={`${inputClass} mt-0 font-mono`}
+                  value={v.sku}
+                  onChange={(e) => updateVariant(i, { sku: e.target.value })}
+                />
+                <input
+                  placeholder="250g"
+                  className={`${inputClass} mt-0`}
+                  value={v.weightLabel}
+                  onChange={(e) => updateVariant(i, { weightLabel: e.target.value })}
+                />
+                <input
+                  placeholder="Fiyat"
+                  className={`${inputClass} mt-0`}
+                  value={v.price}
+                  onChange={(e) => updateVariant(i, { price: e.target.value })}
+                />
+                <input
+                  placeholder="Stok"
+                  className={`${inputClass} mt-0`}
+                  value={v.stock}
+                  onChange={(e) => updateVariant(i, { stock: e.target.value })}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between">
+                <Switch
+                  id={`variant-active-${i}`}
+                  checked={v.isActive}
+                  onChange={(isActive) => updateVariant(i, { isActive })}
+                  label="Satışta"
+                />
+                <button
+                  type="button"
+                  disabled={form.variants.length <= 1}
+                  onClick={() => setDeleteVariantIndex(i)}
+                  className="text-xs text-danger hover:underline disabled:opacity-30"
+                >
+                  Sil
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button disabled={saving} className="bg-accent px-4 py-2 text-white disabled:opacity-50">
+            {saving ? 'Kaydediliyor…' : editId ? 'Güncelle' : 'Oluştur'}
+          </button>
+          {editId ? (
+            <>
+              <button
+                type="button"
+                className="border border-border px-4 py-2"
+                onClick={() => navigate('/urunler')}
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="ml-auto text-sm text-danger hover:underline"
+                onClick={() => setDeleteOpen(true)}
+              >
+                Sil
+              </button>
+            </>
+          ) : null}
+        </div>
+      </form>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Ürünü sil?"
+        description="Katalogdan kaldırılır. Bu işlem geri alınamaz."
+        confirmLabel="Ürünü sil"
+        onCancel={() => setDeleteOpen(false)}
+        onConfirm={() => void removeProduct()}
+      />
+      <ConfirmDialog
+        open={deleteVariantIndex !== null}
+        title="Varyantı sil?"
+        description={
+          pendingVariant
+            ? `"${pendingVariant.weightLabel || pendingVariant.sku || 'Bu varyant'}" formdan kalkar. Kaydetmeden kalıcı olmaz.`
+            : undefined
+        }
+        confirmLabel="Varyantı sil"
+        onCancel={() => setDeleteVariantIndex(null)}
+        onConfirm={() => {
+          if (deleteVariantIndex === null) return;
+          setForm((f) => ({
+            ...f,
+            variants:
+              f.variants.length > 1
+                ? f.variants.filter((_, idx) => idx !== deleteVariantIndex)
+                : f.variants,
+          }));
+          setDeleteVariantIndex(null);
+        }}
+      />
+    </div>
+  );
+}

@@ -7,6 +7,8 @@ import { CampaignsAndRefundAmount1778000000000 } from './1778000000000-Campaigns
 import { ProductSeoAndHomeFaq1779000000000 } from './1779000000000-ProductSeoAndHomeFaq';
 import { ReplaceUnsplashWithStock1780000000000 } from './1780000000000-ReplaceUnsplashWithStock';
 import { AboutPageSections1781000000000 } from './1781000000000-AboutPageSections';
+import { AccountingAndCatalog1782000000000 } from './1782000000000-AccountingAndCatalog';
+import { InAppNotifications1783000000000 } from './1783000000000-InAppNotifications';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -22,4 +24,6 @@ export const ALL_MIGRATIONS = [
   ProductSeoAndHomeFaq1779000000000,
   ReplaceUnsplashWithStock1780000000000,
   AboutPageSections1781000000000,
+  AccountingAndCatalog1782000000000,
+  InAppNotifications1783000000000,
 ];

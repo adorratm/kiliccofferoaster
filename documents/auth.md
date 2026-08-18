@@ -11,6 +11,8 @@ Yöntemler:
 
 JWT `Authorization: Bearer <token>` ile gönderilir. Frontend token’ı localStorage’da tutar.
 
+Hesap silme: `DELETE /auth/me` (müşteri). Personel hesapları bu uçtan silinmez.
+
 ## Admin
 
 - Yalnızca Google OAuth: `GET /auth/google/admin`

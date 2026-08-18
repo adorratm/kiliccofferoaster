@@ -2,13 +2,17 @@
 
 ## Monorepo
 
-Tek GitHub repository içinde üç uygulama:
+Tek GitHub repository içinde uygulamalar:
 
 | Paket | Klasör | Rol |
 |-------|--------|-----|
 | `@kilic/api` | `api/` | NestJS REST API |
 | `@kilic/frontend` | `frontend/` | Müşteri vitrini (App Router) |
 | `@kilic/admin` | `admin/` | Yönetim paneli |
+| `@kilic/desktop` | `desktop/` | Electron ön muhasebe (Win/macOS) |
+| `@kilic/mobile` | `mobile/` | Expo iOS/Android ops |
+| `@kilic/accounting-contracts` | `packages/accounting-contracts` | Ortak DTO/enum |
+| `@kilic/ui-tokens` | `packages/ui-tokens` | Admin görsel token’ları |
 
 Yarn workspaces kök `package.json` üzerinden yönetilir. Node ve Yarn sürümleri Volta ile pinlenir.
 
@@ -39,6 +43,8 @@ Repository pattern (`@InjectRepository`, custom Repository sınıfları) yasakt�
 - `marketplace` — Trendyol / HB / N11 adaptörleri
 - `legal` — sözleşme CMS + çerez onay logu
 - `contact` — iletişim + bülten
+- `accounting` — cari, fatura, kasa, stok defteri, ÖKC import, senkron, raporlar
+- `einvoice` — Turkcell e-Şirket e-arşiv / e-fatura adapter (mock varsayılan)
 
 ## Ortam
 

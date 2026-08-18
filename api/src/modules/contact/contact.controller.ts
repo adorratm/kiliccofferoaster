@@ -8,7 +8,7 @@ import {
 } from '@modules/contact/dto/contact.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 
 @ApiTags('contact')
 @Controller()
@@ -22,7 +22,7 @@ export class ContactController {
     return this.contactService.createMessage(dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('contact/admin')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: iletişim mesajları' })
@@ -30,7 +30,7 @@ export class ContactController {
     return this.contactService.listMessages();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('contact/messages')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: iletişim mesajları (alias)' })
@@ -38,7 +38,7 @@ export class ContactController {
     return this.contactService.listMessages();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch('contact/admin/:id/read')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: mesajı okundu işaretle' })
@@ -46,7 +46,7 @@ export class ContactController {
     return this.contactService.markRead(id, dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch('contact/messages/:id/read')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: mesajı okundu (alias)' })
@@ -68,7 +68,7 @@ export class ContactController {
     return this.contactService.subscribeNewsletter(dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('newsletter/subscribers')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: bülten aboneleri' })

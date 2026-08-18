@@ -13,4 +13,5 @@
 | [legal-pages.md](legal-pages.md) | Sözleşmeler ve çerez |
 | [smoke-checklist.md](smoke-checklist.md) | Canlı öncesi smoke kontrol listesi |
 | [docker.md](docker.md) | Docker Compose notları |
+| [accounting.md](accounting.md) | Ön muhasebe, e-belge, Electron / Expo |
 | [env-variables.md](env-variables.md) | Ortam değişkenleri |

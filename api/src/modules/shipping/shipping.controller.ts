@@ -8,7 +8,7 @@ import {
 } from '@modules/shipping/dto/shipping.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 import { ShippingProviderCode } from '@entities/shipment.entity';
 
 @ApiTags('shipping')
@@ -16,7 +16,7 @@ import { ShippingProviderCode } from '@entities/shipment.entity';
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Post('shipments')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: kargo oluştur' })
@@ -45,7 +45,7 @@ export class ShippingController {
     return this.shippingService.listEnabledProvidersPublic();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('providers')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: kargo sağlayıcı listesi' })
@@ -53,7 +53,7 @@ export class ShippingController {
     return this.shippingService.listProviderConfigs();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch('providers/:provider')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin: kargo sağlayıcı güncelle' })

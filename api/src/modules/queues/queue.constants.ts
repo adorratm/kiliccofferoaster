@@ -3,6 +3,7 @@ export const QUEUE_SHIPPING_POLL = 'shipping-poll';
 export const QUEUE_ABANDONED_CART = 'abandoned-cart';
 export const QUEUE_MARKETPLACE_SYNC = 'marketplace-sync';
 export const QUEUE_LOW_STOCK = 'low-stock';
+export const QUEUE_EINVOICE = 'einvoice';
 
 export type NotificationChannelName = 'email' | 'whatsapp' | 'sms';
 
@@ -16,6 +17,7 @@ export type NotificationJobPayload = {
   recipientName?: string;
   recipientPhone?: string;
   cartId?: string;
+  userId?: string;
 };
 
 export type ShippingPollJobPayload = {

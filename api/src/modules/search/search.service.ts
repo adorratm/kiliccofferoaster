@@ -9,6 +9,11 @@ import { MediaAsset } from '@entities/media-asset.entity';
 import { NewsletterSubscriber } from '@entities/newsletter-subscriber.entity';
 import { LegalDocument } from '@entities/legal-document.entity';
 import { BlogPost } from '@entities/blog-post.entity';
+import { Party } from '@entities/party.entity';
+import { Invoice } from '@entities/invoice.entity';
+import { Coupon } from '@entities/coupon.entity';
+import { Campaign } from '@entities/campaign.entity';
+import { User, UserRole } from '@entities/user.entity';
 
 export type SearchHit = {
   type: string;
@@ -16,6 +21,7 @@ export type SearchHit = {
   title: string;
   subtitle?: string;
   href: string;
+  screen?: string;
 };
 
 export type SearchResponse = {
@@ -133,6 +139,7 @@ export class SearchService {
       newsletter,
       legal,
       posts,
+      customers,
     ] = await Promise.all([
       this.em
         .createQueryBuilder(Product, 'p')
@@ -192,6 +199,16 @@ export class SearchService {
           { like },
         )
         .orderBy('b.updated_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(User, 'u')
+        .where('u.role = :role', { role: UserRole.CUSTOMER })
+        .andWhere(
+          `(u.email ILIKE :like OR COALESCE(u.first_name,'') ILIKE :like OR COALESCE(u.last_name,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('u.created_at', 'DESC')
         .take(per)
         .getMany(),
     ]);
@@ -302,6 +319,256 @@ export class SearchService {
         })),
       });
     }
+    if (customers.length) {
+      groups.push({
+        type: 'customers',
+        label: 'Müşteriler',
+        items: customers.map((u) => ({
+          type: 'customer',
+          id: u.id,
+          title:
+            [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+          subtitle: u.email,
+          href: `/musteriler/${u.id}`,
+        })),
+      });
+    }
+
+    return { q: term, groups };
+  }
+
+  async searchOps(q: string, limit = 8): Promise<SearchResponse> {
+    const term = q.trim();
+    if (term.length < 2) {
+      return { q: term, groups: [] };
+    }
+    const like = `%${term}%`;
+    const per = Math.min(limit, 12);
+
+    const [
+      products,
+      orders,
+      categories,
+      messages,
+      newsletter,
+      parties,
+      invoices,
+      coupons,
+      campaigns,
+      customers,
+    ] = await Promise.all([
+      this.em
+        .createQueryBuilder(Product, 'p')
+        .where(
+          `(p.name ILIKE :like OR p.slug ILIKE :like OR COALESCE(p.batch_id,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('p.updated_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Order, 'o')
+        .where(
+          `(o.order_number ILIKE :like OR o.customer_email ILIKE :like OR o.customer_name ILIKE :like OR o.customer_phone ILIKE :like)`,
+          { like },
+        )
+        .orderBy('o.created_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Category, 'c')
+        .where(`(c.name ILIKE :like OR c.slug ILIKE :like)`, { like })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ContactMessage, 'm')
+        .where(
+          `(m.sender_name ILIKE :like OR m.sender_email ILIKE :like OR m.message ILIKE :like)`,
+          { like },
+        )
+        .orderBy('m.created_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(NewsletterSubscriber, 'n')
+        .where(`n.email ILIKE :like`, { like })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Party, 'pt')
+        .where(
+          `(pt.title ILIKE :like OR COALESCE(pt.tax_number,'') ILIKE :like OR COALESCE(pt.email,'') ILIKE :like OR COALESCE(pt.phone,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('pt.updated_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Invoice, 'inv')
+        .leftJoinAndSelect('inv.party', 'party')
+        .where(
+          `(inv.invoice_number ILIKE :like OR COALESCE(party.title,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('inv.created_at', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Coupon, 'cp')
+        .where(
+          `(cp.code ILIKE :like OR COALESCE(cp.title,'') ILIKE :like)`,
+          { like },
+        )
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Campaign, 'cm')
+        .where(`(cm.name ILIKE :like OR cm.slug ILIKE :like)`, { like })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(User, 'u')
+        .where('u.role = :role', { role: UserRole.CUSTOMER })
+        .andWhere(
+          `(u.email ILIKE :like OR COALESCE(u.first_name,'') ILIKE :like OR COALESCE(u.last_name,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('u.created_at', 'DESC')
+        .take(per)
+        .getMany(),
+    ]);
+
+    const groups: SearchResponse['groups'] = [];
+    const push = (
+      type: string,
+      label: string,
+      items: SearchHit[],
+    ) => {
+      if (items.length) groups.push({ type, label, items });
+    };
+
+    push(
+      'products',
+      'Ürünler',
+      products.map((p) => ({
+        type: 'product',
+        id: p.id,
+        title: p.name,
+        subtitle: p.slug,
+        href: '/urunler',
+        screen: 'Products',
+      })),
+    );
+    push(
+      'orders',
+      'Siparişler',
+      orders.map((o) => ({
+        type: 'order',
+        id: o.id,
+        title: o.orderNumber,
+        subtitle: `${o.customerName} · ${o.status}`,
+        href: '/siparisler',
+        screen: 'ShopOrders',
+      })),
+    );
+    push(
+      'categories',
+      'Kategoriler',
+      categories.map((c) => ({
+        type: 'category',
+        id: c.id,
+        title: c.name,
+        subtitle: c.slug,
+        href: '/kategoriler',
+        screen: 'Categories',
+      })),
+    );
+    push(
+      'parties',
+      'Cari',
+      parties.map((p) => ({
+        type: 'party',
+        id: p.id,
+        title: p.title,
+        subtitle: [p.type === 'supplier' ? 'Tedarikçi' : 'Müşteri', p.taxNumber]
+          .filter(Boolean)
+          .join(' · '),
+        href: '/cari',
+        screen: 'Parties',
+      })),
+    );
+    push(
+      'invoices',
+      'Faturalar',
+      invoices.map((i) => ({
+        type: 'invoice',
+        id: i.id,
+        title: i.invoiceNumber,
+        subtitle: [i.party?.title, i.status].filter(Boolean).join(' · '),
+        href: '/faturalar',
+        screen: 'Invoices',
+      })),
+    );
+    push(
+      'coupons',
+      'Kuponlar',
+      coupons.map((c) => ({
+        type: 'coupon',
+        id: c.id,
+        title: c.code,
+        subtitle: c.title || undefined,
+        href: '/kuponlar',
+        screen: 'Coupons',
+      })),
+    );
+    push(
+      'campaigns',
+      'Kampanyalar',
+      campaigns.map((c) => ({
+        type: 'campaign',
+        id: c.id,
+        title: c.name,
+        subtitle: `%${c.discountPercent}`,
+        href: '/kampanyalar',
+        screen: 'Campaigns',
+      })),
+    );
+    push(
+      'customers',
+      'Müşteriler',
+      customers.map((u) => ({
+        type: 'customer',
+        id: u.id,
+        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        subtitle: u.email,
+        href: `/musteriler?id=${encodeURIComponent(u.id)}`,
+        screen: 'CustomerDetail',
+      })),
+    );
+    push(
+      'messages',
+      'Mesajlar',
+      messages.map((m) => ({
+        type: 'message',
+        id: m.id,
+        title: m.senderName,
+        subtitle: m.senderEmail,
+        href: '/mesajlar',
+        screen: 'Messages',
+      })),
+    );
+    push(
+      'newsletter',
+      'Bülten',
+      newsletter.map((n) => ({
+        type: 'newsletter',
+        id: n.id,
+        title: n.email,
+        subtitle: n.source,
+        href: '/bulten',
+        screen: 'Newsletter',
+      })),
+    );
 
     return { q: term, groups };
   }

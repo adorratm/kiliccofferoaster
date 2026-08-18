@@ -64,6 +64,9 @@ type FormState = {
   categoryId: string;
   isActive: boolean;
   isFeatured: boolean;
+  kind: string;
+  unit: string;
+  vatRate: string;
   variants: VariantForm[];
 };
 
@@ -127,6 +130,9 @@ const emptyForm = (): FormState => ({
   categoryId: '',
   isActive: true,
   isFeatured: false,
+  kind: 'other',
+  unit: 'adet',
+  vatRate: '20',
   variants: [emptyVariant()],
 });
 
@@ -302,6 +308,9 @@ function ProductsPageInner() {
       categoryId: p.categoryId || '',
       isActive: p.isActive,
       isFeatured: Boolean(p.isFeatured),
+      kind: p.kind || 'other',
+      unit: p.unit || 'adet',
+      vatRate: String(p.vatRate ?? '20'),
       variants,
     });
     setEditing(true);
@@ -350,6 +359,9 @@ function ProductsPageInner() {
         .map((u) => u.trim())
         .filter(Boolean),
       categoryId: form.categoryId || null,
+      kind: form.kind || 'other',
+      unit: form.unit || 'adet',
+      vatRate: Number(form.vatRate) || 20,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       variants,
@@ -547,6 +559,52 @@ function ProductsPageInner() {
               value={form.basePrice}
               onChange={(e) =>
                 setForm((f) => ({ ...f, basePrice: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">Tür</span>
+            <select
+              value={form.kind}
+              onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            >
+              <option value="coffee_turkish">Türk Kahvesi</option>
+              <option value="coffee_filter">Filtre Kahve</option>
+              <option value="coffee_espresso">Espresso</option>
+              <option value="lokum">Lokum</option>
+              <option value="draje">Draje</option>
+              <option value="nuts">Kuruyemiş</option>
+              <option value="herbal_tea">Bitki Çayı</option>
+              <option value="spice">Baharat</option>
+              <option value="beverage">Meşrubat</option>
+              <option value="tea">Çay</option>
+              <option value="other">Diğer</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">Birim</span>
+            <select
+              value={form.unit}
+              onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            >
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="adet">adet</option>
+              <option value="paket">paket</option>
+              <option value="lt">lt</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">KDV %</span>
+            <input
+              type="number"
+              step="0.01"
+              value={form.vatRate}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, vatRate: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />

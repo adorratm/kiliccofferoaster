@@ -4,8 +4,14 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { StatsCard } from '@/components/StatsCard';
+import { EChart } from '@/components/EChart';
 import { Reveal, Stagger } from '@/components/Reveal';
 import { asArray, asPaged, formatMoney } from '@/lib/utils';
+import {
+  revenueSeriesOption,
+  statusPieOption,
+  topProductsOption,
+} from '@/lib/charts';
 import type {
   DashboardStats,
   MarketplaceAccount,
@@ -38,6 +44,12 @@ export default function DashboardPage() {
   const [syncRows, setSyncRows] = useState<
     { platform: string; storeName: string; status: string; at: string }[]
   >([]);
+  const [series, setSeries] = useState<DashboardStats['series']>([]);
+  const [byStatus, setByStatus] = useState<DashboardStats['byStatus']>([]);
+  const [topProducts, setTopProducts] = useState<DashboardStats['topProducts']>(
+    [],
+  );
+  const [pendingOrders, setPendingOrders] = useState<number | string>('—');
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
 
@@ -66,6 +78,12 @@ export default function DashboardPage() {
               }).format(stats.revenueToday),
             );
           }
+          if (typeof stats.pendingOrders === 'number') {
+            setPendingOrders(stats.pendingOrders);
+          }
+          if (stats.series?.length) setSeries(stats.series);
+          if (stats.byStatus?.length) setByStatus(stats.byStatus);
+          if (stats.topProducts?.length) setTopProducts(stats.topProducts);
           if (stats.marketplaceSync?.length) {
             setSyncRows(
               stats.marketplaceSync.map((s) => ({
@@ -168,6 +186,11 @@ export default function DashboardPage() {
           hint="Ödenmiş / işlenen"
         />
         <StatsCard
+          label="Hazırlanan sipariş"
+          value={loading ? '…' : pendingOrders}
+          hint="processing"
+        />
+        <StatsCard
           label="Düşük stok"
           value={loading ? '…' : lowStock}
           hint="Stok ≤ 10"
@@ -175,12 +198,36 @@ export default function DashboardPage() {
             typeof lowStock === 'number' && lowStock > 0 ? 'warning' : 'default'
           }
         />
-        <StatsCard
-          label="Pazaryeri hesapları"
-          value={loading ? '…' : syncRows.length}
-          hint="Senkron durumu aşağıda"
-        />
       </Stagger>
+
+      {(series?.length || byStatus?.length || topProducts?.length) ? (
+        <div className="grid gap-4 lg:grid-cols-5">
+          {series?.length ? (
+            <Reveal delay={80} variant="up" className="border border-border-muted bg-surface p-4 lg:col-span-3">
+              <h3 className="mono text-[10px] uppercase tracking-widest text-muted">
+                Son 14 gün · ciro ve sipariş
+              </h3>
+              <EChart option={revenueSeriesOption(series)} height={300} />
+            </Reveal>
+          ) : null}
+          {byStatus?.length ? (
+            <Reveal delay={100} variant="up" className="border border-border-muted bg-surface p-4 lg:col-span-2">
+              <h3 className="mono text-[10px] uppercase tracking-widest text-muted">
+                Sipariş durumları
+              </h3>
+              <EChart option={statusPieOption(byStatus)} height={300} />
+            </Reveal>
+          ) : null}
+          {topProducts?.length ? (
+            <Reveal delay={120} variant="up" className="border border-border-muted bg-surface p-4 lg:col-span-5">
+              <h3 className="mono text-[10px] uppercase tracking-widest text-muted">
+                En çok satanlar · 30 gün
+              </h3>
+              <EChart option={topProductsOption(topProducts)} height={260} />
+            </Reveal>
+          ) : null}
+        </div>
+      ) : null}
 
       <Reveal delay={120} variant="up">
         <section>

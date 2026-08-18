@@ -108,21 +108,21 @@ bash "${ROOT_DIR}/deploy/render-kiliccoffee-conf.sh" "${SSL_MODE}"
 export KILIC_CONF_HOST="${TTEN_TPL}/kiliccoffee.conf"
 
 if ! docker ps --format '{{.Names}}' | grep -qx "${NGINX_CONTAINER}"; then
-  echo "TTEN nginx çalışmıyor — conf render edildi, sync atlandı."
-  exit 0
+  echo "TTEN nginx çalışmıyor — başlatılıp bekleniyor (sync atlanmayacak)."
+  docker start "${NGINX_CONTAINER}" >/dev/null 2>&1 || true
 fi
 
 echo "==> Nginx container hazır bekleniyor..."
 if ! wait_for_nginx_running "${NGINX_CONTAINER}" 60; then
-  if [[ -f "${KILIC_CONF_HOST}" ]]; then
-    recover_nginx_from_restart_loop "${NGINX_CONTAINER}" "${KILIC_CONF_HOST}"
-  else
-    echo "HATA: nginx hazır değil ve ${KILIC_CONF_HOST} yok."
+  echo "UYARI: nginx henüz hazır değil — start + yeniden bekleme..."
+  docker start "${NGINX_CONTAINER}" >/dev/null 2>&1 || true
+  if ! wait_for_nginx_running "${NGINX_CONTAINER}" 90; then
+    echo "HATA: nginx hazır değil (${NGINX_CONTAINER})."
     exit 1
   fi
 fi
 
-ensure_kilic_on_tten_network || exit 0
+ensure_kilic_on_tten_network || true
 verify_tten_frontend_dns || exit 1
 
 echo "==> Nginx kiliccoffee conf.d..."

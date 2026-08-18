@@ -3,6 +3,10 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { AppDataSource } from '@database/data-source';
 import { AdminAllowlist } from '@entities/admin-allowlist.entity';
+import { User, UserRole, AuthProvider } from '@entities/user.entity';
+import { CashAccount, CashAccountKind } from '@entities/cash-account.entity';
+import { AccountingSettings } from '@entities/accounting-settings.entity';
+import * as bcrypt from 'bcryptjs';
 import { Category } from '@entities/category.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
@@ -47,19 +51,38 @@ async function seed() {
     console.log('Admin allowlist:', adminEmail);
   }
 
+  // Ön muhasebe kategorileri
+  const extraCategories = [
+    { slug: 'turk-kahvesi', name: 'Türk Kahvesi', description: 'Geleneksel Türk kahvesi', sortOrder: 1 },
+    { slug: 'filtre-kahve', name: 'Filtre Kahve', description: 'Filtre / pour-over', sortOrder: 2 },
+    { slug: 'espresso', name: 'Espresso', description: 'Espresso kavrumları', sortOrder: 3 },
+    { slug: 'lokum', name: 'Lokum', description: 'Lokum çeşitleri', sortOrder: 4 },
+    { slug: 'draje', name: 'Draje', description: 'Draje çeşitleri', sortOrder: 5 },
+    { slug: 'kuruyemis', name: 'Kuruyemiş', description: 'Kuruyemiş', sortOrder: 6 },
+    { slug: 'bitki-cayi', name: 'Bitki Çayı', description: 'Bitki çayları', sortOrder: 7 },
+    { slug: 'baharat', name: 'Baharat', description: 'Baharat çeşitleri', sortOrder: 8 },
+    { slug: 'mesrubat', name: 'Meşrubat', description: 'Meşrubat', sortOrder: 9 },
+    { slug: 'cay', name: 'Çay', description: 'Çay', sortOrder: 10 },
+  ];
+  for (const row of extraCategories) {
+    let cat = await em.findOne(Category, { where: { slug: row.slug } });
+    if (!cat) {
+      cat = em.create(Category, { ...row, isActive: true });
+      await em.save(cat);
+      console.log('Category:', row.slug);
+    } else if (!cat.isActive) {
+      cat.isActive = true;
+      cat.name = row.name;
+      cat.sortOrder = row.sortOrder;
+      await em.save(cat);
+    }
+  }
+
   let turkCategory = await em.findOne(Category, {
     where: { slug: 'turk-kahvesi' },
   });
   if (!turkCategory) {
-    turkCategory = em.create(Category, {
-      slug: 'turk-kahvesi',
-      name: 'Türk Kahvesi',
-      description: 'Geleneksel Türk kahvesi',
-      sortOrder: 1,
-      isActive: true,
-    });
-    await em.save(turkCategory);
-    console.log('Category: turk-kahvesi');
+    throw new Error('turk-kahvesi kategorisi oluşturulamadı');
   }
 
   // Eski specialty kategorilerini pasifle
@@ -106,6 +129,9 @@ async function seed() {
         badge: null,
         gallery: [],
         categoryId: turkCategory.id,
+        kind: 'coffee_turkish',
+        unit: 'g',
+        vatRate: '20.00',
       }),
     );
     console.log('Product: turk-kahvesi');
@@ -114,6 +140,9 @@ async function seed() {
     turkKahvesi.isActive = true;
     turkKahvesi.isFeatured = true;
     turkKahvesi.categoryId = turkCategory.id;
+    turkKahvesi.kind = 'coffee_turkish';
+    turkKahvesi.unit = turkKahvesi.unit || 'g';
+    turkKahvesi.vatRate = turkKahvesi.vatRate || '20.00';
     turkKahvesi.basePrice = turkKahvesiVariants[0].price;
     turkKahvesi.shortDescription =
       turkKahvesi.shortDescription ||
@@ -448,6 +477,51 @@ async function seed() {
       }),
     );
     console.log('Coupon: HOSGELDIN10');
+  }
+
+  const cashDefaults: { name: string; kind: CashAccountKind }[] = [
+    { name: 'Nakit Kasa', kind: CashAccountKind.CASH },
+    { name: 'Banka', kind: CashAccountKind.BANK },
+    { name: 'PayTR', kind: CashAccountKind.PAYTR },
+    { name: 'POS / ÖKC Kart', kind: CashAccountKind.POS },
+  ];
+  for (const row of cashDefaults) {
+    const exists = await em.findOne(CashAccount, { where: { kind: row.kind } });
+    if (!exists) {
+      await em.save(em.create(CashAccount, row));
+      console.log('Cash account:', row.name);
+    }
+  }
+
+  const settings = await em.findOne(AccountingSettings, { where: {} });
+  if (!settings) {
+    await em.save(
+      em.create(AccountingSettings, {
+        companyTitle: 'Kılıç Coffee Roaster',
+        city: 'Torbalı / İzmir',
+      }),
+    );
+    console.log('Accounting settings');
+  }
+
+  const staffEmail = (process.env.OPS_STAFF_EMAIL || '').trim().toLowerCase();
+  const staffPassword = process.env.OPS_STAFF_PASSWORD || '';
+  if (staffEmail && staffPassword) {
+    let staff = await em.findOne(User, { where: { email: staffEmail } });
+    if (!staff) {
+      staff = em.create(User, {
+        email: staffEmail,
+        passwordHash: await bcrypt.hash(staffPassword, 12),
+        firstName: 'Ops',
+        lastName: 'Staff',
+        provider: AuthProvider.LOCAL,
+        role: UserRole.STAFF,
+        emailVerified: true,
+        isActive: true,
+      });
+      await em.save(staff);
+      console.log('Ops staff:', staffEmail);
+    }
   }
 
   console.log('Seed tamamlandı.');

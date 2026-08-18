@@ -14,7 +14,7 @@ import {
   UpdateCampaignDto,
 } from '@modules/campaigns/dto/campaigns.dto';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 import { Public } from '@common/decorators/public.decorator';
 
 @ApiTags('campaigns')
@@ -29,28 +29,28 @@ export class CampaignsController {
     return this.campaigns.listActiveNow();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/all')
   @ApiBearerAuth()
   listAdmin() {
     return this.campaigns.listAdmin();
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Post()
   @ApiBearerAuth()
   create(@Body() dto: CreateCampaignDto) {
     return this.campaigns.create(dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch(':id')
   @ApiBearerAuth()
   update(@Param('id') id: string, @Body() dto: UpdateCampaignDto) {
     return this.campaigns.update(id, dto);
   }
 
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Delete(':id')
   @ApiBearerAuth()
   remove(@Param('id') id: string) {

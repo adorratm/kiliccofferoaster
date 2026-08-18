@@ -51,6 +51,9 @@ export type Product = {
   isActive: boolean;
   isFeatured?: boolean;
   categoryId?: string | null;
+  kind?: string;
+  unit?: string;
+  vatRate?: string | number;
   variants?: ProductVariant[];
   createdAt?: string;
   updatedAt?: string;
@@ -114,6 +117,7 @@ export type Order = {
   payment?: OrderPayment | null;
   items?: OrderItem[];
   shipments?: Shipment[];
+  userId?: string | null;
   createdAt?: string;
 };
 
@@ -194,6 +198,9 @@ export type DashboardStats = {
     lastSyncAt?: string | null;
     lastSyncStatus?: string | null;
   }[];
+  series?: { date: string; orders: number; revenue: number }[];
+  byStatus?: { status: string; label: string; count: number }[];
+  topProducts?: { name: string; quantity: number; revenue: number }[];
 };
 
 export type Coupon = {
@@ -225,4 +232,91 @@ export type ProductReview = {
   isVerifiedPurchase: boolean;
   createdAt?: string;
   product?: { id: string; name: string; slug?: string } | null;
+};
+
+export type CustomerListItem = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  provider: string;
+  avatarUrl: string | null;
+  isActive: boolean;
+  emailVerified: boolean;
+  createdAt?: string;
+  orderCount: number;
+  totalSpent: number;
+  addressCount: number;
+};
+
+export type CustomerAddress = {
+  id: string;
+  title: string;
+  fullName: string;
+  phone: string;
+  city: string;
+  district: string;
+  neighborhood?: string | null;
+  addressLine: string;
+  postalCode: string;
+  isDefaultShipping: boolean;
+  isDefaultBilling: boolean;
+};
+
+export type CustomerDetail = {
+  user: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    provider: string;
+    role: string;
+    avatarUrl: string | null;
+    isActive: boolean;
+    emailVerified: boolean;
+    hasPassword: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  stats: {
+    orderCount: number;
+    guestOrderCount: number;
+    totalSpent: number;
+    addressCount: number;
+    returnCount: number;
+    reviewCount: number;
+    wishlistCount: number;
+  };
+  addresses: CustomerAddress[];
+  orders: Order[];
+  guestOrders: Order[];
+  returns: {
+    id: string;
+    orderId: string;
+    orderNumber: string | null;
+    type: string;
+    status: string;
+    reason: string;
+    adminNote?: string | null;
+    refundAmount?: string | number | null;
+    createdAt?: string;
+  }[];
+  reviews: {
+    id: string;
+    productId: string;
+    productName: string | null;
+    rating: number;
+    title: string | null;
+    body: string;
+    isApproved: boolean;
+    createdAt?: string;
+  }[];
+  wishlist: {
+    id: string;
+    productId: string;
+    productName: string | null;
+    createdAt?: string;
+  }[];
 };

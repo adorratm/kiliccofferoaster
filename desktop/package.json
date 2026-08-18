@@ -1,0 +1,41 @@
+{
+  "name": "@kilic/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Kılıç Coffee Roaster",
+  "description": "Kılıç Coffee Roaster mağaza ve personel uygulaması",
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "pack:win": "electron-vite build && electron-builder --win nsis",
+    "pack:mac": "electron-vite build && electron-builder --mac dmg",
+    "postinstall": "node ../scripts/download-electron.cjs"
+  },
+  "dependencies": {
+    "@kilic/accounting-contracts": "workspace:*",
+    "@kilic/ui-tokens": "workspace:*",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router-dom": "^7.9.4",
+    "socket.io-client": "^4.8.3",
+    "sql.js": "^1.13.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.12",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@types/sql.js": "^1.4.9",
+    "@vitejs/plugin-react": "^5.1.0",
+    "electron": "^37.3.1",
+    "electron-builder": "26.0.12",
+    "electron-vite": "^4.0.0",
+    "tailwindcss": "^4.1.12",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

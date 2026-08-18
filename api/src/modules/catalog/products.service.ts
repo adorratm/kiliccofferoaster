@@ -94,6 +94,10 @@ export class ProductsService {
       });
     }
 
+    if (query.kind) {
+      qb.andWhere('p.kind = :kind', { kind: query.kind });
+    }
+
     if (query.minPrice != null && !Number.isNaN(query.minPrice)) {
       qb.andWhere('p.base_price >= :minPrice', { minPrice: query.minPrice });
     }
@@ -196,6 +200,12 @@ export class ProductsService {
       isActive: productFields.isActive ?? true,
       isFeatured: productFields.isFeatured ?? false,
       categoryId: productFields.categoryId ?? null,
+      kind: productFields.kind ?? 'other',
+      unit: productFields.unit ?? 'adet',
+      vatRate:
+        productFields.vatRate != null
+          ? String(productFields.vatRate)
+          : '20.00',
     });
     const saved = await this.em.save(product);
     if (variants?.length) {

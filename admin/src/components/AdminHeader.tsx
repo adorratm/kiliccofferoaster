@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminSearch } from '@/components/AdminSearch';
+import { NotificationBell } from '@/components/NotificationBell';
 import { clearToken } from '@/lib/auth';
 
 const TITLES: Record<string, string> = {
@@ -13,6 +14,8 @@ const TITLES: Record<string, string> = {
   '/site-ayarlari': 'Site Ayarları',
   '/medya': 'Medya',
   '/siparisler': 'Siparişler',
+  '/musteriler': 'Müşteriler',
+  '/iadeler': 'İade Talepleri',
   '/kuponlar': 'Kuponlar',
   '/yorumlar': 'Ürün Yorumları',
   '/kargo': 'Kargo Ayarları',
@@ -21,6 +24,7 @@ const TITLES: Record<string, string> = {
   '/mesajlar': 'Mesajlar',
   '/bulten': 'Bülten Aboneleri',
   '/kuyruklar': 'Kuyruklar',
+  '/bildirimler': 'Bildirimler',
 };
 
 function resolveTitle(pathname: string): string {
@@ -68,6 +72,7 @@ export function AdminHeader({ onMenuOpen }: Props) {
         </div>
       </div>
       <AdminSearch />
+      <NotificationBell />
       <button
         type="button"
         onClick={logout}

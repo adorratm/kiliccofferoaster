@@ -7,7 +7,8 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { oauthErrorUrl, parseOauthClient } from '@modules/auth/oauth-redirect';
 
 /**
  * Admin Google OAuth hatalarında JSON yerine login sayfasına yönlendirir.
@@ -18,14 +19,12 @@ export class GoogleAdminOauthFilter implements ExceptionFilter {
   constructor(private readonly config: ConfigService) {}
 
   catch(exception: HttpException, host: ArgumentsHost) {
-    const res = host.switchToHttp().getResponse<Response>();
+    const ctx = host.switchToHttp();
+    const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
     if (res.headersSent) {
       return;
     }
-
-    const adminBase = (
-      this.config.get<string>('adminUrl') || 'http://localhost:3001'
-    ).replace(/\/$/, '');
 
     const raw =
       (typeof exception.message === 'string' && exception.message) ||
@@ -48,8 +47,7 @@ export class GoogleAdminOauthFilter implements ExceptionFilter {
       ? 'Bu e-posta admin allowlist’te değil'
       : fromBody;
 
-    res.redirect(
-      `${adminBase}/login?error=${encodeURIComponent(message)}`,
-    );
+    const client = parseOauthClient(req.query?.state);
+    res.redirect(oauthErrorUrl(this.config, client, message));
   }
 }

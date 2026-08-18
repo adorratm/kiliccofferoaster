@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -17,7 +18,7 @@ import {
 } from '@modules/catalog/dto/catalog.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 
 @ApiTags('products')
 @Controller('products')
@@ -32,7 +33,7 @@ export class ProductsController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Get('admin/all')
   @ApiOperation({ summary: 'Admin: ürün listesi' })
   findAllAdmin(@Query() query: ProductQueryDto) {
@@ -44,7 +45,15 @@ export class ProductsController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
+  @Get('admin/:id')
+  @ApiOperation({ summary: 'Admin: ürün detay (varyantlar dahil)' })
+  findOneAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.findById(id);
+  }
+
+  @ApiBearerAuth()
+  @Roles(...OPS_ROLES)
   @Post()
   @ApiOperation({ summary: 'Admin: ürün oluştur' })
   create(@Body() dto: CreateProductDto) {
@@ -52,7 +61,7 @@ export class ProductsController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Patch(':id')
   @ApiOperation({ summary: 'Admin: ürün güncelle' })
   update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
@@ -60,7 +69,7 @@ export class ProductsController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Delete(':id')
   @ApiOperation({ summary: 'Admin: ürün sil' })
   remove(@Param('id') id: string) {

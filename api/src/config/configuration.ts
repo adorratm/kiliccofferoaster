@@ -4,6 +4,9 @@ export default () => ({
   apiUrl: process.env.API_URL || 'http://localhost:4000',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminUrl: process.env.ADMIN_URL || 'http://localhost:3001',
+  opsMobileCallbackUrl:
+    process.env.OPS_MOBILE_CALLBACK_URL || 'kilicops://auth/callback',
+  opsWebUrl: process.env.OPS_WEB_URL || 'http://localhost:8081',
   adminAllowlist: (process.env.ADMIN_ALLOWLIST || 'emrekilic19983@gmail.com')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -155,5 +158,20 @@ export default () => ({
       process.env.LOW_STOCK_SCAN_INTERVAL_HOURS || '24',
       10,
     ),
+  },
+  desktopUrl: process.env.DESKTOP_DEV_URL || 'http://localhost:5173',
+  einvoice: {
+    mock:
+      process.env.TURKCELL_ESIRKET_MOCK === 'true'
+        ? true
+        : process.env.TURKCELL_ESIRKET_MOCK === 'false'
+          ? false
+          : !process.env.TURKCELL_ESIRKET_API_KEY,
+    turkcell: {
+      apiKey: process.env.TURKCELL_ESIRKET_API_KEY || '',
+      baseUrl:
+        process.env.TURKCELL_ESIRKET_BASE_URL ||
+        'https://api.turkcellesirket.com',
+    },
   },
 });
