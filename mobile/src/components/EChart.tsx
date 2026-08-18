@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Dimensions, View } from 'react-native';
-import { SVGRenderer, SvgChart } from '@wuba/react-native-echarts';
+import SvgChart, { SVGRenderer } from '@wuba/react-native-echarts/svgChart';
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, PieChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';

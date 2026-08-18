@@ -3546,6 +3546,7 @@ __metadata:
     react-native-webview: "npm:13.16.1"
     socket.io-client: "npm:^4.8.3"
     typescript: "npm:^6.0.3"
+    zrender: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -18366,7 +18367,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zrender@npm:6.1.0":
+"zrender@npm:6.1.0, zrender@npm:^6.1.0":
   version: 6.1.0
   resolution: "zrender@npm:6.1.0"
   dependencies:
