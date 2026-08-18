@@ -17,25 +17,25 @@
   "dependencies": {
     "@kilic/accounting-contracts": "workspace:*",
     "@kilic/ui-tokens": "workspace:*",
-    "echarts": "^5.6.0",
-    "echarts-for-react": "^3.0.2",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.0.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-router-dom": "^7.9.4",
+    "react-router-dom": "^7.18.2",
     "socket.io-client": "^4.8.3",
-    "sql.js": "^1.13.0"
+    "sql.js": "^1.14.2"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.12",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@types/sql.js": "^1.4.9",
-    "@vitejs/plugin-react": "^5.1.0",
-    "electron": "^37.3.1",
-    "electron-builder": "26.0.12",
-    "electron-vite": "^4.0.0",
-    "tailwindcss": "^4.1.12",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.5"
+    "@types/sql.js": "^1.4.11",
+    "@vitejs/plugin-react": "^6.0.5",
+    "electron": "^43.4.0",
+    "electron-builder": "26.15.7",
+    "electron-vite": "^5.0.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1"
   }
 }
