@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 const { createRequire } = require('module');
 
 const electronDir = path.join(__dirname, '..', 'node_modules', 'electron');
 const electronRequire = createRequire(path.join(electronDir, 'install.js'));
 const { downloadArtifact } = electronRequire('@electron/get');
+const { extract } = electronRequire('@electron-internal/extract-zip');
 const { version } = require(path.join(electronDir, 'package.json'));
 const distDir = path.join(electronDir, 'dist');
 const exeName =
@@ -16,21 +16,9 @@ const exeName =
       : 'electron';
 const exePath = path.join(distDir, exeName);
 
-function unzip(zipPath, dest) {
+async function unzip(zipPath, dest) {
   fs.mkdirSync(dest, { recursive: true });
-  if (process.platform === 'win32') {
-    execFileSync(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-Command',
-        `Expand-Archive -LiteralPath '${zipPath.replace(/'/g, "''")}' -DestinationPath '${dest.replace(/'/g, "''")}' -Force`,
-      ],
-      { stdio: 'inherit' },
-    );
-    return;
-  }
-  execFileSync('unzip', ['-o', zipPath, '-d', dest], { stdio: 'inherit' });
+  await extract(zipPath, { dir: dest });
 }
 
 async function main() {
@@ -52,7 +40,7 @@ async function main() {
   }
 
   console.log('Extracting…');
-  unzip(zipPath, distDir);
+  await unzip(zipPath, distDir);
   fs.writeFileSync(path.join(electronDir, 'path.txt'), exeName.replace(/\\/g, '/'));
   if (!fs.existsSync(exePath)) {
     throw new Error('Electron binary missing after extract');
