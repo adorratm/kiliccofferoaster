@@ -2,7 +2,6 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class FoodRetailCatalog1784000000000 implements MigrationInterface {
   name = 'FoodRetailCatalog1784000000000';
-  transaction = false;
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

@@ -19,6 +19,7 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB || 'kiliccoffeeroaster',
   entities: ALL_ENTITIES,
   migrations: ALL_MIGRATIONS,
+  migrationsTransactionMode: 'each',
   synchronize: false,
   logging: process.env.TYPEORM_LOGGING === 'true',
 });

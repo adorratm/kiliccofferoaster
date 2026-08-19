@@ -81,6 +81,7 @@ const shouldRunMigrations =
         entities: ALL_ENTITIES,
         migrations: ALL_MIGRATIONS,
         migrationsRun: shouldRunMigrations,
+        migrationsTransactionMode: 'each' as const,
         synchronize: shouldSynchronize,
         logging: process.env.TYPEORM_LOGGING === 'true',
       }),
