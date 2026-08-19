@@ -1,5 +1,18 @@
 # Pazaryeri adaptörleri
 
+Tam diyagram: [akislar.md](akislar.md) §7.
+
+```mermaid
+flowchart TD
+  cron[BullMQ_marketplace_sync] --> adapter[Trendyol_HB_N11]
+  adminUi[Admin_Senkronize] --> adapter
+  adapter --> listings[listings_stok]
+  adapter --> mOrders[marketplace_orders]
+  mOrders --> import[ic_Order_Payment]
+  import --> stock[stok_dusum]
+  adapter -->|iptal| restock[stok_iade]
+```
+
 ## Platformlar
 
 | Kod | Platform | Stok | Sipariş | Ürün push |
@@ -53,7 +66,7 @@ Stok: `stockCode` = `externalSku` / `externalListingId`.
 
 ## Sync
 
-Admin “Senkronize” ve otomatik Bull job (`MARKETPLACE_SYNC_*`) aynı adaptörleri kullanır.
+Admin “Senkronize” ve otomatik Bull job (`MARKETPLACE_SYNC_*`) aynı adaptörleri kullanır. Kuyruk adı: `marketplace-sync` — [kuyruklar.md](kuyruklar.md).
 
 | Env | Açıklama |
 |-----|----------|
@@ -99,4 +112,4 @@ Otomatik import başarısız olduysa veya sipariş bağlı değilse Admin `/paza
 - Tek sipariş: `POST /marketplace/orders/:id/import` (UI: **İçe aktar** / **Durum güncelle**)
 - Hesaptaki bekleyenler: `POST /marketplace/accounts/:id/import-orders` (UI: **Bekleyen siparişleri aktar**)
 
-Zaten bağlı siparişte yeniden çağrı yalnızca durumu senkronlar; kopya iç sipariş üretmez.
+Zaten bağlı siparişte yeniden çağrı yalnızca durumu senkronlar; kopya iç sipariş üretmez. Pazaryeri siparişinde “kargo oluştur” gizlenir.

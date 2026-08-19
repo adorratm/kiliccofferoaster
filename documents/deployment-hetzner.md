@@ -3,6 +3,18 @@
 Bu proje `emrekilic.web.tr` ve `ttengamesstudio.com.tr` ile aynı VPS’e kurulur.
 Detaylı adımlar: [`deploy/README.md`](../deploy/README.md)
 
+Akış diyagramı: [akislar.md](akislar.md) §9. Docker özeti: [docker.md](docker.md).
+
+```mermaid
+flowchart LR
+  gh[GitHub_Actions] --> ssh[SSH_VPS]
+  ssh --> script[deploy_deploy.sh]
+  script --> compose[docker_compose_prod]
+  compose --> fe[host_3200]
+  compose --> ad[host_3201]
+  compose --> api[host_3202]
+```
+
 ## Özet
 
 | | |
@@ -24,5 +36,8 @@ bash deploy/deploy.sh
 DNS (Cloudflare Proxied OK): `@`, `www`, `admin`, `api` → VPS IP.
 
 SSL: `deploy/setup-server.sh` (certbot webroot). Cloudflare proxy açıkken HTTP-01 için geçici DNS-only önerilir.
+
+Ödeme callback (PayTR panele): `https://api.kiliccoffeeroaster.com.tr/payments/paytr/callback`.  
+OAuth redirect: `https://api.kiliccoffeeroaster.com.tr/auth/google/callback` ve `.../auth/google/admin/callback`.
 
 Güvenlik: `deploy/.env` commit edilmez; JWT/DB şifreleri güçlü olsun; Postgres/Redis yalnızca host localhost bind (erişim localhost).

@@ -1,6 +1,6 @@
 # ASO ve mağaza yayını
 
-Public store müşteri uygulamasıdır (`Kılıç Coffee Roaster`). Personel sekmesi yalnızca ops JWT görünce çıkar.
+Public store müşteri uygulamasıdır (`Kılıç Coffee Roaster`). Personel sekmesi yalnızca ops JWT görünce çıkar. Mobil README: [mobile/README.md](../mobile/README.md).
 
 ## Kimlik
 
@@ -33,16 +33,21 @@ Public store müşteri uygulamasıdır (`Kılıç Coffee Roaster`). Personel sek
    - `https://kiliccoffeeroaster.com.tr/.well-known/assetlinks.json`
 5. Native build (Expo prebuild) associatedDomains ve intentFilters için şart.
 
+Deep link örnekleri (`/urunler/:slug`, `/takip/:kod`) native tab’lere düşer.
+
 ## Merchant / SEO
 
 Ürün feed: `https://kiliccoffeeroaster.com.tr/feed/google-merchant.xml`  
 Google Merchant Center’a bu URL’yi ekleyin. Search Console: `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.
 
+Vitrin `/sitemap.xml`, `/robots.txt`; özel sayfalar (`/hesabim`, `/odeme`, `/siparis-sorgula`) `noindex`.
+
 ## EAS / FCM
 
 - `eas.json` submit hesaplarını doldurun.
-- Android push: `google-services.json` (repoya koyulmaz).
+- Android push: `google-services.json` (repoya koyulmaz) + `EXPO_PUBLIC_EAS_PROJECT_ID`.
 - Screenshot: telefon 6.7" / 6.5", Play feature graphic 1024×500.
+- Preview APK: `frontend/public/downloads/` + `NEXT_PUBLIC_DOWNLOAD_ANDROID`. Store URL: `NEXT_PUBLIC_PLAY_STORE_URL` / `NEXT_PUBLIC_APP_STORE_URL` → vitrin `/indir`.
 
 ## Sürüm
 

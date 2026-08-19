@@ -1,5 +1,7 @@
 # Yasal sayfalar ve e-ticaret uyumu
 
+Checkout’taki zorunlu onaylar [sepet-odeme.md](sepet-odeme.md) ile birlikte çalışır.
+
 ## Rotalar (frontend)
 
 | Slug | Sayfa |
@@ -26,6 +28,14 @@ Kabul kaydı siparişin `legal_acceptances` JSON alanında saklanır.
 ## Çerez
 
 `CookieBanner` gerekli / analitik / pazarlama tercihlerini `POST /legal/cookie-consent` ile kaydeder.
+
+Onay sonrası vitrin:
+
+- Analytics → GA4 (`NEXT_PUBLIC_GA4_ID`) veya GTM (`NEXT_PUBLIC_GTM_ID`; doluysa GA4 script atlanır)
+- Marketing → Meta Pixel (`NEXT_PUBLIC_META_PIXEL_ID`)
+- Olaylar: ViewContent, AddToCart, BeginCheckout, Purchase
+
+Smoke: [smoke-checklist.md](smoke-checklist.md) §5b.
 
 ## Checklist (canlı öncesi)
 

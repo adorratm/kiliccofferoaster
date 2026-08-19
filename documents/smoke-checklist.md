@@ -2,13 +2,17 @@
 
 Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen sonuç kısa notla yazılmıştır.
 
-Önkoşul: `yarn dev:api` + `yarn dev:frontend` + `yarn dev:admin` (veya Docker stack), seed çalışmış `.env`.
+Önkoşul: `yarn dev:api` + `yarn dev:frontend` + `yarn dev:admin` (veya Docker stack), seed çalışmış `.env`. Redis: `docker compose up -d postgres redis`.
 
 | Servis | URL |
 |--------|-----|
 | API / Swagger | http://localhost:4000/docs |
 | Mağaza | http://localhost:3000 |
 | Admin | http://localhost:3001 |
+| Masaüstü | `yarn dev:desktop` (personel paneli) |
+| Mobil | `yarn dev:mobile` (mağaza) |
+
+Akışlar: [akislar.md](akislar.md). Aşamalar: [asamalar.md](asamalar.md).
 
 ---
 
@@ -29,6 +33,9 @@ Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen
 - [ ] `/sifremi-unuttum` → mail (SMTP yoksa konsol) + `/sifre-sifirla?token=` ile yeni şifre
 - [ ] Google-only hesap: Hesabım → **Şifre belirle** (mevcut şifre istemeden)
 - [ ] Yerel şifreli hesap: Hesabım → **Şifre değiştir** (mevcut şifre zorunlu)
+- [ ] Desktop / mobil personel: `POST /auth/ops-login` (müşteri reddedilir)
+
+Detay: [auth.md](auth.md).
 
 ---
 
@@ -53,6 +60,8 @@ Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen
 - [ ] Giriş sonrası session sepeti kullanıcı sepetine birleşiyor
 - [ ] Terk edilen sepet: 1. hatırlatma (`ABANDONED_CART_HOURS`) + 2. hatırlatma (`ABANDONED_CART_SECOND_HOURS`)
 
+Detay: [sepet-odeme.md](sepet-odeme.md), [payments-iyzico.md](payments-iyzico.md).
+
 ---
 
 ## 4. Sipariş & kargo (müşteri)
@@ -61,6 +70,8 @@ Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen
 - [ ] Sipariş detaydan iptal (kargo öncesi) veya iade/cayma talebi açılıyor
 - [ ] Misafir: `/siparis-sorgula` + e-posta + sipariş no ile kayıt bulunuyor
 - [ ] Admin’den kargo tracking girilince müşteri timeline’da görünüyor
+
+Detay: [shipping-adapters.md](shipping-adapters.md).
 
 ---
 
@@ -75,6 +86,7 @@ Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen
 - [ ] Durum `cancelled` veya `refunded` → stok geri geliyor (`stock_decremented` false)
 - [ ] Blog oluştur / yayınla → mağazada `/blog/[slug]` görünür
 - [ ] Prod’da credentials yokken kargo oluştur → hata (`SHIPPING_ALLOW_MOCK` kapalı)
+- [ ] `/kuyruklar` → Bull Board (yalnızca admin JWT)
 
 ---
 
@@ -84,6 +96,8 @@ Canlı veya staging öncesi hızlı sağlık kontrolü. Her madde için beklenen
 - [ ] Analytics onayı sonrası GA4 veya GTM yüklenir
 - [ ] Marketing onayı sonrası Meta Pixel yüklenir
 - [ ] Ürün detay → ViewContent; sepete ekle → AddToCart; ödeme → BeginCheckout; başarı → Purchase (girişliyse tutar dolu)
+
+Detay: [legal-pages.md](legal-pages.md).
 
 ---
 
@@ -131,7 +145,8 @@ WHERE status IN ('paid','processing','shipped','delivered');
 - [ ] Sepet kalem güncellemesinde diğer kalemler silinmiyor
 - [ ] Admin kargo ayarı PATCH (provider kodu / UUID karışmasın)
 - [ ] Cart fetch hata verince sessizce boş sepet gibi davranmıyor (logout hariç)
-- [ ] iyzico sepet toplamı sipariş total ile uyumlu
+- [ ] PayTR / iyzico sepet toplamı sipariş total ile uyumlu
+- [ ] Desktop varsayılan pencere personel; mobil varsayılan mağaza
 
 ---
 
@@ -147,7 +162,7 @@ Başarısız madde varsa issue/PR’a bağla; pazaryeri ve ödeme için ayrınt�
 
 ## Kod doğrulama notları (statik)
 
-Son tarama: çoğu madde kodda mevcut. Canlı credential gerektirenler (OAuth, iyzico sandbox, pazaryeri API, Resend) SKIP.
+Son tarama: çoğu madde kodda mevcut. Canlı credential gerektirenler (OAuth, PayTR/iyzico sandbox, pazaryeri API, SMTP) SKIP.
 
 Kalan riskler:
 

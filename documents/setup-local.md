@@ -5,7 +5,7 @@ Windows, macOS ve Linux’ta aynı adımlar geçerlidir. Native modüller için 
 ## Önkoşullar
 
 - [Volta](https://volta.sh) ile Node.js ve Yarn (kök `package.json` pin’leri)
-- [Docker Engine](https://docs.docker.com/engine/install/) (PostgreSQL için önerilir). Docker Desktop şart değil.
+- [Docker Engine](https://docs.docker.com/engine/install/) (PostgreSQL + Redis için önerilir). Docker Desktop şart değil.
 
 ## Adımlar
 
@@ -17,11 +17,13 @@ yarn install
 cp .env.example .env
 ```
 
-2. PostgreSQL
+2. PostgreSQL ve Redis
 
 ```bash
-docker compose up -d postgres
+docker compose up -d postgres redis
 ```
+
+Kuyruklar (abandoned cart, pazaryeri sync, bildirim) Redis olmadan fail log üretir.
 
 3. Şema
 
@@ -39,7 +41,7 @@ yarn migration:run
 yarn workspace @kilic/api seed
 ```
 
-Seed içeriği: `ADMIN_ALLOWLIST` doluysa o e-posta admin allowlist’e yazılır; örnek ürünler, yasal belge taslakları, kargo provider kayıtları.
+Seed içeriği: `ADMIN_ALLOWLIST` doluysa o e-posta admin allowlist’e yazılır; `OPS_STAFF_EMAIL` / `OPS_STAFF_PASSWORD` doluysa staff hesabı; örnek ürünler, yasal belge taslakları, kargo provider kayıtları, PayTR kasa hesabı.
 
 5. Servisleri başlat (ayrı terminaller)
 
@@ -47,6 +49,8 @@ Seed içeriği: `ADMIN_ALLOWLIST` doluysa o e-posta admin allowlist’e yazılı
 yarn dev:api
 yarn dev:frontend
 yarn dev:admin
+yarn dev:desktop   # personel paneli; mağaza menüden
+yarn dev:mobile    # native mağaza; personel sekmesi ops JWT ile
 ```
 
 Masaüstü paket: `yarn pack:desktop:win` | `pack:desktop:mac` | `pack:desktop:linux`
@@ -58,7 +62,9 @@ Ops ikon üretimi (`scripts/generate-ops-icons.ps1`) yalnızca Windows’ta çal
 - API: 4000 — Swagger `/docs`
 - Frontend: 3000
 - Admin: 3001
+- Desktop Vite: 5173 (`DESKTOP_DEV_URL`)
 - Postgres: 5432
+- Redis: 6379
 
 ## Alias kontrolü
 
