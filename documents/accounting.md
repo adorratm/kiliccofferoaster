@@ -1,6 +1,14 @@
 # Ön muhasebe ve e-belge
 
-Masaüstü (`desktop/`, Electron) ve mobil (`mobile/`, Expo) mevcut NestJS API’ye bağlanır. Kaynak gerçekliği PostgreSQL’dir; cihazlar SQLite outbox ile çevrimdışı çalışır.
+Masaüstü (`desktop/`, Electron: Windows / macOS / Linux) ve mobil (`mobile/`, Expo) mevcut NestJS API’ye bağlanır. Kaynak gerçekliği PostgreSQL’dir; cihazlar SQLite outbox ile çevrimdışı çalışır.
+
+## Satış yeterliliği
+
+Türk Kahvesi, Filtre, Espresso, Lokum, Draje, Kuruyemiş, Bitki Çayı, Baharat, Meşrubat ve Çay katalog `kind` + birim (`g`/`kg`/`adet`/`paket`/`lt`) + satır KDV ile satılabilir. Cari, satış/alış fatura, e-arşiv/e-fatura (Turkcell), kasa ve web siparişinden fatura bu ürün karışımı için yeterlidir.
+
+Gıda perakende alanları: barkod, SKT (`expiresAt`), alerjen, içerik; stok `numeric(12,3)`; stok hareketi `waste` (fire); kasa çıkışında gider kategorisi (`kira`, `enerji`, `ambalaj`, `hammadde`, `diger`). Stok raporunda SKT’ye 30 gün kala / geçmiş kalemler işaretlenir.
+
+Bilerek kapsam dışı: yeşil çekirdek → kavrum üretim emri, blend BOM, FEFO lot, yerleşik barkodlu POS, Logo/Paraşüt.
 
 ## Roller
 
@@ -13,10 +21,10 @@ Masaüstü (`desktop/`, Electron) ve mobil (`mobile/`, Expo) mevcut NestJS API�
 - Cari: `/parties`
 - Faturalar: `/invoices` — taslak, kuyruk, gönder, iptal, HTML yazdırma
 - Web siparişinden fatura: `POST /invoices/from-order/:orderId` (stok tekrar düşmez)
-- Kasa: `/cash/accounts`, `/cash/entries`, `POST /cash/sync-paytr`
-- Stok: `/stock`, `/stock/movements`
+- Kasa: `/cash/accounts`, `/cash/entries` (`category` isteğe bağlı), `POST /cash/sync-paytr`
+- Stok: `/stock`, `/stock/movements` (`waste` dahil; miktar ondalıklı)
 - ÖKC: `POST /okc/import` (CSV satırları; e-belge üretilmez)
-- Raporlar: `/reports/turnover|vat|cash|stock`
+- Raporlar: `/reports/turnover|vat|cash|stock` (stok satırında `expiresAt`, `expiringSoon`, `expired`)
 - Senkron: `POST /sync/push`, `GET /sync/pull?since=`
 - e-belge: `/einvoice/taxpayer/:vkn`, `/einvoice/inbox`
 

@@ -5,11 +5,13 @@ import type { RootStack } from '../../App';
 import { api, restoreOpsSession, setToken } from '../lib/api';
 import { errorFromUrl, loginWithGoogle, tokenFromUrl } from '../lib/google-login';
 import { registerPushToken } from '../lib/push';
+import { useStaffSession } from '../lib/staff-session';
 import { colors } from '../ui';
 
 type Props = NativeStackScreenProps<RootStack, 'StaffLogin'>;
 
 export function LoginScreen({ navigation }: Props) {
+  const { refreshStaff } = useStaffSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,14 +19,15 @@ export function LoginScreen({ navigation }: Props) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    void restoreOpsSession().then((ok) => {
+    void restoreOpsSession().then(async (ok) => {
       if (ok) {
+        await refreshStaff();
         navigation.replace('Home');
         return;
       }
       setChecking(false);
     });
-  }, [navigation]);
+  }, [navigation, refreshStaff]);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
@@ -43,6 +46,7 @@ export function LoginScreen({ navigation }: Props) {
           }
           window.history.replaceState({}, '', window.location.pathname || '/');
           void registerPushToken().catch(() => undefined);
+          await refreshStaff();
           navigation.replace('Home');
         });
       } catch {
@@ -50,11 +54,12 @@ export function LoginScreen({ navigation }: Props) {
         setError('Google oturumu doğrulanamadı');
       }
     });
-  }, [navigation]);
+  }, [navigation, refreshStaff]);
 
   async function finish(token: string) {
     await setToken(token);
     void registerPushToken().catch(() => undefined);
+    await refreshStaff();
     navigation.replace('Home');
   }
 
@@ -91,6 +96,7 @@ export function LoginScreen({ navigation }: Props) {
         return;
       }
       void registerPushToken().catch(() => undefined);
+      await refreshStaff();
       navigation.replace('Home');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Google girişi başarısız');

@@ -16,7 +16,12 @@ DOMAINS=(
   admin.kiliccoffeeroaster.com.tr
   api.kiliccoffeeroaster.com.tr
 )
-EMAIL="${CERTBOT_EMAIL:-emrekilic19983@gmail.com}"
+EMAIL="${CERTBOT_EMAIL:-}"
+if [[ -z "${EMAIL}" ]]; then
+  echo "CERTBOT_EMAIL gerekli (Let's Encrypt bildirim adresi)."
+  echo "Örnek: CERTBOT_EMAIL=you@example.com sudo -E bash $0"
+  exit 1
+fi
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Root gerekli: sudo bash $0"

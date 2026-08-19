@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -8,10 +7,17 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ShopStackParamList } from '../../navigation/types';
+import { Chip } from '../../components/shop/Chip';
+import { ExploreTile } from '../../components/shop/ExploreTile';
+import { PageHeader } from '../../components/shop/PageHeader';
+import { ScreenLoader } from '../../components/shop/ScreenLoader';
+import { SearchBar } from '../../components/shop/SearchBar';
+import { SectionLabel } from '../../components/shop/SectionLabel';
 import { shopCategories, shopProducts } from '../../lib/shop-api';
 import type { Category, Product } from '../../lib/shop-types';
-import { colors, muted, title } from '../../ui';
+import { colors } from '../../ui';
 import { ProductCard } from './ProductCard';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'ShopHome'>;
@@ -45,78 +51,49 @@ export function ShopHomeScreen({ navigation }: Props) {
     void load();
   }, [load]);
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  if (loading) return <ScreenLoader />;
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
       refreshControl={
         <RefreshControl refreshing={false} onRefresh={() => void load()} tintColor={colors.accent} />
       }
     >
-      <Text style={muted}>KILIÇ COFFEE ROASTER</Text>
-      <Text style={[title, { marginTop: 6 }]}>Mağaza</Text>
+      <PageHeader
+        kicker="01 // Kavrum"
+        heading="Mağaza"
+        subtitle="Torbalı’dan taze kavrulmuş specialty coffee. Batch bazlı, izlenebilir çekirdek."
+      />
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
-      <Pressable
+      <SearchBar
+        placeholder="Kahve, köken, kavrum ara…"
+        editable={false}
         onPress={() => navigation.navigate('ShopSearch')}
-        style={{
-          marginTop: 16,
-          borderWidth: 1,
-          borderColor: colors.border,
-          padding: 14,
-          backgroundColor: colors.surface,
-        }}
-      >
-        <Text style={{ color: colors.muted }}>Kahve ara…</Text>
-      </Pressable>
+      />
 
       {categories.length ? (
         <>
-          <Text style={[muted, { marginTop: 24, letterSpacing: 2 }]}>KATEGORİLER</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+          <SectionLabel index="02" label="Kategoriler" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+            <Chip filled label="Tümü" onPress={() => navigation.navigate('Catalog', {})} />
             {categories.map((c) => (
-              <Pressable
+              <Chip
                 key={c.id}
+                label={c.name}
                 onPress={() => navigation.navigate('Catalog', { categorySlug: c.slug })}
-                style={{
-                  marginRight: 8,
-                  marginTop: 8,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                }}
-              >
-                <Text style={{ color: colors.accentSoft }}>{c.name}</Text>
-              </Pressable>
+              />
             ))}
-            <Pressable
-              onPress={() => navigation.navigate('Catalog', {})}
-              style={{
-                marginRight: 8,
-                marginTop: 8,
-                backgroundColor: colors.accent,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-              }}
-            >
-              <Text style={{ color: '#fff' }}>Tümü</Text>
-            </Pressable>
-          </View>
+          </ScrollView>
         </>
       ) : null}
 
       {featured.length ? (
         <>
-          <Text style={[muted, { marginTop: 24, letterSpacing: 2 }]}>ÖNE ÇIKANLAR</Text>
+          <SectionLabel index="03" label="Öne çıkanlar" />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
             {featured.map((p) => (
               <View key={p.id} style={{ width: '50%' }}>
@@ -130,7 +107,7 @@ export function ShopHomeScreen({ navigation }: Props) {
         </>
       ) : null}
 
-      <Text style={[muted, { marginTop: 24, letterSpacing: 2 }]}>KAHVELER</Text>
+      <SectionLabel index="04" label="Kahveler" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
         {latest.map((p) => (
           <View key={p.id} style={{ width: '50%' }}>
@@ -141,6 +118,49 @@ export function ShopHomeScreen({ navigation }: Props) {
           </View>
         ))}
       </View>
+      <Pressable onPress={() => navigation.navigate('Catalog', {})} style={{ marginTop: 8, paddingVertical: 12 }}>
+        <Text
+          style={{
+            color: colors.accentSoft,
+            textAlign: 'center',
+            fontSize: 12,
+            letterSpacing: 1.6,
+            textTransform: 'uppercase',
+            fontWeight: '700',
+          }}
+        >
+          Tüm kataloğu gör
+        </Text>
+      </Pressable>
+
+      <SectionLabel index="05" label="Keşfet" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <ExploreTile
+          icon="info"
+          label="Hakkımızda"
+          hint="Atölye ve kavrum"
+          onPress={() => navigation.navigate('About')}
+        />
+        <ExploreTile
+          icon="book-open"
+          label="Blog"
+          hint="Notlar ve profiller"
+          onPress={() => navigation.navigate('BlogList')}
+        />
+        <ExploreTile
+          icon="help-circle"
+          label="SSS"
+          hint="Kargo ve öğütme"
+          onPress={() => navigation.navigate('Faq')}
+        />
+        <ExploreTile
+          icon="map-pin"
+          label="İletişim"
+          hint="Torbalı / İzmir"
+          onPress={() => navigation.navigate('Contact')}
+        />
+      </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }

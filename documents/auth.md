@@ -7,9 +7,9 @@ Yöntemler:
 1. E-posta + şifre — `POST /auth/register`, `POST /auth/login`
 2. Google — `GET /auth/google` → callback → JWT
 3. Facebook — `GET /auth/facebook`
-4. Apple — `GET /auth/apple`
+4. Apple — web: `GET /auth/apple` (Services ID); iOS native: `POST /auth/apple` (`APPLE_CLIENT_ID` = bundle id)
 
-JWT `Authorization: Bearer <token>` ile gönderilir. Frontend token’ı localStorage’da tutar.
+JWT `Authorization: Bearer <token>` ile gönderilir. Frontend token’ı localStorage’da tutar. Mobil mağaza Google: `/auth/google?client=mobile`.
 
 Hesap silme: `DELETE /auth/me` (müşteri). Personel hesapları bu uçtan silinmez.
 
@@ -18,8 +18,8 @@ Hesap silme: `DELETE /auth/me` (müşteri). Personel hesapları bu uçtan silinm
 - Yalnızca Google OAuth: `GET /auth/google/admin`
 - Callback: `GOOGLE_ADMIN_CALLBACK_URL`
 - Kullanıcı e-postası şu kaynaklarda olmalıdır:
-  - `ADMIN_ALLOWLIST` env (varsayılan: `emrekilic19983@gmail.com`)
-  - veya `admin_allowlist` tablosu (seed ile eklenir)
+  - `ADMIN_ALLOWLIST` env
+  - veya `admin_allowlist` tablosu (seed: `ADMIN_ALLOWLIST` doluysa eklenir)
 - Başarılı girişte `role = admin`
 
 ## Google Cloud Console

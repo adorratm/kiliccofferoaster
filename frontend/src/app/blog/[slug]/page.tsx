@@ -22,7 +22,9 @@ export async function generateMetadata({ params }: Props) {
     getBlogPostBySlug(slug),
     getSiteSettings(),
   ]);
-  if (!post) return { title: "Yazı" };
+  if (!post) {
+    return { title: "Yazı bulunamadı", robots: { index: false, follow: false } };
+  }
   return buildBlogPostMetadata(post, settings);
 }
 

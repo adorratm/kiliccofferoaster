@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { categoryCatalogPath } from "@/lib/catalog-paths";
 import type { SiteSettings } from "@/lib/cms";
-import type { BlogPost, Product } from "@/lib/types";
+import type { BlogPost, Product, ProductReview } from "@/lib/types";
 
 export { categoryCatalogPath };
 
@@ -74,11 +74,26 @@ export function buildCatalogMetadata(
     categorySlug?: string;
     categoryName?: string;
     categoryDescription?: string | null;
+    categorySeoTitle?: string | null;
+    categorySeoDescription?: string | null;
     q?: string;
+    page?: string | number;
+    origin?: string;
+    roast?: string;
+    sort?: string;
+    order?: string;
   } = {},
 ): Metadata {
   const { categorySlug, categoryName, categoryDescription, q } = opts;
   const query = q?.trim();
+  const pageNum = Number(opts.page || 1);
+  const filtered = Boolean(
+    (pageNum > 1 && Number.isFinite(pageNum)) ||
+      opts.origin?.trim() ||
+      opts.roast?.trim() ||
+      opts.sort?.trim() ||
+      opts.order?.trim(),
+  );
 
   let title = "Kavrumlar";
   let description =
@@ -86,8 +101,9 @@ export function buildCatalogMetadata(
   let path = "/urunler";
 
   if (categorySlug && categoryName) {
-    title = categoryName;
+    title = opts.categorySeoTitle?.trim() || categoryName;
     description =
+      opts.categorySeoDescription?.trim() ||
       categoryDescription?.trim() ||
       `${categoryName} kategorisindeki kavrumlar — ${settings.brand.name}.`;
     path = categoryCatalogPath(categorySlug);
@@ -105,7 +121,7 @@ export function buildCatalogMetadata(
     keywords: categoryName
       ? [categoryName, categorySlug || "", "kahve", "kavrum"]
       : ["katalog", "kahve", "specialty coffee"],
-    noIndex: Boolean(query),
+    noIndex: Boolean(query) || filtered,
   });
 }
 
@@ -406,12 +422,66 @@ export function breadcrumbJsonLd(
   };
 }
 
-export function productJsonLd(product: Product, settings: SiteSettings) {
-  const price = product.variants?.[0]?.price ?? product.basePrice;
-  const stock =
-    product.variants?.some((v) => v.isActive && v.stock > 0) ||
-    product.stock > 0;
-  const ratingCount = product.ratingCount ?? 0;
+const DEFAULT_SHIPPING_FEE = "89.90";
+
+function productAvailability(inStock: boolean) {
+  return inStock
+    ? "https://schema.org/InStock"
+    : "https://schema.org/OutOfStock";
+}
+
+function merchantReturnPolicy() {
+  return {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "TR",
+    returnPolicyCategory:
+      "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: "https://schema.org/ReturnShippingFees",
+    merchantReturnLink: `${SITE_URL}/iptal-iade`,
+  };
+}
+
+function offerShippingDetails() {
+  return {
+    "@type": "OfferShippingDetails",
+    shippingRate: {
+      "@type": "MonetaryAmount",
+      value: DEFAULT_SHIPPING_FEE,
+      currency: "TRY",
+    },
+    shippingDestination: {
+      "@type": "DefinedRegion",
+      addressCountry: "TR",
+    },
+    deliveryTime: {
+      "@type": "ShippingDeliveryTime",
+      handlingTime: {
+        "@type": "QuantitativeValue",
+        minValue: 1,
+        maxValue: 3,
+        unitCode: "DAY",
+      },
+      transitTime: {
+        "@type": "QuantitativeValue",
+        minValue: 1,
+        maxValue: 5,
+        unitCode: "DAY",
+      },
+    },
+  };
+}
+
+export function productJsonLd(
+  product: Product,
+  settings: SiteSettings,
+  reviews: ProductReview[] = [],
+) {
+  const activeVariants = (product.variants || []).filter((v) => v.isActive);
+  const inStock =
+    activeVariants.some((v) => Number(v.stock) > 0) || product.stock > 0;
+  const ratingCount = product.ratingCount ?? reviews.length;
   const ratingAvg = Number(product.ratingAvg || 0);
   const images = [
     product.imageUrl,
@@ -421,7 +491,59 @@ export function productJsonLd(product: Product, settings: SiteSettings) {
     product.seoDescription ||
     product.shortDescription ||
     product.description;
+  const url = `${SITE_URL}/urunler/${product.slug}`;
+  const currency = product.currency || "TRY";
+  const seller = {
+    "@type": "Organization",
+    name: settings.brand.name,
+  };
+  const shipping = {
+    shippingDetails: offerShippingDetails(),
+    hasMerchantReturnPolicy: merchantReturnPolicy(),
+    seller,
+    url,
+    itemCondition: "https://schema.org/NewCondition",
+  };
 
+  const prices = (
+    activeVariants.length
+      ? activeVariants.map((v) => Number(v.price))
+      : [Number(product.salePrice ?? product.basePrice)]
+  ).filter((n) => Number.isFinite(n));
+  const low = prices.length ? Math.min(...prices) : Number(product.basePrice);
+  const high = prices.length ? Math.max(...prices) : low;
+
+  const offers =
+    activeVariants.length > 1
+      ? {
+          "@type": "AggregateOffer",
+          priceCurrency: currency,
+          lowPrice: low.toFixed(2),
+          highPrice: high.toFixed(2),
+          offerCount: activeVariants.length,
+          availability: productAvailability(inStock),
+          ...shipping,
+          offers: activeVariants.map((variant) => ({
+            "@type": "Offer",
+            sku: variant.sku,
+            name: variant.weightLabel,
+            price: variant.price,
+            priceCurrency: currency,
+            availability: productAvailability(Number(variant.stock) > 0),
+            url,
+            seller,
+          })),
+        }
+      : {
+          "@type": "Offer",
+          priceCurrency: currency,
+          price: String(activeVariants[0]?.price ?? product.basePrice),
+          sku: activeVariants[0]?.sku || product.batchId || product.slug,
+          availability: productAvailability(inStock),
+          ...shipping,
+        };
+
+  const approvedReviews = reviews.filter((r) => r.isApproved && r.body);
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -433,20 +555,7 @@ export function productJsonLd(product: Product, settings: SiteSettings) {
       "@type": "Brand",
       name: settings.brand.name,
     },
-    offers: {
-      "@type": "Offer",
-      priceCurrency: product.currency || "TRY",
-      price,
-      itemCondition: "https://schema.org/NewCondition",
-      availability: stock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      url: `${SITE_URL}/urunler/${product.slug}`,
-      seller: {
-        "@type": "Organization",
-        name: settings.brand.name,
-      },
-    },
+    offers,
     ...(ratingCount > 0 && ratingAvg > 0
       ? {
           aggregateRating: {
@@ -456,6 +565,22 @@ export function productJsonLd(product: Product, settings: SiteSettings) {
             bestRating: "5",
             worstRating: "1",
           },
+        }
+      : {}),
+    ...(approvedReviews.length
+      ? {
+          review: approvedReviews.slice(0, 10).map((review) => ({
+            "@type": "Review",
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: review.rating,
+              bestRating: "5",
+              worstRating: "1",
+            },
+            author: { "@type": "Person", name: review.authorName },
+            reviewBody: review.body,
+            datePublished: review.createdAt || undefined,
+          })),
         }
       : {}),
   };

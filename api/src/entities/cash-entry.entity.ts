@@ -51,6 +51,9 @@ export class CashEntry extends BaseEntity {
   @Column({ name: 'source_id', type: 'varchar', length: 80, nullable: true })
   sourceId!: string | null;
 
+  @Column({ name: 'category', type: 'varchar', length: 40, nullable: true })
+  category!: string | null;
+
   @Column({ name: 'client_id', type: 'varchar', length: 80, nullable: true })
   clientId!: string | null;
 }

@@ -3,6 +3,7 @@
     "name": "Kılıç Coffee Roaster",
     "slug": "kilic-ops",
     "version": "1.0.0",
+    "description": "Torbalı / İzmir specialty kahve: kavrum siparişi, takip ve hesap yönetimi.",
     "orientation": "portrait",
     "scheme": "kilicops",
     "userInterfaceStyle": "dark",
@@ -23,11 +24,17 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-apple-authentication"
     ],
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "tr.kiliccoffeeroaster.ops",
+      "associatedDomains": [
+        "applinks:kiliccoffeeroaster.com.tr",
+        "applinks:www.kiliccoffeeroaster.com.tr"
+      ],
       "icon": "./assets/icon.png",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "Sipariş ve kampanya bildirimleri için kullanılır.",
@@ -46,9 +53,27 @@
           "autoVerify": false,
           "data": [
             {
-              "scheme": "kilicops",
-              "host": "auth",
-              "pathPrefix": "/callback"
+              "scheme": "kilicops"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "kiliccoffeeroaster.com.tr",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.kiliccoffeeroaster.com.tr",
+              "pathPrefix": "/"
             }
           ],
           "category": [
@@ -63,11 +88,13 @@
       "output": "single",
       "favicon": "./assets/favicon.png"
     },
+    "owner": "adorratm",
     "extra": {
       "eas": {
         "projectId": "5e3e5653-794f-49ef-baf6-e32edbd29340"
-      }
-    },
-    "owner": "adorratm"
+      },
+      "privacyPolicyUrl": "https://kiliccoffeeroaster.com.tr/gizlilik",
+      "supportUrl": "https://kiliccoffeeroaster.com.tr/iletisim"
+    }
   }
 }

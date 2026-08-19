@@ -14,6 +14,8 @@ type ProductVariant = {
   price: string | number;
   stock: number;
   isActive?: boolean;
+  barcode?: string | null;
+  expiresAt?: string | null;
 };
 
 type Product = {
@@ -29,6 +31,10 @@ type Product = {
   kind?: string;
   unit?: string;
   vatRate?: string | number;
+  barcode?: string | null;
+  expiresAt?: string | null;
+  allergens?: string[];
+  ingredients?: string | null;
   variants?: ProductVariant[];
 };
 
@@ -39,6 +45,8 @@ type VariantForm = {
   price: string;
   stock: string;
   isActive: boolean;
+  barcode: string;
+  expiresAt: string;
 };
 
 type FormState = {
@@ -51,6 +59,10 @@ type FormState = {
   kind: string;
   unit: string;
   vatRate: string;
+  barcode: string;
+  expiresAt: string;
+  allergens: string;
+  ingredients: string;
   isActive: boolean;
   isFeatured: boolean;
   variants: VariantForm[];
@@ -79,6 +91,8 @@ function emptyVariant(): VariantForm {
     price: '',
     stock: '0',
     isActive: true,
+    barcode: '',
+    expiresAt: '',
   };
 }
 
@@ -93,6 +107,10 @@ function emptyForm(): FormState {
     kind: 'other',
     unit: 'adet',
     vatRate: '20',
+    barcode: '',
+    expiresAt: '',
+    allergens: '',
+    ingredients: '',
     isActive: true,
     isFeatured: false,
     variants: [emptyVariant()],
@@ -109,6 +127,8 @@ function formFromProduct(p: Product): FormState {
           price: String(v.price ?? ''),
           stock: String(v.stock ?? 0),
           isActive: v.isActive !== false,
+          barcode: v.barcode || '',
+          expiresAt: v.expiresAt ? String(v.expiresAt).slice(0, 10) : '',
         }))
       : [emptyVariant()];
   return {
@@ -121,6 +141,10 @@ function formFromProduct(p: Product): FormState {
     kind: p.kind || 'other',
     unit: p.unit || 'adet',
     vatRate: String(p.vatRate ?? '20'),
+    barcode: p.barcode || '',
+    expiresAt: p.expiresAt ? String(p.expiresAt).slice(0, 10) : '',
+    allergens: (p.allergens || []).join(', '),
+    ingredients: p.ingredients || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
     variants,
@@ -217,6 +241,8 @@ export function ProductsPage() {
         price: String(v.price),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
+        barcode: v.barcode.trim() || null,
+        expiresAt: v.expiresAt.trim() || null,
       }));
     const body = {
       name: form.name.trim(),
@@ -228,6 +254,13 @@ export function ProductsPage() {
       kind: form.kind || 'other',
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
+      barcode: form.barcode.trim() || null,
+      expiresAt: form.expiresAt.trim() || null,
+      allergens: form.allergens
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      ingredients: form.ingredients.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       variants,
@@ -380,6 +413,19 @@ export function ProductsPage() {
             value={form.vatRate}
             onChange={(e) => setForm((f) => ({ ...f, vatRate: e.target.value }))}
           />
+          <input
+            placeholder="Barkod"
+            className={inputClass}
+            value={form.barcode}
+            onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
+          />
+          <input
+            type="date"
+            placeholder="SKT"
+            className={inputClass}
+            value={form.expiresAt}
+            onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
+          />
           <select
             className={inputClass}
             value={form.unit}
@@ -415,6 +461,18 @@ export function ProductsPage() {
             </option>
           ))}
         </select>
+        <input
+          placeholder="Alerjenler (virgülle: fındık, süt)"
+          className={inputClass}
+          value={form.allergens}
+          onChange={(e) => setForm((f) => ({ ...f, allergens: e.target.value }))}
+        />
+        <textarea
+          placeholder="İçerik / bileşenler"
+          className={`${inputClass} min-h-20`}
+          value={form.ingredients}
+          onChange={(e) => setForm((f) => ({ ...f, ingredients: e.target.value }))}
+        />
         <div className="mt-3 space-y-2">
           <Switch
             id="product-active"
@@ -479,6 +537,19 @@ export function ProductsPage() {
                   className={`${inputClass} mt-0`}
                   value={v.stock}
                   onChange={(e) => updateVariant(i, { stock: e.target.value })}
+                />
+                <input
+                  placeholder="Barkod"
+                  className={`${inputClass} mt-0 font-mono`}
+                  value={v.barcode}
+                  onChange={(e) => updateVariant(i, { barcode: e.target.value })}
+                />
+                <input
+                  type="date"
+                  placeholder="SKT"
+                  className={`${inputClass} mt-0`}
+                  value={v.expiresAt}
+                  onChange={(e) => updateVariant(i, { expiresAt: e.target.value })}
                 />
               </div>
               <div className="mt-2 flex items-center justify-between">

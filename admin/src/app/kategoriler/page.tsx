@@ -12,6 +12,8 @@ type Category = {
   slug: string;
   name: string;
   description: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   sortOrder: number;
   isActive: boolean;
 };
@@ -21,6 +23,8 @@ type FormState = {
   name: string;
   slug: string;
   description: string;
+  seoTitle: string;
+  seoDescription: string;
   sortOrder: string;
   isActive: boolean;
 };
@@ -29,6 +33,8 @@ const emptyForm = (): FormState => ({
   name: '',
   slug: '',
   description: '',
+  seoTitle: '',
+  seoDescription: '',
   sortOrder: '0',
   isActive: true,
 });
@@ -79,6 +85,8 @@ function CategoriesPageInner() {
       name: match.name,
       slug: match.slug,
       description: match.description || '',
+      seoTitle: match.seoTitle || '',
+      seoDescription: match.seoDescription || '',
       sortOrder: String(match.sortOrder),
       isActive: match.isActive,
     });
@@ -102,6 +110,8 @@ function CategoriesPageInner() {
       name: form.name,
       slug: form.slug || slugify(form.name),
       description: form.description || undefined,
+      seoTitle: form.seoTitle || undefined,
+      seoDescription: form.seoDescription || undefined,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
     };
@@ -188,6 +198,32 @@ function CategoriesPageInner() {
             />
           </label>
           <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              SEO başlık
+            </span>
+            <input
+              value={form.seoTitle}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, seoTitle: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              maxLength={220}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              SEO açıklama
+            </span>
+            <textarea
+              value={form.seoDescription}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, seoDescription: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              rows={3}
+            />
+          </label>
+          <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">Sıra</span>
             <input
               type="number"
@@ -234,6 +270,8 @@ function CategoriesPageInner() {
             slug: r.slug,
             name: r.name,
             description: r.description || '',
+            seoTitle: r.seoTitle || '',
+            seoDescription: r.seoDescription || '',
             sortOrder: String(r.sortOrder),
             isActive: r.isActive,
           });
@@ -259,6 +297,8 @@ function CategoriesPageInner() {
                     name: r.name,
                     slug: r.slug,
                     description: r.description || '',
+                    seoTitle: r.seoTitle || '',
+                    seoDescription: r.seoDescription || '',
                     sortOrder: String(r.sortOrder),
                     isActive: r.isActive,
                   });

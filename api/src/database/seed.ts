@@ -31,24 +31,26 @@ async function seed() {
   await AppDataSource.initialize();
   const em = AppDataSource.manager;
 
-  const adminEmail = (
-    process.env.ADMIN_ALLOWLIST || 'emrekilic19983@gmail.com'
-  )
+  const adminEmail = (process.env.ADMIN_ALLOWLIST || '')
     .split(',')[0]
     .trim()
     .toLowerCase();
 
-  let allow = await em.findOne(AdminAllowlist, {
-    where: { email: adminEmail },
-  });
-  if (!allow) {
-    allow = em.create(AdminAllowlist, {
-      email: adminEmail,
-      active: true,
-      note: 'Seed admin',
+  if (adminEmail) {
+    let allow = await em.findOne(AdminAllowlist, {
+      where: { email: adminEmail },
     });
-    await em.save(allow);
-    console.log('Admin allowlist:', adminEmail);
+    if (!allow) {
+      allow = em.create(AdminAllowlist, {
+        email: adminEmail,
+        active: true,
+        note: 'Seed admin',
+      });
+      await em.save(allow);
+      console.log('Admin allowlist:', adminEmail);
+    }
+  } else {
+    console.log('ADMIN_ALLOWLIST boş — admin allowlist seed atlandı');
   }
 
   // Ön muhasebe kategorileri
@@ -128,6 +130,7 @@ async function seed() {
         isFeatured: true,
         badge: null,
         gallery: [],
+        imageUrl: apiStockImage('product-1'),
         categoryId: turkCategory.id,
         kind: 'coffee_turkish',
         unit: 'g',
@@ -147,6 +150,9 @@ async function seed() {
     turkKahvesi.shortDescription =
       turkKahvesi.shortDescription ||
       'Geleneksel · Taze kavrum · Çekirdek veya öğütülmüş';
+    if (!turkKahvesi.imageUrl) {
+      turkKahvesi.imageUrl = apiStockImage('product-1');
+    }
     await em.save(turkKahvesi);
     console.log('Product updated: turk-kahvesi');
   }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { CASH_EXPENSE_CATEGORIES, CASH_EXPENSE_CATEGORY_LABELS } from '@kilic/accounting-contracts';
 import { api } from '../lib/api';
 import { enqueue } from '../lib/sync';
+import { colors } from '../ui';
 
 type Account = { id: string; name: string; balance?: string };
 
@@ -9,6 +11,8 @@ export function CashScreen() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [type, setType] = useState<'in' | 'out'>('in');
+  const [category, setCategory] = useState('');
 
   async function load() {
     try {
@@ -27,10 +31,11 @@ export function CashScreen() {
     if (!accountId) return;
     const payload = {
       accountId,
-      type: 'in',
+      type,
       amount: Number(amount),
       entryDate: new Date().toISOString().slice(0, 10),
       description,
+      category: type === 'out' ? category || 'diger' : undefined,
     };
     try {
       await api('/accounting/cash/entries', { method: 'POST', body: payload });
@@ -55,6 +60,44 @@ export function CashScreen() {
           <Text style={{ color: '#cc5b3e', fontSize: 20 }}>{a.balance} ₺</Text>
         </View>
       ))}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+        {(['in', 'out'] as const).map((t) => (
+          <Pressable
+            key={t}
+            onPress={() => setType(t)}
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: type === t ? colors.accent : '#57423d',
+              padding: 10,
+            }}
+          >
+            <Text style={{ color: type === t ? colors.accentSoft : '#e5e2e1', textAlign: 'center' }}>
+              {t === 'in' ? 'Giriş' : 'Çıkış'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {type === 'out' ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          {CASH_EXPENSE_CATEGORIES.map((c) => (
+            <Pressable
+              key={c}
+              onPress={() => setCategory(c)}
+              style={{
+                borderWidth: 1,
+                borderColor: category === c ? colors.accent : '#57423d',
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+              }}
+            >
+              <Text style={{ color: category === c ? colors.accentSoft : '#e5e2e1', fontSize: 12 }}>
+                {CASH_EXPENSE_CATEGORY_LABELS[c]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       <TextInput
         placeholder="Tutar"
         placeholderTextColor="#a58b84"
@@ -77,7 +120,9 @@ export function CashScreen() {
         }}
       />
       <Pressable onPress={() => void save()} style={{ marginTop: 12, backgroundColor: '#cc5b3e', padding: 12 }}>
-        <Text style={{ color: '#fff', textAlign: 'center' }}>Kasa girişi</Text>
+        <Text style={{ color: '#fff', textAlign: 'center' }}>
+          {type === 'in' ? 'Kasa girişi' : 'Kasa çıkışı'}
+        </Text>
       </Pressable>
     </ScrollView>
   );

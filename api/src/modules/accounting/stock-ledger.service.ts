@@ -87,7 +87,10 @@ export class StockLedgerService {
         if (input.type === StockMovementType.COUNT) {
           variant.stock = input.quantity;
         } else {
-          variant.stock = Math.max(0, variant.stock + input.quantity);
+          variant.stock = Math.max(
+            0,
+            Math.round((variant.stock + input.quantity) * 1000) / 1000,
+          );
         }
         await tx.save(variant);
         balanceAfter = variant.stock;
@@ -101,7 +104,10 @@ export class StockLedgerService {
         if (input.type === StockMovementType.COUNT) {
           product.stock = input.quantity;
         } else {
-          product.stock = Math.max(0, product.stock + input.quantity);
+          product.stock = Math.max(
+            0,
+            Math.round((product.stock + input.quantity) * 1000) / 1000,
+          );
         }
         await tx.save(product);
         balanceAfter = product.stock;
@@ -137,6 +143,8 @@ export class StockLedgerService {
       kind: v.product?.kind,
       unit: v.product?.unit,
       vatRate: v.product?.vatRate,
+      barcode: v.barcode || v.product?.barcode || null,
+      expiresAt: v.expiresAt || v.product?.expiresAt || null,
     }));
   }
 

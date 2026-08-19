@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Feather } from '@expo/vector-icons';
 import type { ShopStackParamList } from '../../navigation/types';
+import { Chip } from '../../components/shop/Chip';
+import { RemoteImage } from '../../components/shop/RemoteImage';
+import { ScreenLoader } from '../../components/shop/ScreenLoader';
+import { SectionLabel } from '../../components/shop/SectionLabel';
+import { ProductReviews } from '../../components/shop/ProductReviews';
 import { useShopCart } from '../../lib/shop-cart';
 import { shopAddCartItem, shopProduct, shopToggleWishlist } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
-import { formatMoney, productImage } from '../../lib/format';
+import { formatMoney, stockQty } from '../../lib/format';
 import { GRIND_OPTIONS, type GrindValue } from '../../lib/grind';
-import { btn, btnText, colors, muted } from '../../ui';
+import { productOrigin, roastLabel } from '../../lib/order-status';
+import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
 import type { Product, ProductVariant } from '../../lib/shop-types';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Product'>;
@@ -32,8 +37,9 @@ export function ProductScreen({ navigation, route }: Props) {
     void shopProduct(route.params.slug)
       .then((p) => {
         setProduct(p);
-        const first = (p.variants || []).find((v) => v.isActive !== false);
-        setVariantId(first?.id ?? null);
+        const active = (p.variants || []).filter((v) => v.isActive !== false);
+        const firstInStock = active.find((v) => stockQty(v.stock) > 0) ?? active[0];
+        setVariantId(firstInStock?.id ?? null);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Ürün yok'));
   }, [route.params.slug]);
@@ -44,9 +50,10 @@ export function ProductScreen({ navigation, route }: Props) {
   );
   const selected: ProductVariant | undefined =
     variants.find((v) => v.id === variantId) || variants[0];
-  const price = selected?.price ?? product?.salePrice ?? product?.basePrice;
-  const stock = selected != null ? selected.stock : product?.stock ?? 0;
-  const img = productImage(product?.gallery?.[0] || product?.imageUrl);
+  const amount = selected?.price ?? product?.salePrice ?? product?.basePrice;
+  const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
+  const origin = productOrigin(product?.originCountry, product?.originRegion);
+  const roast = roastLabel(product?.roastLevel);
 
   async function add() {
     if (!product) return;
@@ -55,7 +62,7 @@ export function ProductScreen({ navigation, route }: Props) {
     try {
       await shopAddCartItem({
         productId: product.id,
-        variantId: selected?.id ?? null,
+        variantId: selected?.id,
         grindOption: grind,
         quantity: 1,
       });
@@ -85,13 +92,7 @@ export function ProductScreen({ navigation, route }: Props) {
     }
   }
 
-  if (!product && !error) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  if (!product && !error) return <ScreenLoader />;
 
   if (!product) {
     return (
@@ -102,88 +103,167 @@ export function ProductScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 40 }}>
-      {img ? (
-        <Image source={{ uri: img }} style={{ width: '100%', height: 280 }} resizeMode="cover" />
-      ) : (
-        <View style={{ height: 180, backgroundColor: colors.border }} />
-      )}
-      <View style={{ padding: 16 }}>
-        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '600' }}>{product.name}</Text>
-        {product.campaignName ? (
-          <Text style={[muted, { marginTop: 6 }]}>{product.campaignName}</Text>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 48 }}>
+      <View style={{ height: 320, backgroundColor: colors.surfaceHigh }}>
+        <RemoteImage
+          uri={product.gallery?.[0] || product.imageUrl}
+          seed={product.slug}
+          height={320}
+        />
+        {product.badge ? (
+          <View
+            style={{
+              position: 'absolute',
+              left: 16,
+              bottom: 16,
+              backgroundColor: colors.accent,
+              paddingHorizontal: 10,
+              paddingVertical: 6,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+              {product.badge}
+            </Text>
+          </View>
         ) : null}
-        <Text style={{ color: colors.accentSoft, fontSize: 20, marginTop: 8 }}>
-          {formatMoney(price, product.currency)}
+      </View>
+
+      <View style={{ padding: 16 }}>
+        <Text style={{ color: colors.accentSoft, fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase' }}>
+          Specialty coffee
         </Text>
+        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700', marginTop: 8, lineHeight: 32 }}>
+          {product.name}
+        </Text>
+        {product.campaignName ? (
+          <Text style={[muted, { marginTop: 8 }]}>{product.campaignName}</Text>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 12, gap: 10 }}>
+          <Text style={[price, { fontSize: 22 }]}>{formatMoney(amount, product.currency)}</Text>
+          {product.compareAtPrice && Number(product.compareAtPrice) > Number(amount) ? (
+            <Text style={{ color: colors.muted, textDecorationLine: 'line-through' }}>
+              {formatMoney(product.compareAtPrice, product.currency)}
+            </Text>
+          ) : null}
+        </View>
+
+        {(origin || roast) ? (
+          <View
+            style={{
+              marginTop: 18,
+              borderWidth: 1,
+              borderColor: colors.borderMuted,
+              padding: 14,
+              flexDirection: 'row',
+            }}
+          >
+            {origin ? (
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.muted, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>Köken</Text>
+                <Text style={{ color: colors.text, marginTop: 6 }}>{origin}</Text>
+              </View>
+            ) : null}
+            {roast ? (
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.muted, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>Kavrum</Text>
+                <Text style={{ color: colors.text, marginTop: 6 }}>{roast}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         {product.shortDescription ? (
-          <Text style={{ color: colors.muted, marginTop: 12, lineHeight: 20 }}>
+          <Text style={{ color: colors.muted, marginTop: 16, lineHeight: 22, fontSize: 14 }}>
             {product.shortDescription}
           </Text>
         ) : null}
-        {product.flavorNotes?.length ? (
-          <Text style={[muted, { marginTop: 12 }]}>{product.flavorNotes.join(' · ')}</Text>
-        ) : null}
 
-        {variants.length > 1 ? (
-          <View style={{ marginTop: 16 }}>
-            <Text style={muted}>GRAMAJ</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
-              {variants.map((v) => (
-                <Pressable
-                  key={v.id}
-                  onPress={() => setVariantId(v.id)}
+        {product.flavorNotes?.length ? (
+          <>
+            <SectionLabel label="Tat notları" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {product.flavorNotes.map((note) => (
+                <View
+                  key={note}
                   style={{
                     marginRight: 8,
-                    marginTop: 8,
+                    marginTop: 4,
                     borderWidth: 1,
-                    borderColor: variantId === v.id ? colors.accent : colors.border,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
+                    borderColor: colors.border,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
                   }}
                 >
-                  <Text style={{ color: colors.text }}>{v.weightLabel}</Text>
-                </Pressable>
+                  <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 0.6 }}>{note}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        {variants.length ? (
+          <View style={{ marginTop: 8 }}>
+            <SectionLabel label="Gramaj" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {variants.map((v) => (
+                <Chip
+                  key={v.id}
+                  label={stockQty(v.stock) > 0 ? v.weightLabel : `${v.weightLabel} · Yok`}
+                  selected={variantId === v.id}
+                  onPress={() => setVariantId(v.id)}
+                />
               ))}
             </View>
           </View>
         ) : null}
 
-        <View style={{ marginTop: 16 }}>
-          <Text style={muted}>ÖĞÜTME</Text>
-          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+        <View style={{ marginTop: 8 }}>
+          <SectionLabel label="Öğütme" />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {GRIND_OPTIONS.map((g) => (
-              <Pressable
+              <Chip
                 key={g.value}
+                label={g.label}
+                selected={grind === g.value}
                 onPress={() => setGrind(g.value)}
-                style={{
-                  marginRight: 8,
-                  borderWidth: 1,
-                  borderColor: grind === g.value ? colors.accent : colors.border,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                }}
-              >
-                <Text style={{ color: colors.text }}>{g.label}</Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
 
-        <Text style={[muted, { marginTop: 16 }]}>
-          {stock > 0 ? `Stok: ${stock}` : 'Tükendi'}
+        <Text style={[muted, { marginTop: 20 }]}>
+          {stock > 0 ? `Stokta ${stock} adet` : 'Tükendi'}
         </Text>
-        {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
+        {msg ? (
+          <Text style={{ color: msg.includes('Eklenemedi') || msg.includes('güncellenemedi') || msg.toLowerCase().includes('stok') ? colors.danger : colors.success, marginTop: 8 }}>
+            {msg}
+          </Text>
+        ) : null}
         <Pressable
           onPress={() => void add()}
           disabled={busy || stock <= 0}
-          style={[btn, { opacity: busy || stock <= 0 ? 0.5 : 1 }]}
+          style={[btn, { opacity: busy || stock <= 0 ? 0.5 : 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }]}
         >
+          <Feather name="shopping-bag" size={16} color="#fff" />
           <Text style={btnText}>{busy ? 'Ekleniyor…' : 'Sepete ekle'}</Text>
         </Pressable>
-        <Pressable onPress={() => void fav()} style={{ marginTop: 12 }}>
-          <Text style={{ color: colors.accentSoft, textAlign: 'center' }}>Favorilere ekle</Text>
+        <Pressable
+          onPress={() => void fav()}
+          style={[btnGhost, { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }]}
+        >
+          <Feather name="heart" size={16} color={colors.accentSoft} />
+          <Text style={btnGhostText}>Favorilere ekle</Text>
         </Pressable>
+        <ProductReviews
+          productId={product.id}
+          slug={product.slug}
+          onNeedLogin={() =>
+            navigation.getParent()?.navigate('AccountTab', {
+              screen: 'ShopLogin',
+            } as never)
+          }
+        />
       </View>
     </ScrollView>
   );

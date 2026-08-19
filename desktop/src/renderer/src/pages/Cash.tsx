@@ -1,3 +1,4 @@
+import { CASH_EXPENSE_CATEGORIES, CASH_EXPENSE_CATEGORY_LABELS } from '@kilic/accounting-contracts';
 import { FormEvent, useEffect, useState } from 'react';
 import { api, isOnline } from '../lib/api';
 import { enqueue } from '../lib/sync';
@@ -9,6 +10,7 @@ type Entry = {
   type: string;
   entryDate: string;
   description?: string | null;
+  category?: string | null;
   account?: { name?: string };
 };
 
@@ -19,6 +21,7 @@ export function CashPage() {
   const [type, setType] = useState<'in' | 'out'>('in');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
 
   async function load() {
     if (!isOnline()) return;
@@ -41,6 +44,7 @@ export function CashPage() {
       amount: Number(amount),
       entryDate: new Date().toISOString().slice(0, 10),
       description,
+      category: type === 'out' ? category || 'diger' : undefined,
     };
     if (isOnline()) {
       await api('/accounting/cash/entries', { method: 'POST', body: payload });
@@ -108,6 +112,20 @@ export function CashPage() {
           placeholder="Açıklama"
           className="border border-border-muted bg-background px-3 py-2"
         />
+        {type === 'out' ? (
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border border-border-muted bg-background px-3 py-2"
+          >
+            <option value="">Gider kategorisi</option>
+            {CASH_EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {CASH_EXPENSE_CATEGORY_LABELS[c]}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <button className="bg-accent px-4 py-2 text-white">Kaydet</button>
       </form>
       <table className="mt-6 w-full text-sm">
@@ -117,6 +135,7 @@ export function CashPage() {
             <th>Kasa</th>
             <th>Tip</th>
             <th>Tutar</th>
+            <th>Kategori</th>
             <th>Açıklama</th>
           </tr>
         </thead>
@@ -127,6 +146,13 @@ export function CashPage() {
               <td>{e.account?.name}</td>
               <td>{e.type}</td>
               <td>{e.amount}</td>
+              <td>
+                {e.category
+                  ? CASH_EXPENSE_CATEGORY_LABELS[
+                      e.category as keyof typeof CASH_EXPENSE_CATEGORY_LABELS
+                    ] || e.category
+                  : ''}
+              </td>
               <td>{e.description}</td>
             </tr>
           ))}

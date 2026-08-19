@@ -113,13 +113,24 @@ export class ReportsService {
       relations: { product: true },
       order: { sku: 'ASC' },
     });
-    return variants.map((v) => ({
-      sku: v.sku,
-      name: v.product?.name,
-      kind: v.product?.kind,
-      label: v.weightLabel,
-      stock: v.stock,
-    }));
+    const horizon = new Date();
+    horizon.setDate(horizon.getDate() + 30);
+    const horizonStr = horizon.toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    return variants.map((v) => {
+      const expiresAt = v.expiresAt || v.product?.expiresAt || null;
+      return {
+        sku: v.sku,
+        name: v.product?.name,
+        kind: v.product?.kind,
+        label: v.weightLabel,
+        stock: v.stock,
+        barcode: v.barcode || v.product?.barcode || null,
+        expiresAt,
+        expiringSoon: Boolean(expiresAt && expiresAt <= horizonStr),
+        expired: Boolean(expiresAt && expiresAt < today),
+      };
+    });
   }
 
   async partyStatement(partyId: string, query: ReportsQueryDto) {

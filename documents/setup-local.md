@@ -1,9 +1,11 @@
 # Yerel kurulum
 
+Windows, macOS ve Linux’ta aynı adımlar geçerlidir. Native modüller için Linux’ta `build-essential` (ve gerekirse `python3`) yeterlidir; Windows’ta Visual Studio Build Tools.
+
 ## Önkoşullar
 
 - [Volta](https://volta.sh) ile Node.js ve Yarn (kök `package.json` pin’leri)
-- Docker (PostgreSQL için önerilir)
+- [Docker Engine](https://docs.docker.com/engine/install/) (PostgreSQL için önerilir). Docker Desktop şart değil.
 
 ## Adımlar
 
@@ -37,7 +39,7 @@ yarn migration:run
 yarn workspace @kilic/api seed
 ```
 
-Seed içeriği: admin allowlist (`emrekilic19983@gmail.com`), örnek ürünler, yasal belge taslakları, kargo provider kayıtları.
+Seed içeriği: `ADMIN_ALLOWLIST` doluysa o e-posta admin allowlist’e yazılır; örnek ürünler, yasal belge taslakları, kargo provider kayıtları.
 
 5. Servisleri başlat (ayrı terminaller)
 
@@ -46,6 +48,10 @@ yarn dev:api
 yarn dev:frontend
 yarn dev:admin
 ```
+
+Masaüstü paket: `yarn pack:desktop:win` | `pack:desktop:mac` | `pack:desktop:linux`
+
+Ops ikon üretimi (`scripts/generate-ops-icons.ps1`) yalnızca Windows’ta çalışır; PNG ikonlar repoda mevcuttir.
 
 ## Portlar
 

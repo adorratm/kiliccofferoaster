@@ -308,6 +308,14 @@ export class CreateCashEntryDto {
   @IsString()
   @MaxLength(80)
   clientId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Gider kategorisi (çıkış için): kira, enerji, ambalaj, hammadde, diger',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 }
 
 export class CashEntryQueryDto extends AccountingQueryDto {
@@ -343,7 +351,7 @@ export class CreateStockMovementDto {
   type!: StockMovementType;
 
   @ApiProperty()
-  @IsInt()
+  @IsNumber()
   quantity!: number;
 
   @ApiPropertyOptional()

@@ -46,6 +46,18 @@ export class ProductVariantDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  barcode?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  expiresAt?: string;
 }
 
 export class CreateCategoryDto {
@@ -63,6 +75,17 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(220)
+  seoTitle?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  seoDescription?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -226,6 +249,29 @@ export class CreateProductDto {
   @Min(0)
   @Max(100)
   vatRate?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  barcode?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  expiresAt?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  allergens?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  ingredients?: string;
 
   @ApiPropertyOptional({ type: [ProductVariantDto] })
   @IsOptional()

@@ -27,9 +27,19 @@ yarn pack:desktop:mac
 
 Çıktı: `desktop/release/KilicCoffee.dmg` (universal: Intel + Apple Silicon).
 
+## Linux (AppImage / deb)
+
+Linux makinede:
+
+```bash
+yarn pack:desktop:linux
+```
+
+Çıktı: `desktop/release/KilicCoffee.AppImage` ve `KilicCoffee.deb`. AppImage’i çalıştırılabilir yapın (`chmod +x`). Debian/Ubuntu için `.deb` kullanın.
+
 Windows PC’den macOS paketi alınamaz. Gatekeeper uyarısı olmasın diye Apple Developer ID ile imza + notarize gerekir.
 
-Dosyaları `frontend/public/downloads/` altına kopyalayın veya `NEXT_PUBLIC_DOWNLOAD_WINDOWS` / `NEXT_PUBLIC_DOWNLOAD_MAC` ile CDN verin. Vitrin `/indir` sayfası bu adresleri kullanır.
+Dosyaları `frontend/public/downloads/` altına kopyalayın veya `NEXT_PUBLIC_DOWNLOAD_WINDOWS` / `NEXT_PUBLIC_DOWNLOAD_MAC` / `NEXT_PUBLIC_DOWNLOAD_LINUX` ile CDN verin. Vitrin `/indir` sayfası bu adresleri kullanır.
 
 Paketlenmiş uygulama API için `https://api.kiliccoffeeroaster.com.tr` kullanır. Geliştirmede localhost.
 

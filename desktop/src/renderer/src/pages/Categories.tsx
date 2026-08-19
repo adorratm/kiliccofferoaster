@@ -8,11 +8,21 @@ type Category = {
   name: string;
   slug: string;
   description?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   sortOrder?: number;
   isActive: boolean;
 };
 
-const empty = { name: '', slug: '', description: '', sortOrder: '0', isActive: true };
+const empty = {
+  name: '',
+  slug: '',
+  description: '',
+  seoTitle: '',
+  seoDescription: '',
+  sortOrder: '0',
+  isActive: true,
+};
 
 export function CategoriesPage() {
   const [items, setItems] = useState<Category[]>([]);
@@ -34,6 +44,8 @@ export function CategoriesPage() {
       name: form.name,
       slug: form.slug || slugify(form.name),
       description: form.description || undefined,
+      seoTitle: form.seoTitle || undefined,
+      seoDescription: form.seoDescription || undefined,
       sortOrder: Number(form.sortOrder) || 0,
       isActive: form.isActive,
     };
@@ -72,6 +84,8 @@ export function CategoriesPage() {
                     name: c.name,
                     slug: c.slug,
                     description: c.description || '',
+                    seoTitle: c.seoTitle || '',
+                    seoDescription: c.seoDescription || '',
                     sortOrder: String(c.sortOrder ?? 0),
                     isActive: c.isActive,
                   });
@@ -107,6 +121,18 @@ export function CategoriesPage() {
           className={`${inputClass} min-h-20`}
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        />
+        <input
+          placeholder="SEO başlık"
+          className={inputClass}
+          value={form.seoTitle}
+          onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))}
+        />
+        <textarea
+          placeholder="SEO açıklama"
+          className={`${inputClass} min-h-20`}
+          value={form.seoDescription}
+          onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))}
         />
         <div className="mt-3">
           <Switch

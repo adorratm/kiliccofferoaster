@@ -1,6 +1,5 @@
 import { useLayoutEffect } from 'react';
 import type { ComponentProps } from 'react';
-import { Pressable, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import {
   BottomTabScreenProps,
@@ -8,24 +7,38 @@ import {
 } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { InboxHeaderButton } from '../components/InboxHeaderButton';
+import { InboxHeaderButton, StaffHomeHeaderRight } from '../components/InboxHeaderButton';
 import { useShopCart } from '../lib/shop-cart';
+import { useStaffSession } from '../lib/staff-session';
 import { colors } from '../ui';
+import { AboutScreen } from '../screens/shop/AboutScreen';
 import { AccountScreen } from '../screens/shop/AccountScreen';
 import { AddressesScreen } from '../screens/shop/AddressesScreen';
+import { BlogListScreen } from '../screens/shop/BlogListScreen';
+import { BlogPostScreen } from '../screens/shop/BlogPostScreen';
 import { CartScreen } from '../screens/shop/CartScreen';
 import { CatalogScreen } from '../screens/shop/CatalogScreen';
 import { CheckoutScreen } from '../screens/shop/CheckoutScreen';
+import { ContactScreen } from '../screens/shop/ContactScreen';
+import { FaqScreen } from '../screens/shop/FaqScreen';
 import { FavoritesScreen } from '../screens/shop/FavoritesScreen';
+import { ForgotPasswordScreen } from '../screens/shop/ForgotPasswordScreen';
+import { LegalScreen } from '../screens/shop/LegalScreen';
 import { OrderDetailScreen } from '../screens/shop/OrderDetailScreen';
+import { OrderLookupScreen } from '../screens/shop/OrderLookupScreen';
 import { OrderResultScreen } from '../screens/shop/OrderResultScreen';
 import { OrdersScreen } from '../screens/shop/OrdersScreen';
 import { PaytrScreen } from '../screens/shop/PaytrScreen';
 import { ProductScreen } from '../screens/shop/ProductScreen';
+import { ProfileScreen } from '../screens/shop/ProfileScreen';
+import { ResetPasswordScreen } from '../screens/shop/ResetPasswordScreen';
 import { ShopHomeScreen } from '../screens/shop/ShopHomeScreen';
 import { ShopLoginScreen } from '../screens/shop/ShopLoginScreen';
 import { ShopRegisterScreen } from '../screens/shop/ShopRegisterScreen';
+import { InboxScreen } from '../screens/shop/InboxScreen';
 import { ShopSearchScreen } from '../screens/shop/ShopSearchScreen';
+import { TrackingResultScreen } from '../screens/shop/TrackingResultScreen';
+import { TrackingScreen } from '../screens/shop/TrackingScreen';
 import { CashScreen } from '../screens/CashScreen';
 import { CustomersScreen, CustomerDetailScreen } from '../screens/CustomersScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -64,7 +77,14 @@ const StaffStack = createNativeStackNavigator<StaffStackParamList>();
 const stackScreenOptions = {
   headerStyle: { backgroundColor: colors.bg },
   headerTintColor: colors.accentSoft,
-  headerTitleStyle: { color: colors.text },
+  headerTitleStyle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600' as const,
+    letterSpacing: 0.6,
+  },
+  headerShadowVisible: false,
+  headerRightContainerStyle: { paddingRight: 8 },
   contentStyle: { backgroundColor: colors.bg },
 };
 
@@ -80,7 +100,7 @@ function ShopStackNavigator() {
       <ShopStack.Screen
         name="ShopHome"
         component={ShopHomeScreen}
-        options={{ title: 'Mağaza' }}
+        options={{ title: 'Mağaza', headerShown: false }}
       />
       <ShopStack.Screen
         name="Catalog"
@@ -97,6 +117,11 @@ function ShopStackNavigator() {
         component={ShopSearchScreen}
         options={{ title: 'Ara' }}
       />
+      <ShopStack.Screen name="About" component={AboutScreen} options={{ title: 'Hakkımızda' }} />
+      <ShopStack.Screen name="Faq" component={FaqScreen} options={{ title: 'SSS' }} />
+      <ShopStack.Screen name="BlogList" component={BlogListScreen} options={{ title: 'Blog' }} />
+      <ShopStack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Yazı' }} />
+      <ShopStack.Screen name="Contact" component={ContactScreen} options={{ title: 'İletişim' }} />
     </ShopStack.Navigator>
   );
 }
@@ -120,7 +145,7 @@ function CartStackNavigator({
       <CartStack.Screen
         name="Cart"
         component={CartScreen}
-        options={{ title: 'Sepet' }}
+        options={{ title: 'Sepet', headerShown: false }}
       />
       <CartStack.Screen
         name="Checkout"
@@ -137,6 +162,7 @@ function CartStackNavigator({
         component={OrderResultScreen}
         options={{ title: 'Sipariş', headerBackVisible: false }}
       />
+      <CartStack.Screen name="Legal" component={LegalScreen} options={{ title: 'Belge' }} />
     </CartStack.Navigator>
   );
 }
@@ -147,7 +173,7 @@ function AccountStackNavigator() {
       <AccountStack.Screen
         name="Account"
         component={AccountScreen}
-        options={{ title: 'Hesabım' }}
+        options={{ title: 'Hesabım', headerShown: false }}
       />
       <AccountStack.Screen
         name="ShopLogin"
@@ -179,6 +205,34 @@ function AccountStackNavigator() {
         component={FavoritesScreen}
         options={{ title: 'Favoriler' }}
       />
+      <AccountStack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ title: 'Şifremi unuttum' }}
+      />
+      <AccountStack.Screen
+        name="ResetPassword"
+        component={ResetPasswordScreen}
+        options={{ title: 'Yeni şifre' }}
+      />
+      <AccountStack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil' }} />
+      <AccountStack.Screen
+        name="Inbox"
+        component={InboxScreen}
+        options={{ title: 'Bildirimler' }}
+      />
+      <AccountStack.Screen
+        name="OrderLookup"
+        component={OrderLookupScreen}
+        options={{ title: 'Sipariş sorgula' }}
+      />
+      <AccountStack.Screen name="Tracking" component={TrackingScreen} options={{ title: 'Takip' }} />
+      <AccountStack.Screen
+        name="TrackingResult"
+        component={TrackingResultScreen}
+        options={{ title: 'Takip' }}
+      />
+      <AccountStack.Screen name="Legal" component={LegalScreen} options={{ title: 'Belge' }} />
     </AccountStack.Navigator>
   );
 }
@@ -208,20 +262,7 @@ function StaffStackNavigator() {
         options={({ navigation }) => ({
           title: 'Personel',
           headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <InboxHeaderButton />
-              <Pressable
-                onPress={() => navigation.navigate('Search')}
-                style={{ marginRight: 12 }}
-              >
-                <Text style={{ color: colors.accentSoft }}>Ara</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => navigation.getParent()?.navigate('ShopTab')}
-              >
-                <Text style={{ color: colors.accentSoft }}>Mağaza</Text>
-              </Pressable>
-            </View>
+            <StaffHomeHeaderRight onSearch={() => navigation.navigate('Search')} />
           ),
         })}
       />
@@ -263,6 +304,7 @@ function tabIcon(name: ComponentProps<typeof Feather>['name']) {
 }
 
 export function RootTabs() {
+  const { showStaff } = useStaffSession();
   return (
     <Tab.Navigator
       initialRouteName="ShopTab"
@@ -310,6 +352,8 @@ export function RootTabs() {
         options={{
           title: 'Personel',
           tabBarIcon: tabIcon('briefcase'),
+          tabBarButton: showStaff ? undefined : () => null,
+          tabBarItemStyle: showStaff ? undefined : { display: 'none', width: 0, height: 0 },
         }}
       />
     </Tab.Navigator>

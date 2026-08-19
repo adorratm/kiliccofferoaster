@@ -19,6 +19,7 @@
     "dev:mobile:android": "yarn workspace @kilic/mobile android",
     "pack:desktop:win": "yarn workspace @kilic/desktop pack:win",
     "pack:desktop:mac": "yarn workspace @kilic/desktop pack:mac",
+    "pack:desktop:linux": "yarn workspace @kilic/desktop pack:linux",
     "build": "yarn workspaces foreach -Apt run build",
     "build:api": "yarn workspace @kilic/api build",
     "build:frontend": "yarn workspace @kilic/frontend build",

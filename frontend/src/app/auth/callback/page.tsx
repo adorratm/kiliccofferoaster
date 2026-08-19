@@ -13,6 +13,11 @@ function CallbackInner() {
 
   useEffect(() => {
     const token = params.get("token");
+    const oauthError = params.get("error");
+    if (oauthError) {
+      router.replace(`/giris?error=${encodeURIComponent(oauthError)}`);
+      return;
+    }
     if (token) {
       setToken(token);
       const next = consumeAuthNext("/hesabim");

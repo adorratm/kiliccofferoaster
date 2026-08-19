@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Feather } from '@expo/vector-icons';
 import type { ShopStackParamList } from '../../navigation/types';
+import { EmptyState } from '../../components/shop/EmptyState';
+import { SearchBar } from '../../components/shop/SearchBar';
 import { shopSearch } from '../../lib/shop-api';
 import { colors, muted } from '../../ui';
 
@@ -10,6 +13,7 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'ShopSearch'>;
 export function ShopSearchScreen({ navigation }: Props) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<{ title: string; subtitle?: string; href: string }[]>([]);
+  const [ran, setRan] = useState(false);
 
   async function run() {
     if (q.trim().length < 2) return;
@@ -19,29 +23,37 @@ export function ShopSearchScreen({ navigation }: Props) {
       setHits(items);
     } catch {
       setHits([]);
+    } finally {
+      setRan(true);
     }
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, padding: 16 }}>
-      <TextInput
-        placeholder="Kahve, kategori…"
-        placeholderTextColor={colors.muted}
+      <SearchBar
         value={q}
+        placeholder="Kahve, kategori, köken…"
         onChangeText={setQ}
-        onSubmitEditing={() => void run()}
-        autoFocus
-        style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          color: colors.text,
-          padding: 12,
-        }}
+        onSubmit={() => void run()}
       />
-      <Pressable onPress={() => void run()} style={{ marginTop: 12 }}>
-        <Text style={{ color: colors.accentSoft }}>Ara</Text>
+      <Pressable onPress={() => void run()} style={{ marginTop: 12, paddingVertical: 8 }}>
+        <Text
+          style={{
+            color: colors.accentSoft,
+            textAlign: 'center',
+            fontSize: 12,
+            letterSpacing: 1.6,
+            textTransform: 'uppercase',
+            fontWeight: '700',
+          }}
+        >
+          Ara
+        </Text>
       </Pressable>
-      <ScrollView style={{ marginTop: 16 }}>
+      <ScrollView style={{ marginTop: 8 }}>
+        {ran && !hits.length ? (
+          <EmptyState icon="search" title="Sonuç yok" body="En az iki karakter ve farklı bir ifade deneyin." />
+        ) : null}
         {hits.map((h) => (
           <Pressable
             key={`${h.href}-${h.title}`}
@@ -57,13 +69,18 @@ export function ShopSearchScreen({ navigation }: Props) {
               }
             }}
             style={{
-              paddingVertical: 12,
+              paddingVertical: 14,
               borderBottomWidth: 1,
-              borderBottomColor: colors.border,
+              borderBottomColor: colors.borderMuted,
+              flexDirection: 'row',
+              alignItems: 'center',
             }}
           >
-            <Text style={{ color: colors.text }}>{h.title}</Text>
-            {h.subtitle ? <Text style={muted}>{h.subtitle}</Text> : null}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: '600' }}>{h.title}</Text>
+              {h.subtitle ? <Text style={[muted, { marginTop: 4 }]}>{h.subtitle}</Text> : null}
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.muted} />
           </Pressable>
         ))}
       </ScrollView>

@@ -146,7 +146,7 @@ export class IyzicoService {
         identityNumber: '11111111111',
         registrationAddress:
           order.shippingAddress?.addressLine || 'Adres',
-        ip: '85.34.78.112',
+        ip: this.config.get<string>('paytr.fallbackIp') || '1.1.1.1',
         city: order.shippingAddress?.city || 'Istanbul',
         country: 'Turkey',
         zipCode: order.shippingAddress?.postalCode || '34000',

@@ -22,6 +22,8 @@ type ProductVariant = {
   price: string | number;
   stock: number;
   isActive?: boolean;
+  barcode?: string | null;
+  expiresAt?: string | null;
 };
 
 type Product = {
@@ -37,6 +39,10 @@ type Product = {
   kind?: string;
   unit?: string;
   vatRate?: string | number;
+  barcode?: string | null;
+  expiresAt?: string | null;
+  allergens?: string[];
+  ingredients?: string | null;
   variants?: ProductVariant[];
 };
 
@@ -49,6 +55,8 @@ type VariantForm = {
   price: string;
   stock: string;
   isActive: boolean;
+  barcode: string;
+  expiresAt: string;
 };
 
 type FormState = {
@@ -61,6 +69,10 @@ type FormState = {
   kind: string;
   unit: string;
   vatRate: string;
+  barcode: string;
+  expiresAt: string;
+  allergens: string;
+  ingredients: string;
   isActive: boolean;
   isFeatured: boolean;
   variants: VariantForm[];
@@ -104,6 +116,8 @@ function emptyVariant(): VariantForm {
     price: '',
     stock: '0',
     isActive: true,
+    barcode: '',
+    expiresAt: '',
   };
 }
 
@@ -118,6 +132,10 @@ function emptyForm(): FormState {
     kind: 'other',
     unit: 'adet',
     vatRate: '20',
+    barcode: '',
+    expiresAt: '',
+    allergens: '',
+    ingredients: '',
     isActive: true,
     isFeatured: false,
     variants: [emptyVariant()],
@@ -134,6 +152,8 @@ function formFromProduct(p: Product): FormState {
           price: String(v.price ?? ''),
           stock: String(v.stock ?? 0),
           isActive: v.isActive !== false,
+          barcode: v.barcode || '',
+          expiresAt: v.expiresAt ? String(v.expiresAt).slice(0, 10) : '',
         }))
       : [emptyVariant()];
   return {
@@ -146,6 +166,10 @@ function formFromProduct(p: Product): FormState {
     kind: p.kind || 'other',
     unit: p.unit || 'adet',
     vatRate: String(p.vatRate ?? '20'),
+    barcode: p.barcode || '',
+    expiresAt: p.expiresAt ? String(p.expiresAt).slice(0, 10) : '',
+    allergens: (p.allergens || []).join(', '),
+    ingredients: p.ingredients || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
     variants,
@@ -347,6 +371,8 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
         price: String(v.price),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
+        barcode: v.barcode.trim() || null,
+        expiresAt: v.expiresAt.trim() || null,
       }));
     const payload = {
       name: form.name.trim(),
@@ -358,6 +384,13 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
       kind: form.kind || 'other',
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
+      barcode: form.barcode.trim() || null,
+      expiresAt: form.expiresAt.trim() || null,
+      allergens: form.allergens
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      ingredients: form.ingredients.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       variants,
@@ -437,8 +470,38 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
           placeholderTextColor={colors.muted}
           value={form.stock}
           onChangeText={(stock) => setForm((f) => ({ ...f, stock }))}
-          keyboardType="number-pad"
+          keyboardType="decimal-pad"
           style={input}
+        />
+        <TextInput
+          placeholder="Barkod"
+          placeholderTextColor={colors.muted}
+          value={form.barcode}
+          onChangeText={(barcode) => setForm((f) => ({ ...f, barcode }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="SKT (YYYY-MM-DD)"
+          placeholderTextColor={colors.muted}
+          value={form.expiresAt}
+          onChangeText={(expiresAt) => setForm((f) => ({ ...f, expiresAt }))}
+          autoCapitalize="none"
+          style={input}
+        />
+        <TextInput
+          placeholder="Alerjenler (virgülle)"
+          placeholderTextColor={colors.muted}
+          value={form.allergens}
+          onChangeText={(allergens) => setForm((f) => ({ ...f, allergens }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="İçerik / bileşenler"
+          placeholderTextColor={colors.muted}
+          value={form.ingredients}
+          onChangeText={(ingredients) => setForm((f) => ({ ...f, ingredients }))}
+          multiline
+          style={[input, { minHeight: 72, textAlignVertical: 'top' }]}
         />
         <TextInput
           placeholder="KDV %"
@@ -543,7 +606,22 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
                 placeholderTextColor={colors.muted}
                 value={v.stock}
                 onChangeText={(stock) => updateVariant(i, { stock })}
-                keyboardType="number-pad"
+                keyboardType="decimal-pad"
+                style={input}
+              />
+              <TextInput
+                placeholder="Barkod"
+                placeholderTextColor={colors.muted}
+                value={v.barcode}
+                onChangeText={(barcode) => updateVariant(i, { barcode })}
+                style={input}
+              />
+              <TextInput
+                placeholder="SKT (YYYY-MM-DD)"
+                placeholderTextColor={colors.muted}
+                value={v.expiresAt}
+                onChangeText={(expiresAt) => updateVariant(i, { expiresAt })}
+                autoCapitalize="none"
                 style={input}
               />
               <View style={{ marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

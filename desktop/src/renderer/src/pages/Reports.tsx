@@ -14,21 +14,30 @@ type Turnover = {
 
 type Vat = { outputVat: string; inputVat: string; payable: string };
 
+type StockRow = {
+  sku: string;
+  name?: string;
+  stock: number;
+  expiresAt?: string | null;
+  barcode?: string | null;
+  expiringSoon?: boolean;
+  expired?: boolean;
+};
+
 export function ReportsPage() {
   const [turnover, setTurnover] = useState<Turnover | null>(null);
   const [vat, setVat] = useState<Vat | null>(null);
-  const [stock, setStock] = useState<{ sku: string; name?: string; stock: number }[]>([]);
+  const [stock, setStock] = useState<StockRow[]>([]);
 
   useEffect(() => {
     if (!isOnline()) return;
     void api<Turnover>('/accounting/reports/turnover').then(setTurnover);
     void api<Vat>('/accounting/reports/vat').then(setVat);
-    void api<{ sku: string; name?: string; stock: number }[]>('/accounting/reports/stock').then(
-      setStock,
-    );
+    void api<StockRow[]>('/accounting/reports/stock').then(setStock);
   }, []);
 
   const lowStock = [...stock].sort((a, b) => a.stock - b.stock).slice(0, 8);
+  const expiring = stock.filter((s) => s.expired || s.expiringSoon);
 
   return (
     <div>
@@ -91,6 +100,31 @@ export function ReportsPage() {
           <Stat label="Hesaplanan KDV" value={vat.outputVat} meta="satış" />
           <Stat label="İndirilecek KDV" value={vat.inputVat} meta="alış" />
           <Stat label="Ödenecek" value={vat.payable} meta="çıktı − girdi" />
+        </div>
+      ) : null}
+      {expiring.length ? (
+        <div className="mt-6">
+          <p className="mono text-[10px] uppercase text-muted">SKT yaklaşan / geçmiş</p>
+          <table className="mt-2 w-full text-sm">
+            <thead>
+              <tr className="border-b border-border-muted text-left text-muted">
+                <th className="py-2">SKU</th>
+                <th>Ürün</th>
+                <th>SKT</th>
+                <th>Stok</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expiring.map((s) => (
+                <tr key={`exp-${s.sku}`} className="border-b border-border-muted/40">
+                  <td className="py-2 mono">{s.sku}</td>
+                  <td>{s.name}</td>
+                  <td className={s.expired ? 'text-danger' : 'text-accent'}>{s.expiresAt}</td>
+                  <td>{s.stock}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
       <table className="mt-6 w-full text-sm">

@@ -9,6 +9,7 @@ import { revenueSeriesOption, statusPieOption } from '../lib/charts';
 import { openShopTab } from '../lib/nav';
 import { unregisterPushToken } from '../lib/push';
 import { flushOutbox, pendingCount } from '../lib/sync';
+import { useStaffSession } from '../lib/staff-session';
 import { btn, btnText, card, colors, muted } from '../ui';
 
 type Props = NativeStackScreenProps<RootStack, 'Home'>;
@@ -46,6 +47,7 @@ const GROUPS: { title: string; links: { label: string; to: Exclude<keyof RootSta
 ];
 
 export function HomeScreen({ navigation }: Props) {
+  const { refreshStaff } = useStaffSession();
   const [pending, setPending] = useState(0);
   const [msg, setMsg] = useState('');
   const [stats, setStats] = useState<{
@@ -145,6 +147,7 @@ export function HomeScreen({ navigation }: Props) {
         onPress={async () => {
           await unregisterPushToken().catch(() => undefined);
           await setToken(null);
+          await refreshStaff();
           navigation.replace('StaffLogin');
           openShopTab(navigation);
         }}

@@ -1,18 +1,28 @@
 import { api, asArray, toQuery } from './api';
 import type {
   Address,
+  BlogPost,
   Cart,
   Category,
   CheckoutPayload,
   CouponPreview,
+  GuestOrderLookup,
+  LegalDocument,
   Order,
   Paginated,
   PaymentInitResponse,
   Product,
+  ProductReview,
+  ReturnRequest,
+  ReturnRequestType,
   ShopUser,
   ShippingProvider,
+  TrackingResult,
   WishlistItem,
+  InboxItem,
 } from './shop-types';
+import type { CmsSection, SiteSettings } from './cms';
+import { mergeSettings } from './cms';
 
 function asPage<T>(data: T[] | Paginated<T>, limit = 12): Paginated<T> {
   if (Array.isArray(data)) {
@@ -80,7 +90,7 @@ export async function shopAddCartItem(payload: {
     session: true,
     body: {
       productId: payload.productId,
-      variantId: payload.variantId ?? null,
+      ...(payload.variantId ? { variantId: payload.variantId } : {}),
       grindOption: payload.grindOption ?? 'whole_bean',
       quantity: payload.quantity ?? 1,
     },
@@ -104,6 +114,15 @@ export async function shopRemoveCartItem(itemId: string): Promise<Cart> {
     method: 'DELETE',
     auth: 'shop',
     session: true,
+  });
+}
+
+export async function shopSetGuestEmail(email: string): Promise<Cart> {
+  return api<Cart>('/cart/guest-email', {
+    method: 'PATCH',
+    auth: 'shop',
+    session: true,
+    body: { email },
   });
 }
 
@@ -242,4 +261,165 @@ export async function shopSearch(q: string) {
       items: { id: string; title: string; subtitle?: string; href: string }[];
     }[];
   }>(`/search${toQuery({ q, limit: 12 })}`, { auth: 'none' });
+}
+
+export async function shopCmsSettings(): Promise<SiteSettings> {
+  const data = await api<unknown>('/cms/settings', { auth: 'none' });
+  return mergeSettings(data);
+}
+
+export async function shopCmsSections(page: string): Promise<CmsSection[]> {
+  const data = await api<CmsSection[] | { items: CmsSection[] }>(
+    `/cms/sections${toQuery({ page })}`,
+    { auth: 'none' },
+  );
+  return Array.isArray(data) ? data : data.items ?? [];
+}
+
+export async function shopBlog(params?: { page?: number; limit?: number }) {
+  const qs = toQuery({
+    page: params?.page ?? 1,
+    limit: params?.limit ?? 12,
+    sort: 'publishedAt',
+  });
+  const data = await api<BlogPost[] | Paginated<BlogPost>>(`/blog${qs}`, {
+    auth: 'none',
+  });
+  return asPage(data, params?.limit ?? 12);
+}
+
+export async function shopBlogPost(slug: string): Promise<BlogPost> {
+  return api<BlogPost>(`/blog/${encodeURIComponent(slug)}`, { auth: 'none' });
+}
+
+export async function shopLegal(slug: string): Promise<LegalDocument> {
+  return api<LegalDocument>(`/legal/documents/${encodeURIComponent(slug)}`, {
+    auth: 'none',
+  });
+}
+
+export async function shopContact(payload: {
+  senderName: string;
+  senderEmail: string;
+  protocolType: string;
+  message: string;
+}) {
+  return api<{ ok?: boolean }>('/contact', {
+    method: 'POST',
+    auth: 'none',
+    body: payload,
+  });
+}
+
+export async function shopTrack(code: string): Promise<TrackingResult> {
+  return api<TrackingResult>(`/shipping/track/${encodeURIComponent(code)}`, {
+    auth: 'none',
+  });
+}
+
+export async function shopLookupOrder(orderNumber: string, email: string) {
+  return api<GuestOrderLookup>('/orders/lookup', {
+    method: 'POST',
+    auth: 'none',
+    body: {
+      orderNumber: orderNumber.trim().toUpperCase(),
+      email: email.trim().toLowerCase(),
+    },
+  });
+}
+
+export async function shopForgotPassword(email: string) {
+  return api<{ ok: true }>('/auth/forgot-password', {
+    method: 'POST',
+    auth: 'none',
+    body: { email: email.trim().toLowerCase() },
+  });
+}
+
+export async function shopResetPassword(token: string, password: string) {
+  return api<{ ok: true }>('/auth/reset-password', {
+    method: 'POST',
+    auth: 'none',
+    body: { token, password },
+  });
+}
+
+export async function shopChangePassword(payload: {
+  currentPassword?: string;
+  password: string;
+}) {
+  return api<{ ok: true }>('/auth/change-password', {
+    method: 'POST',
+    auth: 'shop',
+    body: payload,
+  });
+}
+
+export async function shopProductReviews(slug: string, page = 1, limit = 20) {
+  return api<{
+    items: ProductReview[];
+    ratingAvg: string;
+    ratingCount: number;
+  }>(
+    `/reviews/product/${encodeURIComponent(slug)}?page=${page}&limit=${limit}`,
+    { auth: 'none' },
+  );
+}
+
+export async function shopCreateReview(payload: {
+  productId: string;
+  rating: number;
+  title?: string;
+  body: string;
+}) {
+  return api<ProductReview>('/reviews', {
+    method: 'POST',
+    auth: 'shop',
+    body: payload,
+  });
+}
+
+export async function shopReturnRequests(orderId: string) {
+  const data = await api<ReturnRequest[] | { items: ReturnRequest[] }>(
+    `/orders/${encodeURIComponent(orderId)}/return-requests`,
+    { auth: 'shop' },
+  );
+  return asArray<ReturnRequest>(data);
+}
+
+export async function shopCreateReturnRequest(
+  orderId: string,
+  payload: { type: ReturnRequestType; reason: string },
+) {
+  return api<ReturnRequest>(
+    `/orders/${encodeURIComponent(orderId)}/return-requests`,
+    {
+      method: 'POST',
+      auth: 'shop',
+      body: payload,
+    },
+  );
+}
+
+export async function shopInbox(page = 1) {
+  return api<{
+    items: InboxItem[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }>(`/notifications/inbox?page=${page}&limit=30`, { auth: 'shop' });
+}
+
+export async function shopInboxMarkRead(id: string) {
+  return api<{ ok?: boolean }>(`/notifications/inbox/${id}/read`, {
+    method: 'PATCH',
+    auth: 'shop',
+  });
+}
+
+export async function shopInboxMarkAllRead() {
+  return api<{ ok?: boolean }>('/notifications/inbox/read-all', {
+    method: 'PATCH',
+    auth: 'shop',
+  });
 }

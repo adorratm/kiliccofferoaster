@@ -12,6 +12,7 @@
     "preview": "electron-vite preview",
     "pack:win": "electron-vite build && electron-builder --win nsis",
     "pack:mac": "electron-vite build && electron-builder --mac dmg",
+    "pack:linux": "electron-vite build && electron-builder --linux AppImage deb",
     "postinstall": "node ../scripts/download-electron.cjs"
   },
   "dependencies": {
@@ -31,7 +32,7 @@
     "@types/react-dom": "^19.2.4",
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^6.0.5",
-    "electron": "^43.4.0",
+    "electron": "^43.4.1",
     "electron-builder": "26.15.7",
     "electron-vite": "^5.0.0",
     "tailwindcss": "^4.3.3",

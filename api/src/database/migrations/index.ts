@@ -9,6 +9,8 @@ import { ReplaceUnsplashWithStock1780000000000 } from './1780000000000-ReplaceUn
 import { AboutPageSections1781000000000 } from './1781000000000-AboutPageSections';
 import { AccountingAndCatalog1782000000000 } from './1782000000000-AccountingAndCatalog';
 import { InAppNotifications1783000000000 } from './1783000000000-InAppNotifications';
+import { FoodRetailCatalog1784000000000 } from './1784000000000-FoodRetailCatalog';
+import { CategorySeo1785000000000 } from './1785000000000-CategorySeo';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -26,4 +28,6 @@ export const ALL_MIGRATIONS = [
   AboutPageSections1781000000000,
   AccountingAndCatalog1782000000000,
   InAppNotifications1783000000000,
+  FoodRetailCatalog1784000000000,
+  CategorySeo1785000000000,
 ];

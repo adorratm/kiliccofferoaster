@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "Uygulamalar",
     description:
-      "Kılıç Coffee Roaster mağazasını Windows, macOS, Android ve iOS uygulamasından kullanın. Alışveriş sitedekiyle aynıdır.",
+      "Kılıç Coffee Roaster mağazasını Windows, macOS, Linux, Android ve iOS uygulamasından kullanın. Alışveriş sitedekiyle aynıdır.",
     path: "/indir",
     settings,
     keywords: [
@@ -17,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "kahve sipariş uygulaması",
       "Windows",
       "macOS",
+      "Linux",
       "Android",
       "iOS",
     ],
@@ -41,7 +42,7 @@ export default async function DownloadPage() {
           Siteden sipariş, uygulamadan da
         </h1>
         <p className="mt-6 max-w-2xl font-meta text-sm uppercase leading-relaxed text-secondary">
-          Windows, macOS, Android ve iOS uygulamaları {settings.brand.name} vitrininin
+          Windows, macOS, Linux, Android ve iOS uygulamaları {settings.brand.name} vitrininin
           kendisidir: ürün, sepet, ödeme ve hesabınız aynı kalır. Personel
           menüleri müşteriye gösterilmez.
         </p>

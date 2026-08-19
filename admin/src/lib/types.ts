@@ -12,6 +12,8 @@ export type Category = {
   slug: string;
   name: string;
   description?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   isActive?: boolean;
 };
 

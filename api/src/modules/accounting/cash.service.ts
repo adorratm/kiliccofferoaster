@@ -115,6 +115,7 @@ export class CashService {
         partyId: dto.partyId ?? null,
         invoiceId: dto.invoiceId ?? null,
         clientId: dto.clientId ?? null,
+        category: dto.category ?? null,
         source: 'manual',
       }),
     );

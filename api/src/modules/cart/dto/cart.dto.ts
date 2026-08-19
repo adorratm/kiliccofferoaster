@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
@@ -9,12 +10,18 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ACCEPTED_GRIND_OPTIONS } from '@common/constants/grind-options';
 
+function emptyToUndefined({ value }: { value: unknown }) {
+  if (value === null || value === '' || value === 'null') return undefined;
+  return value;
+}
+
 export class AddCartItemDto {
   @ApiProperty()
   @IsUUID()
   productId!: string;
 
   @ApiPropertyOptional()
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsUUID()
   variantId?: string;

@@ -40,6 +40,12 @@ Kök `.env` (örnek: `.env.example`).
 
 `GOOGLE_*`, `FACEBOOK_*`, `APPLE_*` — bkz. `auth.md`
 
+| Değişken | Açıklama |
+|----------|----------|
+| `APPLE_CLIENT_ID` | Sign in with Apple — iOS bundle / Services ID (virgülle birden fazla) |
+| `APPLE_TEAM_ID` | Universal Links AASA `appID` (TeamID.bundle) |
+| `ANDROID_SHA256_FINGERPRINTS` | Play App Signing SHA-256 (virgülle, assetlinks.json) |
+
 ## Ödeme
 
 `IYZICO_API_KEY`, `IYZICO_SECRET_KEY`, `IYZICO_BASE_URL`
@@ -52,7 +58,14 @@ Kök `.env` (örnek: `.env.example`).
 | `NEXT_PUBLIC_SITE_URL` | Vitrin canonical (production’da https domain) |
 | `NEXT_PUBLIC_ADMIN_URL` | Admin URL |
 | `NEXT_PUBLIC_CDN_URL` | CDN preconnect (opsiyonel) |
+| `NEXT_PUBLIC_DOWNLOAD_WINDOWS` | Windows kurulum dosyası |
+| `NEXT_PUBLIC_DOWNLOAD_MAC` | macOS DMG |
+| `NEXT_PUBLIC_DOWNLOAD_LINUX` | Linux AppImage/deb |
+| `NEXT_PUBLIC_DOWNLOAD_ANDROID` | Android APK |
+| `NEXT_PUBLIC_PLAY_STORE_URL` | Play Store |
+| `NEXT_PUBLIC_APP_STORE_URL` | App Store |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console meta doğrulama (opsiyonel) |
-| `NEXT_PUBLIC_ADMIN_URL` | Admin URL |
+
+App Links runtime (vitrin container): `APPLE_TEAM_ID`, `ANDROID_SHA256_FINGERPRINTS` — bkz. `aso.md`. Merchant feed: `/feed/google-merchant.xml`.
 
 Build zamanında `NEXT_PUBLIC_*` gömülür; Docker ARG olarak geçilir.

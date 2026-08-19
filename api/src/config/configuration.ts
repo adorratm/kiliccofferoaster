@@ -7,7 +7,7 @@ export default () => ({
   opsMobileCallbackUrl:
     process.env.OPS_MOBILE_CALLBACK_URL || 'kilicops://auth/callback',
   opsWebUrl: process.env.OPS_WEB_URL || 'http://localhost:8081',
-  adminAllowlist: (process.env.ADMIN_ALLOWLIST || 'emrekilic19983@gmail.com')
+  adminAllowlist: (process.env.ADMIN_ALLOWLIST || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
@@ -32,6 +32,10 @@ export default () => ({
       process.env.GOOGLE_ADMIN_CALLBACK_URL ||
       'http://localhost:4000/auth/google/admin/callback',
   },
+  apple: {
+    /** Virgülle: iOS bundle id ve isteğe bağlı Services ID */
+    clientIds: process.env.APPLE_CLIENT_ID || 'tr.kiliccoffeeroaster.ops',
+  },
   payment: {
     /** paytr | iyzico — boşsa PayTR bilgileri varsa paytr, değilse iyzico */
     provider: process.env.PAYMENT_PROVIDER || '',
@@ -46,7 +50,7 @@ export default () => ({
     noInstallment: process.env.PAYTR_NO_INSTALLMENT || '0',
     maxInstallment: process.env.PAYTR_MAX_INSTALLMENT || '0',
     /** Yerel geliştirmede dış IP yoksa kullanılır */
-    fallbackIp: process.env.PAYTR_FALLBACK_IP || '85.34.78.112',
+    fallbackIp: process.env.PAYTR_FALLBACK_IP || '1.1.1.1',
   },
   iyzico: {
     apiKey: process.env.IYZICO_API_KEY || '',

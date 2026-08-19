@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, Profile, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 import { AuthService } from '@modules/auth/auth.service';
 import { AuthProvider } from '@entities/user.entity';
 
@@ -22,6 +23,15 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       callbackURL,
       scope: ['email', 'profile'],
     });
+  }
+
+  authenticate(req: Request, options?: Record<string, unknown>): void {
+    const raw = req.query?.client;
+    if (raw === 'mobile' || raw === 'web') {
+      super.authenticate(req, { ...options, state: raw });
+      return;
+    }
+    super.authenticate(req, options);
   }
 
   async validate(

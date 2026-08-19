@@ -202,6 +202,10 @@ export class ProductsService {
       categoryId: productFields.categoryId ?? null,
       kind: productFields.kind ?? 'other',
       unit: productFields.unit ?? 'adet',
+      barcode: productFields.barcode ?? null,
+      expiresAt: productFields.expiresAt ?? null,
+      allergens: productFields.allergens ?? [],
+      ingredients: productFields.ingredients ?? null,
       vatRate:
         productFields.vatRate != null
           ? String(productFields.vatRate)
@@ -275,6 +279,8 @@ export class ProductsService {
         current.price = v.price;
         current.stock = v.stock ?? current.stock;
         current.isActive = v.isActive ?? true;
+        if (v.barcode !== undefined) current.barcode = v.barcode || null;
+        if (v.expiresAt !== undefined) current.expiresAt = v.expiresAt || null;
         await this.em.save(current);
       } else {
         await this.em.save(
@@ -285,6 +291,8 @@ export class ProductsService {
             price: v.price,
             stock: v.stock ?? 0,
             isActive: v.isActive ?? true,
+            barcode: v.barcode || null,
+            expiresAt: v.expiresAt || null,
           }),
         );
       }

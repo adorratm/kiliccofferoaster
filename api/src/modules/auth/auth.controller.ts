@@ -14,14 +14,24 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '@modules/auth/auth.service';
-import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, CreateOpsUserDto } from '@modules/auth/dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ChangePasswordDto,
+  CreateOpsUserDto,
+  AppleLoginDto,
+} from '@modules/auth/dto/auth.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { User, UserRole } from '@entities/user.entity';
 import { Roles } from '@common/decorators/roles.decorator';
 import { GoogleAdminOauthFilter } from '@modules/auth/filters/google-admin-oauth.filter';
+import { GoogleOauthFilter } from '@modules/auth/filters/google-oauth.filter';
 import {
   oauthSuccessUrl,
+  parseCustomerOauthClient,
   parseOauthClient,
 } from '@modules/auth/oauth-redirect';
 
@@ -107,6 +117,13 @@ export class AuthController {
   }
 
   @Public()
+  @Post('apple')
+  @ApiOperation({ summary: 'Sign in with Apple (iOS identity token)' })
+  appleLogin(@Body() dto: AppleLoginDto) {
+    return this.authService.loginWithApple(dto);
+  }
+
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Google OAuth başlat' })
@@ -117,9 +134,11 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
+  @UseFilters(GoogleOauthFilter)
   @ApiOperation({ summary: 'Google OAuth callback' })
   googleCallback(@Req() req: Request, @Res() res: Response) {
-    this.redirectWithToken(req.user as User, res, 'frontend');
+    const client = parseCustomerOauthClient(req.query?.state);
+    this.redirectWithToken(req.user as User, res, client);
   }
 
   @Public()

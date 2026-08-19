@@ -5,6 +5,11 @@ export type ShopStackParamList = {
   Catalog: { categorySlug?: string; q?: string };
   Product: { slug: string };
   ShopSearch: undefined;
+  About: undefined;
+  Faq: undefined;
+  BlogList: undefined;
+  BlogPost: { slug: string };
+  Contact: undefined;
 };
 
 export type CartStackParamList = {
@@ -17,6 +22,7 @@ export type CartStackParamList = {
     iframeUrl?: string;
   };
   OrderResult: { ok: boolean; orderNumber?: string; message?: string };
+  Legal: { slug: string };
 };
 
 export type AccountStackParamList = {
@@ -27,6 +33,14 @@ export type AccountStackParamList = {
   OrderDetail: { id: string };
   Addresses: undefined;
   Favorites: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token?: string };
+  Profile: undefined;
+  Inbox: undefined;
+  OrderLookup: undefined;
+  Tracking: undefined;
+  TrackingResult: { kod: string };
+  Legal: { slug: string };
 };
 
 export type StaffStackParamList = {

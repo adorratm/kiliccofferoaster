@@ -58,7 +58,7 @@ Portfolio ile aynı SSH anahtarını kullanabilirsiniz; `DEPLOY_PATH` farklı ol
 
 | Secret | Örnek |
 |--------|--------|
-| `SSH_HOST` | `46.62.128.115` |
+| `SSH_HOST` | sunucu IP veya hostname |
 | `SSH_USER` | `root` |
 | `SSH_PRIVATE_KEY` | deploy key |
 | `SSH_PORT` | `22` |

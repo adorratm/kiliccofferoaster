@@ -362,7 +362,7 @@ export class InvoicesService {
           : StockMovementType.OUT;
     for (const line of invoice.lines) {
       if (!line.productId && !line.variantId) continue;
-      const qty = Math.round(parseMoney(line.quantity)) * sign;
+      const qty = parseMoney(line.quantity) * sign;
       if (!qty) continue;
       await this.stock.record({
         productId: line.productId,

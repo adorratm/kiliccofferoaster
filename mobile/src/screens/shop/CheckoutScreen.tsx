@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Linking,
   Pressable,
   ScrollView,
   Switch,
@@ -11,6 +9,10 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CartStackParamList } from '../../navigation/types';
+import { Field } from '../../components/shop/Field';
+import { PageHeader } from '../../components/shop/PageHeader';
+import { ScreenLoader } from '../../components/shop/ScreenLoader';
+import { SectionLabel } from '../../components/shop/SectionLabel';
 import { useShopCart } from '../../lib/shop-cart';
 import {
   cartSubtotal,
@@ -19,10 +21,10 @@ import {
   shopShippingProviders,
   shopValidateCoupon,
 } from '../../lib/shop-api';
-import { getShopToken, SHOP_URL } from '../../lib/api';
+import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
 import type { CouponPreview, ShippingProvider } from '../../lib/shop-types';
-import { btn, btnText, colors, input, muted, title } from '../../ui';
+import { btn, btnText, colors, input, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Checkout'>;
 
@@ -163,30 +165,45 @@ export function CheckoutScreen({ navigation }: Props) {
     }
   }
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  if (loading) return <ScreenLoader />;
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+      keyboardShouldPersistTaps="handled"
     >
-      <Text style={title}>Ödeme</Text>
-      <Field label="Ad soyad" value={form.customerName} onChange={(v) => setForm({ ...form, customerName: v })} />
-      <Field label="E-posta" value={form.customerEmail} onChange={(v) => setForm({ ...form, customerEmail: v })} keyboard="email-address" />
-      <Field label="Telefon" value={form.customerPhone} onChange={(v) => setForm({ ...form, customerPhone: v })} keyboard="phone-pad" />
-      <Field label="İl" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-      <Field label="İlçe" value={form.district} onChange={(v) => setForm({ ...form, district: v })} />
-      <Field label="Mahalle" value={form.neighborhood} onChange={(v) => setForm({ ...form, neighborhood: v })} />
-      <Field label="Adres" value={form.addressLine} onChange={(v) => setForm({ ...form, addressLine: v })} />
-      <Field label="Posta kodu" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} keyboard="number-pad" />
+      <PageHeader kicker="Ödeme" heading="Teslimat" subtitle="Adres, kargo ve yasal onaylar." />
 
-      <Text style={[muted, { marginTop: 20 }]}>KARGO</Text>
+      <SectionLabel index="01" label="İletişim" />
+      <Field title="Ad soyad" value={form.customerName} onChangeText={(customerName) => setForm({ ...form, customerName })} />
+      <Field
+        title="E-posta"
+        value={form.customerEmail}
+        onChangeText={(customerEmail) => setForm({ ...form, customerEmail })}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <Field
+        title="Telefon"
+        value={form.customerPhone}
+        onChangeText={(customerPhone) => setForm({ ...form, customerPhone })}
+        keyboardType="phone-pad"
+      />
+
+      <SectionLabel index="02" label="Adres" />
+      <Field title="İl" value={form.city} onChangeText={(city) => setForm({ ...form, city })} />
+      <Field title="İlçe" value={form.district} onChangeText={(district) => setForm({ ...form, district })} />
+      <Field title="Mahalle" value={form.neighborhood} onChangeText={(neighborhood) => setForm({ ...form, neighborhood })} />
+      <Field title="Adres" value={form.addressLine} onChangeText={(addressLine) => setForm({ ...form, addressLine })} multiline />
+      <Field
+        title="Posta kodu"
+        value={form.postalCode}
+        onChangeText={(postalCode) => setForm({ ...form, postalCode })}
+        keyboardType="number-pad"
+      />
+
+      <SectionLabel index="03" label="Kargo" />
       {providers.map((p) => (
         <Pressable
           key={p.code}
@@ -194,59 +211,75 @@ export function CheckoutScreen({ navigation }: Props) {
           style={{
             marginTop: 8,
             borderWidth: 1,
-            borderColor: form.shippingProvider === p.code ? colors.accent : colors.border,
-            padding: 12,
+            borderColor: form.shippingProvider === p.code ? colors.accent : colors.borderMuted,
+            backgroundColor: form.shippingProvider === p.code ? colors.surfaceHigh : colors.surface,
+            padding: 14,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
           }}
         >
-          <Text style={{ color: colors.text }}>
-            {p.name} · {formatMoney(p.fee)}
-          </Text>
+          <Text style={{ color: colors.text, fontWeight: '600' }}>{p.name}</Text>
+          <Text style={{ color: colors.accentSoft }}>{formatMoney(p.fee)}</Text>
         </Pressable>
       ))}
 
-      <Text style={[muted, { marginTop: 20 }]}>KUPON</Text>
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+      <SectionLabel index="04" label="Kupon" />
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
         <TextInput
           value={couponInput}
           onChangeText={setCouponInput}
           autoCapitalize="characters"
           placeholder="Kod"
           placeholderTextColor={colors.muted}
-          style={[input, { flex: 1, marginTop: 0 }]}
+          style={[input, { flex: 1, marginTop: 0, marginRight: 10 }]}
         />
-        <Pressable onPress={() => void applyCoupon()} style={{ justifyContent: 'center' }}>
-          <Text style={{ color: colors.accentSoft }}>Uygula</Text>
+        <Pressable onPress={() => void applyCoupon()} style={{ paddingVertical: 14, paddingHorizontal: 8 }}>
+          <Text style={{ color: colors.accentSoft, fontWeight: '700', letterSpacing: 1 }}>UYGULA</Text>
         </Pressable>
       </View>
       {coupon?.valid ? (
-        <Text style={{ color: colors.success, marginTop: 6 }}>
+        <Text style={{ color: colors.success, marginTop: 8 }}>
           {coupon.code} · −{formatMoney(coupon.discountAmount)}
         </Text>
       ) : null}
 
+      <SectionLabel index="05" label="Onaylar" />
       <Legal
         label="Mesafeli satış sözleşmesi"
-        href="/mesafeli-satis"
         value={form.mesafeliSatis}
         onChange={(v) => setForm({ ...form, mesafeliSatis: v })}
+        onOpen={() => navigation.navigate('Legal', { slug: 'mesafeli-satis' })}
       />
       <Legal
         label="Ön bilgilendirme"
-        href="/on-bilgilendirme"
         value={form.onBilgilendirme}
         onChange={(v) => setForm({ ...form, onBilgilendirme: v })}
+        onOpen={() => navigation.navigate('Legal', { slug: 'on-bilgilendirme' })}
       />
       <Legal
         label="KVKK"
-        href="/kvkk"
         value={form.kvkk}
         onChange={(v) => setForm({ ...form, kvkk: v })}
+        onOpen={() => navigation.navigate('Legal', { slug: 'kvkk' })}
       />
 
-      <Text style={{ color: colors.text, marginTop: 16 }}>
-        Toplam {formatMoney(totals.total)}
-      </Text>
-      {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
+      <View
+        style={{
+          marginTop: 24,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          padding: 16,
+        }}
+      >
+        <Row label="Ara toplam" value={formatMoney(totals.subtotal)} />
+        <Row label="Kargo" value={formatMoney(totals.shippingFee)} />
+        {totals.discountAmount ? <Row label="İndirim" value={`−${formatMoney(totals.discountAmount)}`} /> : null}
+        <View style={{ height: 1, backgroundColor: colors.borderMuted, marginVertical: 12 }} />
+        <Row label="Toplam" value={formatMoney(totals.total)} strong />
+      </View>
+
+      {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}
       <Pressable
         onPress={() => void submit()}
         disabled={submitting}
@@ -258,51 +291,44 @@ export function CheckoutScreen({ navigation }: Props) {
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  keyboard,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  keyboard?: 'email-address' | 'phone-pad' | 'number-pad';
-}) {
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <View style={{ marginTop: 12 }}>
-      <Text style={muted}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChange}
-        keyboardType={keyboard}
-        autoCapitalize={keyboard === 'email-address' ? 'none' : 'words'}
-        style={input}
-      />
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: strong ? 0 : 6 }}>
+      <Text style={strong ? { color: colors.text, fontWeight: '700' } : muted}>{label}</Text>
+      <Text style={{ color: strong ? colors.accentSoft : colors.text, fontWeight: strong ? '700' : '400', fontSize: strong ? 18 : 14 }}>
+        {value}
+      </Text>
     </View>
   );
 }
 
 function Legal({
   label,
-  href,
   value,
   onChange,
+  onOpen,
 }: {
   label: string;
-  href: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  onOpen: () => void;
 }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, justifyContent: 'space-between' }}>
-      <Pressable
-        onPress={() =>
-          void Linking.openURL(`${SHOP_URL.replace(/\/$/, '')}${href}`)
-        }
-        style={{ flex: 1, marginRight: 12 }}
-      >
-        <Text style={{ color: colors.accentSoft }}>{label}</Text>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: colors.borderMuted,
+        backgroundColor: colors.surface,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+      }}
+    >
+      <Pressable onPress={onOpen} style={{ flex: 1, marginRight: 12 }}>
+        <Text style={{ color: colors.accentSoft, fontSize: 13 }}>{label}</Text>
+        <Text style={[muted, { marginTop: 2, fontSize: 10 }]}>Metni oku</Text>
       </Pressable>
       <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.accent }} />
     </View>

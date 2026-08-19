@@ -154,12 +154,14 @@ export class NotificationsService {
     email: string;
     name?: string | null;
     resetUrl: string;
+    appResetUrl?: string;
     isSetPassword?: boolean;
   }): Promise<void> {
     const name = input.name?.trim() || 'Merhaba';
     const content = buildPasswordResetEmail({
       name,
       resetUrl: input.resetUrl,
+      appResetUrl: input.appResetUrl,
       isSetPassword: input.isSetPassword,
     });
     await this.email.send({

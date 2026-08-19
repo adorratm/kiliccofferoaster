@@ -14,7 +14,13 @@ build
 coverage
 .env
 .env.local
-.env.*.local
+.env.development
+.env.production
+.env.staging
+.env.*
+!.env.example
+!.env*.example
+deploy/.env
 *.log
 .DS_Store
 .turbo
@@ -22,7 +28,6 @@ uploads
 scripts/.stock-cache
 scripts/.electron-zip-path.txt
 *.tsbuildinfo
-deploy/.env
 deploy/artifacts/*.sql
 deploy/artifacts/*.dump
 deploy/artifacts/*.tar.gz

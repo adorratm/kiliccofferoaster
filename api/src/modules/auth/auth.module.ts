@@ -8,6 +8,7 @@ import { JwtStrategy } from '@modules/auth/strategies/jwt.strategy';
 import { GoogleStrategy } from '@modules/auth/strategies/google.strategy';
 import { GoogleAdminStrategy } from '@modules/auth/strategies/google-admin.strategy';
 import { GoogleAdminOauthFilter } from '@modules/auth/filters/google-admin-oauth.filter';
+import { GoogleOauthFilter } from '@modules/auth/filters/google-oauth.filter';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
     GoogleStrategy,
     GoogleAdminStrategy,
     GoogleAdminOauthFilter,
+    GoogleOauthFilter,
   ],
   exports: [AuthService, JwtModule],
 })

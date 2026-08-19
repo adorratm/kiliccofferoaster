@@ -165,6 +165,7 @@ export class SyncService {
           description: payload.description ? String(payload.description) : undefined,
           partyId: payload.partyId ? String(payload.partyId) : undefined,
           invoiceId: payload.invoiceId ? String(payload.invoiceId) : undefined,
+          category: payload.category ? String(payload.category) : undefined,
           clientId,
         });
         return;

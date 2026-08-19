@@ -42,6 +42,8 @@ export type Product = {
   ratingCount?: number;
   categoryId: string | null;
   variants?: ProductVariant[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ProductReview = {
@@ -103,6 +105,10 @@ export type Category = {
   slug: string;
   name: string;
   description: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type CartItem = {

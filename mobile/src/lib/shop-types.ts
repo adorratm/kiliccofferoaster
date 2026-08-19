@@ -127,6 +127,37 @@ export type Order = {
   createdAt?: string;
 };
 
+export type ReturnRequestType = 'cancel' | 'return';
+
+export type ReturnRequest = {
+  id: string;
+  orderId: string;
+  type: ReturnRequestType;
+  status: string;
+  reason: string;
+  createdAt?: string;
+};
+
+export type ProductReview = {
+  id: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  authorName: string;
+  isApproved: boolean;
+  createdAt?: string;
+};
+
+export type InboxItem = {
+  id: string;
+  title: string;
+  body: string;
+  href: string | null;
+  type: string;
+  readAt?: string | null;
+  createdAt?: string;
+};
+
 export type CouponPreview = {
   valid: boolean;
   code: string;
@@ -151,6 +182,62 @@ export type WishlistItem = {
   id: string;
   productId: string;
   product?: Product;
+};
+
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  coverImageUrl: string | null;
+  authorName: string | null;
+  tags: string[];
+  publishedAt: string | null;
+};
+
+export type LegalDocument = {
+  slug: string;
+  title: string;
+  content: string;
+  version: string;
+};
+
+export type GuestOrderLookup = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  createdAt?: string;
+  customerName: string;
+  shippingCity: string | null;
+  shippingDistrict: string | null;
+  total: string;
+  currency: string;
+  shippingProvider: string | null;
+  items: Array<{
+    id: string;
+    productName: string;
+    variantLabel: string | null;
+    quantity: number;
+    lineTotal: string;
+  }>;
+  shipments: Array<{
+    id: string;
+    provider: string;
+    status: string;
+    trackingNumber: string | null;
+    trackingUrl: string | null;
+  }>;
+};
+
+export type TrackingResult = {
+  code?: string;
+  status: string;
+  provider?: string;
+  trackingNumber?: string;
+  trackingUrl?: string | null;
+  events?: Array<{ at?: string; description?: string; location?: string }>;
+  order?: { id?: string; orderNumber?: string; status?: string };
 };
 
 export type CheckoutPayload = {

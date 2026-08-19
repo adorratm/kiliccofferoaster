@@ -14,7 +14,7 @@ type Row = {
 export function StockPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [variantId, setVariantId] = useState('');
-  const [type, setType] = useState<'in' | 'out' | 'count'>('in');
+  const [type, setType] = useState<'in' | 'out' | 'count' | 'waste'>('in');
   const [quantity, setQuantity] = useState('1');
   const [note, setNote] = useState('');
 
@@ -32,7 +32,7 @@ export function StockPage() {
     const payload = {
       variantId,
       type,
-      quantity: type === 'out' ? -Math.abs(Number(quantity)) : Number(quantity),
+      quantity: type === 'out' || type === 'waste' ? -Math.abs(Number(quantity)) : Number(quantity),
       note,
     };
     if (isOnline()) {
@@ -64,11 +64,12 @@ export function StockPage() {
         </select>
         <select
           value={type}
-          onChange={(e) => setType(e.target.value as 'in' | 'out' | 'count')}
+          onChange={(e) => setType(e.target.value as 'in' | 'out' | 'count' | 'waste')}
           className="border border-border-muted bg-background px-3 py-2"
         >
           <option value="in">Giriş</option>
           <option value="out">Çıkış</option>
+          <option value="waste">Fire</option>
           <option value="count">Sayım</option>
         </select>
         <input

@@ -5,7 +5,7 @@ import { ProductBuyBox } from "@/components/ProductBuyBox";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ProductViewTracker } from "@/components/ProductViewTracker";
 import { Reveal } from "@/components/Reveal";
-import { getProductBySlug } from "@/lib/api";
+import { getProductBySlug, getProductReviews } from "@/lib/api";
 import { getSiteSettings } from "@/lib/cms";
 import { productImage } from "@/lib/format";
 import {
@@ -36,15 +36,18 @@ export async function generateMetadata({ params }: Props) {
     getProductBySlug(slug),
     getSiteSettings(),
   ]);
-  if (!product) return { title: "Ürün" };
+  if (!product) {
+    return { title: "Ürün bulunamadı", robots: { index: false, follow: false } };
+  }
   return buildProductMetadata(product, settings);
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [product, settings] = await Promise.all([
+  const [product, settings, reviews] = await Promise.all([
     getProductBySlug(slug),
     getSiteSettings(),
+    getProductReviews(slug, 1, 10).catch(() => null),
   ]);
 
   if (!product) notFound();
@@ -91,7 +94,7 @@ export default async function ProductDetailPage({ params }: Props) {
         )}
         currency={product.currency || "TRY"}
       />
-      <JsonLd data={productJsonLd(product, settings)} />
+      <JsonLd data={productJsonLd(product, settings, reviews?.items ?? [])} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Ana sayfa", path: "/" },

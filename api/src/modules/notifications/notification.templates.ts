@@ -320,28 +320,35 @@ export const buildSmsBody = buildWhatsAppBody;
 export function buildPasswordResetEmail(input: {
   name: string;
   resetUrl: string;
+  appResetUrl?: string;
   /** Google vb. OAuth hesabında henüz yerel şifre yoksa */
   isSetPassword?: boolean;
 }): { subject: string; html: string; text: string } {
   const isSet = !!input.isSetPassword;
+  const paragraphs = [
+    isSet
+      ? 'Hesabınıza e-posta ve şifre ile de giriş yapabilmeniz için bir şifre belirleyebilirsiniz. Google ile girişiniz açık kalır. Bağlantı 1 saat geçerlidir.'
+      : 'Hesabınız için şifre sıfırlama talebi aldık. Bağlantı 1 saat geçerlidir. Siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.',
+  ];
+  if (input.appResetUrl) {
+    paragraphs.push(
+      `Uygulamayı kullanıyorsanız bu bağlantıyı açın: ${input.appResetUrl}`,
+    );
+  }
   return {
     subject: isSet ? 'Şifre belirleme' : 'Şifre sıfırlama',
     html: renderBrandedEmail({
       title: isSet ? 'Şifre belirleme' : 'Şifre sıfırlama',
       greeting: `Merhaba ${input.name},`,
-      paragraphs: [
-        isSet
-          ? 'Hesabınıza e-posta ve şifre ile de giriş yapabilmeniz için bir şifre belirleyebilirsiniz. Google ile girişiniz açık kalır. Bağlantı 1 saat geçerlidir.'
-          : 'Hesabınız için şifre sıfırlama talebi aldık. Bağlantı 1 saat geçerlidir. Siz talep etmediyseniz bu e-postayı yok sayabilirsiniz.',
-      ],
+      paragraphs,
       cta: {
         label: isSet ? 'Şifre belirle' : 'Şifreyi sıfırla',
         href: input.resetUrl,
       },
     }),
     text: isSet
-      ? `Merhaba ${input.name}, şifre belirlemek için: ${input.resetUrl} (1 saat geçerli). Google ile girişiniz açık kalır.`
-      : `Merhaba ${input.name}, şifrenizi sıfırlamak için: ${input.resetUrl} (1 saat geçerli)`,
+      ? `Merhaba ${input.name}, şifre belirlemek için: ${input.resetUrl}${input.appResetUrl ? ` · uygulama: ${input.appResetUrl}` : ''} (1 saat geçerli). Google ile girişiniz açık kalır.`
+      : `Merhaba ${input.name}, şifrenizi sıfırlamak için: ${input.resetUrl}${input.appResetUrl ? ` · uygulama: ${input.appResetUrl}` : ''} (1 saat geçerli)`,
   };
 }
 

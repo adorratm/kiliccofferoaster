@@ -32,6 +32,25 @@ export class RegisterDto {
   lastName?: string;
 }
 
+export class AppleLoginDto {
+  @ApiProperty({ description: 'Apple identityToken (JWT)' })
+  @IsString()
+  @MinLength(20)
+  identityToken!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  firstName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  lastName?: string;
+}
+
 export class LoginDto {
   @ApiProperty({ example: 'ornek@email.com' })
   @IsEmail()

@@ -2,6 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
+import { numericTransformer } from '@common/utils/numeric';
 
 export enum StockMovementType {
   IN = 'in',
@@ -10,6 +11,7 @@ export enum StockMovementType {
   SALE = 'sale',
   RETURN = 'return',
   PURCHASE = 'purchase',
+  WASTE = 'waste',
 }
 
 @Entity('stock_movements')
@@ -32,10 +34,22 @@ export class StockMovement extends BaseEntity {
   type!: StockMovementType;
 
   /** Pozitif giriş, negatif çıkış. COUNT için yeni stok miktarı `quantity` olarak yazılır. */
-  @Column({ type: 'int' })
+  @Column({
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    transformer: numericTransformer,
+  })
   quantity!: number;
 
-  @Column({ name: 'balance_after', type: 'int', nullable: true })
+  @Column({
+    name: 'balance_after',
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   balanceAfter!: number | null;
 
   @Column({ name: 'source', type: 'varchar', length: 40, nullable: true })

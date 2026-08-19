@@ -169,23 +169,28 @@ export class CartService {
       throw new NotFoundException('Ürün bulunamadı');
     }
 
-    let unitPrice = product.basePrice;
-    let variantId: string | null = dto.variantId ?? null;
-    let availableStock = product.stock;
+    const variants = await this.em.find(ProductVariant, {
+      where: { productId: product.id, isActive: true },
+    });
+
+    let variant: ProductVariant | null = null;
     if (dto.variantId) {
-      const variant = await this.em.findOne(ProductVariant, {
-        where: {
-          id: dto.variantId,
-          productId: product.id,
-          isActive: true,
-        },
-      });
+      variant = variants.find((v) => v.id === dto.variantId) ?? null;
       if (!variant) {
         throw new NotFoundException('Varyant bulunamadı');
       }
+    } else if (variants.length) {
+      variant =
+        variants.find((v) => Number(v.stock) > 0) ?? variants[0] ?? null;
+    }
+
+    let unitPrice = product.basePrice;
+    let variantId: string | null = null;
+    let availableStock = Number(product.stock);
+    if (variant) {
       unitPrice = variant.price;
       variantId = variant.id;
-      availableStock = variant.stock;
+      availableStock = Number(variant.stock);
     }
 
     const campaignPrice = await this.campaigns.priceForProduct(
@@ -293,13 +298,19 @@ export class CartService {
       const variant = await this.em.findOne(ProductVariant, {
         where: { id: variantId, isActive: true },
       });
-      return variant?.stock ?? 0;
+      return Number(variant?.stock ?? 0);
     }
     if (!productId) return 0;
     const product = await this.em.findOne(Product, {
       where: { id: productId, isActive: true },
+      relations: { variants: true },
     });
-    return product?.stock ?? 0;
+    if (!product) return 0;
+    const active = (product.variants || []).filter((v) => v.isActive !== false);
+    if (active.length) {
+      return active.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+    }
+    return Number(product.stock ?? 0);
   }
 
   /** Abandoned cart cron için güncel aktivite zamanı */

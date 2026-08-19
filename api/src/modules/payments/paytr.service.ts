@@ -434,7 +434,7 @@ export class PaytrService {
 
   private sanitizeIp(ip?: string): string {
     const fallback =
-      this.config.get<string>('paytr.fallbackIp') || '85.34.78.112';
+      this.config.get<string>('paytr.fallbackIp') || '1.1.1.1';
     if (!ip) return fallback;
     // X-Forwarded-For: ilk IP
     const first = ip.split(',')[0]?.trim() || fallback;

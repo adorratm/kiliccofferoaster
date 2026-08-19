@@ -32,7 +32,14 @@ export async function generateMetadata({
     return {};
   }
   const settings = await getSiteSettings();
-  return buildCatalogMetadata(settings, { q: sp.q });
+  return buildCatalogMetadata(settings, {
+    q: sp.q,
+    page: sp.page,
+    origin: sp.origin,
+    roast: sp.roast,
+    sort: sp.sort,
+    order: sp.order,
+  });
 }
 
 export default async function ProductsPage({ searchParams }: Props) {

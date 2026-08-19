@@ -1,4 +1,5 @@
-import { API_URL } from './api';
+import { API_URL, SHOP_URL } from './api';
+import { isUnusableImageUrl, stockProductFallback } from './stock-images';
 
 export function formatMoney(
   amount: string | number | null | undefined,
@@ -16,11 +17,29 @@ export function formatMoney(
   }
 }
 
-export function productImage(url: string | null | undefined) {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/')) return `${API_URL.replace(/\/$/, '')}${url}`;
-  return url;
+export function stockQty(value: unknown): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function productImage(url: string | null | undefined, seed = 'coffee') {
+  const resolved = resolveMediaUrl(url);
+  if (resolved && !isUnusableImageUrl(resolved)) return resolved;
+  return stockProductFallback(seed);
+}
+
+function resolveMediaUrl(url: string | null | undefined) {
+  if (!url?.trim()) return null;
+  const value = url.trim();
+  if (value.startsWith('//')) return `https:${value}`;
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  if (value.startsWith('/uploads') || value.startsWith('/media')) {
+    return `${API_URL.replace(/\/$/, '')}${value}`;
+  }
+  if (value.startsWith('/')) {
+    return `${SHOP_URL.replace(/\/$/, '')}${value}`;
+  }
+  return value;
 }
 
 export function extractIncludedTax(netTotal: number, ratePercent = 20) {

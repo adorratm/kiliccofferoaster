@@ -15,3 +15,4 @@
 | [docker.md](docker.md) | Docker Compose notları |
 | [accounting.md](accounting.md) | Ön muhasebe, e-belge, Electron / Expo |
 | [env-variables.md](env-variables.md) | Ortam değişkenleri |
+| [aso.md](aso.md) | App Store / Play listing, App Links, Merchant feed |

@@ -14,6 +14,12 @@ export class Category extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'seo_title', type: 'varchar', length: 220, nullable: true })
+  seoTitle!: string | null;
+
+  @Column({ name: 'seo_description', type: 'text', nullable: true })
+  seoDescription!: string | null;
+
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder!: number;
 

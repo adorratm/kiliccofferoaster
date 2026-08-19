@@ -9,6 +9,7 @@ import {
 import { BaseEntity } from '@entities/base.entity';
 import { Category } from '@entities/category.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
+import { numericTransformer } from '@common/utils/numeric';
 
 @Entity('products')
 export class Product extends BaseEntity {
@@ -81,13 +82,32 @@ export class Product extends BaseEntity {
   @Column({ name: 'vat_rate', type: 'decimal', precision: 5, scale: 2, default: 20 })
   vatRate!: string;
 
+  @Column({ name: 'barcode', type: 'varchar', length: 64, nullable: true })
+  barcode!: string | null;
+
+  @Column({ name: 'expires_at', type: 'date', nullable: true })
+  expiresAt!: string | null;
+
+  @Column({ name: 'allergens', type: 'text', array: true, default: '{}' })
+  allergens!: string[];
+
+  @Column({ name: 'ingredients', type: 'text', nullable: true })
+  ingredients!: string | null;
+
   @Column({ name: 'base_price', type: 'decimal', precision: 12, scale: 2 })
   basePrice!: string;
 
   @Column({ name: 'currency', type: 'varchar', length: 3, default: 'TRY' })
   currency!: string;
 
-  @Column({ name: 'stock', type: 'int', default: 0 })
+  @Column({
+    name: 'stock',
+    type: 'numeric',
+    precision: 12,
+    scale: 3,
+    default: 0,
+    transformer: numericTransformer,
+  })
   stock!: number;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })

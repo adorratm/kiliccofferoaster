@@ -47,8 +47,17 @@ export function DownloadButtons() {
       pending: !DOWNLOADS.mac,
     },
     {
+      id: "linux",
+      platform: "03 // Linux",
+      title: "Linux",
+      body: "AppImage çalıştırılabilir veya .deb ile Debian/Ubuntu’ya kurun. Personel paneli ve mağaza aynı uygulamadadır.",
+      href: DOWNLOADS.linux,
+      label: "Linux paketini indir",
+      pending: !DOWNLOADS.linux,
+    },
+    {
       id: "and",
-      platform: "03 // Android",
+      platform: "04 // Android",
       title: "Telefon / tablet",
       body: "Play Store veya APK ile kurun. Kahve siparişi sitedeki akışın aynısıdır.",
       href: DOWNLOADS.playStore || DOWNLOADS.androidApk,
@@ -57,7 +66,7 @@ export function DownloadButtons() {
     },
     {
       id: "ios",
-      platform: "04 // iPhone / iPad",
+      platform: "05 // iPhone / iPad",
       title: "App Store",
       body: "TestFlight veya App Store bağlantısı yayın sonrası burada olur.",
       href: DOWNLOADS.appStore,
@@ -67,7 +76,7 @@ export function DownloadButtons() {
   ];
 
   return (
-    <div className="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div className="mt-16 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card, i) => (
         <Reveal key={card.id} delay={i * 80} variant="up">
           <article className="industrial-border flex h-full flex-col bg-surface-container-low p-6">

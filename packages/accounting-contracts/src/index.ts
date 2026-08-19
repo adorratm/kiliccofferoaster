@@ -87,8 +87,26 @@ export const STOCK_MOVEMENT_TYPES = [
   'sale',
   'return',
   'purchase',
+  'waste',
 ] as const;
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
+
+export const CASH_EXPENSE_CATEGORIES = [
+  'kira',
+  'enerji',
+  'ambalaj',
+  'hammadde',
+  'diger',
+] as const;
+export type CashExpenseCategory = (typeof CASH_EXPENSE_CATEGORIES)[number];
+
+export const CASH_EXPENSE_CATEGORY_LABELS: Record<CashExpenseCategory, string> = {
+  kira: 'Kira',
+  enerji: 'Enerji',
+  ambalaj: 'Ambalaj',
+  hammadde: 'Hammadde',
+  diger: 'Diğer',
+};
 
 export const SYNC_ACTIONS = ['upsert', 'delete'] as const;
 export type SyncAction = (typeof SYNC_ACTIONS)[number];

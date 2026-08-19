@@ -16,22 +16,36 @@ type Turnover = {
 
 type Vat = { outputVat: string; inputVat: string; payable: string };
 
+type StockRow = {
+  sku: string;
+  name?: string;
+  stock: number;
+  expiresAt?: string | null;
+  expiringSoon?: boolean;
+  expired?: boolean;
+};
+
 export function ReportsScreen() {
   const [turnover, setTurnover] = useState<Turnover | null>(null);
   const [vat, setVat] = useState<Vat | null>(null);
+  const [stock, setStock] = useState<StockRow[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     void Promise.all([
       api<Turnover>('/accounting/reports/turnover'),
       api<Vat>('/accounting/reports/vat'),
+      api<StockRow[]>('/accounting/reports/stock'),
     ])
-      .then(([t, v]) => {
+      .then(([t, v, s]) => {
         setTurnover(t);
         setVat(v);
+        setStock(s);
       })
       .catch(() => setError('Çevrimdışı veya rapor alınamadı'));
   }, []);
+
+  const expiring = stock.filter((s) => s.expired || s.expiringSoon);
 
   return (
     <ScrollView style={screen}>
@@ -80,6 +94,19 @@ export function ReportsScreen() {
             })}
             height={220}
           />
+        </View>
+      ) : null}
+      {expiring.length ? (
+        <View style={card}>
+          <Text style={muted}>SKT YAKLAŞAN / GEÇMİŞ</Text>
+          {expiring.map((s) => (
+            <Text
+              key={s.sku}
+              style={{ color: s.expired ? colors.danger : colors.accentSoft, marginTop: 8 }}
+            >
+              {s.name || s.sku} · {s.expiresAt} · stok {s.stock}
+            </Text>
+          ))}
         </View>
       ) : null}
     </ScrollView>

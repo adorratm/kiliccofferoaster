@@ -14,7 +14,14 @@ import ProductsCatalog from "../../ProductsCatalog";
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    origin?: string;
+    roast?: string;
+    sort?: string;
+    order?: string;
+    page?: string;
+  }>;
 };
 
 export async function generateMetadata({
@@ -35,7 +42,14 @@ export async function generateMetadata({
     categorySlug: category.slug,
     categoryName: category.name,
     categoryDescription: category.description,
+    categorySeoTitle: category.seoTitle,
+    categorySeoDescription: category.seoDescription,
     q: sp.q,
+    page: sp.page,
+    origin: sp.origin,
+    roast: sp.roast,
+    sort: sp.sort,
+    order: sp.order,
   });
 }
 

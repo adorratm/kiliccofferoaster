@@ -18,6 +18,7 @@ yarn dev:desktop   # varsayılan pencere: mağaza
 
 Windows kurulum: `yarn pack:desktop:win` → `desktop/release/KilicCoffee-Setup.exe`  
 macOS (bir Mac’te): `yarn pack:desktop:mac` → `desktop/release/KilicCoffee.dmg`  
+Linux: `yarn pack:desktop:linux` → `desktop/release/KilicCoffee.AppImage` / `.deb`  
 Mobil: `cd mobile && npx eas-cli build -p android --profile preview` (APK)
 
 Vitrin indirme sayfası: `/indir`

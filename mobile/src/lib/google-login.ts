@@ -27,6 +27,15 @@ export function errorFromUrl(url: string | null | undefined): string | null {
 }
 
 export async function loginWithGoogle(): Promise<string> {
+  return openGoogleAuth('/auth/google/admin');
+}
+
+/** Müşteri Google — admin allowlist kontrolü yok */
+export async function loginWithGoogleShop(): Promise<string> {
+  return openGoogleAuth('/auth/google');
+}
+
+async function openGoogleAuth(path: string): Promise<string> {
   const client = Platform.OS === 'web' ? 'web' : 'mobile';
   const redirectUri =
     Platform.OS === 'web'
@@ -35,7 +44,7 @@ export async function loginWithGoogle(): Promise<string> {
         : 'http://localhost:8081/'
       : 'kilicops://auth/callback';
   const result = await WebBrowser.openAuthSessionAsync(
-    `${API_URL}/auth/google/admin?client=${client}`,
+    `${API_URL}${path}?client=${client}`,
     redirectUri,
   );
   if (result.type !== 'success') {

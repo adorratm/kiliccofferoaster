@@ -24,3 +24,10 @@ mac:
         - universal
   icon: resources/icon.png
   artifactName: KilicCoffee.${ext}
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: resources/icon.png
+  category: Office
+  artifactName: KilicCoffee.${ext}

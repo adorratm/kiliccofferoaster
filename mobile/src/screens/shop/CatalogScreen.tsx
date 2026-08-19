@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ShopStackParamList } from '../../navigation/types';
+import { EmptyState } from '../../components/shop/EmptyState';
+import { ScreenLoader } from '../../components/shop/ScreenLoader';
+import { SearchBar } from '../../components/shop/SearchBar';
 import { shopProducts } from '../../lib/shop-api';
 import type { Product } from '../../lib/shop-types';
-import { colors, muted } from '../../ui';
+import { colors } from '../../ui';
 import { ProductCard } from './ProductCard';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Catalog'>;
@@ -39,23 +42,16 @@ export function CatalogScreen({ navigation, route }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={{ padding: 16 }}>
-        <TextInput
-          placeholder="Ara"
-          placeholderTextColor={colors.muted}
+      <View style={{ padding: 16, paddingBottom: 8 }}>
+        <SearchBar
           value={q}
+          placeholder="Katalogda ara"
           onChangeText={setQ}
-          onSubmitEditing={() => setAppliedQ(q)}
-          style={{
-            borderWidth: 1,
-            borderColor: colors.border,
-            color: colors.text,
-            padding: 12,
-          }}
+          onSubmit={() => setAppliedQ(q)}
         />
       </View>
       {loading ? (
-        <ActivityIndicator color={colors.accent} style={{ marginTop: 24 }} />
+        <ScreenLoader />
       ) : (
         <FlatList
           data={items}
@@ -63,7 +59,11 @@ export function CatalogScreen({ navigation, route }: Props) {
           numColumns={2}
           contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 40 }}
           ListEmptyComponent={
-            <Text style={[muted, { textAlign: 'center', marginTop: 24 }]}>Ürün bulunamadı</Text>
+            <EmptyState
+              icon="coffee"
+              title="Ürün bulunamadı"
+              body="Farklı bir arama veya kategori deneyin."
+            />
           }
           renderItem={({ item }) => (
             <View style={{ width: '50%' }}>
@@ -80,9 +80,20 @@ export function CatalogScreen({ navigation, route }: Props) {
           if (q === appliedQ) void load();
           else setAppliedQ(q);
         }}
-        style={{ padding: 12 }}
+        style={{ padding: 14, borderTopWidth: 1, borderTopColor: colors.borderMuted }}
       >
-        <Text style={{ color: colors.accentSoft, textAlign: 'center' }}>Yenile</Text>
+        <Text
+          style={{
+            color: colors.accentSoft,
+            textAlign: 'center',
+            fontSize: 12,
+            letterSpacing: 1.6,
+            textTransform: 'uppercase',
+            fontWeight: '700',
+          }}
+        >
+          Yenile
+        </Text>
       </Pressable>
     </View>
   );

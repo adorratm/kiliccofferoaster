@@ -56,6 +56,8 @@ export class CategoriesService {
     const category = this.em.create(Category, {
       ...dto,
       description: dto.description ?? null,
+      seoTitle: dto.seoTitle ?? null,
+      seoDescription: dto.seoDescription ?? null,
       sortOrder: dto.sortOrder ?? 0,
       isActive: dto.isActive ?? true,
     });

@@ -24,7 +24,12 @@ import {
   RegisterDto,
   ResetPasswordDto,
   ChangePasswordDto,
+  AppleLoginDto,
 } from '@modules/auth/dto/auth.dto';
+import {
+  appleAudiencesFromEnv,
+  verifyAppleIdentityToken,
+} from '@modules/auth/apple-token';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { resolveFrontendUrl } from '@modules/notifications/notification.templates';
 
@@ -161,6 +166,7 @@ export class AuthService {
 
       const frontendUrl = resolveFrontendUrl(this.config);
       const resetUrl = `${frontendUrl}/sifre-sifirla?token=${encodeURIComponent(token)}`;
+      const appResetUrl = `kilicops://reset-password?token=${encodeURIComponent(token)}`;
       const name = [user.firstName, user.lastName]
         .filter(Boolean)
         .join(' ')
@@ -171,6 +177,7 @@ export class AuthService {
           email: user.email,
           name: name || null,
           resetUrl,
+          appResetUrl,
           isSetPassword: !user.passwordHash,
         });
       } catch (err) {
@@ -246,6 +253,25 @@ export class AuthService {
     user.provider = AuthProvider.LOCAL;
     await this.em.save(user);
     return { ok: true, hasPassword: true };
+  }
+
+  async loginWithApple(dto: AppleLoginDto): Promise<AuthTokens> {
+    const audiences = appleAudiencesFromEnv(
+      this.config.get<string>('apple.clientIds'),
+    );
+    const payload = await verifyAppleIdentityToken(dto.identityToken, audiences);
+    const email =
+      payload.email?.toLowerCase().trim() ||
+      `apple-${payload.sub}@privaterelay.appleid.com`;
+    const user = await this.findOrCreateOAuthUser({
+      email,
+      provider: AuthProvider.APPLE,
+      providerId: payload.sub,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      asAdmin: false,
+    });
+    return this.buildAuthResponse(user);
   }
 
   async me(userId: string): Promise<PublicUser> {
