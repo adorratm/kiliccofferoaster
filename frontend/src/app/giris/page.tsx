@@ -8,11 +8,13 @@ import { AuthField, AuthShell } from "@/components/AuthModal";
 import { login } from "@/lib/api";
 import {
   isAuthenticated,
+  isOpsRole,
   rememberAuthNext,
   safeNextPath,
   setToken,
 } from "@/lib/auth";
 import { fetchCart } from "@/lib/cart";
+import { isDesktopApp, OPS_PROTOCOL } from "@/lib/downloads";
 
 function LoginInner() {
   const router = useRouter();
@@ -39,6 +41,10 @@ function LoginInner() {
       const res = await login(email, password);
       setToken(res.accessToken);
       await fetchCart().catch(() => null);
+      if (isDesktopApp() && isOpsRole(res.user?.role)) {
+        window.location.href = OPS_PROTOCOL;
+        return;
+      }
       router.replace(next);
     } catch (err) {
       setError(

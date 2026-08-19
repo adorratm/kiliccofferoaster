@@ -3,6 +3,13 @@ export function isInAppShell(): boolean {
   return /KilicCoffee\//i.test(navigator.userAgent);
 }
 
+export function isDesktopApp(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /KilicCoffee\/.*Desktop/i.test(navigator.userAgent);
+}
+
+export const OPS_PROTOCOL = "kilic://ops";
+
 export const DOWNLOADS = {
   windows:
     process.env.NEXT_PUBLIC_DOWNLOAD_WINDOWS ||

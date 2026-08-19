@@ -11,6 +11,7 @@ import { isAuthenticated, loginPath } from "@/lib/auth";
 import { cartItemCount, fetchCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/cms";
 import { DEFAULT_SETTINGS } from "@/lib/cms";
+import { isDesktopApp, OPS_PROTOCOL } from "@/lib/downloads";
 
 type Props = {
   settings?: SiteSettings;
@@ -22,10 +23,12 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
   const [mounted, setMounted] = useState(false);
   const [count, setCount] = useState(0);
   const [authed, setAuthed] = useState(false);
+  const [desktop, setDesktop] = useState(false);
   const nav = settings.navigation.header;
 
   useEffect(() => {
     setMounted(true);
+    setDesktop(isDesktopApp());
   }, []);
 
   useEffect(() => {
@@ -148,6 +151,15 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
                   >
                     {authed ? "Hesabım" : "Giriş"}
                   </Link>
+                  {desktop ? (
+                    <a
+                      href={OPS_PROTOCOL}
+                      onClick={() => setOpen(false)}
+                      className="col-span-2 border border-outline-variant/40 bg-surface-container px-4 py-3 font-meta text-[11px] uppercase tracking-widest text-on-surface hover:border-primary hover:text-primary"
+                    >
+                      Personel paneli
+                    </a>
+                  ) : null}
                 </div>
                 <AppDownloadLink className="mt-4 font-meta text-[11px] uppercase tracking-widest text-secondary underline hover:text-primary" />
 
@@ -196,7 +208,16 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-5">
-          <AppDownloadLink />
+          {desktop ? (
+            <a
+              href={OPS_PROTOCOL}
+              className="hidden font-meta text-[10px] uppercase tracking-widest text-primary sm:inline"
+            >
+              Personel
+            </a>
+          ) : (
+            <AppDownloadLink />
+          )}
           <SiteSearch />
           {authed ? <NotificationBell /> : null}
           <Link

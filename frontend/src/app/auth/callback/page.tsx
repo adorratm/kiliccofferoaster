@@ -2,8 +2,10 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { consumeAuthNext, setToken } from "@/lib/auth";
+import { getMe } from "@/lib/api";
+import { consumeAuthNext, isOpsRole, setToken } from "@/lib/auth";
 import { fetchCart } from "@/lib/cart";
+import { isDesktopApp, OPS_PROTOCOL } from "@/lib/downloads";
 
 function CallbackInner() {
   const router = useRouter();
@@ -14,9 +16,21 @@ function CallbackInner() {
     if (token) {
       setToken(token);
       const next = consumeAuthNext("/hesabim");
-      void fetchCart()
-        .catch(() => null)
-        .finally(() => router.replace(next));
+      void (async () => {
+        if (isDesktopApp()) {
+          try {
+            const me = await getMe(token);
+            if (isOpsRole(me.role)) {
+              window.location.href = OPS_PROTOCOL;
+              return;
+            }
+          } catch {
+            /* vitrin hesabı */
+          }
+        }
+        await fetchCart().catch(() => null);
+        router.replace(next);
+      })();
       return;
     }
     router.replace("/giris");

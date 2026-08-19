@@ -67,6 +67,12 @@ export function isAuthenticated() {
   return Boolean(getToken());
 }
 
+const OPS_ROLES = ["admin", "staff", "accountant"] as const;
+
+export function isOpsRole(role: string | undefined | null): boolean {
+  return Boolean(role && (OPS_ROLES as readonly string[]).includes(role));
+}
+
 function readCookie(name: string): string | null {
   if (!canUseDom()) return null;
   const match = document.cookie

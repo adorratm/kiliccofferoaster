@@ -60,6 +60,7 @@ export default async function RootLayout({
     <html
       lang="tr"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
       className={`${anton.variable} ${inter.variable} ${jetbrains.variable} h-full`}
     >
       <head>

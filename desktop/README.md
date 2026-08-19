@@ -1,6 +1,6 @@
 # Kılıç Coffee — masaüstü
 
-Varsayılan pencere **mağazadır** (`kiliccoffeeroaster.com.tr`). Personel paneli menüden açılır: **Kılıç Coffee → Personel paneli** (Windows’ta Alt).
+Varsayılan pencere **personel paneli**dir (ön muhasebe). Mağaza vitrini menüden açılır: **Kılıç Coffee → Mağaza** (Windows’ta Alt).
 
 ```bash
 yarn install

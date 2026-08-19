@@ -37,6 +37,10 @@ function isExternalScheme(url: string): boolean {
   return /^(tel|mailto|sms|whatsapp):/i.test(url);
 }
 
+function isOpsDeepLink(url: string): boolean {
+  return /^kilic:\/\/ops/i.test(url);
+}
+
 function allowShopPopup(url: string, shopUrl: string): boolean {
   try {
     const u = new URL(url);
@@ -53,7 +57,47 @@ function allowShopPopup(url: string, shopUrl: string): boolean {
   }
 }
 
-function createShopWindow(): BrowserWindow {
+const RETRYABLE_NET_ERRORS = new Set([
+  -102, // ERR_CONNECTION_REFUSED
+  -105, // ERR_NAME_NOT_RESOLVED
+  -106, // ERR_INTERNET_DISCONNECTED
+  -111, // ERR_ADDRESS_UNREACHABLE
+  -118, // ERR_CONNECTION_TIMED_OUT
+]);
+
+function shopUnavailableHtml(shopUrl: string): string {
+  const escaped = shopUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return `<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>Mağaza bekleniyor</title>
+  <style>
+    body { margin:0; font-family: Segoe UI, sans-serif; background:#131313; color:#e5e2e1;
+      display:flex; min-height:100vh; align-items:center; justify-content:center; }
+    main { max-width: 28rem; padding: 2rem; }
+    h1 { font-size: 1.35rem; margin: 0 0 .75rem; }
+    p { color:#a58b84; line-height:1.5; }
+    code { color:#ffb4a2; }
+    a { color:#ffb4a2; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Vitrin açık değil</h1>
+    <p>Masaüstü mağaza penceresi <code>${escaped}</code> adresini bekliyor.</p>
+    <p>Yerelde şunu çalıştırın: <code>yarn dev:frontend</code></p>
+    <p>Personel paneli menüden açılır: <strong>Kılıç Coffee → Personel paneli</strong></p>
+    <p><a href="${escaped}">Tekrar dene</a></p>
+  </main>
+</body>
+</html>`;
+}
+
+function createShopWindow(opts?: {
+  onShopUnreachable?: () => void;
+  onOpenOps?: () => void;
+}): BrowserWindow {
   const { shop } = urls();
   const win = new BrowserWindow({
     width: 1440,
@@ -72,6 +116,10 @@ function createShopWindow(): BrowserWindow {
   });
   win.webContents.setUserAgent(`${win.webContents.getUserAgent()} KilicCoffee/1.0 Desktop`);
   win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isOpsDeepLink(url)) {
+      opts?.onOpenOps?.();
+      return { action: 'deny' };
+    }
     if (isExternalScheme(url)) {
       void shell.openExternal(url);
       return { action: 'deny' };
@@ -92,12 +140,45 @@ function createShopWindow(): BrowserWindow {
     void shell.openExternal(url);
     return { action: 'deny' };
   });
+  let attempts = 0;
+  let openedOps = false;
   win.webContents.on('will-navigate', (event, url) => {
+    if (isOpsDeepLink(url)) {
+      event.preventDefault();
+      opts?.onOpenOps?.();
+      return;
+    }
+    if (url.startsWith(shop)) attempts = 0;
     if (isExternalScheme(url)) {
       event.preventDefault();
       void shell.openExternal(url);
     }
   });
+  win.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, _desc, _url, isMainFrame) => {
+      if (!isMainFrame || errorCode === -3) return;
+      if (RETRYABLE_NET_ERRORS.has(errorCode) && attempts < 10) {
+        attempts += 1;
+        setTimeout(() => {
+          if (!win.isDestroyed()) void win.loadURL(shop);
+        }, 1500);
+        return;
+      }
+      if (!openedOps) {
+        openedOps = true;
+        opts?.onShopUnreachable?.();
+      }
+      void win.loadURL(
+        `data:text/html;charset=utf-8,${encodeURIComponent(shopUnavailableHtml(shop))}`,
+      );
+    },
+  );
+  win.webContents.on('did-finish-load', () => {
+    const current = win.webContents.getURL();
+    if (current.startsWith(shop) || current.startsWith('http')) attempts = 0;
+  });
+
   void win.loadURL(shop);
   return win;
 }
@@ -160,7 +241,12 @@ app.whenReady().then(async () => {
       shopWindow.focus();
       return;
     }
-    shopWindow = createShopWindow();
+    shopWindow = createShopWindow({
+      onShopUnreachable: () => {
+        if (!app.isPackaged) showOps();
+      },
+      onOpenOps: () => showOps(),
+    });
     shopWindow.on('closed', () => {
       shopWindow = null;
     });
@@ -247,10 +333,10 @@ app.whenReady().then(async () => {
     },
   );
 
-  showShop();
+  showOps();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) showShop();
+    if (BrowserWindow.getAllWindows().length === 0) showOps();
   });
 });
 

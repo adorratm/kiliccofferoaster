@@ -4,7 +4,7 @@ import { join } from 'path';
 import initSqlJs, { type Database } from 'sql.js';
 import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
+const nodeRequire = createRequire(import.meta.url);
 
 export type OutboxRow = {
   id: string;
@@ -22,7 +22,7 @@ export class LocalStore {
 
   static async open(): Promise<LocalStore> {
     const SQL = await initSqlJs({
-      locateFile: (file: string) => require.resolve(`sql.js/dist/${file}`),
+      locateFile: (file: string) => nodeRequire.resolve(`sql.js/dist/${file}`),
     });
     const dir = app.getPath('userData');
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
