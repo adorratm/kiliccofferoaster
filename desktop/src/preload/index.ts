@@ -46,6 +46,45 @@ contextBridge.exposeInMainWorld('ops', {
     ipcRenderer.on('ops:notification-click', listener);
     return () => ipcRenderer.removeListener('ops:notification-click', listener);
   },
+  getAppVersion: () => ipcRenderer.invoke('ops:get-app-version') as Promise<string>,
+  checkForUpdate: () =>
+    ipcRenderer.invoke('ops:check-for-update') as Promise<
+      'disabled' | 'up-to-date' | 'downloading' | 'error'
+    >,
+  onUpdateEvent: (
+    fn: (event: {
+      type:
+        | 'checking'
+        | 'available'
+        | 'not-available'
+        | 'progress'
+        | 'downloaded'
+        | 'error'
+        | 'disabled';
+      version?: string;
+      percent?: number;
+      message?: string;
+    }) => void,
+  ) => {
+    const listener = (
+      _event: unknown,
+      payload: {
+        type:
+          | 'checking'
+          | 'available'
+          | 'not-available'
+          | 'progress'
+          | 'downloaded'
+          | 'error'
+          | 'disabled';
+        version?: string;
+        percent?: number;
+        message?: string;
+      },
+    ) => fn(payload);
+    ipcRenderer.on('ops:update-event', listener);
+    return () => ipcRenderer.removeListener('ops:update-event', listener);
+  },
 });
 
 export {};

@@ -25,7 +25,19 @@ npx eas-cli submit -p ios --profile production
 
 Preview APK’yı `frontend/public/downloads/` altına koyup `NEXT_PUBLIC_DOWNLOAD_ANDROID` verin. Mağaza URL’lerini `NEXT_PUBLIC_PLAY_STORE_URL` / `NEXT_PUBLIC_APP_STORE_URL` ile `/indir` sayfasına bağlayın.
 
-`eas.json` preview ve production profilleri canlı API/vitrin adreslerini basar.
+`eas.json` preview ve production profilleri canlı API/vitrin adreslerini basar; her profil bir EAS Update `channel` taşır.
+
+### OTA güncelleme (EAS Update)
+
+JS/asset değişiklikleri için (native kod değişmediyse):
+
+```bash
+cd mobile
+npx eas-cli update --channel production --message "özet"
+# veya: --channel preview
+```
+
+Açılışta uygulama OTA kontrol eder; Hesap → Destek → **Güncelleme kontrol et** ile manuel çalışır. Native değişikliklerde `version` bump + yeni `eas build` / store submit gerekir (`runtimeVersion` = appVersion).
 
 Kapalı uygulamada Android push için EAS project id + `google-services.json` (FCM) gerekir.
 

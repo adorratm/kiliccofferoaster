@@ -41,6 +41,12 @@ Windows PC’den macOS paketi alınamaz. Gatekeeper uyarısı olmasın diye Appl
 
 Dosyaları `frontend/public/downloads/` altına kopyalayın veya `NEXT_PUBLIC_DOWNLOAD_WINDOWS` / `NEXT_PUBLIC_DOWNLOAD_MAC` / `NEXT_PUBLIC_DOWNLOAD_LINUX` ile CDN verin. Vitrin `/indir` sayfası bu adresleri kullanır.
 
+### Otomatik güncelleme (electron-updater)
+
+Pack çıktısındaki installer ile birlikte `latest.yml` (Windows), `latest-mac.yml`, `latest-linux.yml` dosyalarını **aynı** `downloads/` dizinine koyun. Feed adresi: `https://kiliccoffeeroaster.com.tr/downloads/`.
+
+Uygulama açılışta bu feed’i kontrol eder; Ayarlar → **Güncellemeleri kontrol et** ile manuel tetiklenir. macOS’ta otomatik kurulum için Developer ID imzası gerekir.
+
 Paketlenmiş uygulama API için `https://api.kiliccoffeeroaster.com.tr` kullanır. Geliştirmede localhost.
 
 Personel girişi: `POST /auth/ops-login`. Offline kuyruk yalnızca personel muhasebe ekranlarında (cari/fatura/stok).

@@ -9,6 +9,9 @@ extraResources:
     to: resources
 asarUnpack:
   - node_modules/sql.js/**/*
+publish:
+  provider: generic
+  url: https://kiliccoffeeroaster.com.tr/downloads/
 win:
   target: nsis
   icon: resources/icon.ico

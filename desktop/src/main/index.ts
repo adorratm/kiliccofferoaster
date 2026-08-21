@@ -18,6 +18,7 @@ import {
   verifyOfflinePassword,
   type OfflineUser,
 } from './offline-auth';
+import { setupAutoUpdater } from './updater';
 
 function urls() {
   const packaged = app.isPackaged;
@@ -232,6 +233,7 @@ app.whenReady().then(async () => {
     app.dock.setIcon(dockIcon);
   }
   const store = await LocalStore.open();
+  setupAutoUpdater();
   let shopWindow: BrowserWindow | null = null;
   let opsWindow: BrowserWindow | null = null;
 

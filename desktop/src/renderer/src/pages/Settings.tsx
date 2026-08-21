@@ -21,6 +21,9 @@ export function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [newPassword2, setNewPassword2] = useState('');
   const [pwLoading, setPwLoading] = useState(false);
+  const [appVersion, setAppVersion] = useState('');
+  const [updateMsg, setUpdateMsg] = useState('');
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
     void api<Settings>('/accounting/settings').then(setForm).catch(() => {
@@ -36,7 +39,49 @@ export function SettingsPage() {
         const local = getUser();
         setHasPassword(Boolean(local?.hasPassword));
       });
+    void window.ops?.getAppVersion?.().then(setAppVersion).catch(() => {});
   }, []);
+
+  async function onCheckUpdate() {
+    setUpdateMsg('');
+    setUpdateLoading(true);
+    let settled = false;
+    const done = (msg: string) => {
+      if (settled) return;
+      settled = true;
+      setUpdateMsg(msg);
+      setUpdateLoading(false);
+      unsub?.();
+    };
+    const unsub = window.ops?.onUpdateEvent?.((event) => {
+      if (event.type === 'available' && event.version) {
+        setUpdateMsg(`Sürüm ${event.version} indiriliyor…`);
+      } else if (event.type === 'progress' && event.percent != null) {
+        setUpdateMsg(`İndiriliyor… %${Math.round(event.percent)}`);
+      } else if (event.type === 'downloaded') {
+        done('Kuruluyor…');
+      } else if (event.type === 'not-available' || event.type === 'disabled') {
+        done(event.type === 'disabled' ? 'Geliştirme derlemesinde otomatik güncelleme kapalı.' : 'Uygulama güncel.');
+      } else if (event.type === 'error' && event.message) {
+        done(event.message);
+      }
+    });
+    try {
+      const result = await window.ops?.checkForUpdate?.();
+      if (result === 'disabled') {
+        done('Geliştirme derlemesinde otomatik güncelleme kapalı.');
+      } else if (result === 'up-to-date') {
+        done('Uygulama güncel.');
+      } else if (result === 'error') {
+        done('Güncelleme kontrolü başarısız.');
+      } else if (result === 'downloading') {
+        setUpdateMsg((m) => m || 'Güncelleme indiriliyor…');
+        // leave loading until downloaded / error event
+      }
+    } catch (e) {
+      done(e instanceof Error ? e.message : 'Güncelleme kontrolü başarısız.');
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -177,6 +222,25 @@ export function SettingsPage() {
         {pwMsg ? <p className="mt-2 text-sm text-success">{pwMsg}</p> : null}
         {pwError ? <p className="mt-2 text-sm text-danger">{pwError}</p> : null}
       </form>
+
+      <div className="mt-10 border-t border-border-muted pt-8">
+        <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">
+          App // Güncelleme
+        </p>
+        <h2 className="mt-1 text-xl font-semibold">Uygulama sürümü</h2>
+        <p className="mt-2 text-sm text-muted">
+          Kurulu sürüm: {appVersion || '—'}
+        </p>
+        <button
+          type="button"
+          disabled={updateLoading}
+          onClick={() => void onCheckUpdate()}
+          className="mt-4 bg-accent px-4 py-2 text-white disabled:opacity-50"
+        >
+          {updateLoading ? 'Kontrol ediliyor…' : 'Güncellemeleri kontrol et'}
+        </button>
+        {updateMsg ? <p className="mt-2 text-sm text-muted">{updateMsg}</p> : null}
+      </div>
     </div>
   );
 }

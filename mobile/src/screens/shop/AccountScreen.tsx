@@ -12,6 +12,7 @@ import { shopMe } from '../../lib/shop-api';
 import { useStaffSession } from '../../lib/staff-session';
 import type { ShopUser } from '../../lib/shop-types';
 import { LEGAL_LINKS } from '../../lib/cms';
+import { manualUpdateCheck } from '../../lib/updates';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<AccountStackParamList, 'Account'>;
@@ -26,6 +27,13 @@ export function AccountScreen({ navigation }: Props) {
   const { refreshStaff } = useStaffSession();
   const [user, setUser] = useState<ShopUser | null>(null);
   const [ready, setReady] = useState(false);
+  const [updateHint, setUpdateHint] = useState('');
+
+  const onCheckUpdate = useCallback(async () => {
+    setUpdateHint('Kontrol ediliyor…');
+    const msg = await manualUpdateCheck();
+    setUpdateHint(msg);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,6 +81,8 @@ export function AccountScreen({ navigation }: Props) {
           onLookup={() => navigation.navigate('OrderLookup')}
           onTrack={() => navigation.navigate('Tracking')}
           onLegal={(slug) => navigation.navigate('Legal', { slug })}
+          onCheckUpdate={() => void onCheckUpdate()}
+          updateHint={updateHint}
           onShop={(screen) =>
             navigation.getParent()?.navigate('ShopTab', { screen } as never)
           }
@@ -149,6 +159,8 @@ export function AccountScreen({ navigation }: Props) {
         onLookup={() => navigation.navigate('OrderLookup')}
         onTrack={() => navigation.navigate('Tracking')}
         onLegal={(slug) => navigation.navigate('Legal', { slug })}
+        onCheckUpdate={() => void onCheckUpdate()}
+        updateHint={updateHint}
         onShop={(screen) =>
           navigation.getParent()?.navigate('ShopTab', { screen } as never)
         }
@@ -175,17 +187,27 @@ function InfoLinks({
   onTrack,
   onLegal,
   onShop,
+  onCheckUpdate,
+  updateHint,
 }: {
   onLookup: () => void;
   onTrack: () => void;
   onLegal: (slug: string) => void;
   onShop: (screen: 'About' | 'Faq' | 'BlogList' | 'Contact') => void;
+  onCheckUpdate: () => void;
+  updateHint?: string;
 }) {
   return (
     <View>
       <SectionLabel index="02" label="Destek" />
       <MenuRow icon="search" label="Sipariş sorgula" hint="Misafir sipariş no" onPress={onLookup} />
       <MenuRow icon="truck" label="Kargo takip" hint="Takip kodu" onPress={onTrack} />
+      <MenuRow
+        icon="refresh-cw"
+        label="Güncelleme kontrol et"
+        hint={updateHint || 'OTA güncellemesi'}
+        onPress={onCheckUpdate}
+      />
       <MenuRow icon="info" label="Hakkımızda" onPress={() => onShop('About')} />
       <MenuRow icon="book-open" label="Blog" onPress={() => onShop('BlogList')} />
       <MenuRow icon="help-circle" label="SSS" onPress={() => onShop('Faq')} />

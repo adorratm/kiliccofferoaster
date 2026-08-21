@@ -7,6 +7,7 @@ import type { LinkingOptions } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AccountingSyncRuntime } from './src/components/AccountingSyncRuntime';
+import { BootGate } from './src/components/BootGate';
 import { LEGAL_LINKS } from './src/lib/cms';
 import { navigationRef } from './src/lib/navigation';
 import { ShopCartProvider } from './src/lib/shop-cart';
@@ -107,15 +108,17 @@ const linking: LinkingOptions<RootTabParamList> = {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <StaffSessionProvider>
-        <ShopCartProvider>
-          <AccountingSyncRuntime />
-          <NavigationContainer ref={navigationRef} theme={theme} linking={linking}>
-            <StatusBar style="light" />
-            <RootTabs />
-          </NavigationContainer>
-        </ShopCartProvider>
-      </StaffSessionProvider>
+      <BootGate>
+        <StaffSessionProvider>
+          <ShopCartProvider>
+            <AccountingSyncRuntime />
+            <NavigationContainer ref={navigationRef} theme={theme} linking={linking}>
+              <StatusBar style="light" />
+              <RootTabs />
+            </NavigationContainer>
+          </ShopCartProvider>
+        </StaffSessionProvider>
+      </BootGate>
     </SafeAreaProvider>
   );
 }

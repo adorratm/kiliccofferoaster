@@ -3481,6 +3481,7 @@ __metadata:
     echarts-for-react: "npm:^3.0.6"
     electron: "npm:^43.4.1"
     electron-builder: "npm:26.15.7"
+    electron-updater: "npm:^6.8.9"
     electron-vite: "npm:^5.0.0"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
@@ -3537,6 +3538,7 @@ __metadata:
     expo-secure-store: "npm:~57.0.1"
     expo-sqlite: "npm:~57.0.1"
     expo-status-bar: "npm:~57.0.1"
+    expo-updates: "npm:^57.0.16"
     expo-web-browser: "npm:~57.0.2"
     pretty-format: "npm:30.4.1"
     react: "npm:19.2.3"
@@ -8602,6 +8604,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"electron-updater@npm:^6.8.9":
+  version: 6.8.9
+  resolution: "electron-updater@npm:6.8.9"
+  dependencies:
+    builder-util-runtime: "npm:9.7.0"
+    fs-extra: "npm:^10.1.0"
+    js-yaml: "npm:^4.1.0"
+    lazy-val: "npm:^1.0.5"
+    lodash.escaperegexp: "npm:^4.1.2"
+    lodash.isequal: "npm:^4.5.0"
+    semver: "npm:~7.7.3"
+    tiny-typed-emitter: "npm:^2.1.0"
+  checksum: 10c0/a95d8ffcadc52fe289b0e44721ad78cab6bf2a4d5951f1242e0dbdf2a065e42ca64d48ee5040bd55d6320b8491ec90ae3f23eb7e343540b92e004799eb001aab
+  languageName: node
+  linkType: hard
+
 "electron-vite@npm:^5.0.0":
   version: 5.0.0
   resolution: "electron-vite@npm:5.0.0"
@@ -9610,6 +9628,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-eas-client@npm:~57.0.1":
+  version: 57.0.1
+  resolution: "expo-eas-client@npm:57.0.1"
+  checksum: 10c0/f2c2215b2e8a06b161c1d1ef8bb8505296278ac3baf978da8f961cc3328d396a00d6d1214ccb3db22594f015fe18c4adf93850f18fc9cbadbeacb576d465a4ed
+  languageName: node
+  linkType: hard
+
 "expo-file-system@npm:~57.0.5":
   version: 57.0.5
   resolution: "expo-file-system@npm:57.0.5"
@@ -9772,12 +9797,52 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-structured-headers@npm:~57.0.0":
+  version: 57.0.0
+  resolution: "expo-structured-headers@npm:57.0.0"
+  checksum: 10c0/e4f8f0adea4039cd2827e3d7454fff760c0da726fbb3f82535e0c615ae06d7d5dd27d5b5b147328b674f55c1fd9a9370b63ce4a4830379a3bfd7038d12121076
+  languageName: node
+  linkType: hard
+
 "expo-updates-interface@npm:~57.0.1":
   version: 57.0.1
   resolution: "expo-updates-interface@npm:57.0.1"
   peerDependencies:
     expo: "*"
   checksum: 10c0/763ade714dfce8f989fc7dbf73ac447d26d3b0d9d5f5c04d1273f60d9a3741641f13e457a33f1dd7873f95eb97e5e01deee60b630fc8c07a07caa1e6a7d1a914
+  languageName: node
+  linkType: hard
+
+"expo-updates@npm:^57.0.16":
+  version: 57.0.16
+  resolution: "expo-updates@npm:57.0.16"
+  dependencies:
+    "@expo/code-signing-certificates": "npm:^0.0.6"
+    "@expo/plist": "npm:^0.8.1"
+    "@expo/spawn-async": "npm:^1.8.0"
+    arg: "npm:^4.1.0"
+    chalk: "npm:^4.1.2"
+    debug: "npm:^4.3.4"
+    expo-eas-client: "npm:~57.0.1"
+    expo-manifests: "npm:~57.0.1"
+    expo-structured-headers: "npm:~57.0.0"
+    expo-updates-interface: "npm:~57.0.1"
+    getenv: "npm:^2.0.0"
+    glob: "npm:^13.0.0"
+    ignore: "npm:^5.3.1"
+    nullthrows: "npm:^1.1.1"
+    resolve-from: "npm:^5.0.0"
+  peerDependencies:
+    expo: "*"
+    expo-dev-client: "*"
+    react: "*"
+    react-native: "*"
+  peerDependenciesMeta:
+    expo-dev-client:
+      optional: true
+  bin:
+    expo-updates: bin/cli.js
+  checksum: 10c0/ccd19d0cd6ad392f4ce354b807f8e3e758f200c6bf1a546388f39a5247dc3f416fede634f84e0420ae130cb3bff6af5f3e78afccb425f8005ec7b55f454c0074
   languageName: node
   linkType: hard
 
@@ -12686,6 +12751,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.escaperegexp@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "lodash.escaperegexp@npm:4.1.2"
+  checksum: 10c0/484ad4067fa9119bb0f7c19a36ab143d0173a081314993fe977bd00cf2a3c6a487ce417a10f6bac598d968364f992153315f0dbe25c9e38e3eb7581dd333e087
+  languageName: node
+  linkType: hard
+
 "lodash.includes@npm:^4.3.0":
   version: 4.3.0
   resolution: "lodash.includes@npm:4.3.0"
@@ -12697,6 +12769,13 @@ __metadata:
   version: 3.0.3
   resolution: "lodash.isboolean@npm:3.0.3"
   checksum: 10c0/0aac604c1ef7e72f9a6b798e5b676606042401dd58e49f051df3cc1e3adb497b3d7695635a5cbec4ae5f66456b951fdabe7d6b387055f13267cde521f10ec7f7
+  languageName: node
+  linkType: hard
+
+"lodash.isequal@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "lodash.isequal@npm:4.5.0"
+  checksum: 10c0/dfdb2356db19631a4b445d5f37868a095e2402292d59539a987f134a8778c62a2810c2452d11ae9e6dcac71fc9de40a6fedcb20e2952a15b431ad8b29e50e28f
   languageName: node
   linkType: hard
 
@@ -16850,6 +16929,13 @@ __metadata:
   dependencies:
     semver: "npm:^5.5.0"
   checksum: 10c0/bbdece69f596f16d1a7b0df7fe451fe959c6f26af283d8919154f59abf8a853b3da1aea8d10e49e7af5b039a38a3d8b4ca0c044b59dcf19a93d63c6ee7e36507
+  languageName: node
+  linkType: hard
+
+"tiny-typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-typed-emitter@npm:2.1.0"
+  checksum: 10c0/522bed4c579ee7ee16548540cb693a3d098b137496110f5a74bff970b54187e6b7343a359b703e33f77c5b4b90ec6cebc0d0ec3dbdf1bd418723c5c3ce36d8a2
   languageName: node
   linkType: hard
 

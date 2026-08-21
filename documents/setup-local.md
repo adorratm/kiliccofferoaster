@@ -55,6 +55,8 @@ yarn dev:mobile    # native mağaza; personel sekmesi ops JWT ile
 
 Masaüstü paket: `yarn pack:desktop:win` | `pack:desktop:mac` | `pack:desktop:linux`
 
+Installer + `latest*.yml` dosyalarını `frontend/public/downloads/` (veya CDN) altına koyun; masaüstü uygulama buradan otomatik güncellenir. Mobil OTA: `cd mobile && npx eas-cli update --channel production`.
+
 Ops ikon üretimi (`scripts/generate-ops-icons.ps1`) yalnızca Windows’ta çalışır; PNG ikonlar repoda mevcuttir.
 
 ## Portlar

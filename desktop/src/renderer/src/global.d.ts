@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 export type OutboxRow = {
   id: string;
   collection: string;
@@ -45,6 +47,25 @@ declare global {
         href?: string | null;
       }) => Promise<void>;
       onNotificationClick: (fn: (href: string) => void) => () => void;
+      getAppVersion: () => Promise<string>;
+      checkForUpdate: () => Promise<
+        'disabled' | 'up-to-date' | 'downloading' | 'error'
+      >;
+      onUpdateEvent: (
+        fn: (event: {
+          type:
+            | 'checking'
+            | 'available'
+            | 'not-available'
+            | 'progress'
+            | 'downloaded'
+            | 'error'
+            | 'disabled';
+          version?: string;
+          percent?: number;
+          message?: string;
+        }) => void,
+      ) => () => void;
     };
   }
 }
