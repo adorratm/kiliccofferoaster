@@ -4,6 +4,7 @@ import {
   Post,
   Delete,
   Body,
+  Param,
   Req,
   Res,
   UseGuards,
@@ -62,6 +63,45 @@ export class AuthController {
   @ApiOperation({ summary: 'Masaüstü / ops e-posta girişi (staff, accountant, admin)' })
   opsLogin(@Body() dto: LoginDto) {
     return this.authService.opsLogin(dto);
+  }
+
+  @Public()
+  @Post('ops-register')
+  @ApiOperation({
+    summary:
+      'Masaüstü kayıt: müşteri hesabı + personel talebi (allowlist → admin)',
+  })
+  opsRegister(@Body() dto: RegisterDto) {
+    return this.authService.opsRegister(dto);
+  }
+
+  @Get('ops-access-requests')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: bekleyen personel erişim talepleri' })
+  listOpsAccessRequests() {
+    return this.authService.listOpsAccessRequests();
+  }
+
+  @Post('ops-access-requests/:id/approve')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: personel erişimini onayla (staff)' })
+  approveOpsAccess(
+    @Param('id') id: string,
+    @Body() body: { role?: 'staff' | 'accountant' } = {},
+  ) {
+    const role =
+      body?.role === 'accountant' ? UserRole.ACCOUNTANT : UserRole.STAFF;
+    return this.authService.approveOpsAccess(id, role);
+  }
+
+  @Post('ops-access-requests/:id/reject')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: personel erişim talebini reddet' })
+  rejectOpsAccess(@Param('id') id: string) {
+    return this.authService.rejectOpsAccess(id);
   }
 
   @Post('ops-users')

@@ -1,6 +1,8 @@
-import { autoUpdater, type UpdateInfo } from 'electron-updater';
-import { BrowserWindow, ipcMain } from 'electron';
-import { app } from 'electron';
+import electronUpdater from 'electron-updater';
+import type { UpdateInfo } from 'electron-updater';
+import { BrowserWindow, ipcMain, app } from 'electron';
+
+const { autoUpdater } = electronUpdater;
 
 export type UpdateCheckResult = 'disabled' | 'up-to-date' | 'downloading' | 'error';
 

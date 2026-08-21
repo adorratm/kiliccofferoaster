@@ -11,6 +11,15 @@ type Settings = {
   einvoicePrefix: string;
 };
 
+type OpsAccessRequest = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  opsAccessPending?: boolean;
+  createdAt?: string;
+};
+
 export function SettingsPage() {
   const [form, setForm] = useState<Settings | null>(null);
   const [msg, setMsg] = useState('');
@@ -24,6 +33,20 @@ export function SettingsPage() {
   const [appVersion, setAppVersion] = useState('');
   const [updateMsg, setUpdateMsg] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [requests, setRequests] = useState<OpsAccessRequest[]>([]);
+  const [reqMsg, setReqMsg] = useState('');
+  const [reqBusy, setReqBusy] = useState<string | null>(null);
+  const isAdmin = getUser()?.role === 'admin';
+
+  async function loadRequests() {
+    if (!isAdmin) return;
+    try {
+      const list = await api<OpsAccessRequest[]>('/auth/ops-access-requests');
+      setRequests(list);
+    } catch {
+      setRequests([]);
+    }
+  }
 
   useEffect(() => {
     void api<Settings>('/accounting/settings').then(setForm).catch(() => {
@@ -40,7 +63,39 @@ export function SettingsPage() {
         setHasPassword(Boolean(local?.hasPassword));
       });
     void window.ops?.getAppVersion?.().then(setAppVersion).catch(() => {});
+    void loadRequests();
   }, []);
+
+  async function onApprove(id: string, role: 'staff' | 'accountant' = 'staff') {
+    setReqBusy(id);
+    setReqMsg('');
+    try {
+      await api(`/auth/ops-access-requests/${id}/approve`, {
+        method: 'POST',
+        body: { role },
+      });
+      setReqMsg('Personel erişimi onaylandı.');
+      await loadRequests();
+    } catch (err) {
+      setReqMsg(err instanceof Error ? err.message : 'Onay başarısız.');
+    } finally {
+      setReqBusy(null);
+    }
+  }
+
+  async function onReject(id: string) {
+    setReqBusy(id);
+    setReqMsg('');
+    try {
+      await api(`/auth/ops-access-requests/${id}/reject`, { method: 'POST' });
+      setReqMsg('Talep reddedildi. Hesap müşteri olarak kaldı.');
+      await loadRequests();
+    } catch (err) {
+      setReqMsg(err instanceof Error ? err.message : 'Reddetme başarısız.');
+    } finally {
+      setReqBusy(null);
+    }
+  }
 
   async function onCheckUpdate() {
     setUpdateMsg('');
@@ -143,6 +198,59 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-xl">
+      {isAdmin ? (
+        <div className="mb-10 border border-border-muted bg-surface p-4">
+          <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">
+            Auth // Personel talepleri
+          </p>
+          <h2 className="mt-1 text-xl font-semibold">Onay bekleyenler</h2>
+          <p className="mt-1 text-sm text-muted">
+            Masaüstünden kayıt olan hesaplar müşteri olarak kalır; burada
+            onaylayınca personel olur.
+          </p>
+          {requests.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">Bekleyen talep yok.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {requests.map((r) => {
+                const name =
+                  [r.firstName, r.lastName].filter(Boolean).join(' ') || r.email;
+                return (
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 border-b border-border-muted/50 pb-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{name}</p>
+                      <p className="text-xs text-muted">{r.email}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={reqBusy === r.id}
+                        className="bg-accent px-3 py-1.5 text-sm text-white disabled:opacity-50"
+                        onClick={() => void onApprove(r.id, 'staff')}
+                      >
+                        Onayla
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reqBusy === r.id}
+                        className="border border-border px-3 py-1.5 text-sm hover:bg-surface-high disabled:opacity-50"
+                        onClick={() => void onReject(r.id)}
+                      >
+                        Reddet
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {reqMsg ? <p className="mt-3 text-sm text-muted">{reqMsg}</p> : null}
+        </div>
+      ) : null}
+
       <form onSubmit={onSubmit}>
         <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">08 // Ayarlar</p>
         <h1 className="mt-1 text-2xl font-semibold">Firma / e-belge</h1>

@@ -5,6 +5,7 @@ export type AuthUser = {
   firstName?: string | null;
   lastName?: string | null;
   hasPassword?: boolean;
+  opsAccessPending?: boolean;
 };
 
 export const OPS_ROLES = ['admin', 'staff', 'accountant'] as const;

@@ -89,6 +89,14 @@ export class User extends BaseEntity {
   })
   passwordResetExpiresAt!: Date | null;
 
+  /** Masaüstü personel erişimi talebi; doluysa yönetici onayı bekleniyor. */
+  @Column({
+    name: 'ops_access_requested_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  opsAccessRequestedAt!: Date | null;
+
   @OneToMany(() => Address, (address) => address.user)
   addresses!: Address[];
 

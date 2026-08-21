@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -52,6 +53,8 @@ export type PublicUser = {
   isActive: boolean;
   emailVerified: boolean;
   hasPassword: boolean;
+  /** Personel erişimi talep edilmiş, yönetici onayı bekleniyor */
+  opsAccessPending: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -129,9 +132,107 @@ export class AuthService {
   async opsLogin(dto: LoginDto): Promise<AuthTokens> {
     const result = await this.login(dto);
     if (!OPS_ROLES.includes(result.user.role)) {
+      if (result.user.opsAccessPending) {
+        throw new ForbiddenException(
+          'Personel erişimi yönetici onayı bekliyor. Bu süre zarfında web mağazadan müşteri olarak alışveriş yapabilirsiniz.',
+        );
+      }
       throw new ForbiddenException('Bu hesap ön muhasebe için yetkili değil');
     }
     return result;
+  }
+
+  /**
+   * Masaüstü kayıt: müşteri hesabı + personel talebi.
+   * Admin allowlist’teyse doğrudan admin; aksi halde yönetici onayı gerekir.
+   */
+  async opsRegister(dto: RegisterDto): Promise<AuthTokens> {
+    const email = dto.email.toLowerCase().trim();
+    const isAdmin = await this.isAdminEmail(email);
+    const existing = await this.em.findOne(User, { where: { email } });
+
+    if (existing) {
+      if (OPS_ROLES.includes(existing.role)) {
+        throw new ConflictException('Bu e-posta zaten personel hesabı');
+      }
+      if (!existing.passwordHash) {
+        throw new ConflictException(
+          'Bu e-posta Google ile kayıtlı. Giriş yapın veya şifre belirlemek için “şifremi unuttum” kullanın.',
+        );
+      }
+      const ok = await bcrypt.compare(dto.password, existing.passwordHash);
+      if (!ok) {
+        throw new ConflictException('Bu e-posta zaten kayıtlı');
+      }
+      if (isAdmin) {
+        existing.role = UserRole.ADMIN;
+        existing.opsAccessRequestedAt = null;
+      } else {
+        existing.opsAccessRequestedAt =
+          existing.opsAccessRequestedAt ?? new Date();
+      }
+      if (dto.firstName !== undefined) {
+        existing.firstName = dto.firstName ?? existing.firstName;
+      }
+      if (dto.lastName !== undefined) {
+        existing.lastName = dto.lastName ?? existing.lastName;
+      }
+      await this.em.save(existing);
+      return this.buildAuthResponse(existing);
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const user = this.em.create(User, {
+      email,
+      passwordHash,
+      firstName: dto.firstName ?? null,
+      lastName: dto.lastName ?? null,
+      provider: AuthProvider.LOCAL,
+      role: isAdmin ? UserRole.ADMIN : UserRole.CUSTOMER,
+      emailVerified: false,
+      isActive: true,
+      opsAccessRequestedAt: isAdmin ? null : new Date(),
+    });
+    await this.em.save(user);
+    return this.buildAuthResponse(user);
+  }
+
+  async listOpsAccessRequests(): Promise<PublicUser[]> {
+    const rows = await this.em
+      .createQueryBuilder(User, 'u')
+      .where('u.role = :role', { role: UserRole.CUSTOMER })
+      .andWhere('u.opsAccessRequestedAt IS NOT NULL')
+      .andWhere('u.isActive = true')
+      .orderBy('u.opsAccessRequestedAt', 'ASC')
+      .getMany();
+    return rows.map((u) => this.sanitize(u));
+  }
+
+  async approveOpsAccess(
+    userId: string,
+    role: UserRole.STAFF | UserRole.ACCOUNTANT = UserRole.STAFF,
+  ): Promise<PublicUser> {
+    const user = await this.em.findOne(User, { where: { id: userId } });
+    if (!user || !user.opsAccessRequestedAt) {
+      throw new NotFoundException('Bekleyen personel talebi bulunamadı');
+    }
+    if (user.role !== UserRole.CUSTOMER) {
+      throw new ConflictException('Bu hesap zaten personel');
+    }
+    user.role = role;
+    user.opsAccessRequestedAt = null;
+    await this.em.save(user);
+    return this.sanitize(user);
+  }
+
+  async rejectOpsAccess(userId: string): Promise<PublicUser> {
+    const user = await this.em.findOne(User, { where: { id: userId } });
+    if (!user || !user.opsAccessRequestedAt) {
+      throw new NotFoundException('Bekleyen personel talebi bulunamadı');
+    }
+    user.opsAccessRequestedAt = null;
+    await this.em.save(user);
+    return this.sanitize(user);
   }
 
   async createOpsUser(dto: {
@@ -156,6 +257,7 @@ export class AuthService {
       role: dto.role,
       emailVerified: true,
       isActive: true,
+      opsAccessRequestedAt: null,
     });
     await this.em.save(user);
     return this.sanitize(user);
@@ -501,6 +603,8 @@ export class AuthService {
       isActive: user.isActive,
       emailVerified: user.emailVerified,
       hasPassword: Boolean(user.passwordHash),
+      opsAccessPending:
+        user.role === UserRole.CUSTOMER && Boolean(user.opsAccessRequestedAt),
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
