@@ -28,7 +28,7 @@ export function BrandSplash({ status, exiting, onHidden }: Props) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background ${
+      className={`fixed inset-0 z-100 flex flex-col items-center justify-center bg-background ${
         phase === 'exit' ? 'brand-splash-exit' : 'brand-splash-enter'
       }`}
     >
@@ -50,7 +50,7 @@ export function BrandSplash({ status, exiting, onHidden }: Props) {
         <h1 className="mt-2 text-[1.35rem] font-semibold tracking-wide text-foreground">
           Kılıç Coffee Roaster
         </h1>
-        <div className="brand-splash-line mt-[18px] h-[2px] bg-accent" />
+        <div className="brand-splash-line mt-4.5 h-0.5 bg-accent" />
         {status ? (
           <p className="mt-5 text-xs tracking-wide text-muted">{status}</p>
         ) : null}
