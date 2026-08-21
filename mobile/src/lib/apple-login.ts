@@ -36,6 +36,8 @@ export async function loginWithApple(): Promise<string> {
     auth: 'none',
     body: {
       identityToken: credential.identityToken,
+      // Apple e-postayı yalnızca ilk yetkilendirmede verir
+      email: credential.email || undefined,
       firstName: credential.fullName?.givenName || undefined,
       lastName: credential.fullName?.familyName || undefined,
     },

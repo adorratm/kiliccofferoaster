@@ -17,6 +17,7 @@ import {
   UserRole,
   OPS_ROLES,
 } from '@entities/user.entity';
+import { UserIdentity } from '@entities/user-identity.entity';
 import { AdminAllowlist } from '@entities/admin-allowlist.entity';
 import {
   ForgotPasswordDto,
@@ -63,6 +64,13 @@ export interface OAuthProfileInput {
   lastName?: string;
   avatarUrl?: string;
   asAdmin?: boolean;
+  /** E-posta ile mevcut hesaba bağlanabilir mi (sentetik Apple adresi hariç) */
+  emailLinkable?: boolean;
+}
+
+/** Apple ilk girişte e-posta vermezse kullanılan yer tutucu — başka hesaba bağlanmaz */
+function isSyntheticAppleEmail(email: string): boolean {
+  return /^apple-.+@privaterelay\.appleid\.com$/i.test(email.trim());
 }
 
 @Injectable()
@@ -80,7 +88,11 @@ export class AuthService {
     const email = dto.email.toLowerCase().trim();
     const existing = await this.em.findOne(User, { where: { email } });
     if (existing) {
-      throw new ConflictException('Bu e-posta zaten kayıtlı');
+      throw new ConflictException(
+        existing.passwordHash
+          ? 'Bu e-posta zaten kayıtlı'
+          : 'Bu e-posta Google veya Apple ile kayıtlı. Giriş yapın veya şifre belirlemek için “şifremi unuttum” kullanın.',
+      );
     }
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const role = await this.resolveRole(email, false);
@@ -215,7 +227,7 @@ export class AuthService {
     user.passwordHash = await bcrypt.hash(dto.password, 12);
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
-    // providerId silinmez — Google ile giriş açık kalır
+    // providerId / identities silinmez — Google/Apple ile giriş açık kalır
     user.provider = AuthProvider.LOCAL;
     await this.em.save(user);
     return { ok: true };
@@ -260,9 +272,13 @@ export class AuthService {
       this.config.get<string>('apple.clientIds'),
     );
     const payload = await verifyAppleIdentityToken(dto.identityToken, audiences);
+    const tokenEmail = payload.email?.toLowerCase().trim();
+    const clientEmail = dto.email?.toLowerCase().trim();
     const email =
-      payload.email?.toLowerCase().trim() ||
+      tokenEmail ||
+      clientEmail ||
       `apple-${payload.sub}@privaterelay.appleid.com`;
+    const emailLinkable = !isSyntheticAppleEmail(email);
     const user = await this.findOrCreateOAuthUser({
       email,
       provider: AuthProvider.APPLE,
@@ -270,6 +286,7 @@ export class AuthService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       asAdmin: false,
+      emailLinkable,
     });
     return this.buildAuthResponse(user);
   }
@@ -304,6 +321,7 @@ export class AuthService {
     user.isActive = false;
     user.emailVerified = false;
     await this.em.save(user);
+    await this.em.delete(UserIdentity, { userId: user.id });
     await this.em
       .createQueryBuilder()
       .delete()
@@ -314,15 +332,23 @@ export class AuthService {
   }
 
   /**
-   * Google (OAuth) girişi:
-   * - Aynı Google kimliği varsa o kullanıcı
-   * - Yoksa aynı e-posta ile kayıtlı hesap varsa ona bağlanır (ayrı kullanıcı açılmaz)
+   * Google / Apple (OAuth) girişi:
+   * - Aynı provider + providerId kimliği varsa o kullanıcı
+   * - Yoksa (bağlanabilir e-posta ile) mevcut hesap varsa ona bağlanır
    * - Hiçbiri yoksa yeni kullanıcı oluşturulur
-   * Yerel şifre varsa korunur; hem e-posta/şifre hem Google ile giriş mümkün kalır
+   * Yerel şifre ve diğer OAuth kimlikleri korunur; hepsi aynı hesapta kalır
    */
   async findOrCreateOAuthUser(input: OAuthProfileInput): Promise<User> {
     const email = input.email.toLowerCase().trim();
+    const emailLinkable =
+      input.emailLinkable !== false && !isSyntheticAppleEmail(email);
+
     if (input.asAdmin) {
+      if (!emailLinkable) {
+        throw new ForbiddenException(
+          'Bu e-posta admin allowlist’te değil',
+        );
+      }
       const allowed = await this.isAdminEmail(email);
       if (!allowed) {
         throw new ForbiddenException(
@@ -331,26 +357,17 @@ export class AuthService {
       }
     }
 
-    let user =
-      (await this.em.findOne(User, {
-        where: {
-          provider: input.provider,
-          providerId: input.providerId,
-        },
-      })) || null;
+    let user = await this.findUserByIdentity(input.provider, input.providerId);
 
-    if (!user && input.providerId) {
-      user = await this.em.findOne(User, {
-        where: { providerId: input.providerId },
-      });
-    }
-
-    if (!user) {
+    if (!user && emailLinkable) {
       user = await this.em.findOne(User, { where: { email } });
     }
 
     if (!user) {
-      const role = await this.resolveRole(email, !!input.asAdmin);
+      const role = await this.resolveRole(
+        emailLinkable ? email : '',
+        !!input.asAdmin,
+      );
       user = this.em.create(User, {
         email,
         passwordHash: null,
@@ -360,10 +377,11 @@ export class AuthService {
         providerId: input.providerId,
         avatarUrl: input.avatarUrl ?? null,
         role,
-        emailVerified: true,
+        emailVerified: emailLinkable,
         isActive: true,
       });
       await this.em.save(user);
+      await this.ensureIdentity(user.id, input.provider, input.providerId);
       return user;
     }
 
@@ -371,8 +389,20 @@ export class AuthService {
       throw new UnauthorizedException('Hesap pasif');
     }
 
+    await this.ensureIdentity(user.id, input.provider, input.providerId);
+
+    // Gerçek e-posta geldiyse sentetik yer tutucuyu güncelle
+    if (emailLinkable && isSyntheticAppleEmail(user.email)) {
+      const taken = await this.em.findOne(User, { where: { email } });
+      if (!taken || taken.id === user.id) {
+        user.email = email;
+      }
+    }
+
     user.providerId = input.providerId;
-    user.emailVerified = true;
+    if (emailLinkable) {
+      user.emailVerified = true;
+    }
     if (user.passwordHash) {
       user.provider = AuthProvider.LOCAL;
     } else {
@@ -382,7 +412,10 @@ export class AuthService {
     if (input.lastName && !user.lastName) user.lastName = input.lastName;
     if (input.avatarUrl && !user.avatarUrl) user.avatarUrl = input.avatarUrl;
 
-    if (input.asAdmin || (await this.isAdminEmail(email))) {
+    if (
+      emailLinkable &&
+      (input.asAdmin || (await this.isAdminEmail(email)))
+    ) {
       user.role = UserRole.ADMIN;
     }
 
@@ -397,6 +430,61 @@ export class AuthService {
       role: user.role,
     });
     return { accessToken, user: this.sanitize(user) };
+  }
+
+  private async findUserByIdentity(
+    provider: AuthProvider,
+    providerId: string,
+  ): Promise<User | null> {
+    const identity = await this.em.findOne(UserIdentity, {
+      where: { provider, providerId },
+    });
+    if (identity) {
+      return this.em.findOne(User, { where: { id: identity.userId } });
+    }
+
+    // Eski kayıtlar: henüz identity satırı yoksa users.provider_id
+    const legacy = await this.em.findOne(User, {
+      where: { provider, providerId },
+    });
+    if (legacy) {
+      await this.ensureIdentity(legacy.id, provider, providerId);
+      return legacy;
+    }
+
+    const byProviderId = await this.em.findOne(User, {
+      where: { providerId },
+    });
+    if (byProviderId) {
+      await this.ensureIdentity(byProviderId.id, provider, providerId);
+      return byProviderId;
+    }
+
+    return null;
+  }
+
+  private async ensureIdentity(
+    userId: string,
+    provider: AuthProvider,
+    providerId: string,
+  ): Promise<void> {
+    const existing = await this.em.findOne(UserIdentity, {
+      where: { provider, providerId },
+    });
+    if (existing) {
+      if (existing.userId !== userId) {
+        throw new ConflictException(
+          'Bu giriş yöntemi başka bir hesaba bağlı',
+        );
+      }
+      return;
+    }
+    const row = this.em.create(UserIdentity, {
+      userId,
+      provider,
+      providerId,
+    });
+    await this.em.save(row);
   }
 
   private sanitize(user: User): PublicUser {
@@ -424,6 +512,7 @@ export class AuthService {
 
   async isAdminEmail(email: string): Promise<boolean> {
     const normalized = email.toLowerCase().trim();
+    if (!normalized) return false;
     const envList = this.config.get<string[]>('adminAllowlist') || [];
     if (envList.includes(normalized)) {
       return true;
@@ -438,7 +527,7 @@ export class AuthService {
     email: string,
     forceAdmin: boolean,
   ): Promise<UserRole> {
-    if (forceAdmin || (await this.isAdminEmail(email))) {
+    if (forceAdmin || (email && (await this.isAdminEmail(email)))) {
       return UserRole.ADMIN;
     }
     return UserRole.CUSTOMER;

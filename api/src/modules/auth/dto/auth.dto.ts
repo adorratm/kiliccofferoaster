@@ -38,6 +38,12 @@ export class AppleLoginDto {
   @MinLength(20)
   identityToken!: string;
 
+  /** Apple yalnızca ilk girişte verir; token’da yoksa istemci e-postası kullanılır */
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

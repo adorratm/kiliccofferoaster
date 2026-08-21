@@ -1,4 +1,5 @@
 import { User } from '@entities/user.entity';
+import { UserIdentity } from '@entities/user-identity.entity';
 import { AdminAllowlist } from '@entities/admin-allowlist.entity';
 import { Address } from '@entities/address.entity';
 import { Category } from '@entities/category.entity';
@@ -43,6 +44,7 @@ import { AccountingSettings } from '@entities/accounting-settings.entity';
 
 export const ALL_ENTITIES = [
   User,
+  UserIdentity,
   AdminAllowlist,
   Address,
   Category,

@@ -3,6 +3,7 @@ import { BaseEntity } from '@entities/base.entity';
 import { Address } from '@entities/address.entity';
 import { Order } from '@entities/order.entity';
 import { Cart } from '@entities/cart.entity';
+import type { UserIdentity } from '@entities/user-identity.entity';
 
 export enum AuthProvider {
   LOCAL = 'local',
@@ -49,6 +50,7 @@ export class User extends BaseEntity {
   @Column({
     type: 'enum',
     enum: AuthProvider,
+    enumName: 'users_provider_enum',
     default: AuthProvider.LOCAL,
   })
   provider!: AuthProvider;
@@ -95,4 +97,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Cart, (cart) => cart.user)
   carts!: Cart[];
+
+  @OneToMany('UserIdentity', 'user')
+  identities!: UserIdentity[];
 }

@@ -1,5 +1,6 @@
 export { BaseEntity } from '@entities/base.entity';
 export { User, AuthProvider, UserRole, OPS_ROLES, isOpsRole } from '@entities/user.entity';
+export { UserIdentity } from '@entities/user-identity.entity';
 export { AdminAllowlist } from '@entities/admin-allowlist.entity';
 export { Address } from '@entities/address.entity';
 export { Category } from '@entities/category.entity';

@@ -11,6 +11,7 @@ import { AccountingAndCatalog1782000000000 } from './1782000000000-AccountingAnd
 import { InAppNotifications1783000000000 } from './1783000000000-InAppNotifications';
 import { FoodRetailCatalog1784000000000 } from './1784000000000-FoodRetailCatalog';
 import { CategorySeo1785000000000 } from './1785000000000-CategorySeo';
+import { UserIdentities1786000000000 } from './1786000000000-UserIdentities';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -30,4 +31,5 @@ export const ALL_MIGRATIONS = [
   InAppNotifications1783000000000,
   FoodRetailCatalog1784000000000,
   CategorySeo1785000000000,
+  UserIdentities1786000000000,
 ];
