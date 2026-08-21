@@ -112,6 +112,9 @@ services:
       ANDROID_SHA256_FINGERPRINTS: ${ANDROID_SHA256_FINGERPRINTS:-}
     ports:
       - "${FRONTEND_HOST_PORT:-3200}:3000"
+    volumes:
+      # scp → host path; Next public/downloads (rebuild gerekmez)
+      - ./frontend/public/downloads:/app/frontend/public/downloads
     networks:
       - kiliccoffee
 
