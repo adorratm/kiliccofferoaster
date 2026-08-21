@@ -41,3 +41,8 @@ frontend/public/downloads/*
 !frontend/public/downloads/README.md
 release
 desktop/release
+desktop/resources
+desktop/
+desktop/*
+tmp-ico/
+scripts/

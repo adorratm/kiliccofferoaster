@@ -3479,7 +3479,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^6.1.0"
     echarts: "npm:^6.1.0"
     echarts-for-react: "npm:^3.0.6"
-    electron: "npm:^43.4.1"
+    electron: "npm:43.4.1"
     electron-builder: "npm:26.15.7"
     electron-updater: "npm:^6.8.9"
     electron-vite: "npm:^5.0.0"
@@ -8642,7 +8642,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:^43.4.1":
+"electron@npm:43.4.1":
   version: 43.4.1
   resolution: "electron@npm:43.4.1"
   dependencies:

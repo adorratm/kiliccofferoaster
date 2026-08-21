@@ -1,5 +1,6 @@
 appId: tr.kiliccoffeeroaster.desktop
 productName: Kilic Coffee Roaster
+executableName: KilicCoffeeRoaster
 directories:
   output: release
 files:
@@ -18,7 +19,7 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  artifactName: KilicCoffee-Setup.${ext}
+  artifactName: KilicCoffeeRoaster-Setup.${ext}
 mac:
   category: public.app-category.shopping
   target:
@@ -26,11 +27,14 @@ mac:
       arch:
         - universal
   icon: resources/icon.png
-  artifactName: KilicCoffee.${ext}
+  artifactName: KilicCoffeeRoaster.${ext}
 linux:
   target:
     - AppImage
     - deb
   icon: resources/icon.png
   category: Office
-  artifactName: KilicCoffee.${ext}
+  executableName: KilicCoffeeRoaster
+  syncDesktopName: true
+  maintainer: Kılıç Coffee Roaster <info@kiliccoffeeroaster.com.tr>
+  artifactName: KilicCoffeeRoaster.${ext}

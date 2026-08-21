@@ -17,7 +17,7 @@ yarn dev:desktop   # varsayılan pencere: personel paneli
 yarn dev:mobile    # varsayılan ekran: mağaza
 ```
 
-Windows kurulum: `yarn pack:desktop:win` → `desktop/release/KilicCoffee-Setup.exe`  
+Windows kurulum: `yarn pack:desktop:win` → `desktop/release/KilicCoffeeRoaster-Setup.exe`  
 macOS (bir Mac’te): `yarn pack:desktop:mac` → `desktop/release/KilicCoffee.dmg`  
 Linux: `yarn pack:desktop:linux` → `desktop/release/KilicCoffee.AppImage` / `.deb`  
 Mobil: `cd mobile && npx eas-cli build -p android --profile preview` (APK)

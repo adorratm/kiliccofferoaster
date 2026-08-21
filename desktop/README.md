@@ -15,7 +15,7 @@ yarn dev:desktop
 yarn pack:desktop:win
 ```
 
-Çıktı: `desktop/release/KilicCoffee-Setup.exe`
+Pack öncesi `icon.ico` otomatik üretilir (`scripts/make-desktop-ico.cjs`). Çıktı: `desktop/release/KilicCoffeeRoaster-Setup.exe`
 
 ## macOS (DMG)
 

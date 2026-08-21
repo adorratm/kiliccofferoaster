@@ -13,7 +13,7 @@ export const OPS_PROTOCOL = "kilic://ops";
 export const DOWNLOADS = {
   windows:
     process.env.NEXT_PUBLIC_DOWNLOAD_WINDOWS ||
-    "/downloads/KilicCoffee-Setup.exe",
+    "/downloads/KilicCoffeeRoaster-Setup.exe",
   mac: process.env.NEXT_PUBLIC_DOWNLOAD_MAC || "",
   linux: process.env.NEXT_PUBLIC_DOWNLOAD_LINUX || "",
   androidApk: process.env.NEXT_PUBLIC_DOWNLOAD_ANDROID || "",
