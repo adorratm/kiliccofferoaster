@@ -10,7 +10,7 @@ import {
 import { join } from 'path';
 import { LocalStore } from './store';
 import { runGoogleLogin } from './google-login';
-import { appIconPath } from './icon';
+import { appIconPath, APP_USER_MODEL_ID } from './icon';
 import {
   OFFLINE_AUTH_KEY,
   parseOfflineAuth,
@@ -19,6 +19,11 @@ import {
   type OfflineUser,
 } from './offline-auth';
 import { setupAutoUpdater } from './updater';
+
+// Windows taskbar: ready öncesi AppUserModelId zorunlu (aksi halde Electron ikonu kalır)
+if (process.platform === 'win32') {
+  app.setAppUserModelId(APP_USER_MODEL_ID);
+}
 
 function urls() {
   const packaged = app.isPackaged;
@@ -88,11 +93,19 @@ function shopUnavailableHtml(shopUrl: string): string {
     <h1>Vitrin açık değil</h1>
     <p>Masaüstü mağaza penceresi <code>${escaped}</code> adresini bekliyor.</p>
     <p>Yerelde şunu çalıştırın: <code>yarn dev:frontend</code></p>
-    <p>Personel paneli menüden açılır: <strong>Kılıç Coffee → Personel paneli</strong></p>
+    <p>Personel paneli menüden açılır: <strong>Kılıç Coffee Roaster → Personel paneli</strong></p>
     <p><a href="${escaped}">Tekrar dene</a></p>
   </main>
 </body>
 </html>`;
+}
+
+function applyWindowIcon(win: BrowserWindow): void {
+  const path = appIconPath();
+  const img = nativeImage.createFromPath(path);
+  if (!img.isEmpty()) {
+    win.setIcon(img);
+  }
 }
 
 function createShopWindow(opts?: {
@@ -115,6 +128,7 @@ function createShopWindow(opts?: {
       sandbox: true,
     },
   });
+  applyWindowIcon(win);
   win.webContents.setUserAgent(`${win.webContents.getUserAgent()} KilicCoffee/1.0 Desktop`);
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isOpsDeepLink(url)) {
@@ -191,7 +205,7 @@ function createOpsWindow(): BrowserWindow {
     minWidth: 1100,
     minHeight: 720,
     backgroundColor: '#131313',
-    title: 'Kılıç Coffee — Personel',
+    title: 'Kılıç Coffee Roaster — Personel',
     icon: appIconPath(),
     autoHideMenuBar: true,
     webPreferences: {
@@ -201,6 +215,7 @@ function createOpsWindow(): BrowserWindow {
       sandbox: false,
     },
   });
+  applyWindowIcon(win);
 
   if (process.env.ELECTRON_RENDERER_URL) {
     void win.loadURL(process.env.ELECTRON_RENDERER_URL);
@@ -225,9 +240,6 @@ function writeOffline(
 
 app.whenReady().then(async () => {
   const { api: API_URL } = urls();
-  if (process.platform === 'win32') {
-    app.setAppUserModelId('tr.kiliccoffeeroaster.desktop');
-  }
   const dockIcon = nativeImage.createFromPath(appIconPath());
   if (!dockIcon.isEmpty() && app.dock) {
     app.dock.setIcon(dockIcon);
@@ -269,7 +281,7 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
       {
-        label: 'Kılıç Coffee',
+        label: 'Kılıç Coffee Roaster',
         submenu: [
           { label: 'Mağaza', click: () => showShop() },
           { label: 'Personel paneli', click: () => showOps() },

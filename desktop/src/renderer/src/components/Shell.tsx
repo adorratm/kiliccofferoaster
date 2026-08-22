@@ -109,7 +109,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <aside className="flex w-60 shrink-0 flex-col border-r border-border-muted bg-background">
         <div className="border-b border-border-muted px-4 py-5">
           <p className="mono text-[10px] uppercase tracking-[0.2em] text-muted">Ops // Mağaza</p>
-          <p className="mt-1 text-lg font-semibold leading-tight">Kılıç Coffee</p>
+          <p className="mt-1 text-lg font-semibold leading-tight">Kılıç Coffee Roaster</p>
           <p className="mono text-xs text-accent">ROASTER</p>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-auto p-2">

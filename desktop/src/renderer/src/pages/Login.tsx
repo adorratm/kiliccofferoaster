@@ -243,7 +243,7 @@ export function LoginPage() {
         <p className="mono text-[10px] uppercase tracking-[0.2em] text-muted">
           Auth_Protocol // Ops
         </p>
-        <h1 className="mt-2 text-2xl font-semibold">Kılıç Coffee</h1>
+        <h1 className="mt-2 text-2xl font-semibold">Kılıç Coffee Roaster</h1>
         <p className="mt-1 text-sm text-muted">Ön muhasebe masaüstü</p>
 
         <div className="mt-6 grid grid-cols-2 gap-2">

@@ -12,7 +12,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/e5e5653-794f-49ef-baf6-e32edbd29340",
+      "url": "https://u.expo.dev/5e3e5653-794f-49ef-baf6-e32edbd29340",
       "checkAutomatically": "NEVER",
       "fallbackToCacheTimeout": 0
     },
@@ -32,6 +32,7 @@
           "defaultChannel": "default"
         }
       ],
+      "expo-updates",
       "expo-secure-store",
       "expo-apple-authentication"
     ],
