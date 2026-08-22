@@ -266,7 +266,7 @@ export default function ProductsCatalog() {
                 patchParams({ sort: s, order: o });
               }}
             >
-              <option value="name:asc">İsim A→Z</option>
+              <option value="name:asc">Kategori sırası (varsayılan)</option>
               <option value="name:desc">İsim Z→A</option>
               <option value="price:asc">Fiyat artan</option>
               <option value="price:desc">Fiyat azalan</option>

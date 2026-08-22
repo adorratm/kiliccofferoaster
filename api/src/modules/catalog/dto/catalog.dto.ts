@@ -316,6 +316,12 @@ export class ProductQueryDto {
   @MaxLength(40)
   kind?: string;
 
+  @ApiPropertyOptional({ description: 'Yalnızca kahve türleri (coffee_*)' })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true' || value === '1')
+  @IsBoolean()
+  coffeeOnly?: boolean;
+
   @ApiPropertyOptional()
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true' || value === '1')

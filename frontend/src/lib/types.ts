@@ -80,6 +80,7 @@ export type ProductQuery = {
   roastLevel?: string;
   originCountry?: string;
   featured?: boolean;
+  coffeeOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
   sort?: "name" | "price" | "createdAt" | "stock";

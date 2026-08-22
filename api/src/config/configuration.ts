@@ -164,6 +164,11 @@ export default () => ({
     ),
   },
   desktopUrl: process.env.DESKTOP_DEV_URL || 'http://localhost:5173',
+  instagram: {
+    accessToken: process.env.INSTAGRAM_ACCESS_TOKEN || '',
+    userId: process.env.INSTAGRAM_USER_ID || '',
+    username: process.env.INSTAGRAM_USERNAME || 'kiliccoffeeroaster',
+  },
   einvoice: {
     mock:
       process.env.TURKCELL_ESIRKET_MOCK === 'true'

@@ -47,6 +47,9 @@ export async function shopProducts(params?: {
   q?: string;
   categorySlug?: string;
   featured?: boolean;
+  coffeeOnly?: boolean;
+  sort?: 'name' | 'price' | 'createdAt' | 'stock';
+  order?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }): Promise<Paginated<Product>> {
@@ -54,6 +57,9 @@ export async function shopProducts(params?: {
     q: params?.q,
     categorySlug: params?.categorySlug,
     featured: params?.featured,
+    coffeeOnly: params?.coffeeOnly,
+    sort: params?.sort,
+    order: params?.order,
     page: params?.page ?? 1,
     limit: params?.limit ?? 20,
   });

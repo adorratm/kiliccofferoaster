@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
-import { getProducts } from "@/lib/api";
+import { getProductsPaged } from "@/lib/api";
 import {
   cmsImageUrl,
   getContentSections,
@@ -111,10 +111,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [sections, settings, apiProducts] = await Promise.all([
+  const [sections, settings, featuredPage, catalogPage] = await Promise.all([
     getContentSections("home"),
     getSiteSettings(),
-    getProducts({ featured: true }),
+    getProductsPaged({ featured: true, limit: 12 }),
+    getProductsPaged({ limit: 12, sort: "name", order: "asc" }),
   ]);
 
   const hero = sectionContent(sections, "hero", FALLBACK_HERO);
@@ -167,8 +168,8 @@ export default async function HomePage() {
   );
   const faqSchema = faqJsonLd(faqItems);
 
-  const featuredPool = apiProducts.filter((p) => p.isFeatured);
-  const featured = (featuredPool.length ? featuredPool : apiProducts).slice(
+  const featuredPool = featuredPage.items.filter((p) => p.isFeatured);
+  const featured = (featuredPool.length ? featuredPool : catalogPage.items).slice(
     0,
     3,
   );

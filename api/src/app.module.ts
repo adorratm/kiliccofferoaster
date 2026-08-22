@@ -34,7 +34,7 @@ import { CampaignsModule } from '@modules/campaigns/campaigns.module';
 import { ReviewsModule } from '@modules/reviews/reviews.module';
 import { WishlistModule } from '@modules/wishlist/wishlist.module';
 import { AccountingModule } from '@modules/accounting/accounting.module';
-import { EinvoiceModule } from '@modules/einvoice/einvoice.module';
+import { GalleryModule } from '@modules/gallery/gallery.module';
 
 const shouldSynchronize =
   process.env.DATABASE_SYNCHRONIZE === 'true'
@@ -112,6 +112,7 @@ const shouldRunMigrations =
     StorageModule,
     CmsModule,
     MediaModule,
+    GalleryModule,
     QueuesModule,
   ],
   providers: [

@@ -13,6 +13,7 @@ export const ADMIN_NAV = [
   { href: '/icerik', label: 'İçerik', code: '05' },
   { href: '/site-ayarlari', label: 'Site Ayarları', code: '06' },
   { href: '/medya', label: 'Medya', code: '07' },
+  { href: '/galeri', label: 'Site Galerisi', code: '07b' },
   { href: '/siparisler', label: 'Siparişler', code: '08' },
   { href: '/musteriler', label: 'Müşteriler', code: '08c' },
   { href: '/personel-onaylari', label: 'Personel onayları', code: '08d' },

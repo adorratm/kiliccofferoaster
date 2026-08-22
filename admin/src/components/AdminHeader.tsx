@@ -13,6 +13,7 @@ const TITLES: Record<string, string> = {
   '/icerik': 'İçerik',
   '/site-ayarlari': 'Site Ayarları',
   '/medya': 'Medya',
+  '/galeri': 'Site Galerisi',
   '/siparisler': 'Siparişler',
   '/musteriler': 'Müşteriler',
   '/personel-onaylari': 'Personel onayları',

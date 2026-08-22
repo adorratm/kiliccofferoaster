@@ -20,7 +20,7 @@ import { LegalDocument } from '@entities/legal-document.entity';
 import { CookieConsentLog } from '@entities/cookie-consent-log.entity';
 import { ContactMessage } from '@entities/contact-message.entity';
 import { NewsletterSubscriber } from '@entities/newsletter-subscriber.entity';
-import { MediaAsset } from '@entities/media-asset.entity';
+import { GalleryItem } from '@entities/gallery-item.entity';
 import { SiteSetting } from '@entities/site-setting.entity';
 import { ContentSection } from '@entities/content-section.entity';
 import { NotificationLog } from '@entities/notification-log.entity';
@@ -66,6 +66,7 @@ export const ALL_ENTITIES = [
   ContactMessage,
   NewsletterSubscriber,
   MediaAsset,
+  GalleryItem,
   SiteSetting,
   ContentSection,
   NotificationLog,

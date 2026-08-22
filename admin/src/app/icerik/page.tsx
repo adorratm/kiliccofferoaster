@@ -68,6 +68,14 @@ type ContactHeaderForm = {
   subtitle: string;
 };
 
+type MediaHeaderForm = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  instagramLabel: string;
+  uploadsLabel: string;
+};
+
 type FaqForm = {
   title: string;
   items: FaqItem[];
@@ -103,6 +111,7 @@ type SectionForm =
   | { kind: 'workshop'; data: WorkshopForm }
   | { kind: 'newsletter'; data: NewsletterForm }
   | { kind: 'contact-header'; data: ContactHeaderForm }
+  | { kind: 'media-header'; data: MediaHeaderForm }
   | { kind: 'faq'; data: FaqForm }
   | { kind: 'about-hero'; data: AboutHeroForm }
   | { kind: 'about-body'; data: AboutBodyForm }
@@ -113,6 +122,7 @@ const PAGE_OPTIONS = [
   { value: 'home', label: 'Ana Sayfa' },
   { value: 'about', label: 'Hakkımızda' },
   { value: 'contact', label: 'İletişim' },
+  { value: 'media', label: 'Medya' },
 ];
 
 function asString(value: unknown, fallback = ''): string {
@@ -286,6 +296,18 @@ function toSectionForm(section: Section): SectionForm {
         },
       };
     case 'header':
+      if (section.page === 'media') {
+        return {
+          kind: 'media-header',
+          data: {
+            eyebrow: asString(c.eyebrow, '01 // Medya'),
+            title: asString(c.title, 'Atölyeden & Instagram'),
+            subtitle: asString(c.subtitle),
+            instagramLabel: asString(c.instagramLabel, 'Instagram'),
+            uploadsLabel: asString(c.uploadsLabel, 'Atölyeden'),
+          },
+        };
+      }
       return {
         kind: 'contact-header',
         data: {
@@ -311,6 +333,7 @@ function fromSectionForm(form: SectionForm): Record<string, unknown> {
     case 'workshop':
     case 'newsletter':
     case 'contact-header':
+    case 'media-header':
     case 'faq':
     case 'about-hero':
     case 'about-body':
@@ -689,7 +712,7 @@ export default function ContentPage() {
         <div>
           <h2 className="text-lg font-semibold">Sayfa İçerikleri</h2>
           <p className="text-sm text-muted">
-            Ana sayfa, hakkımızda, SSS ve iletişim blokları
+            Ana sayfa, hakkımızda, medya, SSS ve iletişim blokları
           </p>
         </div>
         <select
@@ -1301,6 +1324,77 @@ export default function ContentPage() {
                   className={inputClassName()}
                 />
               </Field>
+            </>
+          ) : null}
+
+          {form.kind === 'media-header' ? (
+            <>
+              <Field label="Üst etiket">
+                <input
+                  value={form.data.eyebrow}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'media-header',
+                      data: { ...form.data, eyebrow: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <Field label="Başlık">
+                <input
+                  value={form.data.title}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'media-header',
+                      data: { ...form.data, title: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <Field label="Alt başlık">
+                <textarea
+                  rows={3}
+                  value={form.data.subtitle}
+                  onChange={(e) =>
+                    setForm({
+                      kind: 'media-header',
+                      data: { ...form.data, subtitle: e.target.value },
+                    })
+                  }
+                  className={inputClassName()}
+                />
+              </Field>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Instagram bölüm etiketi">
+                  <input
+                    value={form.data.instagramLabel}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'media-header',
+                        data: {
+                          ...form.data,
+                          instagramLabel: e.target.value,
+                        },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+                <Field label="Atölye bölüm etiketi">
+                  <input
+                    value={form.data.uploadsLabel}
+                    onChange={(e) =>
+                      setForm({
+                        kind: 'media-header',
+                        data: { ...form.data, uploadsLabel: e.target.value },
+                      })
+                    }
+                    className={inputClassName()}
+                  />
+                </Field>
+              </div>
             </>
           ) : null}
 

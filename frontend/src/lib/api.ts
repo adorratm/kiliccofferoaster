@@ -142,6 +142,7 @@ export async function getProductsPaged(
       roastLevel: params?.roastLevel,
       originCountry: params?.originCountry,
       featured: params?.featured,
+      coffeeOnly: params?.coffeeOnly,
       minPrice: params?.minPrice,
       maxPrice: params?.maxPrice,
       sort: params?.sort,

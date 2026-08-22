@@ -19,6 +19,7 @@ import {
 } from '@common/utils/pagination';
 import { LowStockService } from '@modules/catalog/low-stock.service';
 import { CampaignsService } from '@modules/campaigns/campaigns.service';
+import { COFFEE_KINDS } from '@common/constants/grind-options';
 
 @Injectable()
 export class ProductsService {
@@ -98,6 +99,12 @@ export class ProductsService {
       qb.andWhere('p.kind = :kind', { kind: query.kind });
     }
 
+    if (query.coffeeOnly === true) {
+      qb.andWhere('p.kind IN (:...coffeeKinds)', {
+        coffeeKinds: [...COFFEE_KINDS],
+      });
+    }
+
     if (query.minPrice != null && !Number.isNaN(query.minPrice)) {
       qb.andWhere('p.base_price >= :minPrice', { minPrice: query.minPrice });
     }
@@ -136,7 +143,18 @@ export class ProductsService {
       createdAt: 'p.created_at',
       stock: 'p.stock',
     };
-    qb.orderBy(sortMap[sort] || 'p.name', orderDir);
+    const sortColumn = sortMap[sort] || 'p.name';
+
+    if (!query.includeInactive) {
+      // Vitrin: önce kategori sırası (kahve kategorileri üstte), sonra kullanıcı sıralaması
+      qb.orderBy('COALESCE(category.sort_order, 9999)', 'ASC');
+      qb.addOrderBy(sortColumn, orderDir);
+      if (sort !== 'name') {
+        qb.addOrderBy('p.name', 'ASC');
+      }
+    } else {
+      qb.orderBy(sortColumn, orderDir);
+    }
 
     const [items, total] = await qb
       .skip((page - 1) * limit)

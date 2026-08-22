@@ -15,6 +15,7 @@ const STATIC_ROUTES: {
   { path: "/hakkimizda", changeFrequency: "monthly", priority: 0.8 },
   { path: "/sss", changeFrequency: "monthly", priority: 0.6 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.85 },
+  { path: "/medya", changeFrequency: "weekly", priority: 0.75 },
   { path: "/iletisim", changeFrequency: "monthly", priority: 0.7 },
   { path: "/indir", changeFrequency: "weekly", priority: 0.65 },
   { path: "/kvkk", changeFrequency: "yearly", priority: 0.3 },

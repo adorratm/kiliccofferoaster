@@ -26,6 +26,8 @@ export function CatalogScreen({ navigation, route }: Props) {
       const page = await shopProducts({
         q: appliedQ.trim() || undefined,
         categorySlug,
+        sort: 'name',
+        order: 'asc',
         limit: 40,
       });
       setItems(page.items);

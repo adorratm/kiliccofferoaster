@@ -33,6 +33,7 @@ export { CookieConsentLog } from '@entities/cookie-consent-log.entity';
 export { ContactMessage } from '@entities/contact-message.entity';
 export { NewsletterSubscriber } from '@entities/newsletter-subscriber.entity';
 export { MediaAsset } from '@entities/media-asset.entity';
+export { GalleryItem } from '@entities/gallery-item.entity';
 export { SiteSetting } from '@entities/site-setting.entity';
 export { ContentSection } from '@entities/content-section.entity';
 export {

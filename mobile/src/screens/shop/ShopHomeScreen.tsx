@@ -32,13 +32,14 @@ export function ShopHomeScreen({ navigation }: Props) {
   const load = useCallback(async () => {
     setError('');
     try {
-      const [feat, all, cats] = await Promise.all([
+      const [feat, coffee, cats] = await Promise.all([
         shopProducts({ featured: true, limit: 8 }),
-        shopProducts({ limit: 12 }),
+        shopProducts({ coffeeOnly: true, limit: 12 }),
         shopCategories(),
       ]);
-      setFeatured(feat.items);
-      setLatest(all.items);
+      const coffeeItems = coffee.items;
+      setFeatured(feat.items.length ? feat.items : coffeeItems.slice(0, 4));
+      setLatest(coffeeItems);
       setCategories(cats);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Mağaza yüklenemedi');
