@@ -25,15 +25,23 @@ type SearchResponse = {
 };
 
 const SEE_ALL: Record<string, (q: string) => string> = {
+  pages: () => '/',
   products: (q) => `/urunler?q=${encodeURIComponent(q)}`,
   orders: (q) => `/siparisler?q=${encodeURIComponent(q)}`,
   customers: (q) => `/musteriler?q=${encodeURIComponent(q)}`,
+  staff_requests: () => `/personel-onaylari`,
   categories: (q) => `/kategoriler?q=${encodeURIComponent(q)}`,
   messages: (q) => `/mesajlar?q=${encodeURIComponent(q)}`,
   media: (q) => `/medya?q=${encodeURIComponent(q)}`,
   newsletter: (q) => `/bulten?q=${encodeURIComponent(q)}`,
   legal: (q) => `/sozlesmeler?q=${encodeURIComponent(q)}`,
   blog: (q) => `/blog?q=${encodeURIComponent(q)}`,
+  coupons: (q) => `/kuponlar?q=${encodeURIComponent(q)}`,
+  campaigns: (q) => `/kampanyalar?q=${encodeURIComponent(q)}`,
+  returns: () => `/iadeler`,
+  reviews: () => `/yorumlar`,
+  shipping: () => `/kargo`,
+  marketplace: () => `/pazaryeri`,
 };
 
 function shortcutLabel() {

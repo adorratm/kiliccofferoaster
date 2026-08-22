@@ -21,12 +21,18 @@ import {
   buildAbandonedCartEmail,
   buildEmailContent,
   buildLowStockEmail,
+  buildOpsAccessDecisionEmail,
   buildPasswordResetEmail,
   buildWhatsAppBody,
   resolveFrontendUrl,
   statusLabel,
 } from '@modules/notifications/notification.templates';
 import { InboxService } from '@modules/notifications/inbox.service';
+import {
+  OPS_ACCESS_REJECT_REASON,
+  opsAccessDecisionCopy,
+  opsAccessRequestedCopy,
+} from '@modules/notifications/inbox.templates';
 import { ConfigService } from '@nestjs/config';
 import { normalizePhoneE164 } from '@common/utils/phone';
 
@@ -170,6 +176,72 @@ export class NotificationsService {
       html: content.html,
       text: content.text,
     });
+  }
+
+  /** Yeni personel erişim talebi — admin inbox */
+  async notifyOpsAccessRequested(input: {
+    name?: string | null;
+    email: string;
+  }): Promise<void> {
+    const name =
+      input.name?.trim() ||
+      input.email.split('@')[0] ||
+      'Kullanıcı';
+    try {
+      await this.inbox.notifyAdmins(
+        opsAccessRequestedCopy(name, input.email),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Ops access request inbox failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+  }
+
+  /** Onay / red — e-posta + kullanıcı inbox (aynı metin) */
+  async notifyOpsAccessDecision(input: {
+    userId: string;
+    email: string;
+    name?: string | null;
+    approved: boolean;
+  }): Promise<void> {
+    const name = input.name?.trim() || 'Merhaba';
+    const frontendUrl = resolveFrontendUrl(this.config);
+    const accountUrl = `${frontendUrl}/hesabim`;
+    const copy = opsAccessDecisionCopy(input.approved);
+
+    try {
+      await this.inbox.notifyUser(input.userId, copy);
+    } catch (err) {
+      this.logger.warn(
+        `Ops access decision inbox failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+
+    try {
+      const content = buildOpsAccessDecisionEmail({
+        name,
+        approved: input.approved,
+        accountUrl,
+        rejectReason: input.approved ? undefined : OPS_ACCESS_REJECT_REASON,
+      });
+      await this.email.send({
+        to: input.email,
+        subject: content.subject,
+        html: content.html,
+        text: content.text,
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Ops access decision email failed for ${input.email}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
   }
 
   async processJob(payload: NotificationJobPayload): Promise<void> {

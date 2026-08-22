@@ -192,3 +192,42 @@ export function lowStockCopy(label: string, stock: number): InboxCopy {
     href: '/urunler',
   };
 }
+
+export function opsAccessRequestedCopy(
+  name: string,
+  email: string,
+): InboxCopy {
+  return {
+    audience: InboxAudience.OPS,
+    category: InboxCategory.OPS_MESSAGES,
+    type: 'ops_access_requested',
+    title: 'Yeni personel talebi',
+    body: `${name} (${email}) personel erişimi istedi.`,
+    href: '/personel-onaylari',
+  };
+}
+
+/** Onay / red — e-posta ile aynı metin gövdesi */
+export const OPS_ACCESS_REJECT_REASON =
+  'Personel erişim talebiniz, başvuru şartlarının karşılanmaması nedeniyle onaylanmamıştır. Hesabınız müşteri olarak kullanılmaya devam eder; web mağazamızdan alışveriş yapabilirsiniz.';
+
+export function opsAccessDecisionCopy(approved: boolean): InboxCopy {
+  if (approved) {
+    return {
+      audience: InboxAudience.USER,
+      category: InboxCategory.ACCOUNT,
+      type: 'ops_access_approved',
+      title: 'Personel erişiminiz onaylandı',
+      body: 'Personel paneline aynı e-posta ve şifrenizle giriş yapabilirsiniz.',
+      href: '/hesabim',
+    };
+  }
+  return {
+    audience: InboxAudience.USER,
+    category: InboxCategory.ACCOUNT,
+    type: 'ops_access_rejected',
+    title: 'Personel erişim talebiniz reddedildi',
+    body: OPS_ACCESS_REJECT_REASON,
+    href: '/hesabim',
+  };
+}

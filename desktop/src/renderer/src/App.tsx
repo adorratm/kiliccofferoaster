@@ -56,6 +56,7 @@ export default function App() {
                 <Route path="/siparisler/:id" element={<OrdersPage />} />
                 <Route path="/musteriler" element={<CustomersPage />} />
                 <Route path="/personel-talepleri" element={<StaffRequestsPage />} />
+                <Route path="/personel-onaylari" element={<StaffRequestsPage />} />
                 <Route path="/bildirimler" element={<NotificationsPage />} />
                 <Route path="/iadeler" element={<ReturnsPage />} />
                 <Route path="/kuponlar" element={<CouponsPage />} />

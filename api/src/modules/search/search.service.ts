@@ -14,6 +14,13 @@ import { Invoice } from '@entities/invoice.entity';
 import { Coupon } from '@entities/coupon.entity';
 import { Campaign } from '@entities/campaign.entity';
 import { User, UserRole } from '@entities/user.entity';
+import { ReturnRequest } from '@entities/return-request.entity';
+import { ProductReview } from '@entities/product-review.entity';
+import { ShippingProviderConfig } from '@entities/shipping-provider-config.entity';
+import { MarketplaceAccount } from '@entities/marketplace-account.entity';
+import { MarketplaceOrder } from '@entities/marketplace-order.entity';
+import { CashAccount } from '@entities/cash-account.entity';
+import { OkcSale } from '@entities/okc-sale.entity';
 
 export type SearchHit = {
   type: string;
@@ -28,6 +35,70 @@ export type SearchResponse = {
   q: string;
   groups: { type: string; label: string; items: SearchHit[] }[];
 };
+
+type PageShortcut = {
+  keywords: string[];
+  title: string;
+  href: string;
+  screen?: string;
+};
+
+const ADMIN_PAGES: PageShortcut[] = [
+  { keywords: ['dashboard', 'özet', 'ozet'], title: 'Dashboard', href: '/' },
+  { keywords: ['ürün', 'urun', 'product'], title: 'Ürünler', href: '/urunler' },
+  { keywords: ['kategori'], title: 'Kategoriler', href: '/kategoriler' },
+  { keywords: ['blog'], title: 'Blog', href: '/blog' },
+  { keywords: ['içerik', 'icerik'], title: 'İçerik', href: '/icerik' },
+  { keywords: ['site', 'ayar'], title: 'Site Ayarları', href: '/site-ayarlari' },
+  { keywords: ['medya'], title: 'Medya', href: '/medya' },
+  { keywords: ['sipariş', 'siparis'], title: 'Siparişler', href: '/siparisler' },
+  { keywords: ['müşteri', 'musteri'], title: 'Müşteriler', href: '/musteriler' },
+  {
+    keywords: ['personel', 'onay', 'staff', 'talep'],
+    title: 'Personel onayları',
+    href: '/personel-onaylari',
+  },
+  { keywords: ['iade', 'iptal'], title: 'İade Talepleri', href: '/iadeler' },
+  { keywords: ['kupon'], title: 'Kuponlar', href: '/kuponlar' },
+  { keywords: ['kampanya'], title: 'Kampanyalar', href: '/kampanyalar' },
+  { keywords: ['yorum'], title: 'Yorumlar', href: '/yorumlar' },
+  { keywords: ['kargo', 'shipping'], title: 'Kargo', href: '/kargo' },
+  { keywords: ['pazaryeri', 'trendyol', 'hepsiburada', 'n11'], title: 'Pazaryeri', href: '/pazaryeri' },
+  { keywords: ['sözleşme', 'sozlesme', 'yasal'], title: 'Sözleşmeler', href: '/sozlesmeler' },
+  { keywords: ['mesaj', 'iletişim', 'iletisim'], title: 'Mesajlar', href: '/mesajlar' },
+  { keywords: ['bülten', 'bulten'], title: 'Bülten', href: '/bulten' },
+  { keywords: ['bildirim'], title: 'Bildirimler', href: '/bildirimler' },
+  { keywords: ['kuyruk', 'queue'], title: 'Kuyruklar', href: '/kuyruklar' },
+];
+
+const OPS_PAGES: PageShortcut[] = [
+  { keywords: ['dashboard', 'özet', 'ozet'], title: 'Dashboard', href: '/', screen: 'Home' },
+  { keywords: ['cari', 'party', 'tedarikçi', 'tedarikci'], title: 'Cari', href: '/cari', screen: 'Parties' },
+  { keywords: ['fatura', 'invoice'], title: 'Faturalar', href: '/faturalar', screen: 'Invoices' },
+  { keywords: ['stok'], title: 'Stok', href: '/stok', screen: 'Products' },
+  { keywords: ['kasa', 'banka'], title: 'Kasa / Banka', href: '/kasa', screen: 'Cash' },
+  { keywords: ['okc', 'ökc', 'pos'], title: 'ÖKC Import', href: '/okc', screen: 'Cash' },
+  { keywords: ['rapor'], title: 'Raporlar', href: '/raporlar', screen: 'Reports' },
+  { keywords: ['ürün', 'urun'], title: 'Ürünler', href: '/urunler', screen: 'Products' },
+  { keywords: ['kategori'], title: 'Kategoriler', href: '/kategoriler', screen: 'Categories' },
+  { keywords: ['sipariş', 'siparis'], title: 'Siparişler', href: '/siparisler', screen: 'ShopOrders' },
+  { keywords: ['müşteri', 'musteri'], title: 'Müşteriler', href: '/musteriler', screen: 'Customers' },
+  {
+    keywords: ['personel', 'onay', 'staff', 'talep'],
+    title: 'Personel onayları',
+    href: '/personel-onaylari',
+    screen: 'Notifications',
+  },
+  { keywords: ['iade', 'iptal'], title: 'İadeler', href: '/iadeler', screen: 'Returns' },
+  { keywords: ['kupon'], title: 'Kuponlar', href: '/kuponlar', screen: 'Coupons' },
+  { keywords: ['kampanya'], title: 'Kampanyalar', href: '/kampanyalar', screen: 'Campaigns' },
+  { keywords: ['yorum'], title: 'Yorumlar', href: '/yorumlar', screen: 'Reviews' },
+  { keywords: ['kargo'], title: 'Kargo', href: '/kargo', screen: 'Shipping' },
+  { keywords: ['mesaj'], title: 'Mesajlar', href: '/mesajlar', screen: 'Messages' },
+  { keywords: ['bülten', 'bulten'], title: 'Bülten', href: '/bulten', screen: 'Newsletter' },
+  { keywords: ['ayar'], title: 'Ayarlar', href: '/ayarlar', screen: 'Home' },
+  { keywords: ['bildirim'], title: 'Bildirimler', href: '/bildirimler', screen: 'Notifications' },
+];
 
 @Injectable()
 export class SearchService {
@@ -140,23 +211,31 @@ export class SearchService {
       legal,
       posts,
       customers,
+      coupons,
+      campaigns,
+      returns,
+      reviews,
+      shipping,
+      marketplaceAccounts,
+      marketplaceOrders,
+      staffRequests,
     ] = await Promise.all([
       this.em
         .createQueryBuilder(Product, 'p')
         .where(
-          `(p.name ILIKE :like OR p.slug ILIKE :like OR COALESCE(p.batch_id,'') ILIKE :like)`,
+          `(p.name ILIKE :like OR p.slug ILIKE :like OR COALESCE(p.batchId,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('p.updated_at', 'DESC')
+        .orderBy('p.updatedAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
         .createQueryBuilder(Order, 'o')
         .where(
-          `(o.order_number ILIKE :like OR o.customer_email ILIKE :like OR o.customer_name ILIKE :like OR o.customer_phone ILIKE :like)`,
+          `(o.orderNumber ILIKE :like OR o.customerEmail ILIKE :like OR o.customerName ILIKE :like OR o.customerPhone ILIKE :like)`,
           { like },
         )
-        .orderBy('o.created_at', 'DESC')
+        .orderBy('o.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
@@ -167,10 +246,10 @@ export class SearchService {
       this.em
         .createQueryBuilder(ContactMessage, 'm')
         .where(
-          `(m.sender_name ILIKE :like OR m.sender_email ILIKE :like OR m.message ILIKE :like OR m.protocol_type ILIKE :like)`,
+          `(m.senderName ILIKE :like OR m.senderEmail ILIKE :like OR m.message ILIKE :like OR m.protocolType ILIKE :like)`,
           { like },
         )
-        .orderBy('m.created_at', 'DESC')
+        .orderBy('m.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
@@ -179,7 +258,7 @@ export class SearchService {
           `(a.filename ILIKE :like OR a.url ILIKE :like OR COALESCE(a.alt,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('a.created_at', 'DESC')
+        .orderBy('a.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
@@ -198,141 +277,290 @@ export class SearchService {
           `(b.title ILIKE :like OR b.slug ILIKE :like OR COALESCE(b.excerpt,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('b.updated_at', 'DESC')
+        .orderBy('b.updatedAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
         .createQueryBuilder(User, 'u')
         .where('u.role = :role', { role: UserRole.CUSTOMER })
         .andWhere(
-          `(u.email ILIKE :like OR COALESCE(u.first_name,'') ILIKE :like OR COALESCE(u.last_name,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
+          `(u.email ILIKE :like OR COALESCE(u.firstName,'') ILIKE :like OR COALESCE(u.lastName,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('u.created_at', 'DESC')
+        .orderBy('u.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Coupon, 'cp')
+        .where(`(cp.code ILIKE :like OR COALESCE(cp.title,'') ILIKE :like)`, {
+          like,
+        })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(Campaign, 'cm')
+        .where(`(cm.name ILIKE :like OR cm.slug ILIKE :like)`, { like })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ReturnRequest, 'r')
+        .leftJoinAndSelect('r.order', 'ord')
+        .where(
+          `(COALESCE(ord.orderNumber,'') ILIKE :like OR r.reason ILIKE :like OR CAST(r.status AS text) ILIKE :like OR CAST(r.type AS text) ILIKE :like)`,
+          { like },
+        )
+        .orderBy('r.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ProductReview, 'rv')
+        .leftJoinAndSelect('rv.product', 'prod')
+        .where(
+          `(rv.authorName ILIKE :like OR COALESCE(rv.title,'') ILIKE :like OR rv.body ILIKE :like OR COALESCE(prod.name,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('rv.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ShippingProviderConfig, 'sp')
+        .where(
+          `(sp.displayName ILIKE :like OR CAST(sp.provider AS text) ILIKE :like)`,
+          { like },
+        )
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(MarketplaceAccount, 'ma')
+        .where(
+          `(ma.storeName ILIKE :like OR CAST(ma.platform AS text) ILIKE :like)`,
+          { like },
+        )
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(MarketplaceOrder, 'mo')
+        .leftJoinAndSelect('mo.account', 'acc')
+        .where(
+          `(mo.externalOrderId ILIKE :like OR COALESCE(mo.externalStatus,'') ILIKE :like OR COALESCE(acc.storeName,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('mo.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(User, 'su')
+        .where('su.role = :role', { role: UserRole.CUSTOMER })
+        .andWhere('su.opsAccessRequestedAt IS NOT NULL')
+        .andWhere('su.isActive = true')
+        .andWhere(
+          `(su.email ILIKE :like OR COALESCE(su.firstName,'') ILIKE :like OR COALESCE(su.lastName,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('su.opsAccessRequestedAt', 'ASC')
         .take(per)
         .getMany(),
     ]);
 
     const groups: SearchResponse['groups'] = [];
+    const push = (type: string, label: string, items: SearchHit[]) => {
+      if (items.length) groups.push({ type, label, items });
+    };
 
-    if (products.length) {
-      groups.push({
-        type: 'products',
-        label: 'Ürünler',
-        items: products.map((p) => ({
-          type: 'product',
-          id: p.id,
-          title: p.name,
-          subtitle: p.slug,
-          href: `/urunler?q=${encodeURIComponent(p.name)}`,
-        })),
-      });
-    }
-    if (orders.length) {
-      groups.push({
-        type: 'orders',
-        label: 'Siparişler',
-        items: orders.map((o) => ({
-          type: 'order',
-          id: o.id,
-          title: o.orderNumber,
-          subtitle: `${o.customerName} · ${o.status}`,
-          href: `/siparisler/${o.id}`,
-        })),
-      });
-    }
-    if (categories.length) {
-      groups.push({
-        type: 'categories',
-        label: 'Kategoriler',
-        items: categories.map((c) => ({
-          type: 'category',
-          id: c.id,
-          title: c.name,
-          subtitle: c.slug,
-          href: `/kategoriler?q=${encodeURIComponent(c.name)}`,
-        })),
-      });
-    }
-    if (messages.length) {
-      groups.push({
-        type: 'messages',
-        label: 'Mesajlar',
-        items: messages.map((m) => ({
-          type: 'message',
-          id: m.id,
-          title: m.senderName,
-          subtitle: m.senderEmail,
-          href: `/mesajlar?id=${encodeURIComponent(m.id)}`,
-        })),
-      });
-    }
-    if (media.length) {
-      groups.push({
-        type: 'media',
-        label: 'Medya',
-        items: media.map((a) => ({
-          type: 'media',
+    const pages = this.matchPages(term, ADMIN_PAGES);
+    push('pages', 'Sayfalar', pages);
+
+    push(
+      'products',
+      'Ürünler',
+      products.map((p) => ({
+        type: 'product',
+        id: p.id,
+        title: p.name,
+        subtitle: p.slug,
+        href: `/urunler?q=${encodeURIComponent(p.name)}`,
+      })),
+    );
+    push(
+      'orders',
+      'Siparişler',
+      orders.map((o) => ({
+        type: 'order',
+        id: o.id,
+        title: o.orderNumber,
+        subtitle: `${o.customerName} · ${o.status}`,
+        href: `/siparisler/${o.id}`,
+      })),
+    );
+    push(
+      'categories',
+      'Kategoriler',
+      categories.map((c) => ({
+        type: 'category',
+        id: c.id,
+        title: c.name,
+        subtitle: c.slug,
+        href: `/kategoriler?q=${encodeURIComponent(c.name)}`,
+      })),
+    );
+    push(
+      'customers',
+      'Müşteriler',
+      customers.map((u) => ({
+        type: 'customer',
+        id: u.id,
+        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        subtitle: u.email,
+        href: `/musteriler/${u.id}`,
+      })),
+    );
+    push(
+      'staff_requests',
+      'Personel talepleri',
+      staffRequests.map((u) => ({
+        type: 'staff_request',
+        id: u.id,
+        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        subtitle: `${u.email} · onay bekliyor`,
+        href: '/personel-onaylari',
+      })),
+    );
+    push(
+      'returns',
+      'İadeler',
+      returns.map((r) => ({
+        type: 'return',
+        id: r.id,
+        title: r.order?.orderNumber || r.id.slice(0, 8),
+        subtitle: `${r.type} · ${r.status}`,
+        href: `/iadeler`,
+      })),
+    );
+    push(
+      'coupons',
+      'Kuponlar',
+      coupons.map((c) => ({
+        type: 'coupon',
+        id: c.id,
+        title: c.code,
+        subtitle: c.title || undefined,
+        href: `/kuponlar?q=${encodeURIComponent(c.code)}`,
+      })),
+    );
+    push(
+      'campaigns',
+      'Kampanyalar',
+      campaigns.map((c) => ({
+        type: 'campaign',
+        id: c.id,
+        title: c.name,
+        subtitle: c.slug,
+        href: `/kampanyalar?q=${encodeURIComponent(c.name)}`,
+      })),
+    );
+    push(
+      'reviews',
+      'Yorumlar',
+      reviews.map((r) => ({
+        type: 'review',
+        id: r.id,
+        title: r.title || r.authorName,
+        subtitle: [r.product?.name, r.isApproved ? 'onaylı' : 'bekliyor']
+          .filter(Boolean)
+          .join(' · '),
+        href: '/yorumlar',
+      })),
+    );
+    push(
+      'shipping',
+      'Kargo',
+      shipping.map((s) => ({
+        type: 'shipping',
+        id: s.id,
+        title: s.displayName,
+        subtitle: `${s.provider}${s.isEnabled ? '' : ' · kapalı'}`,
+        href: '/kargo',
+      })),
+    );
+    push(
+      'marketplace',
+      'Pazaryeri',
+      [
+        ...marketplaceAccounts.map((a) => ({
+          type: 'marketplace_account',
           id: a.id,
-          title: a.filename,
-          subtitle: a.mimeType,
-          href: `/medya?q=${encodeURIComponent(a.filename)}`,
+          title: a.storeName,
+          subtitle: a.platform,
+          href: '/pazaryeri',
         })),
-      });
-    }
-    if (newsletter.length) {
-      groups.push({
+        ...marketplaceOrders.map((o) => ({
+          type: 'marketplace_order',
+          id: o.id,
+          title: o.externalOrderId,
+          subtitle: [o.account?.storeName, o.externalStatus]
+            .filter(Boolean)
+            .join(' · '),
+          href: o.internalOrderId
+            ? `/siparisler/${o.internalOrderId}`
+            : '/pazaryeri',
+        })),
+      ].slice(0, per),
+    );
+    push(
+      'messages',
+      'Mesajlar',
+      messages.map((m) => ({
+        type: 'message',
+        id: m.id,
+        title: m.senderName,
+        subtitle: m.senderEmail,
+        href: `/mesajlar?id=${encodeURIComponent(m.id)}`,
+      })),
+    );
+    push(
+      'media',
+      'Medya',
+      media.map((a) => ({
+        type: 'media',
+        id: a.id,
+        title: a.filename,
+        subtitle: a.mimeType,
+        href: `/medya?q=${encodeURIComponent(a.filename)}`,
+      })),
+    );
+    push(
+      'newsletter',
+      'Bülten',
+      newsletter.map((n) => ({
         type: 'newsletter',
-        label: 'Bülten',
-        items: newsletter.map((n) => ({
-          type: 'newsletter',
-          id: n.id,
-          title: n.email,
-          subtitle: n.source,
-          href: `/bulten?q=${encodeURIComponent(n.email)}`,
-        })),
-      });
-    }
-    if (legal.length) {
-      groups.push({
+        id: n.id,
+        title: n.email,
+        subtitle: n.source,
+        href: `/bulten?q=${encodeURIComponent(n.email)}`,
+      })),
+    );
+    push(
+      'legal',
+      'Sözleşmeler',
+      legal.map((d) => ({
         type: 'legal',
-        label: 'Sözleşmeler',
-        items: legal.map((d) => ({
-          type: 'legal',
-          id: d.id,
-          title: d.title,
-          subtitle: d.slug,
-          href: `/sozlesmeler?q=${encodeURIComponent(d.slug)}`,
-        })),
-      });
-    }
-    if (posts.length) {
-      groups.push({
+        id: d.id,
+        title: d.title,
+        subtitle: d.slug,
+        href: `/sozlesmeler?q=${encodeURIComponent(d.slug)}`,
+      })),
+    );
+    push(
+      'blog',
+      'Blog',
+      posts.map((p) => ({
         type: 'blog',
-        label: 'Blog',
-        items: posts.map((p) => ({
-          type: 'blog',
-          id: p.id,
-          title: p.title,
-          subtitle: p.isPublished ? 'published' : 'draft',
-          href: `/blog?q=${encodeURIComponent(p.title)}`,
-        })),
-      });
-    }
-    if (customers.length) {
-      groups.push({
-        type: 'customers',
-        label: 'Müşteriler',
-        items: customers.map((u) => ({
-          type: 'customer',
-          id: u.id,
-          title:
-            [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
-          subtitle: u.email,
-          href: `/musteriler/${u.id}`,
-        })),
-      });
-    }
+        id: p.id,
+        title: p.title,
+        subtitle: p.isPublished ? 'published' : 'draft',
+        href: `/blog?q=${encodeURIComponent(p.title)}`,
+      })),
+    );
 
     return { q: term, groups };
   }
@@ -356,23 +584,29 @@ export class SearchService {
       coupons,
       campaigns,
       customers,
+      returns,
+      reviews,
+      cashAccounts,
+      okcSales,
+      staffRequests,
+      shipping,
     ] = await Promise.all([
       this.em
         .createQueryBuilder(Product, 'p')
         .where(
-          `(p.name ILIKE :like OR p.slug ILIKE :like OR COALESCE(p.batch_id,'') ILIKE :like)`,
+          `(p.name ILIKE :like OR p.slug ILIKE :like OR COALESCE(p.batchId,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('p.updated_at', 'DESC')
+        .orderBy('p.updatedAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
         .createQueryBuilder(Order, 'o')
         .where(
-          `(o.order_number ILIKE :like OR o.customer_email ILIKE :like OR o.customer_name ILIKE :like OR o.customer_phone ILIKE :like)`,
+          `(o.orderNumber ILIKE :like OR o.customerEmail ILIKE :like OR o.customerName ILIKE :like OR o.customerPhone ILIKE :like)`,
           { like },
         )
-        .orderBy('o.created_at', 'DESC')
+        .orderBy('o.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
@@ -383,10 +617,10 @@ export class SearchService {
       this.em
         .createQueryBuilder(ContactMessage, 'm')
         .where(
-          `(m.sender_name ILIKE :like OR m.sender_email ILIKE :like OR m.message ILIKE :like)`,
+          `(m.senderName ILIKE :like OR m.senderEmail ILIKE :like OR m.message ILIKE :like)`,
           { like },
         )
-        .orderBy('m.created_at', 'DESC')
+        .orderBy('m.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
@@ -397,28 +631,27 @@ export class SearchService {
       this.em
         .createQueryBuilder(Party, 'pt')
         .where(
-          `(pt.title ILIKE :like OR COALESCE(pt.tax_number,'') ILIKE :like OR COALESCE(pt.email,'') ILIKE :like OR COALESCE(pt.phone,'') ILIKE :like)`,
+          `(pt.title ILIKE :like OR COALESCE(pt.taxNumber,'') ILIKE :like OR COALESCE(pt.email,'') ILIKE :like OR COALESCE(pt.phone,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('pt.updated_at', 'DESC')
+        .orderBy('pt.updatedAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
         .createQueryBuilder(Invoice, 'inv')
         .leftJoinAndSelect('inv.party', 'party')
         .where(
-          `(inv.invoice_number ILIKE :like OR COALESCE(party.title,'') ILIKE :like)`,
+          `(inv.invoiceNumber ILIKE :like OR COALESCE(party.title,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('inv.created_at', 'DESC')
+        .orderBy('inv.createdAt', 'DESC')
         .take(per)
         .getMany(),
       this.em
         .createQueryBuilder(Coupon, 'cp')
-        .where(
-          `(cp.code ILIKE :like OR COALESCE(cp.title,'') ILIKE :like)`,
-          { like },
-        )
+        .where(`(cp.code ILIKE :like OR COALESCE(cp.title,'') ILIKE :like)`, {
+          like,
+        })
         .take(per)
         .getMany(),
       this.em
@@ -430,22 +663,76 @@ export class SearchService {
         .createQueryBuilder(User, 'u')
         .where('u.role = :role', { role: UserRole.CUSTOMER })
         .andWhere(
-          `(u.email ILIKE :like OR COALESCE(u.first_name,'') ILIKE :like OR COALESCE(u.last_name,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
+          `(u.email ILIKE :like OR COALESCE(u.firstName,'') ILIKE :like OR COALESCE(u.lastName,'') ILIKE :like OR COALESCE(u.phone,'') ILIKE :like)`,
           { like },
         )
-        .orderBy('u.created_at', 'DESC')
+        .orderBy('u.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ReturnRequest, 'r')
+        .leftJoinAndSelect('r.order', 'ord')
+        .where(
+          `(COALESCE(ord.orderNumber,'') ILIKE :like OR r.reason ILIKE :like OR CAST(r.status AS text) ILIKE :like)`,
+          { like },
+        )
+        .orderBy('r.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ProductReview, 'rv')
+        .leftJoinAndSelect('rv.product', 'prod')
+        .where(
+          `(rv.authorName ILIKE :like OR COALESCE(rv.title,'') ILIKE :like OR rv.body ILIKE :like OR COALESCE(prod.name,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('rv.createdAt', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(CashAccount, 'ca')
+        .where(`(ca.name ILIKE :like OR CAST(ca.kind AS text) ILIKE :like)`, {
+          like,
+        })
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(OkcSale, 'ok')
+        .where(
+          `(ok.externalKey ILIKE :like OR COALESCE(ok.receiptNo,'') ILIKE :like OR COALESCE(ok.zNo,'') ILIKE :like OR COALESCE(ok.description,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('ok.saleDate', 'DESC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(User, 'su')
+        .where('su.role = :role', { role: UserRole.CUSTOMER })
+        .andWhere('su.opsAccessRequestedAt IS NOT NULL')
+        .andWhere('su.isActive = true')
+        .andWhere(
+          `(su.email ILIKE :like OR COALESCE(su.firstName,'') ILIKE :like OR COALESCE(su.lastName,'') ILIKE :like)`,
+          { like },
+        )
+        .orderBy('su.opsAccessRequestedAt', 'ASC')
+        .take(per)
+        .getMany(),
+      this.em
+        .createQueryBuilder(ShippingProviderConfig, 'sp')
+        .where(
+          `(sp.displayName ILIKE :like OR CAST(sp.provider AS text) ILIKE :like)`,
+          { like },
+        )
         .take(per)
         .getMany(),
     ]);
 
     const groups: SearchResponse['groups'] = [];
-    const push = (
-      type: string,
-      label: string,
-      items: SearchHit[],
-    ) => {
+    const push = (type: string, label: string, items: SearchHit[]) => {
       if (items.length) groups.push({ type, label, items });
     };
+
+    push('pages', 'Sayfalar', this.matchPages(term, OPS_PAGES));
 
     push(
       'products',
@@ -510,6 +797,30 @@ export class SearchService {
       })),
     );
     push(
+      'cash',
+      'Kasa',
+      cashAccounts.map((c) => ({
+        type: 'cash',
+        id: c.id,
+        title: c.name,
+        subtitle: c.kind,
+        href: '/kasa',
+        screen: 'Cash',
+      })),
+    );
+    push(
+      'okc',
+      'ÖKC',
+      okcSales.map((s) => ({
+        type: 'okc',
+        id: s.id,
+        title: s.receiptNo || s.externalKey,
+        subtitle: [s.saleDate, s.zNo, `₺${s.total}`].filter(Boolean).join(' · '),
+        href: '/okc',
+        screen: 'Cash',
+      })),
+    );
+    push(
       'coupons',
       'Kuponlar',
       coupons.map((c) => ({
@@ -546,6 +857,54 @@ export class SearchService {
       })),
     );
     push(
+      'staff_requests',
+      'Personel talepleri',
+      staffRequests.map((u) => ({
+        type: 'staff_request',
+        id: u.id,
+        title: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+        subtitle: `${u.email} · onay bekliyor`,
+        href: '/personel-onaylari',
+        screen: 'Notifications',
+      })),
+    );
+    push(
+      'returns',
+      'İadeler',
+      returns.map((r) => ({
+        type: 'return',
+        id: r.id,
+        title: r.order?.orderNumber || r.id.slice(0, 8),
+        subtitle: `${r.type} · ${r.status}`,
+        href: '/iadeler',
+        screen: 'Returns',
+      })),
+    );
+    push(
+      'reviews',
+      'Yorumlar',
+      reviews.map((r) => ({
+        type: 'review',
+        id: r.id,
+        title: r.title || r.authorName,
+        subtitle: r.product?.name,
+        href: '/yorumlar',
+        screen: 'Reviews',
+      })),
+    );
+    push(
+      'shipping',
+      'Kargo',
+      shipping.map((s) => ({
+        type: 'shipping',
+        id: s.id,
+        title: s.displayName,
+        subtitle: String(s.provider),
+        href: '/kargo',
+        screen: 'Shipping',
+      })),
+    );
+    push(
       'messages',
       'Mesajlar',
       messages.map((m) => ({
@@ -571,5 +930,24 @@ export class SearchService {
     );
 
     return { q: term, groups };
+  }
+
+  private matchPages(term: string, pages: PageShortcut[]): SearchHit[] {
+    const t = term.toLocaleLowerCase('tr-TR');
+    return pages
+      .filter((p) =>
+        p.keywords.some(
+          (k) => k.includes(t) || t.includes(k) || k.startsWith(t),
+        ),
+      )
+      .slice(0, 6)
+      .map((p) => ({
+        type: 'page',
+        id: p.href,
+        title: p.title,
+        subtitle: 'Sayfa',
+        href: p.href,
+        screen: p.screen,
+      }));
   }
 }

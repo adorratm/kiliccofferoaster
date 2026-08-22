@@ -59,6 +59,9 @@ function hrefToTarget(href: string | null | undefined): OpsHrefTarget {
   const query = href.includes('?') ? href.slice(href.indexOf('?') + 1) : '';
   const params = new URLSearchParams(query);
   if (path.startsWith('/siparisler')) return { name: 'ShopOrders' };
+  if (path.startsWith('/personel-onaylari') || path.startsWith('/personel-talepleri')) {
+    return { name: 'Notifications' };
+  }
   if (path.startsWith('/iadeler')) return { name: 'Returns' };
   if (path.startsWith('/mesajlar')) return { name: 'Messages' };
   if (path.startsWith('/yorumlar')) return { name: 'Reviews' };

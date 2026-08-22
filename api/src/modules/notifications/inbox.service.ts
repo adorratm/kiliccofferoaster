@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager, In, IsNull } from 'typeorm';
-import { User, OPS_ROLES } from '@entities/user.entity';
+import { User, OPS_ROLES, UserRole } from '@entities/user.entity';
 import {
   InAppNotification,
   InboxCategory,
@@ -227,6 +227,16 @@ export class InboxService {
       where: { role: In(OPS_ROLES), isActive: true },
     });
     for (const user of ops) {
+      await this.notifyUser(user.id, copy);
+    }
+  }
+
+  /** Yalnızca admin hesaplarına (personel onay talepleri vb.) */
+  async notifyAdmins(copy: InboxCopy): Promise<void> {
+    const admins = await this.em.find(User, {
+      where: { role: UserRole.ADMIN, isActive: true },
+    });
+    for (const user of admins) {
       await this.notifyUser(user.id, copy);
     }
   }

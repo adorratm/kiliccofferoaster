@@ -164,6 +164,7 @@ export class AuthService {
       if (!ok) {
         throw new ConflictException('Bu e-posta zaten kayıtlı');
       }
+      const newlyRequested = !existing.opsAccessRequestedAt;
       if (isAdmin) {
         existing.role = UserRole.ADMIN;
         existing.opsAccessRequestedAt = null;
@@ -178,6 +179,9 @@ export class AuthService {
         existing.lastName = dto.lastName ?? existing.lastName;
       }
       await this.em.save(existing);
+      if (!isAdmin && newlyRequested) {
+        void this.notifyOpsAccessRequested(existing);
+      }
       return this.buildAuthResponse(existing);
     }
 
@@ -194,7 +198,23 @@ export class AuthService {
       opsAccessRequestedAt: isAdmin ? null : new Date(),
     });
     await this.em.save(user);
+    if (!isAdmin) {
+      void this.notifyOpsAccessRequested(user);
+    }
     return this.buildAuthResponse(user);
+  }
+
+  private notifyOpsAccessRequested(user: User): void {
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    void this.notifications.notifyOpsAccessRequested({
+      email: user.email,
+      name: name || null,
+    });
+  }
+
+  private displayName(user: User): string | null {
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return name || null;
   }
 
   async listOpsAccessRequests(): Promise<PublicUser[]> {
@@ -222,6 +242,12 @@ export class AuthService {
     user.role = role;
     user.opsAccessRequestedAt = null;
     await this.em.save(user);
+    void this.notifications.notifyOpsAccessDecision({
+      userId: user.id,
+      email: user.email,
+      name: this.displayName(user),
+      approved: true,
+    });
     return this.sanitize(user);
   }
 
@@ -232,6 +258,12 @@ export class AuthService {
     }
     user.opsAccessRequestedAt = null;
     await this.em.save(user);
+    void this.notifications.notifyOpsAccessDecision({
+      userId: user.id,
+      email: user.email,
+      name: this.displayName(user),
+      approved: false,
+    });
     return this.sanitize(user);
   }
 

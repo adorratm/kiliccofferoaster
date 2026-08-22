@@ -22,14 +22,21 @@ type SearchResponse = {
 };
 
 const SEE_ALL: Record<string, string> = {
+  pages: '/',
   products: '/urunler',
   orders: '/siparisler',
   customers: '/musteriler',
+  staff_requests: '/personel-onaylari',
   categories: '/kategoriler',
   parties: '/cari',
   invoices: '/faturalar',
+  cash: '/kasa',
+  okc: '/okc',
   coupons: '/kuponlar',
   campaigns: '/kampanyalar',
+  returns: '/iadeler',
+  reviews: '/yorumlar',
+  shipping: '/kargo',
   messages: '/mesajlar',
   newsletter: '/bulten',
 };

@@ -352,6 +352,47 @@ export function buildPasswordResetEmail(input: {
   };
 }
 
+export function buildOpsAccessDecisionEmail(input: {
+  name: string;
+  approved: boolean;
+  accountUrl: string;
+  rejectReason?: string;
+}): { subject: string; html: string; text: string } {
+  const name = input.name.trim() || 'Merhaba';
+  if (input.approved) {
+    const paragraphs = [
+      'Personel erişim talebiniz onaylandı.',
+      'Masaüstü veya mobil personel uygulamasına aynı e-posta ve şifrenizle giriş yapabilirsiniz. Web mağazadaki müşteri hesabınız da açık kalır.',
+    ];
+    return {
+      subject: 'Personel erişiminiz onaylandı',
+      html: renderBrandedEmail({
+        title: 'Personel erişiminiz onaylandı',
+        greeting: `Merhaba ${name},`,
+        paragraphs,
+        cta: { label: 'Hesabıma git', href: input.accountUrl },
+      }),
+      text: `Merhaba ${name}, personel erişim talebiniz onaylandı. Personel uygulamasına aynı e-posta ve şifrenizle giriş yapabilirsiniz. ${input.accountUrl}`,
+    };
+  }
+  const reason =
+    input.rejectReason ||
+    'Personel erişim talebiniz, başvuru şartlarının karşılanmaması nedeniyle onaylanmamıştır. Hesabınız müşteri olarak kullanılmaya devam eder; web mağazamızdan alışveriş yapabilirsiniz.';
+  return {
+    subject: 'Personel erişim talebiniz reddedildi',
+    html: renderBrandedEmail({
+      title: 'Personel erişim talebiniz reddedildi',
+      greeting: `Merhaba ${name},`,
+      paragraphs: [
+        reason,
+        'Sorularınız için bizimle iletişime geçebilirsiniz.',
+      ],
+      cta: { label: 'Mağazaya git', href: input.accountUrl },
+    }),
+    text: `Merhaba ${name}, ${reason} ${input.accountUrl}`,
+  };
+}
+
 export function buildAbandonedCartEmail(input: {
   name: string;
   itemCount: number;
