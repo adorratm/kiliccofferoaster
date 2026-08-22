@@ -3533,7 +3533,7 @@ __metadata:
     expo-dev-client: "npm:~57.0.14"
     expo-device: "npm:~57.0.1"
     expo-font: "npm:~57.0.1"
-    expo-image-picker: "npm:~17.0.8"
+    expo-image-picker: "npm:~57.0.7"
     expo-linking: "npm:~57.0.7"
     expo-notifications: "npm:~57.0.13"
     expo-secure-store: "npm:~57.0.1"
@@ -9659,23 +9659,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-loader@npm:~6.0.0":
-  version: 6.0.0
-  resolution: "expo-image-loader@npm:6.0.0"
+"expo-image-loader@npm:~57.0.1":
+  version: 57.0.1
+  resolution: "expo-image-loader@npm:57.0.1"
   peerDependencies:
     expo: "*"
-  checksum: 10c0/36f1e80d2b3d2a1cce440c7d938cd3cf3138f2b1fa706a1954e415bfae87b5b8eeaec65be0ab17880eb7585dd28c9225d056ebdb98ac81e0ffbfe880d952b0eb
+  checksum: 10c0/c68a12901d789bfc395b045305a68a352e05d4b3e4fcbbe382591a5fff5fcd896e81c4cbb082dfaa520c5ac6ee2c3221c3887b0292b7b831e21779bd360936f0
   languageName: node
   linkType: hard
 
-"expo-image-picker@npm:~17.0.8":
-  version: 17.0.11
-  resolution: "expo-image-picker@npm:17.0.11"
+"expo-image-picker@npm:~57.0.7":
+  version: 57.0.12
+  resolution: "expo-image-picker@npm:57.0.12"
   dependencies:
-    expo-image-loader: "npm:~6.0.0"
+    expo-image-loader: "npm:~57.0.1"
   peerDependencies:
     expo: "*"
-  checksum: 10c0/4708eca0f93258b9214d4a107edeed52562ade4bc1b53c5fa6dcb1218ccdf56ba46e5993110cda81b19e6d5a52e61572e057ccbcb7efdd6a48d99f5633b178ec
+  checksum: 10c0/d7bce16590d014deee4665dcb65538d4c285277ab3600a2c0df6a8a19e5ec5abb21544d446bcda48db865a715cc4176b0ad4e7916d44214632394bb152af6922
   languageName: node
   linkType: hard
 

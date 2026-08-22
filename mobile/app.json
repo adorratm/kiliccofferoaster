@@ -39,7 +39,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ürün görsellerini yüklemek için galeri erişimi gerekir."
+          "photosPermission": "Ürün görsellerini yüklemek için galeri erişimi gerekir.",
+          "cameraPermission": false
         }
       ]
     ],
