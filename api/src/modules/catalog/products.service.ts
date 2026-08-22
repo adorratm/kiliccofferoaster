@@ -146,8 +146,8 @@ export class ProductsService {
     const sortColumn = sortMap[sort] || 'p.name';
 
     if (!query.includeInactive) {
-      // Vitrin: önce kategori sırası (kahve kategorileri üstte), sonra kullanıcı sıralaması
-      qb.orderBy('COALESCE(category.sort_order, 9999)', 'ASC');
+      // Vitrin: önce kategori sırası, sonra kullanıcı sıralaması (NULLS LAST ≈ COALESCE(..., 9999))
+      qb.orderBy('category.sort_order', 'ASC', 'NULLS LAST');
       qb.addOrderBy(sortColumn, orderDir);
       if (sort !== 'name') {
         qb.addOrderBy('p.name', 'ASC');
