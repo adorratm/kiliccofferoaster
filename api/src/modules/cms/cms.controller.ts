@@ -28,7 +28,7 @@ import {
 } from '@modules/cms/dto/cms.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES, UserRole } from '@entities/user.entity';
 
 @ApiTags('cms')
 @Controller('cms')
@@ -104,7 +104,7 @@ export class CmsController {
   }
 
   @ApiBearerAuth()
-  @Roles(UserRole.ADMIN)
+  @Roles(...OPS_ROLES)
   @Post('admin/media/upload')
   @ApiOperation({ summary: 'Admin: görsel yükle (S3 veya yerel)' })
   @ApiConsumes('multipart/form-data')

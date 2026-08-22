@@ -89,6 +89,31 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
+export async function uploadMedia(
+  file: File,
+  options?: { alt?: string; folder?: string },
+): Promise<{ id: string; url: string; filename: string }> {
+  const base = await apiUrl();
+  const token = getToken();
+  const form = new FormData();
+  form.append('file', file);
+  if (options?.alt) form.append('alt', options.alt);
+  if (options?.folder) form.append('folder', options.folder);
+
+  const res = await fetch(`${base}/media/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new ApiError(messageFromBody(text) || res.statusText, res.status);
+  }
+
+  return (await res.json()) as { id: string; url: string; filename: string };
+}
+
 export function isOnline(): boolean {
   return navigator.onLine;
 }

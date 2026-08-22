@@ -1,3 +1,13 @@
+const COFFEE_KINDS = [
+  "coffee_turkish",
+  "coffee_filter",
+  "coffee_espresso",
+] as const;
+
+export function supportsGrind(kind?: string | null): boolean {
+  return !!kind && (COFFEE_KINDS as readonly string[]).includes(kind);
+}
+
 export const GRIND_OPTIONS = [
   { value: "whole_bean", label: "Çekirdek" },
   { value: "ground", label: "Öğütülmüş" },

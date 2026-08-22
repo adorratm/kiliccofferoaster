@@ -17,7 +17,7 @@ import { useShopCart } from '../../lib/shop-cart';
 import { shopAddCartItem, shopProduct, shopToggleWishlist } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { formatMoney, stockQty } from '../../lib/format';
-import { GRIND_OPTIONS, type GrindValue } from '../../lib/grind';
+import { GRIND_OPTIONS, supportsGrind, type GrindValue } from '../../lib/grind';
 import { productOrigin, roastLabel } from '../../lib/order-status';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
 import type { Product, ProductVariant } from '../../lib/shop-types';
@@ -54,6 +54,7 @@ export function ProductScreen({ navigation, route }: Props) {
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
   const roast = roastLabel(product?.roastLevel);
+  const showGrind = supportsGrind(product?.kind);
 
   async function add() {
     if (!product) return;
@@ -63,7 +64,7 @@ export function ProductScreen({ navigation, route }: Props) {
       await shopAddCartItem({
         productId: product.id,
         variantId: selected?.id,
-        grindOption: grind,
+        grindOption: showGrind ? grind : null,
         quantity: 1,
       });
       await cart.refresh();
@@ -218,19 +219,21 @@ export function ProductScreen({ navigation, route }: Props) {
           </View>
         ) : null}
 
-        <View style={{ marginTop: 8 }}>
-          <SectionLabel label="Öğütme" />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {GRIND_OPTIONS.map((g) => (
-              <Chip
-                key={g.value}
-                label={g.label}
-                selected={grind === g.value}
-                onPress={() => setGrind(g.value)}
-              />
-            ))}
+        {showGrind ? (
+          <View style={{ marginTop: 8 }}>
+            <SectionLabel label="Öğütme" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {GRIND_OPTIONS.map((g) => (
+                <Chip
+                  key={g.value}
+                  label={g.label}
+                  selected={grind === g.value}
+                  onPress={() => setGrind(g.value)}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        ) : null}
 
         <Text style={[muted, { marginTop: 20 }]}>
           {stock > 0 ? `Stokta ${stock} adet` : 'Tükendi'}

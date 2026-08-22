@@ -13,11 +13,11 @@ import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nes
 import { memoryStorage } from 'multer';
 import { MediaService } from '@modules/media/media.service';
 import { Roles } from '@common/decorators/roles.decorator';
-import { UserRole } from '@entities/user.entity';
+import { OPS_ROLES } from '@entities/user.entity';
 
 @ApiTags('media')
 @ApiBearerAuth()
-@Roles(UserRole.ADMIN)
+@Roles(...OPS_ROLES)
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}

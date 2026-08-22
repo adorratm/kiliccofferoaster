@@ -10,6 +10,10 @@ import { CartItem } from '@entities/cart-item.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
 import {
+  grindMatchKey,
+  resolveGrindOption,
+} from '@common/constants/grind-options';
+import {
   AddCartItemDto,
   UpdateCartItemDto,
 } from '@modules/cart/dto/cart.dto';
@@ -112,11 +116,13 @@ export class CartService {
     if (userCart.id === sessionCart.id) return;
 
     for (const item of sessionItems) {
+      const productKind = item.product?.kind;
       const existing = userCart.items?.find(
         (i) =>
           i.productId === item.productId &&
           (i.variantId ?? null) === (item.variantId ?? null) &&
-          (i.grindOption ?? 'whole_bean') === (item.grindOption ?? 'whole_bean'),
+          grindMatchKey(i.product?.kind, i.grindOption) ===
+            grindMatchKey(productKind, item.grindOption),
       );
       if (existing) {
         existing.quantity += item.quantity;
@@ -201,14 +207,15 @@ export class CartService {
       unitPrice = campaignPrice.salePrice;
     }
 
-    const grindOption = dto.grindOption ?? 'whole_bean';
+    const grindOption = resolveGrindOption(product.kind, dto.grindOption);
     const qtyToAdd = dto.quantity;
 
     const existing = cart.items?.find(
       (i) =>
         i.productId === product.id &&
         (i.variantId ?? null) === variantId &&
-        (i.grindOption ?? 'whole_bean') === grindOption,
+        grindMatchKey(product.kind, i.grindOption) ===
+          grindMatchKey(product.kind, grindOption),
     );
 
     const nextQty = (existing?.quantity ?? 0) + qtyToAdd;
@@ -266,7 +273,10 @@ export class CartService {
 
     item.quantity = dto.quantity;
     if (dto.grindOption !== undefined) {
-      item.grindOption = dto.grindOption;
+      const product = await this.em.findOne(Product, {
+        where: { id: item.productId },
+      });
+      item.grindOption = resolveGrindOption(product?.kind, dto.grindOption);
     }
     await this.em.save(item);
     await this.touchCart(cart);

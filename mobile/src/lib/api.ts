@@ -123,6 +123,33 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
+export async function uploadMedia(
+  file: { uri: string; name?: string; type?: string },
+  options?: { alt?: string; folder?: string },
+): Promise<{ id: string; url: string; filename: string }> {
+  const token = await getToken();
+  const form = new FormData();
+  form.append('file', {
+    uri: file.uri,
+    name: file.name || 'photo.jpg',
+    type: file.type || 'image/jpeg',
+  } as unknown as Blob);
+  if (options?.alt) form.append('alt', options.alt);
+  if (options?.folder) form.append('folder', options.folder);
+
+  const res = await fetch(`${API_URL}/media/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+
+  if (!res.ok) {
+    throw new Error(messageFromBody(await res.text()) || res.statusText);
+  }
+
+  return (await res.json()) as { id: string; url: string; filename: string };
+}
+
 export function asArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data as T[];
   if (data && typeof data === 'object') {

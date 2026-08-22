@@ -91,7 +91,8 @@ export async function shopAddCartItem(payload: {
     body: {
       productId: payload.productId,
       ...(payload.variantId ? { variantId: payload.variantId } : {}),
-      grindOption: payload.grindOption ?? 'whole_bean',
+      grindOption:
+        payload.grindOption !== undefined ? payload.grindOption : 'whole_bean',
       quantity: payload.quantity ?? 1,
     },
   });

@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
-import { api } from '../lib/api';
+import { api, uploadMedia } from '../lib/api';
 import { asArray, asPaged, formatMoney, inputClass, slugify } from '../lib/format';
 
 type Category = { id: string; name: string };
@@ -29,6 +29,7 @@ type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   kind?: string;
+  imageUrl?: string | null;
   unit?: string;
   vatRate?: string | number;
   barcode?: string | null;
@@ -65,6 +66,7 @@ type FormState = {
   ingredients: string;
   isActive: boolean;
   isFeatured: boolean;
+  imageUrl: string;
   variants: VariantForm[];
 };
 
@@ -113,6 +115,7 @@ function emptyForm(): FormState {
     ingredients: '',
     isActive: true,
     isFeatured: false,
+    imageUrl: '',
     variants: [emptyVariant()],
   };
 }
@@ -147,6 +150,7 @@ function formFromProduct(p: Product): FormState {
     ingredients: p.ingredients || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
+    imageUrl: p.imageUrl || '',
     variants,
   };
 }
@@ -165,6 +169,7 @@ export function ProductsPage() {
   const [q, setQ] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteVariantIndex, setDeleteVariantIndex] = useState<number | null>(null);
 
@@ -263,6 +268,7 @@ export function ProductsPage() {
       ingredients: form.ingredients.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
+      imageUrl: form.imageUrl.trim() || null,
       variants,
     };
     setSaving(true);
@@ -393,6 +399,55 @@ export function ProductsPage() {
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
         />
+        <div className="space-y-2">
+          <p className="mono text-[10px] uppercase text-muted">Kapak görseli</p>
+          {form.imageUrl ? (
+            <div className="relative inline-block">
+              <img
+                src={form.imageUrl}
+                alt=""
+                className="h-28 w-28 border border-border-muted object-cover"
+              />
+              <button
+                type="button"
+                className="absolute right-1 top-1 bg-black/70 px-1.5 py-0.5 text-[10px] text-white"
+                onClick={() => setForm((f) => ({ ...f, imageUrl: '' }))}
+              >
+                Kaldır
+              </button>
+            </div>
+          ) : null}
+          <input
+            type="file"
+            accept="image/*"
+            disabled={uploadingImage}
+            className="block w-full text-sm"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploadingImage(true);
+              setError(null);
+              void uploadMedia(file, { folder: 'products' })
+                .then((asset) => setForm((f) => ({ ...f, imageUrl: asset.url })))
+                .catch((err) =>
+                  setError(err instanceof Error ? err.message : 'Görsel yüklenemedi'),
+                )
+                .finally(() => {
+                  setUploadingImage(false);
+                  e.target.value = '';
+                });
+            }}
+          />
+          <input
+            placeholder="veya görsel URL yapıştır"
+            className={inputClass}
+            value={form.imageUrl}
+            onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+          />
+          {uploadingImage ? (
+            <p className="text-xs text-muted">Görsel yükleniyor…</p>
+          ) : null}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <input
             required

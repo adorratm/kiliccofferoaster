@@ -54,7 +54,8 @@ export async function cartAddItem(payload: {
     {
       productId: payload.productId,
       variantId: payload.variantId ?? null,
-      grindOption: payload.grindOption ?? "whole_bean",
+      grindOption:
+        payload.grindOption !== undefined ? payload.grindOption : "whole_bean",
       quantity: payload.quantity ?? 1,
     },
     getToken(),

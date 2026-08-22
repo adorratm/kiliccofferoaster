@@ -41,6 +41,7 @@ export type Product = {
   ratingAvg?: string;
   ratingCount?: number;
   categoryId: string | null;
+  kind?: string;
   variants?: ProductVariant[];
   createdAt?: string;
   updatedAt?: string;

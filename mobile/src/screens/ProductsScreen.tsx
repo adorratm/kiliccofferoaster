@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,10 +10,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import type { RootStack } from '../../App';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
-import { api, asArray } from '../lib/api';
+import { api, asArray, uploadMedia } from '../lib/api';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
 type ProductVariant = {
@@ -37,6 +39,7 @@ type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   kind?: string;
+  imageUrl?: string | null;
   unit?: string;
   vatRate?: string | number;
   barcode?: string | null;
@@ -75,6 +78,7 @@ type FormState = {
   ingredients: string;
   isActive: boolean;
   isFeatured: boolean;
+  imageUrl: string;
   variants: VariantForm[];
 };
 
@@ -138,6 +142,7 @@ function emptyForm(): FormState {
     ingredients: '',
     isActive: true,
     isFeatured: false,
+    imageUrl: '',
     variants: [emptyVariant()],
   };
 }
@@ -172,6 +177,7 @@ function formFromProduct(p: Product): FormState {
     ingredients: p.ingredients || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
+    imageUrl: p.imageUrl || '',
     variants,
   };
 }
@@ -304,6 +310,7 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteVariantIndex, setDeleteVariantIndex] = useState<number | null>(null);
 
@@ -393,6 +400,7 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
       ingredients: form.ingredients.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
+      imageUrl: form.imageUrl.trim() || null,
       variants,
     };
     setSaving(true);
@@ -420,6 +428,37 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
   }
 
   const pendingVariant = deleteVariantIndex !== null ? form.variants[deleteVariantIndex] : null;
+
+  async function pickImage() {
+    setError('');
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      setError('Galeri izni gerekli');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setUploadingImage(true);
+    try {
+      const uploaded = await uploadMedia(
+        {
+          uri: asset.uri,
+          name: asset.fileName || 'product.jpg',
+          type: asset.mimeType || 'image/jpeg',
+        },
+        { folder: 'products' },
+      );
+      setForm((f) => ({ ...f, imageUrl: uploaded.url }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Görsel yüklenemedi');
+    } finally {
+      setUploadingImage(false);
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -456,6 +495,35 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
           onChangeText={(description) => setForm((f) => ({ ...f, description }))}
           multiline
           style={[input, { minHeight: 88, textAlignVertical: 'top' }]}
+        />
+        <Text style={[muted, { marginBottom: 8 }]}>Kapak görseli</Text>
+        {form.imageUrl ? (
+          <View style={{ marginBottom: 8 }}>
+            <Image
+              source={{ uri: form.imageUrl }}
+              style={{ width: 112, height: 112, borderWidth: 1, borderColor: colors.border }}
+            />
+            <Pressable onPress={() => setForm((f) => ({ ...f, imageUrl: '' }))} style={{ marginTop: 8 }}>
+              <Text style={{ color: colors.danger, fontSize: 12 }}>Görseli kaldır</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        <Pressable
+          onPress={() => void pickImage()}
+          disabled={uploadingImage}
+          style={[btn, { opacity: uploadingImage ? 0.6 : 1, marginBottom: 8 }]}
+        >
+          <Text style={btnText}>
+            {uploadingImage ? 'Yükleniyor…' : 'Galeriden görsel seç'}
+          </Text>
+        </Pressable>
+        <TextInput
+          placeholder="veya görsel URL"
+          placeholderTextColor={colors.muted}
+          value={form.imageUrl}
+          onChangeText={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+          autoCapitalize="none"
+          style={input}
         />
         <TextInput
           placeholder="Fiyat"

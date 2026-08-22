@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { formatMoney } from "@/lib/format";
-import { GRIND_OPTIONS, type GrindValue } from "@/lib/grind";
+import { GRIND_OPTIONS, supportsGrind, type GrindValue } from "@/lib/grind";
 import type { Product, ProductVariant } from "@/lib/types";
 
 type Props = {
@@ -20,6 +20,8 @@ export function ProductBuyBox({ product }: Props) {
     variants[0]?.id ?? null,
   );
   const [grind, setGrind] = useState<GrindValue>("whole_bean");
+
+  const showGrind = supportsGrind(product.kind);
 
   const selected: ProductVariant | undefined =
     variants.find((v) => v.id === variantId) || variants[0];
@@ -68,30 +70,32 @@ export function ProductBuyBox({ product }: Props) {
         </div>
       ) : null}
 
-      <div>
-        <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
-          Öğütme tercihi
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {GRIND_OPTIONS.map((g) => {
-            const active = grind === g.value;
-            return (
-              <button
-                key={g.value}
-                type="button"
-                onClick={() => setGrind(g.value)}
-                className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
-                  active
-                    ? "border-primary bg-primary text-white"
-                    : "border-outline-variant/40 hover:border-primary"
-                }`}
-              >
-                {g.label}
-              </button>
-            );
-          })}
+      {showGrind ? (
+        <div>
+          <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
+            Öğütme tercihi
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {GRIND_OPTIONS.map((g) => {
+              const active = grind === g.value;
+              return (
+                <button
+                  key={g.value}
+                  type="button"
+                  onClick={() => setGrind(g.value)}
+                  className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-white"
+                      : "border-outline-variant/40 hover:border-primary"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="flex items-end justify-between gap-4">
         <div>
@@ -124,7 +128,7 @@ export function ProductBuyBox({ product }: Props) {
           <AddToCartButton
             productId={product.id}
             variantId={selected?.id}
-            grindOption={grind}
+            grindOption={showGrind ? grind : null}
             disabled={disabled}
             productName={product.name}
             price={Number(displayPrice)}

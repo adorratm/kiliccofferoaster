@@ -18,7 +18,7 @@ import {
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
-import { grindLabel } from '../../lib/grind';
+import { grindLabel, supportsGrind } from '../../lib/grind';
 import { btn, btnText, colors, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Cart'>;
@@ -123,7 +123,12 @@ export function CartScreen({ navigation }: Props) {
                   {item.product?.name || 'Ürün'}
                 </Text>
                 <Text style={[muted, { marginTop: 4 }]}>
-                  {[item.variant?.weightLabel, item.grindOption ? grindLabel(item.grindOption) : null]
+                  {[
+                    item.variant?.weightLabel,
+                    supportsGrind(item.product?.kind) && item.grindOption
+                      ? grindLabel(item.grindOption)
+                      : null,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </Text>

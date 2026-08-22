@@ -20,7 +20,7 @@ type Props = {
 export function AddToCartButton({
   productId,
   variantId,
-  grindOption = "whole_bean",
+  grindOption,
   label = "Satın Almayı Başlat",
   className,
   disabled = false,
@@ -39,7 +39,7 @@ export function AddToCartButton({
       await cartAddItem({
         productId,
         variantId,
-        grindOption,
+        grindOption: grindOption ?? null,
         quantity: 1,
       });
       trackAddToCart({

@@ -15,7 +15,7 @@ import {
 import { setCartGuestEmail } from "@/lib/api";
 import { getToken, isAuthenticated } from "@/lib/auth";
 import { formatMoney, productImage } from "@/lib/format";
-import { grindLabel } from "@/lib/grind";
+import { grindLabel, supportsGrind } from "@/lib/grind";
 import type { Cart } from "@/lib/types";
 
 export default function CartPage() {
@@ -137,7 +137,9 @@ export default function CartPage() {
               );
               const meta = [
                 item.variant?.weightLabel,
-                grindLabel(item.grindOption),
+                supportsGrind(item.product?.kind)
+                  ? grindLabel(item.grindOption)
+                  : null,
                 item.product?.roastLevel,
               ]
                 .filter(Boolean)
