@@ -36,11 +36,17 @@ export function SettingsPage() {
   const [requests, setRequests] = useState<OpsAccessRequest[]>([]);
   const [reqMsg, setReqMsg] = useState('');
   const [reqBusy, setReqBusy] = useState<string | null>(null);
-  const isAdmin = getUser()?.role === 'admin';
+  const [isAdmin, setIsAdmin] = useState(() => getUser()?.role === 'admin');
 
   async function loadRequests() {
-    if (!isAdmin) return;
     try {
+      const me = await api<{ role: string; hasPassword?: boolean }>('/auth/me');
+      setIsAdmin(me.role === 'admin');
+      setHasPassword(Boolean(me.hasPassword));
+      if (me.role !== 'admin') {
+        setRequests([]);
+        return;
+      }
       const list = await api<OpsAccessRequest[]>('/auth/ops-access-requests');
       setRequests(list);
     } catch {
@@ -56,12 +62,6 @@ export function SettingsPage() {
         einvoicePrefix: '',
       });
     });
-    void api<{ hasPassword?: boolean }>('/auth/me')
-      .then((me) => setHasPassword(Boolean(me.hasPassword)))
-      .catch(() => {
-        const local = getUser();
-        setHasPassword(Boolean(local?.hasPassword));
-      });
     void window.ops?.getAppVersion?.().then(setAppVersion).catch(() => {});
     void loadRequests();
   }, []);
@@ -248,6 +248,10 @@ export function SettingsPage() {
             </ul>
           )}
           {reqMsg ? <p className="mt-3 text-sm text-muted">{reqMsg}</p> : null}
+          <p className="mt-3 text-xs text-muted">
+            Aynı liste sol menüde <span className="text-accent">Personel onayları</span> altında da
+            var.
+          </p>
         </div>
       ) : null}
 

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { clearSession, getUser, isOnline } from '../lib/api';
+import { api, clearSession, getToken, getUser, isOnline, setSession } from '../lib/api';
 import { flushOutbox, pendingCount, pullAll } from '../lib/sync';
 import { OpsSearch } from './OpsSearch';
 import { NotificationBell } from './NotificationBell';
 
-const NAV: { title: string; items: { to: string; label: string; code: string }[] }[] = [
+type NavItem = { to: string; label: string; code: string; adminOnly?: boolean };
+
+const NAV: { title: string; items: NavItem[] }[] = [
   {
     title: 'Muhasebe',
     items: [
@@ -36,16 +38,41 @@ const NAV: { title: string; items: { to: string; label: string; code: string }[]
   },
   {
     title: 'Sistem',
-    items: [{ to: '/ayarlar', label: 'Ayarlar', code: '18' }, { to: '/bildirimler', label: 'Bildirimler', code: '19' }],
+    items: [
+      { to: '/personel-talepleri', label: 'Personel onayları', code: '17b', adminOnly: true },
+      { to: '/ayarlar', label: 'Ayarlar', code: '18' },
+      { to: '/bildirimler', label: 'Bildirimler', code: '19' },
+    ],
   },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const user = getUser();
+  const [user, setUser] = useState(() => getUser());
+  const isAdmin = user?.role === 'admin';
   const [online, setOnline] = useState(isOnline());
   const [pending, setPending] = useState(0);
   const [syncMsg, setSyncMsg] = useState('');
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    void api<{
+      id: string;
+      email: string;
+      role: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      hasPassword?: boolean;
+    }>('/auth/me')
+      .then((me) => {
+        setSession(token, me);
+        setUser(me);
+      })
+      .catch(() => {
+        setUser(getUser());
+      });
+  }, []);
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -91,21 +118,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <p className="mono px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-muted">
                 {group.title}
               </p>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/'}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 text-sm ${
-                      isActive ? 'bg-accent text-white' : 'text-foreground/80 hover:bg-surface-high'
-                    }`
-                  }
-                >
-                  <span className="mono text-[10px] opacity-70">{item.code}</span>
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
+              {group.items
+                .filter((item) => !item.adminOnly || isAdmin)
+                .map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/'}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2 text-sm ${
+                        isActive
+                          ? 'bg-accent text-white'
+                          : 'text-foreground/80 hover:bg-surface-high'
+                      }`
+                    }
+                  >
+                    <span className="mono text-[10px] opacity-70">{item.code}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
             </div>
           ))}
         </nav>
@@ -118,9 +149,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-border-muted px-6 py-3">
-          <p className="mono hidden shrink-0 text-[10px] uppercase tracking-[0.16em] text-muted lg:block">
-            {user?.email}
-          </p>
+          <div className="hidden shrink-0 lg:block">
+            <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">{user?.email}</p>
+            {user?.role ? (
+              <p className="mono text-[10px] uppercase text-accent">{user.role}</p>
+            ) : null}
+          </div>
           <OpsSearch />
           <NotificationBell />
           <button
