@@ -321,10 +321,12 @@ function ProductsPageInner() {
     setSaving(true);
     setError(null);
     const variants = form.variants
-      .filter((v) => v.sku.trim() && v.weightLabel.trim() && v.price)
-      .map((v) => ({
+      .filter((v) => v.weightLabel.trim() && String(v.price).trim())
+      .map((v, i) => ({
         ...(v.id ? { id: v.id } : {}),
-        sku: v.sku.trim(),
+        sku:
+          v.sku.trim() ||
+          `${slugify(form.name) || 'urun'}-${slugify(v.weightLabel) || i + 1}`.toUpperCase(),
         weightLabel: v.weightLabel.trim(),
         price: String(v.price),
         stock: Number(v.stock) || 0,
@@ -943,7 +945,7 @@ function ProductsPageInner() {
                 className="grid gap-2 border border-border-muted/60 p-2 md:grid-cols-5"
               >
                 <input
-                  placeholder="SKU"
+                  placeholder="SKU (boş bırakılırsa otomatik)"
                   value={v.sku}
                   onChange={(e) =>
                     setForm((f) => {
