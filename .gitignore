@@ -40,9 +40,11 @@ GoogleService-Info.plist
 frontend/public/downloads/*
 !frontend/public/downloads/README.md
 release
+# Desktop: only build outputs. Do NOT ignore desktop/ — EAS uploads respect
+# .gitignore and must include desktop/package.json for yarn workspaces.
 desktop/release
-desktop/resources
-desktop/
-desktop/*
+desktop/release-build
+desktop/out
+desktop/dist
 tmp-ico/
 scripts/
