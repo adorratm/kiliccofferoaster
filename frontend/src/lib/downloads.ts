@@ -14,8 +14,12 @@ export const DOWNLOADS = {
   windows:
     process.env.NEXT_PUBLIC_DOWNLOAD_WINDOWS ||
     "/downloads/KilicCoffeeRoaster-Setup.exe",
-  mac: process.env.NEXT_PUBLIC_DOWNLOAD_MAC || "",
-  linux: process.env.NEXT_PUBLIC_DOWNLOAD_LINUX || "",
+  mac:
+    process.env.NEXT_PUBLIC_DOWNLOAD_MAC ||
+    "/downloads/KilicCoffeeRoaster.dmg",
+  linux:
+    process.env.NEXT_PUBLIC_DOWNLOAD_LINUX ||
+    "/downloads/KilicCoffeeRoaster.AppImage",
   androidApk: process.env.NEXT_PUBLIC_DOWNLOAD_ANDROID || "",
   playStore: process.env.NEXT_PUBLIC_PLAY_STORE_URL || "",
   appStore: process.env.NEXT_PUBLIC_APP_STORE_URL || "",

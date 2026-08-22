@@ -98,6 +98,12 @@ services:
         AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
         AWS_REGION: ${AWS_REGION:-eu-central-1}
         AWS_CDN_URL: ${AWS_CDN_URL:-}
+        NEXT_PUBLIC_DOWNLOAD_WINDOWS: ${NEXT_PUBLIC_DOWNLOAD_WINDOWS:-/downloads/KilicCoffeeRoaster-Setup.exe}
+        NEXT_PUBLIC_DOWNLOAD_MAC: ${NEXT_PUBLIC_DOWNLOAD_MAC:-}
+        NEXT_PUBLIC_DOWNLOAD_LINUX: ${NEXT_PUBLIC_DOWNLOAD_LINUX:-}
+        NEXT_PUBLIC_DOWNLOAD_ANDROID: ${NEXT_PUBLIC_DOWNLOAD_ANDROID:-}
+        NEXT_PUBLIC_PLAY_STORE_URL: ${NEXT_PUBLIC_PLAY_STORE_URL:-}
+        NEXT_PUBLIC_APP_STORE_URL: ${NEXT_PUBLIC_APP_STORE_URL:-}
     container_name: kiliccoffee-prod-frontend
     restart: unless-stopped
     depends_on:
