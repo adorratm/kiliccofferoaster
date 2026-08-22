@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
 export type UpdateCheckResult =
@@ -24,33 +25,67 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+function diagSuffix(): string {
+  const parts = [
+    Updates.channel ? `kanal=${Updates.channel}` : 'kanal=yok',
+    Updates.runtimeVersion ? `runtime=${Updates.runtimeVersion}` : null,
+  ].filter(Boolean);
+  return parts.length ? ` (${parts.join(', ')})` : '';
+}
+
+function isDevClientBuild(): boolean {
+  // developmentClient profili / Expo Go
+  const env = Constants.executionEnvironment;
+  if (env === 'storeClient') return true;
+  // channel null + updates "enabled" gibi görünen bozuk native yapılandırmalar
+  if (!__DEV__ && Updates.isEnabled && !Updates.channel) return true;
+  return false;
+}
+
 function errorMessage(e: unknown): string {
+  const suffix = diagSuffix();
+
   if (e instanceof Error && e.message && e.message !== 'undefined') {
     const msg = e.message.trim();
-    // Native: "err_updates_check: undefined reason" / empty localizedDescription
-    if (/err_updates_check/i.test(msg) && /undefined/i.test(msg)) {
-      return 'Güncelleme sunucusuna ulaşılamadı. Yeni bir store/EAS derlemesi gerekebilir.';
+    if (/err_updates_check|ERR_UPDATES_CHECK/i.test(msg)) {
+      if (isDevClientBuild() || !Updates.channel) {
+        return `OTA bu derlemede çalışmıyor. preview veya production profiliyle kurulan APK/IPA kullanın; development client’ta güncelleme yok.${suffix}`;
+      }
+      return `Güncelleme sunucusuna ulaşılamadı. Kanalda henüz publish yoksa veya runtime uyuşmuyorsa da olur. Önce: eas update --channel ${Updates.channel || 'preview'}${suffix}`;
     }
-    if (msg && msg !== 'undefined reason') return msg;
+    if (/ERR_NOT_AVAILABLE_IN_DEV_CLIENT|ERR_UPDATES_DISABLED/i.test(msg)) {
+      return `Bu derlemede OTA kapalı (development / Expo Go).${suffix}`;
+    }
+    if (msg && msg !== 'undefined reason' && !/^undefined$/i.test(msg)) {
+      return `${msg}${suffix}`;
+    }
   }
+
   if (e && typeof e === 'object') {
-    const any = e as { code?: string; message?: string; reason?: string };
-    if (any.message && any.message !== 'undefined') return any.message;
+    const any = e as { code?: string; message?: string };
+    if (any.code === 'ERR_NOT_AVAILABLE_IN_DEV_CLIENT' || any.code === 'ERR_UPDATES_DISABLED') {
+      return `Bu derlemede OTA kapalı.${suffix}`;
+    }
     if (any.code === 'ERR_UPDATES_CHECK' || any.code === 'ERR_UPDATES_FETCH') {
-      return 'Güncelleme kontrolü başarısız (sunucu veya kanal yapılandırması).';
+      if (!Updates.channel) {
+        return `OTA kanalı gömülü değil — development client olabilir. preview/production build kullanın.${suffix}`;
+      }
+      return `Güncelleme kontrolü başarısız. eas update --channel ${Updates.channel} ile bir OTA yayınlayın.${suffix}`;
     }
-    if (any.code === 'ERR_UPDATES_DISABLED' || any.code === 'ERR_NOT_AVAILABLE_IN_DEV_CLIENT') {
-      return 'Bu derlemede OTA güncelleme kapalı.';
-    }
+    if (any.message && any.message !== 'undefined') return `${any.message}${suffix}`;
   }
-  return 'Güncelleme kontrolü başarısız.';
+
+  return `Güncelleme kontrolü başarısız.${suffix}`;
 }
 
 export async function runUpdateCheck(opts?: {
   onStatus?: (status: string) => void;
 }): Promise<UpdateCheckResult> {
-  // Dev client / Expo Go: native check throws noisy errors
-  if (__DEV__ || !Updates.isEnabled) {
+  if (__DEV__) {
+    return { kind: 'disabled' };
+  }
+
+  if (!Updates.isEnabled || isDevClientBuild()) {
     return { kind: 'disabled' };
   }
 
@@ -66,7 +101,6 @@ export async function runUpdateCheck(opts?: {
     await Updates.reloadAsync();
     return { kind: 'applied' };
   } catch (e) {
-    // Açılışı engelleme — sessizce devam; manuel kontrol mesajı gösterir
     return {
       kind: 'error',
       message: errorMessage(e),
@@ -78,9 +112,15 @@ export async function manualUpdateCheck(): Promise<string> {
   const result = await runUpdateCheck();
   switch (result.kind) {
     case 'disabled':
-      return 'Geliştirme derlemesinde OTA kapalı.';
+      if (__DEV__) {
+        return 'Metro / geliştirme oturumunda OTA kapalı. Store veya preview/production APK’da deneyin.';
+      }
+      if (!Updates.channel) {
+        return 'Bu derlemede EAS Update kanalı yok (genelde development client). eas build --profile preview veya production ile kurun.';
+      }
+      return 'Bu derlemede OTA kapalı.';
     case 'up-to-date':
-      return 'Uygulama güncel.';
+      return `Uygulama güncel.${diagSuffix()}`;
     case 'applied':
       return 'Güncelleme uygulandı.';
     case 'error':
