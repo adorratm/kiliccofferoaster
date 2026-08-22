@@ -16,7 +16,7 @@
     "pack:win": "node ../scripts/make-desktop-ico.cjs && electron-vite build && electron-builder --win nsis",
     "pack:mac": "electron-vite build && electron-builder --mac dmg",
     "pack:linux": "electron-vite build && electron-builder --linux AppImage deb",
-    "postinstall": "node ../scripts/download-electron.cjs"
+    "postinstall": "node ./scripts/postinstall.cjs"
   },
   "dependencies": {
     "@kilic/accounting-contracts": "workspace:*",
