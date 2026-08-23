@@ -12,9 +12,19 @@ import {
 } from '@modules/gallery/dto/gallery.dto';
 import { InstagramService } from '@modules/gallery/instagram.service';
 
+export type PublicStoryItem = {
+  id: string;
+  mediaUrl: string;
+  thumbnailUrl: string | null;
+  permalink: string | null;
+  mediaType: string;
+  publishedAt: string | null;
+};
+
 export type PublicGalleryResponse = {
   instagram: GalleryItem[];
   uploads: GalleryItem[];
+  stories: PublicStoryItem[];
   instagramProfile: string;
   instagramConfigured: boolean;
   instagramSyncedAt: string | null;
@@ -46,13 +56,35 @@ export class GalleryService {
       .orderBy('g.updated_at', 'DESC')
       .getOne();
 
+    const stories = await this.loadLiveStories();
+
     return {
       instagram,
       uploads,
+      stories,
       instagramProfile: this.instagram.profileUrl(),
       instagramConfigured: this.instagram.isConfigured(),
       instagramSyncedAt: lastIg?.updatedAt?.toISOString() ?? null,
     };
+  }
+
+  private async loadLiveStories(): Promise<PublicStoryItem[]> {
+    if (!this.instagram.isConfigured()) return [];
+    const remote = await this.instagram.fetchStories();
+    return remote
+      .map((row) => {
+        const mediaUrl = row.media_url || row.thumbnail_url;
+        if (!mediaUrl) return null;
+        return {
+          id: row.id,
+          mediaUrl,
+          thumbnailUrl: row.thumbnail_url || null,
+          permalink: row.permalink || null,
+          mediaType: row.media_type || 'IMAGE',
+          publishedAt: row.timestamp || null,
+        } satisfies PublicStoryItem;
+      })
+      .filter((row): row is PublicStoryItem => Boolean(row));
   }
 
   async findAllAdmin(): Promise<GalleryItem[]> {

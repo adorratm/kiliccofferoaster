@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { AppImage as Image } from "@/components/AppImage";
+import { MediaLightbox } from "@/components/MediaLightbox";
 import { Reveal } from "@/components/Reveal";
 import {
   galleryCaption,
@@ -12,22 +14,28 @@ type Props = {
   items: GalleryItem[];
   profileUrl?: string;
   emptyMessage?: string;
+  /** Instagram: dış link. Upload: lightbox. */
+  mode?: "link" | "lightbox";
   linkTarget?: "_blank";
 };
 
 function MediaTile({
   item,
   index,
+  mode,
   linkTarget,
+  onOpen,
 }: {
   item: GalleryItem;
   index: number;
+  mode: "link" | "lightbox";
   linkTarget?: "_blank";
+  onOpen: (index: number) => void;
 }) {
   const href =
-    item.source === "instagram"
-      ? item.permalink || item.mediaUrl
-      : item.permalink || null;
+    mode === "link"
+      ? item.permalink || (item.source === "instagram" ? item.mediaUrl : null)
+      : null;
   const caption = galleryCaption(item);
   const isVideo = item.mediaType === "VIDEO";
 
@@ -42,8 +50,13 @@ function MediaTile({
       />
       <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/90 via-background/20 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       {isVideo ? (
-        <span className="absolute right-3 top-3 rounded-full border border-white/30 bg-black/50 px-2 py-0.5 font-meta text-[9px] uppercase tracking-widest text-white">
+        <span className="absolute right-3 top-3 border border-white/30 bg-black/50 px-2 py-0.5 font-meta text-[9px] uppercase tracking-widest text-white">
           Video
+        </span>
+      ) : null}
+      {mode === "lightbox" ? (
+        <span className="absolute left-3 top-3 border border-white/20 bg-black/40 px-2 py-0.5 font-meta text-[9px] uppercase tracking-widest text-white opacity-0 transition group-hover:opacity-100">
+          Büyüt
         </span>
       ) : null}
       {caption ? (
@@ -66,7 +79,13 @@ function MediaTile({
           {inner}
         </a>
       ) : (
-        inner
+        <button
+          type="button"
+          onClick={() => onOpen(index)}
+          className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          {inner}
+        </button>
       )}
     </Reveal>
   );
@@ -76,8 +95,11 @@ export function MediaGallerySection({
   items,
   profileUrl,
   emptyMessage = "Henüz içerik yok.",
+  mode = "link",
   linkTarget = "_blank",
 }: Props) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   if (!items.length) {
     return (
       <Reveal>
@@ -103,15 +125,28 @@ export function MediaGallerySection({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
-      {items.map((item, i) => (
-        <MediaTile
-          key={item.id}
-          item={item}
-          index={i}
-          linkTarget={linkTarget}
+    <>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+        {items.map((item, i) => (
+          <MediaTile
+            key={item.id}
+            item={item}
+            index={i}
+            mode={mode}
+            linkTarget={linkTarget}
+            onOpen={setOpenIndex}
+          />
+        ))}
+      </div>
+
+      {mode === "lightbox" && openIndex != null ? (
+        <MediaLightbox
+          items={items}
+          index={openIndex}
+          onClose={() => setOpenIndex(null)}
+          onIndexChange={setOpenIndex}
         />
-      ))}
-    </div>
+      ) : null}
+    </>
   );
 }

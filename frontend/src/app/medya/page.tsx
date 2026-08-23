@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { MediaGallerySection } from "@/components/MediaGallerySection";
+import { MediaStoriesStrip } from "@/components/MediaStoriesStrip";
 import { Reveal } from "@/components/Reveal";
 import {
   getContentSections,
@@ -15,6 +16,7 @@ type MediaHeader = {
   title: string;
   subtitle: string;
   instagramLabel: string;
+  storiesLabel: string;
   uploadsLabel: string;
 };
 
@@ -24,6 +26,7 @@ const FALLBACK_HEADER: MediaHeader = {
   subtitle:
     "Kavrum anları, batch notları ve atölye yaşamından kareler. Instagram paylaşımlarımız ve seçilmiş görseller.",
   instagramLabel: "Instagram",
+  storiesLabel: "Hikayeler",
   uploadsLabel: "Atölyeden",
 };
 
@@ -32,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "Medya",
     description:
-      "Kılıç Coffee Roaster Instagram paylaşımları ve atölyeden seçilmiş görseller.",
+      "Kılıç Coffee Roaster Instagram paylaşımları, hikayeler ve atölyeden seçilmiş görseller.",
     path: "/medya",
     settings,
     keywords: ["Kılıç Coffee medya", "Instagram", "kavrum atölyesi", "Torbalı"],
@@ -81,11 +84,34 @@ export default async function MediaPage() {
         ) : null}
       </Reveal>
 
+      <section className="mb-16">
+        <Reveal className="mb-8">
+          <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
+            02 // {header.storiesLabel || FALLBACK_HEADER.storiesLabel}
+          </p>
+          <h2 className="mt-2 font-display text-3xl md:text-4xl">
+            Instagram hikayeleri
+          </h2>
+          <p className="mt-3 max-w-xl font-meta text-[11px] uppercase leading-relaxed text-secondary">
+            Son 24 saatteki aktif hikayeler — tıklayınca büyük görünüm.
+          </p>
+        </Reveal>
+        <MediaStoriesStrip
+          stories={gallery.stories}
+          profileUrl={instagramUrl}
+          emptyMessage={
+            gallery.instagramConfigured
+              ? "Şu an aktif Instagram hikayesi yok."
+              : "Instagram hikayeleri yakında burada olacak."
+          }
+        />
+      </section>
+
       <section className="mb-20">
         <Reveal className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
-              02 // {header.instagramLabel}
+              03 // {header.instagramLabel}
             </p>
             <h2 className="mt-2 font-display text-3xl md:text-4xl">
               Instagram paylaşımları
@@ -101,6 +127,7 @@ export default async function MediaPage() {
         <MediaGallerySection
           items={gallery.instagram}
           profileUrl={instagramUrl}
+          mode="lightbox"
           emptyMessage={
             gallery.instagramConfigured
               ? "Instagram gönderileri henüz senkronize edilmedi."
@@ -112,19 +139,19 @@ export default async function MediaPage() {
       <section>
         <Reveal className="mb-8">
           <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
-            03 // {header.uploadsLabel}
+            04 // {header.uploadsLabel}
           </p>
           <h2 className="mt-2 font-display text-3xl md:text-4xl">
             Atölyeden seçkiler
           </h2>
           <p className="mt-3 max-w-xl font-meta text-[11px] uppercase leading-relaxed text-secondary">
-            Panelden yüklenen görseller — kavrum, paketleme ve atölye anları.
+            Kavrum, paketleme ve atölye anları — tıklayınca büyük görünüm.
           </p>
         </Reveal>
         <MediaGallerySection
           items={gallery.uploads}
+          mode="lightbox"
           emptyMessage="Henüz atölye görseli eklenmedi."
-          linkTarget={undefined}
         />
       </section>
     </div>

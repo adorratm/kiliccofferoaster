@@ -49,6 +49,7 @@ export class GalleryItems1788000000000 implements MigrationInterface {
           subtitle:
             'Kavrum anları, batch notları ve atölye yaşamından kareler. Instagram paylaşımlarımız ve seçilmiş görseller.',
           instagramLabel: 'Instagram',
+          storiesLabel: 'Hikayeler',
           uploadsLabel: 'Atölyeden',
         },
       },
