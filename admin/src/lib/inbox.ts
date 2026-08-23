@@ -28,9 +28,8 @@ export function connectNotifySocket(): Socket | null {
   if (!token) return null;
   return io(`${API_URL}/notify`, {
     auth: { token },
-    transports: ['polling', 'websocket'],
-    upgrade: true,
-    rememberUpgrade: false,
+    transports: ['polling'],
+    upgrade: false,
     reconnection: true,
     reconnectionAttempts: 8,
   });

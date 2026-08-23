@@ -7,10 +7,9 @@ import type { InboxItem } from "@/lib/api";
 export function connectNotifySocket(token: string): Socket {
   return io(`${API_BASE}/notify`, {
     auth: { token },
-    // Cloudflare/nginx arkasında önce polling; WS upgrade varsa yükselir
-    transports: ["polling", "websocket"],
-    upgrade: true,
-    rememberUpgrade: false,
+    // Prod: nginx/CF WS upgrade henüz güvenilir değil — polling yeterli
+    transports: ["polling"],
+    upgrade: false,
     reconnection: true,
     reconnectionAttempts: 8,
   });

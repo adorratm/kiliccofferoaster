@@ -27,9 +27,8 @@ export async function connectNotifySocket(): Promise<Socket | null> {
   const base = await apiUrl();
   return io(`${base}/notify`, {
     auth: { token },
-    transports: ['polling', 'websocket'],
-    upgrade: true,
-    rememberUpgrade: false,
+    transports: ['polling'],
+    upgrade: false,
     reconnection: true,
     reconnectionAttempts: 8,
   });

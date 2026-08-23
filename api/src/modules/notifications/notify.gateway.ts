@@ -18,6 +18,7 @@ import { InAppNotification } from '@entities/in-app-notification.entity';
 @WebSocketGateway({
   cors: { origin: true, credentials: true },
   namespace: '/notify',
+  transports: ['polling'],
 })
 export class NotifyGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(NotifyGateway.name);

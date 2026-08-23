@@ -31,6 +31,7 @@ export type TrackUpdatePayload = {
     credentials: true,
   },
   namespace: '/tracking',
+  transports: ['polling'],
 })
 export class TrackingGateway {
   private readonly logger = new Logger(TrackingGateway.name);
