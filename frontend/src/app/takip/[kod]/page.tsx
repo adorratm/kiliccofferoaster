@@ -71,7 +71,9 @@ export default function TrackingPage() {
     }
 
     const socket = io(`${API_BASE}/tracking`, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
+      upgrade: true,
+      rememberUpgrade: false,
       autoConnect: true,
     });
     socketRef.current = socket;

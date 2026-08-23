@@ -39,7 +39,11 @@ export async function connectNotifySocket(): Promise<Socket | null> {
   if (!token) return null;
   return io(`${API_URL}/notify`, {
     auth: { token },
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
+    upgrade: true,
+    rememberUpgrade: false,
+    reconnection: true,
+    reconnectionAttempts: 8,
   });
 }
 

@@ -128,6 +128,21 @@ server {
     client_max_body_size 20M;
     add_header X-Content-Type-Options "nosniff" always;
 
+    # Socket.IO — ayrı location (Upgrade header zorunlu)
+    location /socket.io/ {
+        proxy_pass http://@API_HOST@:@API_PORT@;
+        proxy_http_version 1.1;
+        proxy_set_header Host $${host};
+        proxy_set_header X-Real-IP $${remote_addr};
+        proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
+        proxy_set_header X-Forwarded-Proto $${scheme};
+        proxy_set_header Upgrade $${http_upgrade};
+        proxy_set_header Connection $${kiliccoffee_connection_upgrade};
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+        proxy_buffering off;
+    }
+
     location / {
         proxy_pass http://@API_HOST@:@API_PORT@;
         proxy_http_version 1.1;
@@ -135,7 +150,6 @@ server {
         proxy_set_header X-Real-IP $${remote_addr};
         proxy_set_header X-Forwarded-For $${proxy_add_x_forwarded_for};
         proxy_set_header X-Forwarded-Proto $${scheme};
-        # Socket.IO / WebSocket (notify, tracking)
         proxy_set_header Upgrade $${http_upgrade};
         proxy_set_header Connection $${kiliccoffee_connection_upgrade};
         proxy_read_timeout 86400;
