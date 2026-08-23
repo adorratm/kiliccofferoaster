@@ -14,6 +14,7 @@ import { CategorySeo1785000000000 } from './1785000000000-CategorySeo';
 import { UserIdentities1786000000000 } from './1786000000000-UserIdentities';
 import { OpsAccessRequest1787000000000 } from './1787000000000-OpsAccessRequest';
 import { GalleryItems1788000000000 } from './1788000000000-GalleryItems';
+import { GalleryUrlText1789000000000 } from './1789000000000-GalleryUrlText';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -36,4 +37,5 @@ export const ALL_MIGRATIONS = [
   UserIdentities1786000000000,
   OpsAccessRequest1787000000000,
   GalleryItems1788000000000,
+  GalleryUrlText1789000000000,
 ];

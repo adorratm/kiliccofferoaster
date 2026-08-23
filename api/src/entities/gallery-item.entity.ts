@@ -12,13 +12,14 @@ export class GalleryItem extends BaseEntity {
   @Column({ name: 'instagram_id', type: 'varchar', length: 64, nullable: true })
   instagramId!: string | null;
 
-  @Column({ name: 'media_url', type: 'varchar', length: 800 })
+  /** Instagram CDN URL'leri 800+ olabiliyor (özellikle VIDEO). */
+  @Column({ name: 'media_url', type: 'text' })
   mediaUrl!: string;
 
-  @Column({ name: 'thumbnail_url', type: 'varchar', length: 800, nullable: true })
+  @Column({ name: 'thumbnail_url', type: 'text', nullable: true })
   thumbnailUrl!: string | null;
 
-  @Column({ type: 'varchar', length: 800, nullable: true })
+  @Column({ type: 'text', nullable: true })
   permalink!: string | null;
 
   @Column({ type: 'text', nullable: true })

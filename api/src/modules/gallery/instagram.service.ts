@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 type IgMedia = {
@@ -55,9 +59,11 @@ export class InstagramService {
       const res = await fetch(nextUrl);
       const json = (await res.json()) as IgMediaResponse;
       if (!res.ok || json.error) {
-        this.logger.warn(
-          `Instagram API: ${json.error?.message || res.statusText}`,
-        );
+        const msg = json.error?.message || res.statusText || 'Instagram API hatası';
+        this.logger.warn(`Instagram API: ${msg}`);
+        if (items.length === 0) {
+          throw new BadRequestException(`Instagram API: ${msg}`);
+        }
         break;
       }
       for (const row of json.data || []) {
