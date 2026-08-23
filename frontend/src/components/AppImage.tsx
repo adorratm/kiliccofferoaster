@@ -1,35 +1,67 @@
 import Image, { type ImageProps } from "next/image";
 
-/** Hotlink / optimizer uyumsuz hostlar — doğrudan CDN URL. */
-function shouldBypassOptimizer(src: ImageProps["src"]) {
-  if (typeof src !== "string") return false;
+function hostnameOf(src: ImageProps["src"]): string | null {
+  if (typeof src !== "string" || !/^https?:\/\//i.test(src)) return null;
   try {
-    if (!/^https?:\/\//i.test(src)) return false;
-    const host = new URL(src).hostname.toLowerCase();
-    return (
-      host === "amazonaws.com" ||
-      host.endsWith(".amazonaws.com") ||
-      host === "cdninstagram.com" ||
-      host.endsWith(".cdninstagram.com") ||
-      host === "fbcdn.net" ||
-      host.endsWith(".fbcdn.net") ||
-      host === "instagram.com" ||
-      host.endsWith(".instagram.com")
-    );
+    return new URL(src).hostname.toLowerCase();
   } catch {
-    return (
-      src.includes("amazonaws.com") ||
-      src.includes("cdninstagram.com") ||
-      src.includes("fbcdn.net")
-    );
+    return null;
   }
 }
 
+function isS3Host(host: string) {
+  return host === "amazonaws.com" || host.endsWith(".amazonaws.com");
+}
+
+/** Instagram/Meta CDN — kendi CORS’umuz yok; native img. */
+function isInstagramCdn(host: string) {
+  return (
+    host === "cdninstagram.com" ||
+    host.endsWith(".cdninstagram.com") ||
+    host === "fbcdn.net" ||
+    host.endsWith(".fbcdn.net") ||
+    host === "instagram.com" ||
+    host.endsWith(".instagram.com")
+  );
+}
+
 /**
- * next/image sarmalayıcı: S3 / Instagram CDN’de unoptimized (doğrudan URL).
- * Diğer uzak görseller optimize edilmeye devam eder.
+ * S3: next/image (bucket CORS + unoptimized).
+ * Instagram CDN: native <img> (Meta CORS vermez).
  */
 export function AppImage({ unoptimized, ...props }: ImageProps) {
-  const bypass = shouldBypassOptimizer(props.src);
-  return <Image {...props} unoptimized={unoptimized ?? bypass} />;
+  const host = hostnameOf(props.src);
+  const src = props.src;
+
+  if (host && isInstagramCdn(host) && typeof src === "string") {
+    const { alt, className, fill, width, height, style, priority, loading } =
+      props;
+    const imgClass = fill
+      ? ["absolute inset-0 h-full w-full", className].filter(Boolean).join(" ")
+      : className;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- IG CDN CORS yok
+      <img
+        src={src}
+        alt={alt || ""}
+        width={fill ? undefined : width}
+        height={fill ? undefined : height}
+        className={imgClass}
+        style={style}
+        loading={loading ?? (priority ? "eager" : "lazy")}
+        decoding="async"
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
+  const s3 = Boolean(host && isS3Host(host));
+  return (
+    <Image
+      {...props}
+      unoptimized={unoptimized ?? s3}
+      // Bucket CORS ile anonymous OK; S3 dışı default
+      crossOrigin={s3 ? "anonymous" : props.crossOrigin}
+    />
+  );
 }
