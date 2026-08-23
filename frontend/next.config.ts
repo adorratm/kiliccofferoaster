@@ -14,6 +14,17 @@ function imageRemotePatterns() {
         "kilic-coffee-roaster.s3.eu-central-1.amazonaws.com",
       pathname: "/**",
     },
+    // Instagram Graph media / thumbnail CDN (bölgesel alt alanlar)
+    {
+      protocol: "https",
+      hostname: "**.cdninstagram.com",
+      pathname: "/**",
+    },
+    {
+      protocol: "https",
+      hostname: "**.fbcdn.net",
+      pathname: "/**",
+    },
   ];
 
   const cdnUrl = process.env.AWS_CDN_URL || process.env.NEXT_PUBLIC_CDN_URL;
