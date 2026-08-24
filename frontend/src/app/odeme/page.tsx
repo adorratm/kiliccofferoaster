@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   checkout,
+  createAddress,
   getMe,
   getMyAddresses,
   getShippingProviders,
+  updateAddress,
   validateCoupon,
 } from "@/lib/api";
 import { Reveal } from "@/components/Reveal";
@@ -35,6 +37,8 @@ type AddressFields = {
   postalCode: string;
 };
 
+type AddressMode = "saved" | "new";
+
 const emptyAddr = (): AddressFields => ({
   city: "",
   district: "",
@@ -61,6 +65,15 @@ export default function CheckoutPage() {
   const [shippingId, setShippingId] = useState<string>("");
   const [billingId, setBillingId] = useState<string>("");
   const [billingSame, setBillingSame] = useState(true);
+  const [shippingMode, setShippingMode] = useState<AddressMode>("new");
+  const [billingMode, setBillingMode] = useState<AddressMode>("new");
+  const [saveShippingAddress, setSaveShippingAddress] = useState(true);
+  const [saveBillingAddress, setSaveBillingAddress] = useState(false);
+  const [defaultShippingOnSave, setDefaultShippingOnSave] = useState(true);
+  const [defaultBillingOnSave, setDefaultBillingOnSave] = useState(false);
+  const [newShippingTitle, setNewShippingTitle] = useState("Ev");
+  const [newBillingTitle, setNewBillingTitle] = useState("Fatura");
+  const [defaultBusy, setDefaultBusy] = useState(false);
 
   const [form, setForm] = useState({
     customerName: "",
@@ -97,6 +110,11 @@ export default function CheckoutPage() {
         });
       }
 
+      const defShip =
+        addressData.find((a) => a.isDefaultShipping) || addressData[0];
+      const defBill =
+        addressData.find((a) => a.isDefaultBilling) || defShip;
+
       setForm((f) => {
         const next = { ...f };
         if (providerData[0] && !f.shippingProvider) {
@@ -109,23 +127,42 @@ export default function CheckoutPage() {
             f.customerName;
           next.customerPhone = me.phone || f.customerPhone;
         }
+        if (defShip) {
+          next.customerName = defShip.fullName || next.customerName;
+          next.customerPhone = defShip.phone || next.customerPhone;
+          next.shipping = {
+            city: defShip.city,
+            district: defShip.district,
+            neighborhood: defShip.neighborhood || "",
+            addressLine: defShip.addressLine,
+            postalCode: defShip.postalCode,
+          };
+        }
+        if (defBill && defBill.id !== defShip?.id) {
+          next.billing = {
+            city: defBill.city,
+            district: defBill.district,
+            neighborhood: defBill.neighborhood || "",
+            addressLine: defBill.addressLine,
+            postalCode: defBill.postalCode,
+          };
+        }
         return next;
       });
 
-      const defShip =
-        addressData.find((a) => a.isDefaultShipping) || addressData[0];
-      const defBill =
-        addressData.find((a) => a.isDefaultBilling) || defShip;
       if (defShip) {
         setShippingId(defShip.id);
-        applyAddressToShipping(defShip);
+        setShippingMode("saved");
+      } else {
+        setShippingMode("new");
       }
       if (defBill && defBill.id !== defShip?.id) {
         setBillingSame(false);
         setBillingId(defBill.id);
-        applyAddressToBilling(defBill);
+        setBillingMode("saved");
       } else if (defBill) {
         setBillingId(defBill.id);
+        setBillingMode("saved");
       }
 
       setLoading(false);
@@ -160,6 +197,30 @@ export default function CheckoutPage() {
     }));
   }
 
+  function selectSavedShipping(addr: Address) {
+    setShippingMode("saved");
+    setShippingId(addr.id);
+    applyAddressToShipping(addr);
+  }
+
+  function startNewShipping() {
+    setShippingMode("new");
+    setShippingId("");
+    setForm((f) => ({ ...f, shipping: emptyAddr() }));
+  }
+
+  function selectSavedBilling(addr: Address) {
+    setBillingMode("saved");
+    setBillingId(addr.id);
+    applyAddressToBilling(addr);
+  }
+
+  function startNewBilling() {
+    setBillingMode("new");
+    setBillingId("");
+    setForm((f) => ({ ...f, billing: emptyAddr() }));
+  }
+
   function setField<K extends keyof typeof form>(
     key: K,
     value: (typeof form)[K],
@@ -171,7 +232,6 @@ export default function CheckoutPage() {
     key: K,
     value: AddressFields[K],
   ) {
-    setShippingId("");
     setForm((prev) => ({
       ...prev,
       shipping: { ...prev.shipping, [key]: value },
@@ -182,11 +242,88 @@ export default function CheckoutPage() {
     key: K,
     value: AddressFields[K],
   ) {
-    setBillingId("");
     setForm((prev) => ({
       ...prev,
       billing: { ...prev.billing, [key]: value },
     }));
+  }
+
+  async function refreshAddresses() {
+    const token = getToken();
+    if (!token) return;
+    const next = await getMyAddresses(token);
+    setAddresses(next);
+  }
+
+  async function makeDefault(
+    id: string,
+    kind: "shipping" | "billing",
+  ) {
+    const token = getToken();
+    if (!token) return;
+    setDefaultBusy(true);
+    setError(null);
+    try {
+      await updateAddress(
+        token,
+        id,
+        kind === "shipping"
+          ? { isDefaultShipping: true }
+          : { isDefaultBilling: true },
+      );
+      await refreshAddresses();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Varsayılan adres ayarlanamadı",
+      );
+    } finally {
+      setDefaultBusy(false);
+    }
+  }
+
+  async function persistNewAddressesIfNeeded() {
+    const token = getToken();
+    if (!token || !user) return;
+
+    if (shippingMode === "new" && saveShippingAddress) {
+      const created = await createAddress(token, {
+        title: newShippingTitle.trim() || "Teslimat",
+        fullName: form.customerName,
+        phone: form.customerPhone,
+        city: form.shipping.city,
+        district: form.shipping.district,
+        neighborhood: form.shipping.neighborhood || undefined,
+        addressLine: form.shipping.addressLine,
+        postalCode: form.shipping.postalCode,
+        isDefaultShipping: defaultShippingOnSave,
+        isDefaultBilling:
+          billingSame && defaultShippingOnSave
+            ? true
+            : defaultBillingOnSave && billingSame,
+      });
+      setShippingId(created.id);
+      setShippingMode("saved");
+    }
+
+    if (
+      !billingSame &&
+      billingMode === "new" &&
+      saveBillingAddress
+    ) {
+      await createAddress(token, {
+        title: newBillingTitle.trim() || "Fatura",
+        fullName: form.customerName,
+        phone: form.customerPhone,
+        city: form.billing.city,
+        district: form.billing.district,
+        neighborhood: form.billing.neighborhood || undefined,
+        addressLine: form.billing.addressLine,
+        postalCode: form.billing.postalCode,
+        isDefaultBilling: defaultBillingOnSave,
+      });
+    }
+
+    await refreshAddresses();
   }
 
   async function onSubmit(e: FormEvent) {
@@ -198,8 +335,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (shippingMode === "saved" && !shippingId && addresses.length > 0) {
+      setError("Teslimat için kayıtlı bir adres seçin veya yeni adres girin.");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      await persistNewAddressesIfNeeded();
+
       const sessionId = getCartSessionId();
       const shippingAddress = {
         fullName: form.customerName,
@@ -353,12 +497,20 @@ export default function CheckoutPage() {
         <h1 className="font-display text-4xl md:text-6xl">Ödeme</h1>
         {user ? (
           <p className="mt-3 font-meta text-[11px] uppercase text-secondary">
-            Kayıtlı adresleriniz yüklenir. Yönetmek için{" "}
+            Kayıtlı adreslerinizi seçebilir veya yeni ekleyebilirsiniz.{" "}
             <Link href="/hesabim" className="text-primary underline">
               Hesabım
             </Link>
           </p>
-        ) : null}
+        ) : (
+          <p className="mt-3 font-meta text-[11px] uppercase text-secondary">
+            Adres defteri için{" "}
+            <Link href="/giris?next=/odeme" className="text-primary underline">
+              giriş yapın
+            </Link>
+            .
+          </p>
+        )}
       </div>
 
       <form
@@ -398,62 +550,133 @@ export default function CheckoutPage() {
             <h2 className="mb-6 font-display text-2xl">Teslimat adresi</h2>
             {addresses.length > 0 ? (
               <div className="mb-6 space-y-2">
-                {addresses.map((addr) => (
-                  <button
-                    key={addr.id}
-                    type="button"
-                    onClick={() => {
-                      setShippingId(addr.id);
-                      applyAddressToShipping(addr);
-                    }}
-                    className={`w-full border px-4 py-3 text-left font-meta text-[11px] uppercase transition-colors ${
-                      shippingId === addr.id
-                        ? "border-primary text-primary"
-                        : "border-outline-variant/30 text-secondary hover:border-outline"
-                    }`}
-                  >
-                    <span className="font-medium">{addr.title}</span>
-                    {addr.isDefaultShipping ? " · varsayılan" : ""}
-                    <span className="mt-1 block normal-case tracking-normal text-secondary">
-                      {addr.district}, {addr.city}
-                    </span>
-                  </button>
-                ))}
+                {addresses.map((addr) => {
+                  const selected =
+                    shippingMode === "saved" && shippingId === addr.id;
+                  const live =
+                    addresses.find((a) => a.id === addr.id) || addr;
+                  return (
+                    <div
+                      key={addr.id}
+                      className={`border px-4 py-3 transition-colors ${
+                        selected
+                          ? "border-primary"
+                          : "border-outline-variant/30 hover:border-outline"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => selectSavedShipping(addr)}
+                        className={`w-full text-left font-meta text-[11px] uppercase ${
+                          selected ? "text-primary" : "text-secondary"
+                        }`}
+                      >
+                        <span className="font-medium">{addr.title}</span>
+                        {live.isDefaultShipping ? " · varsayılan" : ""}
+                        <span className="mt-1 block normal-case tracking-normal text-secondary">
+                          {addr.fullName} · {addr.addressLine}
+                          <br />
+                          {addr.district}, {addr.city}
+                          {addr.postalCode ? ` · ${addr.postalCode}` : ""}
+                        </span>
+                      </button>
+                      {selected && !live.isDefaultShipping ? (
+                        <button
+                          type="button"
+                          disabled={defaultBusy}
+                          onClick={() => void makeDefault(addr.id, "shipping")}
+                          className="mt-3 font-meta text-[10px] uppercase text-secondary underline hover:text-primary disabled:opacity-50"
+                        >
+                          Varsayılan teslimat yap
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={startNewShipping}
+                  className={`w-full border px-4 py-3 text-left font-meta text-[11px] uppercase transition-colors ${
+                    shippingMode === "new"
+                      ? "border-primary text-primary"
+                      : "border-outline-variant/30 text-secondary hover:border-outline"
+                  }`}
+                >
+                  + Yeni adres ekle
+                </button>
               </div>
             ) : null}
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field
-                label="Şehir"
-                value={form.shipping.city}
-                onChange={(v) => setShippingField("city", v)}
-                required
+
+            {shippingMode === "saved" && shippingId ? (
+              <SelectedAddressSummary
+                address={addresses.find((a) => a.id === shippingId)}
+                fields={form.shipping}
+                name={form.customerName}
+                phone={form.customerPhone}
               />
-              <Field
-                label="İlçe"
-                value={form.shipping.district}
-                onChange={(v) => setShippingField("district", v)}
-                required
-              />
-              <Field
-                label="Mahalle"
-                value={form.shipping.neighborhood}
-                onChange={(v) => setShippingField("neighborhood", v)}
-              />
-              <Field
-                label="Posta Kodu"
-                value={form.shipping.postalCode}
-                onChange={(v) => setShippingField("postalCode", v)}
-                required
-              />
-              <div className="md:col-span-2">
-                <Field
-                  label="Adres"
-                  value={form.shipping.addressLine}
-                  onChange={(v) => setShippingField("addressLine", v)}
-                  required
-                />
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field
+                    label="Şehir"
+                    value={form.shipping.city}
+                    onChange={(v) => setShippingField("city", v)}
+                    required
+                  />
+                  <Field
+                    label="İlçe"
+                    value={form.shipping.district}
+                    onChange={(v) => setShippingField("district", v)}
+                    required
+                  />
+                  <Field
+                    label="Mahalle"
+                    value={form.shipping.neighborhood}
+                    onChange={(v) => setShippingField("neighborhood", v)}
+                  />
+                  <Field
+                    label="Posta Kodu"
+                    value={form.shipping.postalCode}
+                    onChange={(v) => setShippingField("postalCode", v)}
+                    required
+                  />
+                  <div className="md:col-span-2">
+                    <Field
+                      label="Adres"
+                      value={form.shipping.addressLine}
+                      onChange={(v) => setShippingField("addressLine", v)}
+                      required
+                    />
+                  </div>
+                </div>
+                {user ? (
+                  <div className="mt-6 space-y-3 border-t border-outline-variant/20 pt-5">
+                    <Check
+                      checked={saveShippingAddress}
+                      onChange={setSaveShippingAddress}
+                      label={<span>Bu adresi adres defterime kaydet</span>}
+                    />
+                    {saveShippingAddress ? (
+                      <>
+                        <Field
+                          label="Adres başlığı"
+                          value={newShippingTitle}
+                          onChange={setNewShippingTitle}
+                          required
+                        />
+                        <Check
+                          checked={defaultShippingOnSave}
+                          onChange={setDefaultShippingOnSave}
+                          label={
+                            <span>Varsayılan teslimat adresi olarak tanımla</span>
+                          }
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
+            )}
           </section>
           </Reveal>
 
@@ -465,7 +688,10 @@ export default function CheckoutPage() {
                 checked={billingSame}
                 onChange={(v) => {
                   setBillingSame(v);
-                  if (v) setBillingId(shippingId);
+                  if (v) {
+                    setBillingId(shippingId);
+                    setBillingMode(shippingMode);
+                  }
                 }}
                 label={<span>Teslimat ile aynı</span>}
               />
@@ -474,62 +700,134 @@ export default function CheckoutPage() {
               <>
                 {addresses.length > 0 ? (
                   <div className="mb-6 space-y-2">
-                    {addresses.map((addr) => (
-                      <button
-                        key={`bill-${addr.id}`}
-                        type="button"
-                        onClick={() => {
-                          setBillingId(addr.id);
-                          applyAddressToBilling(addr);
-                        }}
-                        className={`w-full border px-4 py-3 text-left font-meta text-[11px] uppercase transition-colors ${
-                          billingId === addr.id
-                            ? "border-primary text-primary"
-                            : "border-outline-variant/30 text-secondary hover:border-outline"
-                        }`}
-                      >
-                        <span className="font-medium">{addr.title}</span>
-                        {addr.isDefaultBilling ? " · varsayılan fatura" : ""}
-                        <span className="mt-1 block normal-case tracking-normal text-secondary">
-                          {addr.district}, {addr.city}
-                        </span>
-                      </button>
-                    ))}
+                    {addresses.map((addr) => {
+                      const selected =
+                        billingMode === "saved" && billingId === addr.id;
+                      const live =
+                        addresses.find((a) => a.id === addr.id) || addr;
+                      return (
+                        <div
+                          key={`bill-${addr.id}`}
+                          className={`border px-4 py-3 transition-colors ${
+                            selected
+                              ? "border-primary"
+                              : "border-outline-variant/30 hover:border-outline"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectSavedBilling(addr)}
+                            className={`w-full text-left font-meta text-[11px] uppercase ${
+                              selected ? "text-primary" : "text-secondary"
+                            }`}
+                          >
+                            <span className="font-medium">{addr.title}</span>
+                            {live.isDefaultBilling ? " · varsayılan fatura" : ""}
+                            <span className="mt-1 block normal-case tracking-normal text-secondary">
+                              {addr.district}, {addr.city}
+                            </span>
+                          </button>
+                          {selected && !live.isDefaultBilling ? (
+                            <button
+                              type="button"
+                              disabled={defaultBusy}
+                              onClick={() =>
+                                void makeDefault(addr.id, "billing")
+                              }
+                              className="mt-3 font-meta text-[10px] uppercase text-secondary underline hover:text-primary disabled:opacity-50"
+                            >
+                              Varsayılan fatura yap
+                            </button>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={startNewBilling}
+                      className={`w-full border px-4 py-3 text-left font-meta text-[11px] uppercase transition-colors ${
+                        billingMode === "new"
+                          ? "border-primary text-primary"
+                          : "border-outline-variant/30 text-secondary hover:border-outline"
+                      }`}
+                    >
+                      + Yeni fatura adresi
+                    </button>
                   </div>
                 ) : null}
-                <div className="grid gap-5 md:grid-cols-2">
-                  <Field
-                    label="Şehir"
-                    value={form.billing.city}
-                    onChange={(v) => setBillingField("city", v)}
-                    required
+
+                {billingMode === "saved" && billingId ? (
+                  <SelectedAddressSummary
+                    address={addresses.find((a) => a.id === billingId)}
+                    fields={form.billing}
+                    name={form.customerName}
+                    phone={form.customerPhone}
                   />
-                  <Field
-                    label="İlçe"
-                    value={form.billing.district}
-                    onChange={(v) => setBillingField("district", v)}
-                    required
-                  />
-                  <Field
-                    label="Mahalle"
-                    value={form.billing.neighborhood}
-                    onChange={(v) => setBillingField("neighborhood", v)}
-                  />
-                  <Field
-                    label="Posta Kodu"
-                    value={form.billing.postalCode}
-                    onChange={(v) => setBillingField("postalCode", v)}
-                    required
-                  />
-                  <div className="md:col-span-2">
-                    <Field
-                      label="Adres"
-                      value={form.billing.addressLine}
-                      onChange={(v) => setBillingField("addressLine", v)}
-                      required
-                    />
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <Field
+                        label="Şehir"
+                        value={form.billing.city}
+                        onChange={(v) => setBillingField("city", v)}
+                        required
+                      />
+                      <Field
+                        label="İlçe"
+                        value={form.billing.district}
+                        onChange={(v) => setBillingField("district", v)}
+                        required
+                      />
+                      <Field
+                        label="Mahalle"
+                        value={form.billing.neighborhood}
+                        onChange={(v) => setBillingField("neighborhood", v)}
+                      />
+                      <Field
+                        label="Posta Kodu"
+                        value={form.billing.postalCode}
+                        onChange={(v) => setBillingField("postalCode", v)}
+                        required
+                      />
+                      <div className="md:col-span-2">
+                        <Field
+                          label="Adres"
+                          value={form.billing.addressLine}
+                          onChange={(v) => setBillingField("addressLine", v)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    {user ? (
+                      <div className="mt-6 space-y-3 border-t border-outline-variant/20 pt-5">
+                        <Check
+                          checked={saveBillingAddress}
+                          onChange={setSaveBillingAddress}
+                          label={<span>Bu adresi adres defterime kaydet</span>}
+                        />
+                        {saveBillingAddress ? (
+                          <>
+                            <Field
+                              label="Adres başlığı"
+                              value={newBillingTitle}
+                              onChange={setNewBillingTitle}
+                              required
+                            />
+                            <Check
+                              checked={defaultBillingOnSave}
+                              onChange={setDefaultBillingOnSave}
+                              label={
+                                <span>
+                                  Varsayılan fatura adresi olarak tanımla
+                                </span>
+                              }
+                            />
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </>
             ) : (
               <p className="font-meta text-xs uppercase text-secondary">
@@ -698,6 +996,46 @@ export default function CheckoutPage() {
           </Reveal>
         </aside>
       </form>
+    </div>
+  );
+}
+
+function SelectedAddressSummary({
+  address,
+  fields,
+  name,
+  phone,
+}: {
+  address?: Address;
+  fields: AddressFields;
+  name: string;
+  phone: string;
+}) {
+  return (
+    <div className="border border-outline-variant/20 bg-surface-container px-4 py-4 font-meta text-xs leading-relaxed text-on-surface">
+      {address ? (
+        <p className="mb-2 text-[10px] uppercase tracking-widest text-primary">
+          {address.title}
+          {address.isDefaultShipping ? " · varsayılan teslimat" : ""}
+          {address.isDefaultBilling ? " · varsayılan fatura" : ""}
+        </p>
+      ) : null}
+      <p className="uppercase text-secondary">
+        {name}
+        {phone ? ` · ${phone}` : ""}
+      </p>
+      <p className="mt-2 normal-case tracking-normal">
+        {fields.addressLine}
+        <br />
+        {fields.neighborhood ? `${fields.neighborhood}, ` : ""}
+        {fields.district} / {fields.city}
+        {fields.postalCode ? (
+          <>
+            <br />
+            {fields.postalCode}
+          </>
+        ) : null}
+      </p>
     </div>
   );
 }

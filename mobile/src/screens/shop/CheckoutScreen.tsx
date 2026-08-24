@@ -16,26 +16,37 @@ import { SectionLabel } from '../../components/shop/SectionLabel';
 import { useShopCart } from '../../lib/shop-cart';
 import {
   cartSubtotal,
+  shopAddresses,
   shopCheckout,
+  shopCreateAddress,
   shopMe,
   shopShippingProviders,
+  shopUpdateAddress,
   shopValidateCoupon,
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
-import type { CouponPreview, ShippingProvider } from '../../lib/shop-types';
+import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
 import { btn, btnText, colors, input, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Checkout'>;
+type AddressMode = 'saved' | 'new';
 
 export function CheckoutScreen({ navigation }: Props) {
   const { cart, refresh } = useShopCart();
   const [providers, setProviders] = useState<ShippingProvider[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const [addressMode, setAddressMode] = useState<AddressMode>('new');
+  const [selectedId, setSelectedId] = useState('');
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [setAsDefault, setSetAsDefault] = useState(true);
+  const [addressTitle, setAddressTitle] = useState('Ev');
   const [form, setForm] = useState({
     customerName: '',
     customerEmail: '',
@@ -65,8 +76,10 @@ export function CheckoutScreen({ navigation }: Props) {
         shippingProvider: f.shippingProvider || prov[0]?.code || '',
       }));
       if (token) {
+        setLoggedIn(true);
         try {
-          const me = await shopMe();
+          const [me, list] = await Promise.all([shopMe(), shopAddresses()]);
+          setAddresses(list);
           setForm((f) => ({
             ...f,
             customerEmail: me.email || f.customerEmail,
@@ -74,13 +87,61 @@ export function CheckoutScreen({ navigation }: Props) {
               [me.firstName, me.lastName].filter(Boolean).join(' ') || f.customerName,
             customerPhone: me.phone || f.customerPhone,
           }));
+          const def = list.find((a) => a.isDefaultShipping) || list[0];
+          if (def) {
+            applyAddress(def);
+            setSelectedId(def.id);
+            setAddressMode('saved');
+          }
         } catch {
-          /* misafir */
+          /* misafir / adres yok */
         }
       }
       setLoading(false);
     })();
   }, [refresh]);
+
+  function applyAddress(addr: Address) {
+    setForm((f) => ({
+      ...f,
+      customerName: addr.fullName || f.customerName,
+      customerPhone: addr.phone || f.customerPhone,
+      city: addr.city,
+      district: addr.district,
+      neighborhood: addr.neighborhood || '',
+      addressLine: addr.addressLine,
+      postalCode: addr.postalCode,
+    }));
+  }
+
+  function selectSaved(addr: Address) {
+    setAddressMode('saved');
+    setSelectedId(addr.id);
+    applyAddress(addr);
+  }
+
+  function startNew() {
+    setAddressMode('new');
+    setSelectedId('');
+    setForm((f) => ({
+      ...f,
+      city: '',
+      district: '',
+      neighborhood: '',
+      addressLine: '',
+      postalCode: '',
+    }));
+  }
+
+  async function makeDefault(id: string) {
+    try {
+      await shopUpdateAddress(id, { isDefaultShipping: true });
+      const list = await shopAddresses();
+      setAddresses(list);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Varsayılan ayarlanamadı');
+    }
+  }
 
   const subtotal = cartSubtotal(cart);
   const selected = providers.find((p) => p.code === form.shippingProvider);
@@ -112,8 +173,30 @@ export function CheckoutScreen({ navigation }: Props) {
       setError('Yasal onayları işaretleyin');
       return;
     }
+    if (addressMode === 'saved' && !selectedId && addresses.length > 0) {
+      setError('Kayıtlı bir adres seçin veya yeni adres girin');
+      return;
+    }
     setSubmitting(true);
     try {
+      if (loggedIn && addressMode === 'new' && saveAddress) {
+        const created = await shopCreateAddress({
+          title: addressTitle.trim() || 'Teslimat',
+          fullName: form.customerName,
+          phone: form.customerPhone,
+          city: form.city,
+          district: form.district,
+          neighborhood: form.neighborhood || undefined,
+          addressLine: form.addressLine,
+          postalCode: form.postalCode,
+          isDefaultShipping: setAsDefault,
+          isDefaultBilling: setAsDefault,
+        });
+        setSelectedId(created.id);
+        setAddressMode('saved');
+        setAddresses(await shopAddresses());
+      }
+
       const addr = {
         fullName: form.customerName,
         phone: form.customerPhone,
@@ -167,6 +250,8 @@ export function CheckoutScreen({ navigation }: Props) {
 
   if (loading) return <ScreenLoader />;
 
+  const selectedAddr = addresses.find((a) => a.id === selectedId);
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.bg }}
@@ -192,16 +277,118 @@ export function CheckoutScreen({ navigation }: Props) {
       />
 
       <SectionLabel index="02" label="Adres" />
-      <Field title="İl" value={form.city} onChangeText={(city) => setForm({ ...form, city })} />
-      <Field title="İlçe" value={form.district} onChangeText={(district) => setForm({ ...form, district })} />
-      <Field title="Mahalle" value={form.neighborhood} onChangeText={(neighborhood) => setForm({ ...form, neighborhood })} />
-      <Field title="Adres" value={form.addressLine} onChangeText={(addressLine) => setForm({ ...form, addressLine })} multiline />
-      <Field
-        title="Posta kodu"
-        value={form.postalCode}
-        onChangeText={(postalCode) => setForm({ ...form, postalCode })}
-        keyboardType="number-pad"
-      />
+      {addresses.length > 0 ? (
+        <View style={{ marginBottom: 8 }}>
+          {addresses.map((a) => {
+            const active = addressMode === 'saved' && selectedId === a.id;
+            return (
+              <View
+                key={a.id}
+                style={{
+                  marginTop: 8,
+                  borderWidth: 1,
+                  borderColor: active ? colors.accent : colors.borderMuted,
+                  backgroundColor: active ? colors.surfaceHigh : colors.surface,
+                  padding: 14,
+                }}
+              >
+                <Pressable onPress={() => selectSaved(a)}>
+                  <Text style={{ color: colors.accentSoft, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                    {a.title}
+                    {a.isDefaultShipping ? ' · varsayılan' : ''}
+                  </Text>
+                  <Text style={{ color: colors.text, fontWeight: '600', marginTop: 4 }}>{a.fullName}</Text>
+                  <Text style={[muted, { marginTop: 4, lineHeight: 18 }]}>
+                    {a.addressLine}
+                    {'\n'}
+                    {a.district} / {a.city}
+                    {a.postalCode ? ` · ${a.postalCode}` : ''}
+                  </Text>
+                </Pressable>
+                {active && !a.isDefaultShipping ? (
+                  <Pressable onPress={() => void makeDefault(a.id)} style={{ marginTop: 10 }}>
+                    <Text style={{ color: colors.accentSoft, fontSize: 12 }}>Varsayılan yap</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            );
+          })}
+          <Pressable
+            onPress={startNew}
+            style={{
+              marginTop: 8,
+              borderWidth: 1,
+              borderColor: addressMode === 'new' ? colors.accent : colors.borderMuted,
+              backgroundColor: addressMode === 'new' ? colors.surfaceHigh : colors.surface,
+              padding: 14,
+            }}
+          >
+            <Text style={{ color: addressMode === 'new' ? colors.accentSoft : colors.text, fontWeight: '600' }}>
+              + Yeni adres ekle
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {addressMode === 'saved' && selectedAddr ? (
+        <View
+          style={{
+            marginTop: 8,
+            borderWidth: 1,
+            borderColor: colors.borderMuted,
+            backgroundColor: colors.surface,
+            padding: 14,
+          }}
+        >
+          <Text style={[muted, { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }]}>
+            Seçili teslimat
+          </Text>
+          <Text style={{ color: colors.text, marginTop: 6, lineHeight: 20 }}>
+            {form.customerName}
+            {'\n'}
+            {form.addressLine}
+            {'\n'}
+            {form.district} / {form.city}
+            {form.postalCode ? ` · ${form.postalCode}` : ''}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Field title="İl" value={form.city} onChangeText={(city) => setForm({ ...form, city })} />
+          <Field title="İlçe" value={form.district} onChangeText={(district) => setForm({ ...form, district })} />
+          <Field title="Mahalle" value={form.neighborhood} onChangeText={(neighborhood) => setForm({ ...form, neighborhood })} />
+          <Field title="Adres" value={form.addressLine} onChangeText={(addressLine) => setForm({ ...form, addressLine })} multiline />
+          <Field
+            title="Posta kodu"
+            value={form.postalCode}
+            onChangeText={(postalCode) => setForm({ ...form, postalCode })}
+            keyboardType="number-pad"
+          />
+          {loggedIn ? (
+            <View style={{ marginTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, flex: 1, marginRight: 12 }}>Adres defterine kaydet</Text>
+                <Switch value={saveAddress} onValueChange={setSaveAddress} trackColor={{ true: colors.accent }} />
+              </View>
+              {saveAddress ? (
+                <>
+                  <Field title="Başlık" value={addressTitle} onChangeText={setAddressTitle} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                    <Text style={{ color: colors.text, flex: 1, marginRight: 12 }}>
+                      Varsayılan teslimat adresi
+                    </Text>
+                    <Switch
+                      value={setAsDefault}
+                      onValueChange={setSetAsDefault}
+                      trackColor={{ true: colors.accent }}
+                    />
+                  </View>
+                </>
+              ) : null}
+            </View>
+          ) : null}
+        </>
+      )}
 
       <SectionLabel index="03" label="Kargo" />
       {providers.map((p) => (

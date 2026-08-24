@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
@@ -8,6 +8,7 @@ import {
   shopAddresses,
   shopCreateAddress,
   shopDeleteAddress,
+  shopUpdateAddress,
 } from '../../lib/shop-api';
 import type { Address } from '../../lib/shop-types';
 import { btn, btnText, colors, muted } from '../../ui';
@@ -23,6 +24,7 @@ export function AddressesScreen() {
     addressLine: '',
     postalCode: '',
   });
+  const [asDefault, setAsDefault] = useState(true);
   const [msg, setMsg] = useState('');
 
   const load = useCallback(() => {
@@ -38,11 +40,31 @@ export function AddressesScreen() {
   async function save() {
     setMsg('');
     try {
-      await shopCreateAddress({ ...form, isDefaultShipping: true });
+      await shopCreateAddress({
+        ...form,
+        isDefaultShipping: asDefault || items.length === 0,
+        isDefaultBilling: asDefault || items.length === 0,
+      });
       setForm({ ...form, addressLine: '' });
+      setAsDefault(false);
       load();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Kayıt başarısız');
+    }
+  }
+
+  async function makeDefault(id: string, kind: 'shipping' | 'billing') {
+    setMsg('');
+    try {
+      await shopUpdateAddress(
+        id,
+        kind === 'shipping'
+          ? { isDefaultShipping: true }
+          : { isDefaultBilling: true },
+      );
+      load();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Varsayılan ayarlanamadı');
     }
   }
 
@@ -66,21 +88,34 @@ export function AddressesScreen() {
         >
           <Text style={{ color: colors.accentSoft, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>
             {a.title}
+            {a.isDefaultShipping ? ' · teslimat' : ''}
+            {a.isDefaultBilling ? ' · fatura' : ''}
           </Text>
           <Text style={{ color: colors.text, fontWeight: '700', marginTop: 6 }}>{a.fullName}</Text>
           <Text style={[muted, { marginTop: 6, lineHeight: 20 }]}>
             {a.addressLine}{'\n'}{a.district} / {a.city}
             {a.postalCode ? ` · ${a.postalCode}` : ''}
           </Text>
-          <Pressable
-            onPress={async () => {
-              await shopDeleteAddress(a.id);
-              load();
-            }}
-            style={{ marginTop: 12 }}
-          >
-            <Text style={{ color: colors.danger, fontSize: 12 }}>Sil</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginTop: 12 }}>
+            {!a.isDefaultShipping ? (
+              <Pressable onPress={() => void makeDefault(a.id, 'shipping')}>
+                <Text style={{ color: colors.accentSoft, fontSize: 12 }}>Varsayılan teslimat</Text>
+              </Pressable>
+            ) : null}
+            {!a.isDefaultBilling ? (
+              <Pressable onPress={() => void makeDefault(a.id, 'billing')}>
+                <Text style={{ color: colors.accentSoft, fontSize: 12 }}>Varsayılan fatura</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={async () => {
+                await shopDeleteAddress(a.id);
+                load();
+              }}
+            >
+              <Text style={{ color: colors.danger, fontSize: 12 }}>Sil</Text>
+            </Pressable>
+          </View>
         </View>
       ))}
       <SectionLabel label="Yeni adres" />
@@ -91,6 +126,10 @@ export function AddressesScreen() {
       <Field title="İlçe" value={form.district} onChangeText={(district) => setForm({ ...form, district })} />
       <Field title="Adres" value={form.addressLine} onChangeText={(addressLine) => setForm({ ...form, addressLine })} multiline />
       <Field title="Posta kodu" value={form.postalCode} onChangeText={(postalCode) => setForm({ ...form, postalCode })} keyboardType="number-pad" />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
+        <Text style={{ color: colors.text, flex: 1, marginRight: 12 }}>Varsayılan teslimat adresi</Text>
+        <Switch value={asDefault} onValueChange={setAsDefault} trackColor={{ true: colors.accent }} />
+      </View>
       {msg ? <Text style={{ color: colors.danger, marginTop: 8 }}>{msg}</Text> : null}
       <Pressable onPress={() => void save()} style={btn}>
         <Text style={btnText}>Kaydet</Text>

@@ -243,6 +243,28 @@ export async function shopCreateAddress(payload: {
   });
 }
 
+export async function shopUpdateAddress(
+  id: string,
+  payload: Partial<{
+    title: string;
+    fullName: string;
+    phone: string;
+    city: string;
+    district: string;
+    neighborhood: string;
+    addressLine: string;
+    postalCode: string;
+    isDefaultShipping: boolean;
+    isDefaultBilling: boolean;
+  }>,
+) {
+  return api<Address>(`/addresses/${id}`, {
+    method: 'PATCH',
+    auth: 'shop',
+    body: payload,
+  });
+}
+
 export async function shopDeleteAddress(id: string) {
   return api<void>(`/addresses/${id}`, { method: 'DELETE', auth: 'shop' });
 }
