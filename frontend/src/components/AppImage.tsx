@@ -26,8 +26,10 @@ function isInstagramCdn(host: string) {
 }
 
 /**
- * S3: next/image (bucket CORS + unoptimized).
+ * S3: next/image unoptimized (doğrudan bucket URL).
  * Instagram CDN: native <img> (Meta CORS vermez).
+ * crossOrigin koyma: görüntüleme için gerekmez; S3’te cache’lenmiş
+ * Origin’süz yanıt + crossOrigin tarayıcıda sahte CORS hatası üretir.
  */
 export function AppImage({ unoptimized, ...props }: ImageProps) {
   const host = hostnameOf(props.src);
@@ -56,12 +58,5 @@ export function AppImage({ unoptimized, ...props }: ImageProps) {
   }
 
   const s3 = Boolean(host && isS3Host(host));
-  return (
-    <Image
-      {...props}
-      unoptimized={unoptimized ?? s3}
-      // Bucket CORS ile anonymous OK; S3 dışı default
-      crossOrigin={s3 ? "anonymous" : props.crossOrigin}
-    />
-  );
+  return <Image {...props} unoptimized={unoptimized ?? s3} />;
 }
