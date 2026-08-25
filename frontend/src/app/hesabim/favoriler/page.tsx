@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AccountTabs } from "@/components/AccountTabs";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
 import { getWishlist, removeWishlistItem } from "@/lib/api";
@@ -72,24 +73,21 @@ export default function FavoritesPage() {
   return (
     <div className="page-shell py-16 md:py-24">
       <div className="mb-2 font-meta text-xs uppercase tracking-widest text-primary page-enter">
-        Account / Favorites
+        Hesap / Favoriler
       </div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="font-display text-4xl md:text-5xl">Favorilerim</h1>
-        <Link
-          href="/hesabim"
-          className="font-meta text-[11px] uppercase text-secondary underline hover:text-primary"
-        >
-          Hesabıma dön
-        </Link>
-      </div>
+      <h1 className="font-display text-4xl md:text-5xl">Hesabım</h1>
+      <p className="mt-3 font-meta text-xs uppercase text-secondary">
+        Favorilerim
+      </p>
+
+      <AccountTabs active="favoriler" />
 
       {error ? (
         <p className="mt-6 font-meta text-[11px] uppercase text-error">{error}</p>
       ) : null}
 
       {items.length === 0 ? (
-        <div className="mt-16">
+        <div className="mt-10">
           <p className="font-meta text-sm uppercase text-secondary">
             Henüz favori ürün yok.
           </p>
@@ -101,7 +99,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item, i) =>
             item.product ? (
               <Reveal key={item.id} delay={i * 40}>

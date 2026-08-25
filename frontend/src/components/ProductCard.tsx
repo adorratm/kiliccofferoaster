@@ -1,7 +1,7 @@
 import { AppImage as Image } from "@/components/AppImage";
 import Link from "next/link";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { formatMoney, productImage } from "@/lib/format";
+import { displayUpper, formatMoney, productImage } from "@/lib/format";
 import type { Product } from "@/lib/types";
 
 type Props = {
@@ -12,10 +12,10 @@ export function ProductCard({ product }: Props) {
   const img = productImage(product.imageUrl, product.slug);
   const price = product.variants?.[0]?.price ?? product.basePrice;
   const specs = [
-    { label: "Rakım", value: product.altitude },
-    { label: "İşlem", value: product.process },
-    { label: "Batch", value: product.batchId },
-    { label: "Çeşit", value: product.varietal },
+    { label: "Rakım", value: product.altitude, en: false },
+    { label: "İşlem", value: product.process, en: true },
+    { label: "Batch", value: product.batchId, en: true },
+    { label: "Çeşit", value: product.varietal, en: true },
   ].filter((s) => Boolean(s.value?.trim()));
 
   return (
@@ -29,7 +29,7 @@ export function ProductCard({ product }: Props) {
             src={img}
             alt={product.name}
             fill
-            className="media-lift object-cover grayscale"
+            className="media-lift object-cover"
             sizes="(max-width: 768px) 100vw, 33vw"
           />
           {product.badge ? (
@@ -41,8 +41,8 @@ export function ProductCard({ product }: Props) {
 
         <div className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="font-display text-2xl uppercase leading-none">
-              {product.name}
+            <h3 className="font-display text-2xl leading-none tracking-wide">
+              {displayUpper(product.name)}
             </h3>
             <span className="shrink-0 font-meta text-sm text-primary">
               {formatMoney(price, product.currency)}
@@ -53,8 +53,13 @@ export function ProductCard({ product }: Props) {
             <div className="grid grid-cols-2 gap-y-2 border-t border-outline-variant/30 pt-4 font-meta text-[11px] uppercase text-secondary">
               {specs.map((s) => (
                 <div key={s.label} className="contents">
-                  <div>{s.label}</div>
-                  <div className="text-on-background">{s.value}</div>
+                  <div lang={s.label === "Batch" ? "en" : undefined}>{s.label}</div>
+                  <div
+                    className="text-on-background"
+                    lang={s.en ? "en" : undefined}
+                  >
+                    {s.value}
+                  </div>
                 </div>
               ))}
             </div>

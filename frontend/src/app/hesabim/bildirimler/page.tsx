@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AccountTabs } from "@/components/AccountTabs";
 import {
   fetchInbox,
   fetchNotificationPrefs,
@@ -66,22 +66,26 @@ export default function AccountNotificationsPage() {
 
   async function openItem(item: InboxItem) {
     const token = getToken();
-    if (token && !item.readAt) await markInboxRead(token, item.id).catch(() => undefined);
+    if (token && !item.readAt)
+      await markInboxRead(token, item.id).catch(() => undefined);
     if (item.href) router.push(item.href);
     else void load();
   }
 
   return (
     <div className="page-shell py-16 md:py-24">
-      <Link
-        href="/hesabim"
-        className="font-meta text-[11px] uppercase text-secondary hover:text-primary"
-      >
-        ← Hesabım
-      </Link>
-      <h1 className="mt-4 font-display text-4xl">Bildirimler</h1>
+      <div className="mb-2 font-meta text-xs uppercase tracking-widest text-primary">
+        Hesap / Bildirimler
+      </div>
+      <h1 className="font-display text-4xl">Hesabım</h1>
+      <p className="mt-3 font-meta text-xs uppercase text-secondary">
+        Bildirimler
+      </p>
+
+      <AccountTabs active="bildirimler" />
+
       {error ? (
-        <p className="mt-4 font-meta text-sm uppercase text-error">{error}</p>
+        <p className="mt-6 font-meta text-sm uppercase text-error">{error}</p>
       ) : null}
 
       {prefs ? (
@@ -118,7 +122,9 @@ export default function AccountNotificationsPage() {
           </button>
         </div>
         {!items.length ? (
-          <p className="font-meta text-xs uppercase text-secondary">Bildirim yok</p>
+          <p className="font-meta text-xs uppercase text-secondary">
+            Bildirim yok
+          </p>
         ) : (
           <ul className="divide-y divide-outline-variant/20 border border-outline-variant/20">
             {items.map((item) => (
@@ -131,7 +137,9 @@ export default function AccountNotificationsPage() {
                   }`}
                 >
                   <p className="text-sm">{item.title}</p>
-                  <p className="mt-1 font-meta text-[11px] text-secondary">{item.body}</p>
+                  <p className="mt-1 font-meta text-[11px] text-secondary">
+                    {item.body}
+                  </p>
                   {item.createdAt ? (
                     <p className="mt-1 font-meta text-[10px] uppercase text-secondary">
                       {new Date(item.createdAt).toLocaleString("tr-TR")}

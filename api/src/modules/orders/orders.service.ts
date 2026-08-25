@@ -27,6 +27,7 @@ import {
   OrderQueryDto,
   ReviewReturnRequestDto,
   UpdateOrderStatusDto,
+  AddressPayloadDto,
 } from '@modules/orders/dto/orders.dto';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { statusLabel } from '@modules/notifications/notification.templates';
@@ -34,6 +35,10 @@ import { CouponsService } from '@modules/coupons/coupons.service';
 import { InventoryService } from '@modules/catalog/inventory.service';
 import { PaytrService } from '@modules/payments/paytr.service';
 import { grindLabel, resolveGrindOption } from '@common/constants/grind-options';
+import {
+  isStorePickup,
+} from '@common/constants/shipping';
+import { SiteSetting } from '@entities/site-setting.entity';
 import {
   paginateResult,
   PaginatedResult,
@@ -115,6 +120,14 @@ export class OrdersService {
       shippingFee,
     );
 
+    const pickup = isStorePickup(dto.shippingProvider);
+    const shippingAddress = pickup
+      ? await this.buildStorePickupAddress(dto)
+      : dto.shippingAddress;
+    if (!shippingAddress) {
+      throw new BadRequestException('Teslimat adresi gerekli');
+    }
+
     const orderNumber = await this.generateOrderNumber();
 
     const order = await this.em.transaction(async (tx) => {
@@ -125,7 +138,7 @@ export class OrdersService {
         customerEmail: dto.customerEmail.toLowerCase().trim(),
         customerName: dto.customerName,
         customerPhone: dto.customerPhone,
-        shippingAddress: dto.shippingAddress as unknown as Record<string, string>,
+        shippingAddress: shippingAddress as unknown as Record<string, string>,
         billingAddress: (dto.billingAddress as unknown as Record<
           string,
           string
@@ -147,7 +160,10 @@ export class OrdersService {
       // Kupon kullanımı ödeme PAID olunca confirm edilir (başarısız ödemede yanmasın)
 
       const orderItems = cart!.items.map((item: CartItem) => {
-        const grind = resolveGrindOption(item.product?.kind, item.grindOption);
+        const grind = resolveGrindOption(item.product?.kind, item.grindOption, {
+          allowWholeBean: item.product?.allowWholeBean,
+          allowGround: item.product?.allowGround,
+        });
         return tx.create(OrderItem, {
           orderId: created.id,
           productId: item.productId,
@@ -643,6 +659,10 @@ export class OrdersService {
     providerCode: string | undefined | null,
     subtotal: number,
   ): Promise<number> {
+    if (isStorePickup(providerCode)) {
+      return 0;
+    }
+
     const freeOver = this.config.get<number>('shipping.freeOver') || 0;
     if (freeOver > 0 && subtotal >= freeOver) {
       return 0;
@@ -669,6 +689,43 @@ export class OrdersService {
       return Number.isFinite(n) ? n : defaultFee;
     }
     return defaultFee;
+  }
+
+  private async buildStorePickupAddress(
+    dto: CreateOrderDto,
+  ): Promise<AddressPayloadDto> {
+    if (dto.shippingAddress?.addressLine?.trim()) {
+      return {
+        ...dto.shippingAddress,
+        fullName: dto.shippingAddress.fullName || dto.customerName,
+        phone: dto.shippingAddress.phone || dto.customerPhone,
+      };
+    }
+
+    const row = await this.em.findOne(SiteSetting, {
+      where: { key: 'contact' },
+    });
+    const contact = (row?.value || {}) as Record<string, string>;
+    const location = (contact.locationLabel || 'Torbalı / İzmir').trim();
+    let district = 'Torbalı';
+    let city = 'İzmir';
+    if (location.includes('/')) {
+      const [d, c] = location.split('/').map((s) => s.trim());
+      if (d) district = d;
+      if (c) city = c;
+    }
+
+    return {
+      fullName: dto.customerName,
+      phone: dto.customerPhone,
+      city,
+      district,
+      neighborhood: 'Mağaza teslimi',
+      addressLine:
+        contact.address?.trim() ||
+        'AYRANCILAR MAHALLESİ DEĞİRMEN CAD. NO:55A AYRANCILAR, Torbalı/İzmir',
+      postalCode: '35870',
+    };
   }
 
   private calculateTotals(subtotal: number, shippingFee: number) {

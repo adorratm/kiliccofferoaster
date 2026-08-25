@@ -11,7 +11,9 @@ import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
 import {
   grindMatchKey,
+  isGrindAllowed,
   resolveGrindOption,
+  type GrindAvailability,
 } from '@common/constants/grind-options';
 import {
   AddCartItemDto,
@@ -22,6 +24,15 @@ import { CampaignsService } from '@modules/campaigns/campaigns.service';
 const CART_RELATIONS = {
   items: { product: true, variant: true },
 } as const;
+
+function grindAvailability(
+  product?: Pick<Product, 'allowWholeBean' | 'allowGround'> | null,
+): GrindAvailability {
+  return {
+    allowWholeBean: product?.allowWholeBean,
+    allowGround: product?.allowGround,
+  };
+}
 
 @Injectable()
 export class CartService {
@@ -117,12 +128,13 @@ export class CartService {
 
     for (const item of sessionItems) {
       const productKind = item.product?.kind;
+      const availability = grindAvailability(item.product);
       const existing = userCart.items?.find(
         (i) =>
           i.productId === item.productId &&
           (i.variantId ?? null) === (item.variantId ?? null) &&
-          grindMatchKey(i.product?.kind, i.grindOption) ===
-            grindMatchKey(productKind, item.grindOption),
+          grindMatchKey(i.product?.kind, i.grindOption, grindAvailability(i.product)) ===
+            grindMatchKey(productKind, item.grindOption, availability),
       );
       if (existing) {
         existing.quantity += item.quantity;
@@ -207,15 +219,29 @@ export class CartService {
       unitPrice = campaignPrice.salePrice;
     }
 
-    const grindOption = resolveGrindOption(product.kind, dto.grindOption);
+    const availability = grindAvailability(product);
+    if (
+      dto.grindOption != null &&
+      dto.grindOption !== '' &&
+      !isGrindAllowed(product.kind, dto.grindOption, availability)
+    ) {
+      throw new BadRequestException(
+        'Bu ürün için seçilen öğütme tercihi geçerli değil',
+      );
+    }
+    const grindOption = resolveGrindOption(
+      product.kind,
+      dto.grindOption,
+      availability,
+    );
     const qtyToAdd = dto.quantity;
 
     const existing = cart.items?.find(
       (i) =>
         i.productId === product.id &&
         (i.variantId ?? null) === variantId &&
-        grindMatchKey(product.kind, i.grindOption) ===
-          grindMatchKey(product.kind, grindOption),
+        grindMatchKey(product.kind, i.grindOption, availability) ===
+          grindMatchKey(product.kind, grindOption, availability),
     );
 
     const nextQty = (existing?.quantity ?? 0) + qtyToAdd;
@@ -276,7 +302,21 @@ export class CartService {
       const product = await this.em.findOne(Product, {
         where: { id: item.productId },
       });
-      item.grindOption = resolveGrindOption(product?.kind, dto.grindOption);
+      const availability = grindAvailability(product);
+      if (
+        dto.grindOption != null &&
+        dto.grindOption !== '' &&
+        !isGrindAllowed(product?.kind, dto.grindOption, availability)
+      ) {
+        throw new BadRequestException(
+          'Bu ürün için seçilen öğütme tercihi geçerli değil',
+        );
+      }
+      item.grindOption = resolveGrindOption(
+        product?.kind,
+        dto.grindOption,
+        availability,
+      );
     }
     await this.em.save(item);
     await this.touchCart(cart);

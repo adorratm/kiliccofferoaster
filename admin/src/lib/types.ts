@@ -54,6 +54,8 @@ export type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   kind?: string;
+  allowWholeBean?: boolean;
+  allowGround?: boolean;
   unit?: string;
   vatRate?: string | number;
   variants?: ProductVariant[];

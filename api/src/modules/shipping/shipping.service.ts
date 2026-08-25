@@ -83,6 +83,11 @@ export class ShippingService {
     if (!order) {
       throw new NotFoundException('Sipariş bulunamadı');
     }
+    if (order.shippingProvider === 'store_pickup') {
+      throw new BadRequestException(
+        'Mağazadan teslim siparişine kargo oluşturulamaz',
+      );
+    }
 
     const config = await this.em.findOne(ShippingProviderConfig, {
       where: { provider: dto.provider },

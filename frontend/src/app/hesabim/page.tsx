@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Suspense,
   useEffect,
   useState,
   type FormEvent,
@@ -18,6 +19,11 @@ import {
   updateAddress,
   ApiError,
 } from "@/lib/api";
+import {
+  AccountTabs,
+  resolveAccountTab,
+  type AccountTabId,
+} from "@/components/AccountTabs";
 import { Reveal } from "@/components/Reveal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { clearToken, getToken } from "@/lib/auth";
@@ -39,7 +45,26 @@ const emptyAddressForm = (): AddressPayload => ({
 });
 
 export default function AccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="page-shell py-24 font-meta text-sm uppercase text-secondary">
+          Hesap yükleniyor…
+        </div>
+      }
+    >
+      <AccountPageInner />
+    </Suspense>
+  );
+}
+
+function AccountPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab: AccountTabId = resolveAccountTab(
+    "/hesabim",
+    searchParams.get("sekme"),
+  );
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -60,7 +85,9 @@ export default function AccountPage() {
   const [pwOk, setPwOk] = useState<string | null>(null);
   const [closeAccountOpen, setCloseAccountOpen] = useState(false);
   const [closingAccount, setClosingAccount] = useState(false);
-  const [closeAccountError, setCloseAccountError] = useState<string | null>(null);
+  const [closeAccountError, setCloseAccountError] = useState<string | null>(
+    null,
+  );
 
   async function reload(token: string) {
     const [me, myOrders, myAddresses] = await Promise.all([
@@ -253,7 +280,10 @@ export default function AccountPage() {
         <p className="font-meta text-sm uppercase text-error">
           {error || "Yetkisiz erişim"}
         </p>
-        <Link href="/giris?next=/hesabim" className="btn-cta mt-8 inline-block px-8 py-4 text-xs">
+        <Link
+          href="/giris?next=/hesabim"
+          className="btn-cta mt-8 inline-block px-8 py-4 text-xs"
+        >
           Giriş Yap
         </Link>
       </div>
@@ -261,12 +291,18 @@ export default function AccountPage() {
   }
 
   const pendingDelete = addresses.find((a) => a.id === deleteId);
+  const tabTitle =
+    tab === "adresler"
+      ? "Adresler"
+      : tab === "hesap"
+        ? "Hesap"
+        : "Siparişler";
 
   return (
     <div className="page-shell py-16 md:py-24">
       <div className="mb-2 flex items-center justify-between gap-4 page-enter">
         <div className="font-meta text-xs uppercase tracking-widest text-primary">
-          Hesap / Siparişler
+          Hesap / {tabTitle}
         </div>
         <button
           type="button"
@@ -276,7 +312,9 @@ export default function AccountPage() {
           Çıkış
         </button>
       </div>
-      <h1 className="font-display text-4xl md:text-5xl animate-fade-up">Hesabım</h1>
+      <h1 className="font-display text-4xl md:text-5xl animate-fade-up">
+        Hesabım
+      </h1>
       <p
         className="mt-3 font-meta text-xs uppercase text-secondary animate-fade-up"
         style={{ animationDelay: "80ms" }}
@@ -284,397 +322,397 @@ export default function AccountPage() {
         {user.firstName || user.email}
       </p>
 
-      <div
-        className="mt-8 flex flex-wrap gap-4 animate-fade-up"
-        style={{ animationDelay: "120ms" }}
-      >
-        <Link
-          href="/hesabim/favoriler"
-          className="border border-outline-variant/40 px-5 py-3 font-meta text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary"
-        >
-          Favorilerim
-        </Link>
-        <Link
-          href="/hesabim/bildirimler"
-          className="border border-outline-variant/40 px-5 py-3 font-meta text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary"
-        >
-          Bildirimler
-        </Link>
-        <Link
-          href="/urunler"
-          className="border border-outline-variant/40 px-5 py-3 font-meta text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary"
-        >
-          Alışverişe devam
-        </Link>
+      <div className="animate-fade-up" style={{ animationDelay: "120ms" }}>
+        <AccountTabs active={tab} />
       </div>
 
-      <section className="mt-12">
-        <Reveal>
-          <h2 className="mb-6 font-display text-2xl">
-            {user.hasPassword ? "Şifre değiştir" : "Şifre belirle"}
-          </h2>
-        </Reveal>
-        <Reveal delay={40}>
-          <form
-            onSubmit={onChangePassword}
-            className="industrial-border bg-surface-container-low max-w-xl space-y-4 p-6"
-          >
-            {!user.hasPassword ? (
-              <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
-                Google ile giriş yaptınız. İsterseniz bir şifre belirleyin;
-                ardından e-posta ile de oturum açabilirsiniz. Google bağlantınız
-                korunur.
-              </p>
-            ) : null}
-            {user.hasPassword ? (
-              <Field
-                label="Mevcut şifre"
-                value={currentPassword}
-                onChange={setCurrentPassword}
-                required
-                type="password"
-              />
-            ) : null}
-            <Field
-              label="Yeni şifre"
-              value={newPassword}
-              onChange={setNewPassword}
-              required
-              type="password"
-            />
-            <Field
-              label="Yeni şifre (tekrar)"
-              value={newPassword2}
-              onChange={setNewPassword2}
-              required
-              type="password"
-            />
-            {pwError ? (
-              <p className="font-meta text-[11px] uppercase text-error">
-                {pwError}
-              </p>
-            ) : null}
-            {pwOk ? (
-              <p className="font-meta text-[11px] uppercase text-primary">
-                {pwOk}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={pwBusy}
-              className="btn-cta px-6 py-3 text-xs disabled:opacity-50"
-            >
-              {pwBusy
-                ? "Kaydediliyor…"
-                : user.hasPassword
-                  ? "Şifreyi güncelle"
-                  : "Şifreyi belirle"}
-            </button>
-          </form>
-        </Reveal>
-      </section>
+      {tab === "siparisler" ? (
+        <section className="mt-10" role="tabpanel">
+          {!orders.length ? (
+            <Reveal delay={60}>
+              <div className="industrial-border p-8 font-meta text-xs uppercase text-secondary">
+                Henüz sipariş yok.{" "}
+                <Link href="/urunler" className="text-primary underline">
+                  Koleksiyona git
+                </Link>
+              </div>
+            </Reveal>
+          ) : (
+            <div className="divide-y divide-outline-variant/20 border border-outline-variant/20">
+              {orders.map((order, i) => {
+                const trackCode = order.shipments?.[0]?.trackingNumber;
+                return (
+                  <Reveal
+                    key={order.id}
+                    delay={Math.min(i, 6) * 55}
+                    variant="fade"
+                  >
+                    <div className="row-motion flex flex-col justify-between gap-4 px-5 py-5 hover:bg-surface-container-low md:flex-row md:items-center">
+                      <Link
+                        href={`/hesabim/siparisler/${order.id}`}
+                        className="min-w-0 flex-1"
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="font-meta text-sm uppercase text-primary">
+                            {order.orderNumber}
+                          </span>
+                          <StatusBadge status={order.status} />
+                        </div>
+                        <div className="mt-2 font-meta text-[11px] uppercase text-secondary">
+                          {order.createdAt
+                            ? new Date(order.createdAt).toLocaleDateString(
+                                "tr-TR",
+                              )
+                            : null}
+                          {order.shippingProvider
+                            ? ` · ${order.shippingProvider}`
+                            : null}
+                        </div>
+                        <div className="mt-1 font-meta text-[11px] text-secondary">
+                          {(order.items || [])
+                            .map((it) => `${it.productName} ×${it.quantity}`)
+                            .join(", ") || "—"}
+                        </div>
+                      </Link>
+                      <div className="flex shrink-0 flex-col items-start gap-2 md:items-end">
+                        <div className="font-meta text-sm text-on-surface">
+                          {formatMoney(order.total, order.currency)}
+                        </div>
+                        {trackCode ? (
+                          <Link
+                            href={`/takip/${encodeURIComponent(trackCode)}`}
+                            className="font-meta text-[10px] uppercase tracking-widest text-primary underline"
+                          >
+                            Kargo takip
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/hesabim/siparisler/${order.id}`}
+                            className="font-meta text-[10px] uppercase tracking-widest text-secondary underline hover:text-primary"
+                          >
+                            Detay
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      ) : null}
 
-      <section className="mt-12 max-w-xl">
-        <Reveal>
-          <h2 className="mb-4 font-display text-2xl">Hesabı kapat</h2>
-        </Reveal>
-        <Reveal delay={40}>
-          <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
-            Hesabınız pasife alınır, kişisel verileriniz anonimleştirilir. Geçmiş
-            sipariş kayıtları yasal saklama için durur. Bu işlem geri alınamaz.
-          </p>
-          {closeAccountError ? (
-            <p className="mt-3 font-meta text-[11px] uppercase text-error">
-              {closeAccountError}
+      {tab === "adresler" ? (
+        <section className="mt-10" role="tabpanel">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <p className="font-meta text-[11px] uppercase text-secondary">
+              Teslimat ve fatura adresleri
+            </p>
+            <button
+              type="button"
+              onClick={startCreate}
+              className="btn-ghost px-5 py-3 text-xs"
+            >
+              Yeni adres
+            </button>
+          </div>
+
+          {formError ? (
+            <p className="mb-4 font-meta text-[11px] uppercase text-error">
+              {formError}
             </p>
           ) : null}
-          <button
-            type="button"
-            onClick={() => setCloseAccountOpen(true)}
-            className="mt-6 border border-error/50 px-6 py-3 font-meta text-xs uppercase tracking-widest text-error hover:bg-error hover:text-deep-carbon"
-          >
-            Hesabımı sil
-          </button>
-        </Reveal>
-      </section>
 
-      <section className="mt-12">
-        <Reveal className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-display text-2xl">Adreslerim</h2>
-          <button
-            type="button"
-            onClick={startCreate}
-            className="btn-ghost px-5 py-3 text-xs"
-          >
-            Yeni adres
-          </button>
-        </Reveal>
-
-        {formError ? (
-          <p className="mb-4 font-meta text-[11px] uppercase text-error">
-            {formError}
-          </p>
-        ) : null}
-
-        {showForm ? (
-          <Reveal variant="scale" className="mb-8">
-          <form
-            onSubmit={onSubmitAddress}
-            className="industrial-border bg-surface-container-low p-6 md:p-8"
-          >
-            <h3 className="mb-6 font-display text-xl">
-              {editingId ? "Adresi düzenle" : "Yeni adres"}
-            </h3>
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field
-                label="Başlık"
-                value={form.title}
-                onChange={(title) => setForm((f) => ({ ...f, title }))}
-                required
-                placeholder="Ev, İş"
-              />
-              <Field
-                label="Ad Soyad"
-                value={form.fullName}
-                onChange={(fullName) => setForm((f) => ({ ...f, fullName }))}
-                required
-              />
-              <Field
-                label="Telefon"
-                value={form.phone}
-                onChange={(phone) => setForm((f) => ({ ...f, phone }))}
-                required
-              />
-              <Field
-                label="Şehir"
-                value={form.city}
-                onChange={(city) => setForm((f) => ({ ...f, city }))}
-                required
-              />
-              <Field
-                label="İlçe"
-                value={form.district}
-                onChange={(district) => setForm((f) => ({ ...f, district }))}
-                required
-              />
-              <Field
-                label="Mahalle"
-                value={form.neighborhood || ""}
-                onChange={(neighborhood) =>
-                  setForm((f) => ({ ...f, neighborhood }))
-                }
-              />
-              <div className="md:col-span-2">
-                <Field
-                  label="Adres"
-                  value={form.addressLine}
-                  onChange={(addressLine) =>
-                    setForm((f) => ({ ...f, addressLine }))
-                  }
-                  required
-                />
-              </div>
-              <Field
-                label="Posta Kodu"
-                value={form.postalCode}
-                onChange={(postalCode) =>
-                  setForm((f) => ({ ...f, postalCode }))
-                }
-                required
-              />
-            </div>
-            <div className="mt-6 space-y-3">
-              <ToggleCheck
-                checked={Boolean(form.isDefaultShipping)}
-                onChange={(isDefaultShipping) =>
-                  setForm((f) => ({ ...f, isDefaultShipping }))
-                }
-                label="Varsayılan teslimat adresi"
-              />
-              <ToggleCheck
-                checked={Boolean(form.isDefaultBilling)}
-                onChange={(isDefaultBilling) =>
-                  setForm((f) => ({ ...f, isDefaultBilling }))
-                }
-                label="Varsayılan fatura adresi"
-              />
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="btn-cta px-8 py-3 text-xs disabled:opacity-50"
+          {showForm ? (
+            <Reveal variant="scale" className="mb-8">
+              <form
+                onSubmit={onSubmitAddress}
+                className="industrial-border bg-surface-container-low p-6 md:p-8"
               >
-                {saving ? "Kaydediliyor…" : "Kaydet"}
-              </button>
+                <h2 className="mb-6 font-display text-xl">
+                  {editingId ? "Adresi düzenle" : "Yeni adres"}
+                </h2>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field
+                    label="Başlık"
+                    value={form.title}
+                    onChange={(title) => setForm((f) => ({ ...f, title }))}
+                    required
+                    placeholder="Ev, İş"
+                  />
+                  <Field
+                    label="Ad Soyad"
+                    value={form.fullName}
+                    onChange={(fullName) =>
+                      setForm((f) => ({ ...f, fullName }))
+                    }
+                    required
+                  />
+                  <Field
+                    label="Telefon"
+                    value={form.phone}
+                    onChange={(phone) => setForm((f) => ({ ...f, phone }))}
+                    required
+                  />
+                  <Field
+                    label="Şehir"
+                    value={form.city}
+                    onChange={(city) => setForm((f) => ({ ...f, city }))}
+                    required
+                  />
+                  <Field
+                    label="İlçe"
+                    value={form.district}
+                    onChange={(district) =>
+                      setForm((f) => ({ ...f, district }))
+                    }
+                    required
+                  />
+                  <Field
+                    label="Mahalle"
+                    value={form.neighborhood || ""}
+                    onChange={(neighborhood) =>
+                      setForm((f) => ({ ...f, neighborhood }))
+                    }
+                  />
+                  <div className="md:col-span-2">
+                    <Field
+                      label="Adres"
+                      value={form.addressLine}
+                      onChange={(addressLine) =>
+                        setForm((f) => ({ ...f, addressLine }))
+                      }
+                      required
+                    />
+                  </div>
+                  <Field
+                    label="Posta Kodu"
+                    value={form.postalCode}
+                    onChange={(postalCode) =>
+                      setForm((f) => ({ ...f, postalCode }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="mt-6 space-y-3">
+                  <ToggleCheck
+                    checked={Boolean(form.isDefaultShipping)}
+                    onChange={(isDefaultShipping) =>
+                      setForm((f) => ({ ...f, isDefaultShipping }))
+                    }
+                    label="Varsayılan teslimat adresi"
+                  />
+                  <ToggleCheck
+                    checked={Boolean(form.isDefaultBilling)}
+                    onChange={(isDefaultBilling) =>
+                      setForm((f) => ({ ...f, isDefaultBilling }))
+                    }
+                    label="Varsayılan fatura adresi"
+                  />
+                </div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="btn-cta px-8 py-3 text-xs disabled:opacity-50"
+                  >
+                    {saving ? "Kaydediliyor…" : "Kaydet"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingId(null);
+                    }}
+                    className="btn-ghost px-8 py-3 text-xs"
+                  >
+                    İptal
+                  </button>
+                </div>
+              </form>
+            </Reveal>
+          ) : null}
+
+          {!addresses.length ? (
+            <Reveal>
+              <div className="industrial-border p-8 font-meta text-xs uppercase text-secondary">
+                Kayıtlı adres yok. Teslimat ve fatura için adres ekleyin.
+              </div>
+            </Reveal>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {addresses.map((addr, i) => (
+                <Reveal
+                  key={addr.id}
+                  delay={i * 70}
+                  variant={i % 2 ? "right" : "left"}
+                >
+                  <article className="panel-motion industrial-border bg-surface-container-low p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-display text-xl">{addr.title}</h3>
+                        <p className="mt-1 font-meta text-xs uppercase text-secondary">
+                          {addr.fullName} · {addr.phone}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {addr.isDefaultShipping ? (
+                          <span className="font-meta text-[10px] uppercase text-primary">
+                            Teslimat
+                          </span>
+                        ) : null}
+                        {addr.isDefaultBilling ? (
+                          <span className="font-meta text-[10px] uppercase text-primary">
+                            Fatura
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <p className="mt-4 font-meta text-xs leading-relaxed text-on-surface">
+                      {addr.addressLine}
+                      <br />
+                      {addr.neighborhood ? `${addr.neighborhood}, ` : ""}
+                      {addr.district} / {addr.city}
+                      <br />
+                      {addr.postalCode}
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-3 border-t border-outline-variant/20 pt-4 font-meta text-[11px] uppercase">
+                      {!addr.isDefaultShipping ? (
+                        <button
+                          type="button"
+                          onClick={() => void setDefault(addr.id, "shipping")}
+                          className="text-secondary underline hover:text-primary"
+                        >
+                          Varsayılan teslimat
+                        </button>
+                      ) : null}
+                      {!addr.isDefaultBilling ? (
+                        <button
+                          type="button"
+                          onClick={() => void setDefault(addr.id, "billing")}
+                          className="text-secondary underline hover:text-primary"
+                        >
+                          Varsayılan fatura
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => startEdit(addr)}
+                        className="text-secondary underline hover:text-primary"
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteId(addr.id)}
+                        className="text-error underline"
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {tab === "hesap" ? (
+        <section className="mt-10 space-y-12" role="tabpanel">
+          <div>
+            <Reveal>
+              <h2 className="mb-6 font-display text-2xl">
+                {user.hasPassword ? "Şifre değiştir" : "Şifre belirle"}
+              </h2>
+            </Reveal>
+            <Reveal delay={40}>
+              <form
+                onSubmit={onChangePassword}
+                className="industrial-border bg-surface-container-low max-w-xl space-y-4 p-6"
+              >
+                {!user.hasPassword ? (
+                  <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
+                    Google ile giriş yaptınız. İsterseniz bir şifre belirleyin;
+                    ardından e-posta ile de oturum açabilirsiniz. Google
+                    bağlantınız korunur.
+                  </p>
+                ) : null}
+                {user.hasPassword ? (
+                  <Field
+                    label="Mevcut şifre"
+                    value={currentPassword}
+                    onChange={setCurrentPassword}
+                    required
+                    type="password"
+                  />
+                ) : null}
+                <Field
+                  label="Yeni şifre"
+                  value={newPassword}
+                  onChange={setNewPassword}
+                  required
+                  type="password"
+                />
+                <Field
+                  label="Yeni şifre (tekrar)"
+                  value={newPassword2}
+                  onChange={setNewPassword2}
+                  required
+                  type="password"
+                />
+                {pwError ? (
+                  <p className="font-meta text-[11px] uppercase text-error">
+                    {pwError}
+                  </p>
+                ) : null}
+                {pwOk ? (
+                  <p className="font-meta text-[11px] uppercase text-primary">
+                    {pwOk}
+                  </p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={pwBusy}
+                  className="btn-cta px-6 py-3 text-xs disabled:opacity-50"
+                >
+                  {pwBusy
+                    ? "Kaydediliyor…"
+                    : user.hasPassword
+                      ? "Şifreyi güncelle"
+                      : "Şifreyi belirle"}
+                </button>
+              </form>
+            </Reveal>
+          </div>
+
+          <div className="max-w-xl">
+            <Reveal>
+              <h2 className="mb-4 font-display text-2xl">Hesabı kapat</h2>
+            </Reveal>
+            <Reveal delay={40}>
+              <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
+                Hesabınız pasife alınır, kişisel verileriniz anonimleştirilir.
+                Geçmiş sipariş kayıtları yasal saklama için durur. Bu işlem geri
+                alınamaz.
+              </p>
+              {closeAccountError ? (
+                <p className="mt-3 font-meta text-[11px] uppercase text-error">
+                  {closeAccountError}
+                </p>
+              ) : null}
               <button
                 type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                }}
-                className="btn-ghost px-8 py-3 text-xs"
+                onClick={() => setCloseAccountOpen(true)}
+                className="mt-6 border border-error/50 px-6 py-3 font-meta text-xs uppercase tracking-widest text-error hover:bg-error hover:text-deep-carbon"
               >
-                İptal
+                Hesabımı sil
               </button>
-            </div>
-          </form>
-          </Reveal>
-        ) : null}
-
-        {!addresses.length ? (
-          <Reveal>
-          <div className="industrial-border p-8 font-meta text-xs uppercase text-secondary">
-            Kayıtlı adres yok. Teslimat ve fatura için adres ekleyin.
+            </Reveal>
           </div>
-          </Reveal>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {addresses.map((addr, i) => (
-              <Reveal key={addr.id} delay={i * 70} variant={i % 2 ? "right" : "left"}>
-              <article
-                className="panel-motion industrial-border bg-surface-container-low p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-display text-xl">{addr.title}</h3>
-                    <p className="mt-1 font-meta text-xs uppercase text-secondary">
-                      {addr.fullName} · {addr.phone}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {addr.isDefaultShipping ? (
-                      <span className="font-meta text-[10px] uppercase text-primary">
-                        Teslimat
-                      </span>
-                    ) : null}
-                    {addr.isDefaultBilling ? (
-                      <span className="font-meta text-[10px] uppercase text-primary">
-                        Fatura
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <p className="mt-4 font-meta text-xs leading-relaxed text-on-surface">
-                  {addr.addressLine}
-                  <br />
-                  {addr.neighborhood ? `${addr.neighborhood}, ` : ""}
-                  {addr.district} / {addr.city}
-                  <br />
-                  {addr.postalCode}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3 border-t border-outline-variant/20 pt-4 font-meta text-[11px] uppercase">
-                  {!addr.isDefaultShipping ? (
-                    <button
-                      type="button"
-                      onClick={() => void setDefault(addr.id, "shipping")}
-                      className="text-secondary underline hover:text-primary"
-                    >
-                      Varsayılan teslimat
-                    </button>
-                  ) : null}
-                  {!addr.isDefaultBilling ? (
-                    <button
-                      type="button"
-                      onClick={() => void setDefault(addr.id, "billing")}
-                      className="text-secondary underline hover:text-primary"
-                    >
-                      Varsayılan fatura
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => startEdit(addr)}
-                    className="text-secondary underline hover:text-primary"
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteId(addr.id)}
-                    className="text-error underline"
-                  >
-                    Sil
-                  </button>
-                </div>
-              </article>
-              </Reveal>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="mt-16">
-        <Reveal>
-          <h2 className="mb-6 font-display text-2xl">Sipariş geçmişi</h2>
-        </Reveal>
-        {!orders.length ? (
-          <Reveal delay={60}>
-          <div className="industrial-border p-8 font-meta text-xs uppercase text-secondary">
-            Henüz sipariş yok.{" "}
-            <Link href="/urunler" className="text-primary underline">
-              Koleksiyona git
-            </Link>
-          </div>
-          </Reveal>
-        ) : (
-          <div className="divide-y divide-outline-variant/20 border border-outline-variant/20">
-            {orders.map((order, i) => {
-              const trackCode = order.shipments?.[0]?.trackingNumber;
-              return (
-              <Reveal key={order.id} delay={Math.min(i, 6) * 55} variant="fade">
-              <div className="row-motion flex flex-col justify-between gap-4 px-5 py-5 hover:bg-surface-container-low md:flex-row md:items-center">
-                <Link
-                  href={`/hesabim/siparisler/${order.id}`}
-                  className="min-w-0 flex-1"
-                >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="font-meta text-sm uppercase text-primary">
-                      {order.orderNumber}
-                    </span>
-                    <StatusBadge status={order.status} />
-                  </div>
-                  <div className="mt-2 font-meta text-[11px] uppercase text-secondary">
-                    {order.createdAt
-                      ? new Date(order.createdAt).toLocaleDateString("tr-TR")
-                      : null}
-                    {order.shippingProvider
-                      ? ` · ${order.shippingProvider}`
-                      : null}
-                  </div>
-                  <div className="mt-1 font-meta text-[11px] text-secondary">
-                    {(order.items || [])
-                      .map((it) => `${it.productName} ×${it.quantity}`)
-                      .join(", ") || "—"}
-                  </div>
-                </Link>
-                <div className="flex shrink-0 flex-col items-start gap-2 md:items-end">
-                  <div className="font-meta text-sm text-on-surface">
-                    {formatMoney(order.total, order.currency)}
-                  </div>
-                  {trackCode ? (
-                    <Link
-                      href={`/takip/${encodeURIComponent(trackCode)}`}
-                      className="font-meta text-[10px] uppercase tracking-widest text-primary underline"
-                    >
-                      Kargo takip
-                    </Link>
-                  ) : (
-                    <Link
-                      href={`/hesabim/siparisler/${order.id}`}
-                      className="font-meta text-[10px] uppercase tracking-widest text-secondary underline hover:text-primary"
-                    >
-                      Detay
-                    </Link>
-                  )}
-                </div>
-              </div>
-              </Reveal>
-              );
-            })}
-          </div>
-        )}
-      </section>
+        </section>
+      ) : null}
 
       {deleteId ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -809,32 +847,13 @@ function ToggleCheck({
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 font-meta text-xs uppercase text-secondary">
-      <span
-        className={`flex h-5 w-5 items-center justify-center border ${
-          checked
-            ? "border-primary bg-primary text-on-primary"
-            : "border-outline-variant/50"
-        }`}
-        aria-hidden
-      >
-        {checked ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M2 6.2L4.6 9L10 3"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="square"
-            />
-          </svg>
-        ) : null}
-      </span>
       <input
         type="checkbox"
-        className="sr-only"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
+        className="size-4 accent-primary"
       />
-      <span>{label}</span>
+      {label}
     </label>
   );
 }

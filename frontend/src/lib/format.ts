@@ -1,5 +1,16 @@
 import { stockProductFallback } from "@/lib/stock-images";
 
+/**
+ * CSS `text-transform: uppercase` ve `toUpperCase()` Türkçe locale’de
+ * Latin "i" → "İ" yapar. İngilizce metinde en-US, Türkçe karakterli metinde tr-TR.
+ */
+export function displayUpper(text: string): string {
+  if (/[şğıüöçıİŞĞÜÖÇ]/.test(text)) {
+    return text.toLocaleUpperCase("tr-TR");
+  }
+  return text.toLocaleUpperCase("en-US");
+}
+
 export function formatMoney(
   amount: string | number | null | undefined,
   currency = "TRY",

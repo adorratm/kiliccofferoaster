@@ -15,6 +15,19 @@ export const GRIND_OPTIONS = [
 
 export type GrindValue = (typeof GRIND_OPTIONS)[number]['value'];
 
+export function availableGrindOptions(
+  kind?: string | null,
+  allowWholeBean?: boolean | null,
+  allowGround?: boolean | null,
+) {
+  if (!supportsGrind(kind)) return [];
+  return GRIND_OPTIONS.filter((g) => {
+    if (g.value === 'whole_bean') return allowWholeBean !== false;
+    if (g.value === 'ground') return allowGround !== false;
+    return false;
+  });
+}
+
 export function grindLabel(value?: string | null) {
   if (!value) return 'Çekirdek';
   return GRIND_OPTIONS.find((g) => g.value === value)?.label || value;

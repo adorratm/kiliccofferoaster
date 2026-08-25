@@ -14,7 +14,7 @@ import {
 } from "@/lib/cart";
 import { setCartGuestEmail } from "@/lib/api";
 import { getToken, isAuthenticated } from "@/lib/auth";
-import { formatMoney, productImage } from "@/lib/format";
+import { displayUpper, formatMoney, productImage } from "@/lib/format";
 import { grindLabel, supportsGrind } from "@/lib/grind";
 import type { Cart } from "@/lib/types";
 
@@ -153,14 +153,16 @@ export default function CartPage() {
                         src={img}
                         alt={name}
                         fill
-                        className="image-keen object-cover grayscale"
+                        className="image-keen object-cover"
                         sizes="256px"
                       />
                     </div>
                     <div className="flex flex-1 flex-col justify-between p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h3 className="font-display text-2xl uppercase">{name}</h3>
+                          <h3 className="font-display text-2xl tracking-wide">
+                            {displayUpper(name)}
+                          </h3>
                           <p className="mt-1 font-meta text-xs uppercase text-on-surface-variant">
                             {meta || "—"}
                           </p>

@@ -21,6 +21,10 @@ import {
 import { formatMoney } from "@/lib/format";
 import { calculateOrderTotals } from "@/lib/pricing";
 import { trackBeginCheckout } from "@/lib/analytics";
+import { getSiteSettings, type SiteSettings } from "@/lib/cms";
+import {
+  STORE_PICKUP_CODE,
+} from "@/lib/shipping";
 import type {
   Address,
   Cart,
@@ -38,6 +42,7 @@ type AddressFields = {
 };
 
 type AddressMode = "saved" | "new";
+type DeliveryMethod = "cargo" | "pickup";
 
 const emptyAddr = (): AddressFields => ({
   city: "",
@@ -74,6 +79,11 @@ export default function CheckoutPage() {
   const [newShippingTitle, setNewShippingTitle] = useState("Ev");
   const [newBillingTitle, setNewBillingTitle] = useState("Fatura");
   const [defaultBusy, setDefaultBusy] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("cargo");
+  const [storeContact, setStoreContact] = useState<SiteSettings["contact"] | null>(
+    null,
+  );
 
   const [form, setForm] = useState({
     customerName: "",
@@ -95,11 +105,13 @@ export default function CheckoutPage() {
       getShippingProviders(),
       token ? getMyAddresses(token) : Promise.resolve([] as Address[]),
       token ? getMe(token).catch(() => null) : Promise.resolve(null),
-    ]).then(([cartData, providerData, addressData, me]) => {
+      getSiteSettings().catch(() => null),
+    ]).then(([cartData, providerData, addressData, me, settings]) => {
       setCart(cartData);
       setProviders(providerData);
       setAddresses(addressData);
       setUser(me);
+      if (settings?.contact) setStoreContact(settings.contact);
 
       if (cartData?.items?.length) {
         const subtotal = cartSubtotal(cartData);
@@ -285,7 +297,11 @@ export default function CheckoutPage() {
     const token = getToken();
     if (!token || !user) return;
 
-    if (shippingMode === "new" && saveShippingAddress) {
+    if (
+      deliveryMethod === "cargo" &&
+      shippingMode === "new" &&
+      saveShippingAddress
+    ) {
       const created = await createAddress(token, {
         title: newShippingTitle.trim() || "Teslimat",
         fullName: form.customerName,
@@ -335,8 +351,18 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (shippingMode === "saved" && !shippingId && addresses.length > 0) {
+    if (
+      deliveryMethod === "cargo" &&
+      shippingMode === "saved" &&
+      !shippingId &&
+      addresses.length > 0
+    ) {
       setError("Teslimat için kayıtlı bir adres seçin veya yeni adres girin.");
+      return;
+    }
+
+    if (deliveryMethod === "cargo" && !form.shippingProvider) {
+      setError("Kargo sağlayıcısı seçin.");
       return;
     }
 
@@ -345,25 +371,45 @@ export default function CheckoutPage() {
       await persistNewAddressesIfNeeded();
 
       const sessionId = getCartSessionId();
-      const shippingAddress = {
-        fullName: form.customerName,
-        phone: form.customerPhone,
-        city: form.shipping.city,
-        district: form.shipping.district,
-        neighborhood: form.shipping.neighborhood,
-        addressLine: form.shipping.addressLine,
-        postalCode: form.shipping.postalCode,
-      };
-      const billingSource = billingSame ? form.shipping : form.billing;
-      const billingAddress = {
-        fullName: form.customerName,
-        phone: form.customerPhone,
-        city: billingSource.city,
-        district: billingSource.district,
-        neighborhood: billingSource.neighborhood,
-        addressLine: billingSource.addressLine,
-        postalCode: billingSource.postalCode,
-      };
+      const pickup = deliveryMethod === "pickup";
+      const shippingAddress = pickup
+        ? undefined
+        : {
+            fullName: form.customerName,
+            phone: form.customerPhone,
+            city: form.shipping.city,
+            district: form.shipping.district,
+            neighborhood: form.shipping.neighborhood,
+            addressLine: form.shipping.addressLine,
+            postalCode: form.shipping.postalCode,
+          };
+      const billingSource =
+        billingSame && !pickup
+          ? form.shipping
+          : billingSame && pickup
+            ? null
+            : form.billing;
+      const billingAddress = billingSource
+        ? {
+            fullName: form.customerName,
+            phone: form.customerPhone,
+            city: billingSource.city,
+            district: billingSource.district,
+            neighborhood: billingSource.neighborhood,
+            addressLine: billingSource.addressLine,
+            postalCode: billingSource.postalCode,
+          }
+        : pickup
+          ? undefined
+          : {
+              fullName: form.customerName,
+              phone: form.customerPhone,
+              city: form.shipping.city,
+              district: form.shipping.district,
+              neighborhood: form.shipping.neighborhood,
+              addressLine: form.shipping.addressLine,
+              postalCode: form.shipping.postalCode,
+            };
 
       const result = await checkout(
         sessionId,
@@ -371,9 +417,11 @@ export default function CheckoutPage() {
           customerEmail: form.customerEmail,
           customerName: form.customerName,
           customerPhone: form.customerPhone,
-          shippingAddress,
-          billingAddress,
-          shippingProvider: form.shippingProvider,
+          ...(shippingAddress ? { shippingAddress } : {}),
+          ...(billingAddress ? { billingAddress } : {}),
+          shippingProvider: pickup
+            ? STORE_PICKUP_CODE
+            : form.shippingProvider,
           couponCode: couponPreview?.valid ? couponPreview.code : undefined,
           legalAcceptances: {
             mesafeliSatis: form.mesafeliSatis,
@@ -419,8 +467,9 @@ export default function CheckoutPage() {
   }
 
   const subtotal = cartSubtotal(cart);
+  const isPickup = deliveryMethod === "pickup";
   const selected = providers.find((p) => p.code === form.shippingProvider);
-  const shippingFee = Number(selected?.fee || 0);
+  const shippingFee = isPickup ? 0 : Number(selected?.fee || 0);
   const discountAmount = couponPreview?.valid
     ? Number(couponPreview.discountAmount)
     : 0;
@@ -545,6 +594,76 @@ export default function CheckoutPage() {
           </section>
           </Reveal>
 
+          <Reveal variant="left" delay={40}>
+          <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
+            <h2 className="mb-6 font-display text-2xl">Teslimat yöntemi</h2>
+            <div className="space-y-3">
+              <label
+                className={`flex cursor-pointer items-center justify-between border px-4 py-4 font-meta text-xs uppercase ${
+                  deliveryMethod === "cargo"
+                    ? "border-primary text-primary"
+                    : "border-outline-variant/30 text-secondary"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    checked={deliveryMethod === "cargo"}
+                    onChange={() => setDeliveryMethod("cargo")}
+                  />
+                  Kargo ile gönder
+                </span>
+              </label>
+              <label
+                className={`flex cursor-pointer items-start justify-between gap-4 border px-4 py-4 font-meta text-xs uppercase ${
+                  deliveryMethod === "pickup"
+                    ? "border-primary text-primary"
+                    : "border-outline-variant/30 text-secondary"
+                }`}
+              >
+                <span className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    className="mt-0.5"
+                    checked={deliveryMethod === "pickup"}
+                    onChange={() => setDeliveryMethod("pickup")}
+                  />
+                  <span>
+                    Mağazadan teslim al
+                    <span className="mt-1 block normal-case tracking-normal text-secondary">
+                      Ücretsiz · Hazır olduğunda mağazadan alın
+                    </span>
+                  </span>
+                </span>
+                <span className="shrink-0">{formatMoney(0)}</span>
+              </label>
+            </div>
+            {isPickup && storeContact ? (
+              <div className="mt-6 border border-outline-variant/30 bg-surface px-4 py-4 font-meta text-xs leading-relaxed text-secondary">
+                <p className="uppercase tracking-widest text-primary">
+                  Mağaza adresi
+                </p>
+                <p className="mt-2 normal-case tracking-normal text-on-surface">
+                  {storeContact.address}
+                </p>
+                {storeContact.hours ? (
+                  <p className="mt-2 normal-case tracking-normal">
+                    Çalışma: {storeContact.hours}
+                  </p>
+                ) : null}
+                {storeContact.phone ? (
+                  <p className="mt-1 normal-case tracking-normal">
+                    Tel: {storeContact.phone}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+          </Reveal>
+
+          {!isPickup ? (
           <Reveal variant="left" delay={70}>
           <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
             <h2 className="mb-6 font-display text-2xl">Teslimat adresi</h2>
@@ -679,6 +798,7 @@ export default function CheckoutPage() {
             )}
           </section>
           </Reveal>
+          ) : null}
 
           <Reveal variant="left" delay={120}>
           <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
@@ -693,7 +813,11 @@ export default function CheckoutPage() {
                     setBillingMode(shippingMode);
                   }
                 }}
-                label={<span>Teslimat ile aynı</span>}
+                label={
+                  <span>
+                    {isPickup ? "Ayrı fatura adresi istemiyorum" : "Teslimat ile aynı"}
+                  </span>
+                }
               />
             </div>
             {!billingSame ? (
@@ -831,12 +955,15 @@ export default function CheckoutPage() {
               </>
             ) : (
               <p className="font-meta text-xs uppercase text-secondary">
-                Fatura bilgileri teslimat adresiyle aynı olacak.
+                {isPickup
+                  ? "Fatura için ayrı adres istenmeyecek."
+                  : "Fatura bilgileri teslimat adresiyle aynı olacak."}
               </p>
             )}
           </section>
           </Reveal>
 
+          {!isPickup ? (
           <Reveal variant="left" delay={160}>
           <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
             <h2 className="mb-6 font-display text-2xl">Kargo Sağlayıcı</h2>
@@ -865,6 +992,7 @@ export default function CheckoutPage() {
             </div>
           </section>
           </Reveal>
+          ) : null}
 
           <Reveal variant="left" delay={200}>
           <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
@@ -973,7 +1101,12 @@ export default function CheckoutPage() {
                   value={`−${formatMoney(discountAmount)}`}
                 />
               ) : null}
-              <Row label="Kargo" value={formatMoney(shippingFee)} />
+              <Row
+                label={isPickup ? "Teslimat" : "Kargo"}
+                value={
+                  isPickup ? "Mağaza · Ücretsiz" : formatMoney(shippingFee)
+                }
+              />
               <Row
                 label={`KDV (%${totals.ratePercent}${totals.taxIncluded ? " dahil" : ""})`}
                 value={formatMoney(totals.taxAmount)}

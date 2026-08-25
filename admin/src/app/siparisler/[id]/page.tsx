@@ -9,6 +9,7 @@ import {
   formatAddress,
   resolveOrderSource,
 } from '@/lib/order-display';
+import { isStorePickup, shippingMethodLabel } from '@/lib/shipping';
 import { asArray, formatMoney } from '@/lib/utils';
 import type { Order, OrderStatus, ShippingProviderConfig } from '@/lib/types';
 
@@ -147,6 +148,7 @@ export default function OrderDetailPage() {
   }
 
   const source = resolveOrderSource(order);
+  const pickup = isStorePickup(order.shippingProvider);
   const addressLines = formatAddress(order.shippingAddress);
   const currency = order.currency || 'TRY';
   const discount = Number(order.discountAmount || 0);
@@ -214,7 +216,12 @@ export default function OrderDetailPage() {
           ) : null}
           {addressLines.length ? (
             <div className="mt-2 border-t border-border-muted pt-3 text-sm text-muted">
-              <p className="mono mb-1 text-[10px] uppercase">Teslimat</p>
+              <p className="mono mb-1 text-[10px] uppercase">
+                {pickup ? 'Mağaza teslimi' : 'Teslimat'}
+              </p>
+              {pickup ? (
+                <p className="mb-2 text-accent">Mağazadan teslim al</p>
+              ) : null}
               {addressLines.map((line) => (
                 <p key={line}>{line}</p>
               ))}
@@ -235,8 +242,12 @@ export default function OrderDetailPage() {
               <span>{formatMoney(order.subtotal, currency)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">Kargo</span>
-              <span>{formatMoney(order.shippingFee || 0, currency)}</span>
+              <span className="text-muted">{pickup ? 'Teslimat' : 'Kargo'}</span>
+              <span>
+                {pickup
+                  ? 'Mağaza · Ücretsiz'
+                  : formatMoney(order.shippingFee || 0, currency)}
+              </span>
             </div>
             {discount > 0 ? (
               <div className="flex justify-between text-accent">
@@ -305,7 +316,12 @@ export default function OrderDetailPage() {
             </button>
           </form>
 
-          {source.kind === 'web' ? (
+          {pickup ? (
+            <p className="border border-border-muted bg-surface px-4 py-3 text-xs text-muted">
+              Mağazadan teslim — kargo oluşturulmaz. Hazır olunca müşteri
+              bilgilendirilir ({shippingMethodLabel(order.shippingProvider)}).
+            </p>
+          ) : source.kind === 'web' ? (
             <form
               onSubmit={createShipment}
               className="border border-border-muted bg-surface p-4 space-y-3"

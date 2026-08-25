@@ -219,6 +219,8 @@ export class ProductsService {
       isFeatured: productFields.isFeatured ?? false,
       categoryId: productFields.categoryId ?? null,
       kind: productFields.kind ?? 'other',
+      allowWholeBean: productFields.allowWholeBean ?? true,
+      allowGround: productFields.allowGround ?? true,
       unit: productFields.unit ?? 'adet',
       barcode: productFields.barcode ?? null,
       expiresAt: productFields.expiresAt ?? null,

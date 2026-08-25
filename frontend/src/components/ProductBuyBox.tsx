@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { formatMoney } from "@/lib/format";
-import { GRIND_OPTIONS, supportsGrind, type GrindValue } from "@/lib/grind";
+import {
+  availableGrindOptions,
+  type GrindValue,
+} from "@/lib/grind";
 import type { Product, ProductVariant } from "@/lib/types";
 
 type Props = {
@@ -16,12 +19,38 @@ export function ProductBuyBox({ product }: Props) {
     () => (product.variants || []).filter((v) => v.isActive !== false),
     [product.variants],
   );
+  const grindChoices = useMemo(
+    () =>
+      availableGrindOptions(
+        product.kind,
+        product.allowWholeBean,
+        product.allowGround,
+      ),
+    [product.kind, product.allowWholeBean, product.allowGround],
+  );
   const [variantId, setVariantId] = useState<string | null>(
     variants[0]?.id ?? null,
   );
-  const [grind, setGrind] = useState<GrindValue>("whole_bean");
+  const [grind, setGrind] = useState<GrindValue>(
+    () => grindChoices[0]?.value ?? "whole_bean",
+  );
 
-  const showGrind = supportsGrind(product.kind);
+  useEffect(() => {
+    if (
+      grindChoices.length > 0 &&
+      !grindChoices.some((g) => g.value === grind)
+    ) {
+      setGrind(grindChoices[0].value);
+    }
+  }, [grindChoices, grind]);
+
+  const showGrindPicker = grindChoices.length > 1;
+  const resolvedGrind =
+    grindChoices.length > 0
+      ? grindChoices.some((g) => g.value === grind)
+        ? grind
+        : grindChoices[0].value
+      : null;
 
   const selected: ProductVariant | undefined =
     variants.find((v) => v.id === variantId) || variants[0];
@@ -70,13 +99,13 @@ export function ProductBuyBox({ product }: Props) {
         </div>
       ) : null}
 
-      {showGrind ? (
+      {showGrindPicker ? (
         <div>
           <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
             Öğütme tercihi
           </p>
           <div className="flex flex-wrap gap-2">
-            {GRIND_OPTIONS.map((g) => {
+            {grindChoices.map((g) => {
               const active = grind === g.value;
               return (
                 <button
@@ -128,7 +157,7 @@ export function ProductBuyBox({ product }: Props) {
           <AddToCartButton
             productId={product.id}
             variantId={selected?.id}
-            grindOption={showGrind ? grind : null}
+            grindOption={resolvedGrind}
             disabled={disabled}
             productName={product.name}
             price={Number(displayPrice)}

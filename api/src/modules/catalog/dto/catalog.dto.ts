@@ -237,6 +237,22 @@ export class CreateProductDto {
   @MaxLength(40)
   kind?: string;
 
+  @ApiPropertyOptional({
+    description: 'Kahve ürünlerinde Çekirdek seçeneği',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowWholeBean?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Kahve ürünlerinde Öğütülmüş seçeneği',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowGround?: boolean;
+
   @ApiPropertyOptional({ example: 'g' })
   @IsOptional()
   @IsString()

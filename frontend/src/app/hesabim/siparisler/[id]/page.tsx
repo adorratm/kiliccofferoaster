@@ -14,6 +14,7 @@ import {
   retryPayment,
 } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { shippingMethodLabel } from "@/lib/shipping";
 import { formatMoney } from "@/lib/format";
 import { orderStatusHint, shipmentStatusLabel } from "@/lib/order-status";
 import { redirectToPayment } from "@/lib/payment-redirect";
@@ -80,7 +81,7 @@ export default function OrderDetailPage() {
           Sipariş bulunamadı.
         </p>
         <Link
-          href="/hesabim"
+          href="/hesabim?sekme=siparisler"
           className="btn-ghost mt-8 inline-block px-8 py-4 text-xs"
         >
           Hesaba Dön
@@ -162,7 +163,7 @@ export default function OrderDetailPage() {
     <div className="page-shell py-16 md:py-24">
       <div className="page-enter">
         <Link
-          href="/hesabim"
+          href="/hesabim?sekme=siparisler"
           className="font-meta text-[11px] uppercase text-secondary hover:text-primary"
         >
           ← Hesabım
@@ -177,7 +178,7 @@ export default function OrderDetailPage() {
                 ? new Date(order.createdAt).toLocaleString("tr-TR")
                 : null}
               {order.shippingProvider
-                ? ` · ${order.shippingProvider}`
+                ? ` · ${shippingMethodLabel(order.shippingProvider)}`
                 : null}
             </p>
           </div>
@@ -242,8 +243,15 @@ export default function OrderDetailPage() {
 
           <Reveal variant="left" delay={80}>
             <section className="panel-motion industrial-border bg-surface-container-low p-6">
-              <h2 className="mb-4 font-display text-2xl">Kargo</h2>
-              {shipments.length === 0 ? (
+              <h2 className="mb-4 font-display text-2xl">
+                {order.shippingProvider === "store_pickup" ? "Teslimat" : "Kargo"}
+              </h2>
+              {order.shippingProvider === "store_pickup" ? (
+                <p className="font-meta text-xs uppercase text-secondary">
+                  Mağazadan teslim — sipariş hazırlandığında mağazadan
+                  alabilirsiniz.
+                </p>
+              ) : shipments.length === 0 ? (
                 <p className="font-meta text-xs uppercase text-secondary">
                   Henüz kargo kaydı oluşmadı. Sipariş hazırlandığında takip
                   bilgisi burada görünür.
@@ -422,10 +430,18 @@ export default function OrderDetailPage() {
                     <span>−{formatMoney(discount, order.currency)}</span>
                   </div>
                 ) : null}
-                <div className="flex justify-between">
-                  <span>Kargo</span>
-                  <span>{formatMoney(order.shippingFee, order.currency)}</span>
-                </div>
+                  <div className="flex justify-between">
+                    <span>
+                      {order.shippingProvider === "store_pickup"
+                        ? "Teslimat"
+                        : "Kargo"}
+                    </span>
+                    <span>
+                      {order.shippingProvider === "store_pickup"
+                        ? "Mağaza · Ücretsiz"
+                        : formatMoney(order.shippingFee, order.currency)}
+                    </span>
+                  </div>
                 {order.taxAmount ? (
                   <div className="flex justify-between">
                     <span>KDV</span>
@@ -445,6 +461,9 @@ export default function OrderDetailPage() {
               <h3 className="mb-4 font-display text-xl normal-case tracking-normal">
                 Teslimat
               </h3>
+              {order.shippingProvider === "store_pickup" ? (
+                <p className="mb-3 text-primary">Mağazadan teslim</p>
+              ) : null}
               <p className="text-secondary">
                 {order.customerName}
                 <br />

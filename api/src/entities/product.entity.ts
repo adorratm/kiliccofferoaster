@@ -75,6 +75,14 @@ export class Product extends BaseEntity {
   @Column({ name: 'kind', type: 'varchar', length: 40, default: 'other' })
   kind!: string;
 
+  /** Kahve ürünlerinde Çekirdek seçeneği sunulsun mu */
+  @Column({ name: 'allow_whole_bean', type: 'boolean', default: true })
+  allowWholeBean!: boolean;
+
+  /** Kahve ürünlerinde Öğütülmüş seçeneği sunulsun mu */
+  @Column({ name: 'allow_ground', type: 'boolean', default: true })
+  allowGround!: boolean;
+
   @Column({ name: 'unit', type: 'varchar', length: 20, default: 'adet' })
   unit!: string;
 

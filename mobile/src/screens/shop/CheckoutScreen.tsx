@@ -26,11 +26,13 @@ import {
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
+import { STORE_PICKUP_CODE } from '../../lib/shipping';
 import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
 import { btn, btnText, colors, input, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Checkout'>;
 type AddressMode = 'saved' | 'new';
+type DeliveryMethod = 'cargo' | 'pickup';
 
 export function CheckoutScreen({ navigation }: Props) {
   const { cart, refresh } = useShopCart();
@@ -42,6 +44,7 @@ export function CheckoutScreen({ navigation }: Props) {
   const [error, setError] = useState('');
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('cargo');
   const [addressMode, setAddressMode] = useState<AddressMode>('new');
   const [selectedId, setSelectedId] = useState('');
   const [saveAddress, setSaveAddress] = useState(true);
@@ -143,9 +146,10 @@ export function CheckoutScreen({ navigation }: Props) {
     }
   }
 
+  const isPickup = deliveryMethod === 'pickup';
   const subtotal = cartSubtotal(cart);
   const selected = providers.find((p) => p.code === form.shippingProvider);
-  const shippingFee = Number(selected?.fee || 0);
+  const shippingFee = isPickup ? 0 : Number(selected?.fee || 0);
   const totals = calculateOrderTotals(
     subtotal,
     shippingFee,
@@ -173,13 +177,27 @@ export function CheckoutScreen({ navigation }: Props) {
       setError('Yasal onayları işaretleyin');
       return;
     }
-    if (addressMode === 'saved' && !selectedId && addresses.length > 0) {
+    if (
+      !isPickup &&
+      addressMode === 'saved' &&
+      !selectedId &&
+      addresses.length > 0
+    ) {
       setError('Kayıtlı bir adres seçin veya yeni adres girin');
+      return;
+    }
+    if (!isPickup && !form.shippingProvider) {
+      setError('Kargo seçin');
       return;
     }
     setSubmitting(true);
     try {
-      if (loggedIn && addressMode === 'new' && saveAddress) {
+      if (
+        !isPickup &&
+        loggedIn &&
+        addressMode === 'new' &&
+        saveAddress
+      ) {
         const created = await shopCreateAddress({
           title: addressTitle.trim() || 'Teslimat',
           fullName: form.customerName,
@@ -197,22 +215,25 @@ export function CheckoutScreen({ navigation }: Props) {
         setAddresses(await shopAddresses());
       }
 
-      const addr = {
-        fullName: form.customerName,
-        phone: form.customerPhone,
-        city: form.city,
-        district: form.district,
-        neighborhood: form.neighborhood,
-        addressLine: form.addressLine,
-        postalCode: form.postalCode,
-      };
+      const addr = isPickup
+        ? undefined
+        : {
+            fullName: form.customerName,
+            phone: form.customerPhone,
+            city: form.city,
+            district: form.district,
+            neighborhood: form.neighborhood,
+            addressLine: form.addressLine,
+            postalCode: form.postalCode,
+          };
       const result = await shopCheckout({
         customerEmail: form.customerEmail,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
-        shippingAddress: addr,
-        billingAddress: addr,
-        shippingProvider: form.shippingProvider,
+        ...(addr
+          ? { shippingAddress: addr, billingAddress: addr }
+          : {}),
+        shippingProvider: isPickup ? STORE_PICKUP_CODE : form.shippingProvider,
         couponCode: coupon?.valid ? coupon.code : undefined,
         legalAcceptances: {
           mesafeliSatis: form.mesafeliSatis,
@@ -276,7 +297,41 @@ export function CheckoutScreen({ navigation }: Props) {
         keyboardType="phone-pad"
       />
 
-      <SectionLabel index="02" label="Adres" />
+      <SectionLabel index="02" label="Teslimat yöntemi" />
+      <Pressable
+        onPress={() => setDeliveryMethod('cargo')}
+        style={{
+          marginTop: 8,
+          borderWidth: 1,
+          borderColor: deliveryMethod === 'cargo' ? colors.accent : colors.borderMuted,
+          backgroundColor: deliveryMethod === 'cargo' ? colors.surfaceHigh : colors.surface,
+          padding: 14,
+        }}
+      >
+        <Text style={{ color: colors.text, fontWeight: '600' }}>Kargo ile gönder</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => setDeliveryMethod('pickup')}
+        style={{
+          marginTop: 8,
+          borderWidth: 1,
+          borderColor: deliveryMethod === 'pickup' ? colors.accent : colors.borderMuted,
+          backgroundColor: deliveryMethod === 'pickup' ? colors.surfaceHigh : colors.surface,
+          padding: 14,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={{ color: colors.text, fontWeight: '600' }}>Mağazadan teslim al</Text>
+          <Text style={[muted, { marginTop: 4 }]}>Ücretsiz · Hazır olunca mağazadan alın</Text>
+        </View>
+        <Text style={{ color: colors.accentSoft }}>{formatMoney(0)}</Text>
+      </Pressable>
+
+      {!isPickup ? (
+        <>
+      <SectionLabel index="03" label="Adres" />
       {addresses.length > 0 ? (
         <View style={{ marginBottom: 8 }}>
           {addresses.map((a) => {
@@ -388,9 +443,11 @@ export function CheckoutScreen({ navigation }: Props) {
             </View>
           ) : null}
         </>
-      )}
+      ) : null}
 
-      <SectionLabel index="03" label="Kargo" />
+      {!isPickup ? (
+        <>
+      <SectionLabel index="04" label="Kargo" />
       {providers.map((p) => (
         <Pressable
           key={p.code}
@@ -409,8 +466,10 @@ export function CheckoutScreen({ navigation }: Props) {
           <Text style={{ color: colors.accentSoft }}>{formatMoney(p.fee)}</Text>
         </Pressable>
       ))}
+        </>
+      ) : null}
 
-      <SectionLabel index="04" label="Kupon" />
+      <SectionLabel index={isPickup ? '03' : '05'} label="Kupon" />
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
         <TextInput
           value={couponInput}
@@ -430,7 +489,7 @@ export function CheckoutScreen({ navigation }: Props) {
         </Text>
       ) : null}
 
-      <SectionLabel index="05" label="Onaylar" />
+      <SectionLabel index={isPickup ? '04' : '06'} label="Onaylar" />
       <Legal
         label="Mesafeli satış sözleşmesi"
         value={form.mesafeliSatis}
@@ -460,7 +519,10 @@ export function CheckoutScreen({ navigation }: Props) {
         }}
       >
         <Row label="Ara toplam" value={formatMoney(totals.subtotal)} />
-        <Row label="Kargo" value={formatMoney(totals.shippingFee)} />
+        <Row
+          label={isPickup ? 'Teslimat' : 'Kargo'}
+          value={isPickup ? 'Mağaza · Ücretsiz' : formatMoney(totals.shippingFee)}
+        />
         {totals.discountAmount ? <Row label="İndirim" value={`−${formatMoney(totals.discountAmount)}`} /> : null}
         <View style={{ height: 1, backgroundColor: colors.borderMuted, marginVertical: 12 }} />
         <Row label="Toplam" value={formatMoney(totals.total)} strong />

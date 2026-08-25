@@ -11,6 +11,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
@@ -20,6 +21,7 @@ import {
   ReturnRequestStatus,
   ReturnRequestType,
 } from '@entities/return-request.entity';
+import { STORE_PICKUP_CODE } from '@common/constants/shipping';
 
 export class AddressPayloadDto {
   @ApiProperty()
@@ -67,10 +69,14 @@ export class CreateOrderDto {
   @MaxLength(40)
   customerPhone!: string;
 
-  @ApiProperty({ type: AddressPayloadDto })
+  @ApiPropertyOptional({
+    type: AddressPayloadDto,
+    description: 'Kargo teslimatı için zorunlu; mağaza tesliminde opsiyonel',
+  })
+  @ValidateIf((o: CreateOrderDto) => o.shippingProvider !== STORE_PICKUP_CODE)
   @ValidateNested()
   @Type(() => AddressPayloadDto)
-  shippingAddress!: AddressPayloadDto;
+  shippingAddress?: AddressPayloadDto;
 
   @ApiPropertyOptional({ type: AddressPayloadDto })
   @IsOptional()
@@ -78,7 +84,9 @@ export class CreateOrderDto {
   @Type(() => AddressPayloadDto)
   billingAddress?: AddressPayloadDto;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: `Kargo firması kodu veya "${STORE_PICKUP_CODE}" (mağazadan teslim)`,
+  })
   @IsOptional()
   @IsString()
   shippingProvider?: string;

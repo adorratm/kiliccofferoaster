@@ -330,12 +330,10 @@ body {
   transform: translate3d(0, -2px, 0);
 }
 
-.image-keen {
-  transition: transform 0.8s var(--motion-ease), filter 0.8s ease;
-}
+/* Industrial English labels: wrap with lang="en" so CSS uppercase
+   does not map Latin i → Turkish İ under html[lang=tr]. */
 .group:hover .image-keen {
   transform: scale(1.03);
-  filter: grayscale(0);
 }
 
 .oauth-chip {
@@ -395,12 +393,11 @@ body {
 }
 
 .media-lift {
-  transition: transform 0.55s var(--motion-ease), filter 0.55s ease;
+  transition: transform 0.55s var(--motion-ease);
 }
 
 .group:hover .media-lift {
   transform: scale(1.04);
-  filter: grayscale(0);
 }
 
 .card-motion {

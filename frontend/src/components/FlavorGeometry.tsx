@@ -58,7 +58,7 @@ export function FlavorGeometry({ values }: Props) {
   }).join(" ");
 
   return (
-    <div className="industrial-border relative p-6">
+    <div lang="en" className="industrial-border relative p-6">
       <div className="absolute -top-3 left-4 bg-surface px-2 font-meta text-[10px] uppercase text-on-surface-variant">
         Flavor Geometry
       </div>
@@ -97,7 +97,7 @@ export function FlavorGeometry({ values }: Props) {
                 className="fill-on-surface-variant font-meta"
                 style={{ fontSize: 8 }}
               >
-                {LABELS[key].toUpperCase()}
+                {LABELS[key].toLocaleUpperCase("en-US")}
               </text>
             );
           })}

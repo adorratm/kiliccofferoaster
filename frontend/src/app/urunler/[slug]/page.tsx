@@ -137,7 +137,10 @@ export default async function ProductDetailPage({ params }: Props) {
           <div>
             <div className="mb-10 flex items-start justify-between gap-6">
               <div>
-                <div className="mb-2 font-meta text-sm uppercase tracking-widest text-primary">
+                <div
+                  lang="en"
+                  className="mb-2 font-meta text-sm uppercase tracking-widest text-primary"
+                >
                   Configure / Buy
                 </div>
                 <p className="font-meta text-xs uppercase text-on-surface-variant">
@@ -154,7 +157,7 @@ export default async function ProductDetailPage({ params }: Props) {
 
             <div className="mb-10 space-y-8">
               {specs.length > 0 ? (
-                <div className="industrial-border relative p-6">
+                <div lang="en" className="industrial-border relative p-6">
                   <div className="absolute -top-3 left-4 bg-surface px-2 font-meta text-[10px] uppercase text-on-surface-variant">
                     Technical Specs
                   </div>
@@ -179,7 +182,10 @@ export default async function ProductDetailPage({ params }: Props) {
 
           <div>
             <ProductBuyBox product={product} />
-            <div className="mt-4 flex justify-between font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
+            <div
+              lang="en"
+              className="mt-4 flex justify-between font-meta text-[10px] uppercase tracking-widest text-on-surface-variant"
+            >
               <span>Secure_Protocol_V3</span>
               <span>Global_Logistics_Enabled</span>
             </div>
@@ -191,7 +197,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <section className="cv-auto page-shell border-b border-outline-variant/20 py-section">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
             <Reveal className="lg:col-span-4" variant="left">
-              <h2 className="mb-6 font-display text-4xl uppercase">
+              <h2 lang="en" className="mb-6 font-display text-4xl uppercase">
                 The Roaster&apos;s Log
               </h2>
               {product.description ? (
@@ -200,7 +206,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 </p>
               ) : null}
               {showRoastMetrics ? (
-                <div className="mt-8 flex gap-4">
+                <div lang="en" className="mt-8 flex gap-4">
                   {roastTime ? (
                     <div className="industrial-border w-32 p-4 text-center">
                       <span className="block font-display text-2xl">
@@ -226,7 +232,10 @@ export default async function ProductDetailPage({ params }: Props) {
             </Reveal>
             {showRoastTable ? (
               <Reveal className="lg:col-span-8" variant="right" delay={90}>
-                <div className="industrial-border overflow-hidden bg-surface-container">
+                <div
+                  lang="en"
+                  className="industrial-border overflow-hidden bg-surface-container"
+                >
                   <table className="w-full text-left font-meta text-sm">
                     <thead>
                       <tr className="border-b border-outline-variant/20 bg-surface-container-high">

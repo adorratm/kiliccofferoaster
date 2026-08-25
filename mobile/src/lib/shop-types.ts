@@ -32,6 +32,8 @@ export type Product = {
   ratingCount?: number;
   categoryId: string | null;
   kind?: string;
+  allowWholeBean?: boolean;
+  allowGround?: boolean;
   variants?: ProductVariant[];
 };
 
@@ -245,7 +247,7 @@ export type CheckoutPayload = {
   customerEmail: string;
   customerName: string;
   customerPhone: string;
-  shippingAddress: {
+  shippingAddress?: {
     fullName: string;
     phone: string;
     city: string;

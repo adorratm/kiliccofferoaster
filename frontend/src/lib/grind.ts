@@ -21,6 +21,19 @@ const LEGACY_LABELS: Record<string, string> = {
   turkish: "Öğütülmüş",
 };
 
+export function availableGrindOptions(
+  kind?: string | null,
+  allowWholeBean?: boolean | null,
+  allowGround?: boolean | null,
+) {
+  if (!supportsGrind(kind)) return [];
+  return GRIND_OPTIONS.filter((g) => {
+    if (g.value === "whole_bean") return allowWholeBean !== false;
+    if (g.value === "ground") return allowGround !== false;
+    return false;
+  });
+}
+
 export function grindLabel(value?: string | null) {
   if (!value) return "Çekirdek";
   return (

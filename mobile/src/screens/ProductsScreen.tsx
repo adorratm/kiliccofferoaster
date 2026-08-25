@@ -39,6 +39,8 @@ type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   kind?: string;
+  allowWholeBean?: boolean;
+  allowGround?: boolean;
   imageUrl?: string | null;
   unit?: string;
   vatRate?: string | number;
@@ -70,6 +72,8 @@ type FormState = {
   stock: string;
   categoryId: string;
   kind: string;
+  allowWholeBean: boolean;
+  allowGround: boolean;
   unit: string;
   vatRate: string;
   barcode: string;
@@ -134,6 +138,8 @@ function emptyForm(): FormState {
     stock: '0',
     categoryId: '',
     kind: 'other',
+    allowWholeBean: true,
+    allowGround: true,
     unit: 'adet',
     vatRate: '20',
     barcode: '',
@@ -169,6 +175,8 @@ function formFromProduct(p: Product): FormState {
     stock: String(p.stock ?? 0),
     categoryId: p.categoryId || '',
     kind: p.kind || 'other',
+    allowWholeBean: p.allowWholeBean !== false,
+    allowGround: p.allowGround !== false,
     unit: p.unit || 'adet',
     vatRate: String(p.vatRate ?? '20'),
     barcode: p.barcode || '',
@@ -389,6 +397,8 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
       stock: Number(form.stock) || 0,
       categoryId: form.categoryId || null,
       kind: form.kind || 'other',
+      allowWholeBean: form.allowWholeBean,
+      allowGround: form.allowGround,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
       barcode: form.barcode.trim() || null,
@@ -591,6 +601,27 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
           options={KINDS}
           onChange={(kind) => setForm((f) => ({ ...f, kind }))}
         />
+        {form.kind.startsWith('coffee_') ? (
+          <View style={{ marginTop: 14, gap: 12 }}>
+            <Text style={{ color: colors.muted, fontSize: 12, textTransform: 'uppercase' }}>
+              Öğütme seçenekleri
+            </Text>
+            <Switch
+              checked={form.allowWholeBean}
+              label="Çekirdek"
+              onChange={(allowWholeBean) =>
+                setForm((f) => ({ ...f, allowWholeBean }))
+              }
+            />
+            <Switch
+              checked={form.allowGround}
+              label="Öğütülmüş"
+              onChange={(allowGround) =>
+                setForm((f) => ({ ...f, allowGround }))
+              }
+            />
+          </View>
+        ) : null}
         <ChoiceRow
           label="Birim"
           value={form.unit}

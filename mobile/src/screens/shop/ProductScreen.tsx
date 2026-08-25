@@ -17,7 +17,7 @@ import { useShopCart } from '../../lib/shop-cart';
 import { shopAddCartItem, shopProduct, shopToggleWishlist } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { formatMoney, stockQty } from '../../lib/format';
-import { GRIND_OPTIONS, supportsGrind, type GrindValue } from '../../lib/grind';
+import { availableGrindOptions, type GrindValue } from '../../lib/grind';
 import { productOrigin, roastLabel } from '../../lib/order-status';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
 import type { Product, ProductVariant } from '../../lib/shop-types';
@@ -40,6 +40,12 @@ export function ProductScreen({ navigation, route }: Props) {
         const active = (p.variants || []).filter((v) => v.isActive !== false);
         const firstInStock = active.find((v) => stockQty(v.stock) > 0) ?? active[0];
         setVariantId(firstInStock?.id ?? null);
+        const choices = availableGrindOptions(
+          p.kind,
+          p.allowWholeBean,
+          p.allowGround,
+        );
+        if (choices[0]) setGrind(choices[0].value);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Ürün yok'));
   }, [route.params.slug]);
@@ -48,13 +54,28 @@ export function ProductScreen({ navigation, route }: Props) {
     () => (product?.variants || []).filter((v) => v.isActive !== false),
     [product],
   );
+  const grindChoices = useMemo(
+    () =>
+      availableGrindOptions(
+        product?.kind,
+        product?.allowWholeBean,
+        product?.allowGround,
+      ),
+    [product?.kind, product?.allowWholeBean, product?.allowGround],
+  );
   const selected: ProductVariant | undefined =
     variants.find((v) => v.id === variantId) || variants[0];
   const amount = selected?.price ?? product?.salePrice ?? product?.basePrice;
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
   const roast = roastLabel(product?.roastLevel);
-  const showGrind = supportsGrind(product?.kind);
+  const showGrindPicker = grindChoices.length > 1;
+  const resolvedGrind =
+    grindChoices.length > 0
+      ? grindChoices.some((g) => g.value === grind)
+        ? grind
+        : grindChoices[0].value
+      : null;
 
   async function add() {
     if (!product) return;
@@ -64,7 +85,7 @@ export function ProductScreen({ navigation, route }: Props) {
       await shopAddCartItem({
         productId: product.id,
         variantId: selected?.id,
-        grindOption: showGrind ? grind : null,
+        grindOption: resolvedGrind,
         quantity: 1,
       });
       await cart.refresh();
@@ -219,11 +240,11 @@ export function ProductScreen({ navigation, route }: Props) {
           </View>
         ) : null}
 
-        {showGrind ? (
+        {showGrindPicker ? (
           <View style={{ marginTop: 8 }}>
             <SectionLabel label="Öğütme" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              {GRIND_OPTIONS.map((g) => (
+              {grindChoices.map((g) => (
                 <Chip
                   key={g.value}
                   label={g.label}

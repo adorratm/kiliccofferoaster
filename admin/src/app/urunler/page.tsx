@@ -65,6 +65,8 @@ type FormState = {
   isActive: boolean;
   isFeatured: boolean;
   kind: string;
+  allowWholeBean: boolean;
+  allowGround: boolean;
   unit: string;
   vatRate: string;
   variants: VariantForm[];
@@ -131,6 +133,8 @@ const emptyForm = (): FormState => ({
   isActive: true,
   isFeatured: false,
   kind: 'other',
+  allowWholeBean: true,
+  allowGround: true,
   unit: 'adet',
   vatRate: '20',
   variants: [emptyVariant()],
@@ -309,6 +313,8 @@ function ProductsPageInner() {
       isActive: p.isActive,
       isFeatured: Boolean(p.isFeatured),
       kind: p.kind || 'other',
+      allowWholeBean: p.allowWholeBean !== false,
+      allowGround: p.allowGround !== false,
       unit: p.unit || 'adet',
       vatRate: String(p.vatRate ?? '20'),
       variants,
@@ -362,6 +368,8 @@ function ProductsPageInner() {
         .filter(Boolean),
       categoryId: form.categoryId || null,
       kind: form.kind || 'other',
+      allowWholeBean: form.allowWholeBean,
+      allowGround: form.allowGround,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
       isActive: form.isActive,
@@ -585,6 +593,29 @@ function ProductsPageInner() {
               <option value="other">Diğer</option>
             </select>
           </label>
+          {form.kind.startsWith('coffee_') ? (
+            <div className="space-y-2 rounded border border-border-muted p-3 md:col-span-2">
+              <p className="mono text-[10px] uppercase text-muted">
+                Öğütme seçenekleri
+              </p>
+              <Checkbox
+                checked={form.allowWholeBean}
+                onChange={(allowWholeBean) =>
+                  setForm((f) => ({ ...f, allowWholeBean }))
+                }
+                label="Çekirdek"
+                description="Mağazada çekirdek seçeneği sunulsun"
+              />
+              <Checkbox
+                checked={form.allowGround}
+                onChange={(allowGround) =>
+                  setForm((f) => ({ ...f, allowGround }))
+                }
+                label="Öğütülmüş"
+                description="Mağazada öğütülmüş seçeneği sunulsun"
+              />
+            </div>
+          ) : null}
           <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">Birim</span>
             <select

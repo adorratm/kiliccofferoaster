@@ -200,7 +200,7 @@ export default async function HomePage() {
             <span className="block">{hero.titleLine1}</span>
             <span className="text-outline ml-8 block md:ml-32">{hero.titleLine2}</span>
           </h1>
-          <p className="mt-8 max-w-xl border-l-2 border-primary-container py-2 pl-6 font-meta text-xs uppercase leading-relaxed text-secondary md:text-sm">
+          <p className="mt-8 max-w-xl border-l-2 border-primary-container py-2 pl-6 font-meta text-xs leading-relaxed tracking-wide text-secondary md:text-sm">
             {hero.description}
           </p>
           <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:gap-6">
@@ -213,7 +213,10 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 flex-col items-end gap-8 pr-8 font-meta text-[10px] uppercase tracking-tighter text-primary/40 lg:flex">
+        <div
+          lang="en"
+          className="absolute right-0 top-1/2 hidden -translate-y-1/2 flex-col items-end gap-8 pr-8 font-meta text-[10px] uppercase tracking-tighter text-primary/40 lg:flex"
+        >
           {hero.sidebar.map((item, i) => (
             <div
               key={item.label}
@@ -244,7 +247,7 @@ export default async function HomePage() {
             <p className="max-w-sm font-sans text-lg leading-7 text-secondary">
               {ethos.description}
             </p>
-            <div className="mt-10 grid grid-cols-2 gap-4">
+            <div lang="en" className="mt-10 grid grid-cols-2 gap-4">
               {ethos.stats.map((stat) => (
                 <div key={stat.label} className="border border-outline-variant/30 p-4">
                   <div className="font-meta text-[10px] uppercase text-primary/60">

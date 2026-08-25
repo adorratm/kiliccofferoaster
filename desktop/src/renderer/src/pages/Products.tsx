@@ -29,6 +29,8 @@ type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   kind?: string;
+  allowWholeBean?: boolean;
+  allowGround?: boolean;
   imageUrl?: string | null;
   unit?: string;
   vatRate?: string | number;
@@ -58,6 +60,8 @@ type FormState = {
   stock: string;
   categoryId: string;
   kind: string;
+  allowWholeBean: boolean;
+  allowGround: boolean;
   unit: string;
   vatRate: string;
   barcode: string;
@@ -107,6 +111,8 @@ function emptyForm(): FormState {
     stock: '0',
     categoryId: '',
     kind: 'other',
+    allowWholeBean: true,
+    allowGround: true,
     unit: 'adet',
     vatRate: '20',
     barcode: '',
@@ -142,6 +148,8 @@ function formFromProduct(p: Product): FormState {
     stock: String(p.stock ?? 0),
     categoryId: p.categoryId || '',
     kind: p.kind || 'other',
+    allowWholeBean: p.allowWholeBean !== false,
+    allowGround: p.allowGround !== false,
     unit: p.unit || 'adet',
     vatRate: String(p.vatRate ?? '20'),
     barcode: p.barcode || '',
@@ -257,6 +265,8 @@ export function ProductsPage() {
       stock: Number(form.stock) || 0,
       categoryId: form.categoryId || null,
       kind: form.kind || 'other',
+      allowWholeBean: form.allowWholeBean,
+      allowGround: form.allowGround,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
       barcode: form.barcode.trim() || null,
@@ -504,6 +514,31 @@ export function ProductsPage() {
             </option>
           ))}
         </select>
+        {form.kind.startsWith('coffee_') ? (
+          <div className="mt-3 space-y-2 rounded border border-border-muted p-3">
+            <p className="text-xs uppercase tracking-wide text-muted">
+              Öğütme seçenekleri
+            </p>
+            <Switch
+              id="product-whole-bean"
+              checked={form.allowWholeBean}
+              onChange={(checked) =>
+                setForm((f) => ({ ...f, allowWholeBean: checked }))
+              }
+              label="Çekirdek"
+              description="Mağazada çekirdek seçeneği sunulsun"
+            />
+            <Switch
+              id="product-ground"
+              checked={form.allowGround}
+              onChange={(checked) =>
+                setForm((f) => ({ ...f, allowGround: checked }))
+              }
+              label="Öğütülmüş"
+              description="Mağazada öğütülmüş seçeneği sunulsun"
+            />
+          </div>
+        ) : null}
         <select
           className={inputClass}
           value={form.categoryId}
