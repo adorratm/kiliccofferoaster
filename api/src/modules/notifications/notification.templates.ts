@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Order } from '@entities/order.entity';
 import { Shipment } from '@entities/shipment.entity';
+import { BRAND_LOGO_CID } from '@modules/notifications/brand-logo';
 
 export type NotificationTemplateContext = {
   order: Order;
@@ -30,6 +31,24 @@ const STATUS_LABELS: Record<string, string> = {
 
 const BRAND = 'Kılıç Coffee Roaster';
 const BRAND_EMAIL = 'info@kiliccoffeeroaster.com.tr';
+const BRAND_PHONE = '+90 541 214 79 63';
+const DEFAULT_SITE_URL = 'https://kiliccoffeeroaster.com.tr';
+
+/** Marka renkleri — logo (#8c6566) ile uyumlu */
+const C = {
+  page: '#14110f',
+  card: '#1c1714',
+  header: '#f4efe8',
+  ink: '#1a1410',
+  cream: '#f5efe6',
+  muted: '#a89888',
+  soft: '#e8ddd0',
+  line: '#3d3229',
+  lineSoft: '#e5ddd2',
+  accent: '#8c6566',
+  accentSoft: '#c4a574',
+  footer: '#120f0d',
+};
 
 export function statusLabel(status: string): string {
   return STATUS_LABELS[status] || status;
@@ -39,6 +58,11 @@ export function resolveFrontendUrl(config: ConfigService): string {
   return (
     config.get<string>('frontendUrl') || 'http://localhost:3000'
   ).replace(/\/$/, '');
+}
+
+/** Gmail: uzak URL yerine CID (EmailProvider inline attachment) */
+export function brandLogoUrl(_siteUrl?: string): string {
+  return `cid:${BRAND_LOGO_CID}`;
 }
 
 function escapeHtml(value: string): string {
@@ -90,6 +114,22 @@ function orderItemsList(order: Order): string {
     .join('\n');
 }
 
+function sectionLabel(text: string): string {
+  return `<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${C.accentSoft};">${escapeHtml(text)}</p>`;
+}
+
+function infoCard(label: string, bodyHtml: string): string {
+  return `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;background:#241e1a;border:1px solid ${C.line};">
+    <tr>
+      <td style="padding:16px 18px;">
+        ${sectionLabel(label)}
+        ${bodyHtml}
+      </td>
+    </tr>
+  </table>`;
+}
+
 /** Sipariş özeti HTML bloğu (ürünler + iletişim + adres + tutarlar) */
 export function buildOrderDetailsHtml(
   order: Order,
@@ -99,56 +139,70 @@ export function buildOrderDetailsHtml(
   const items = order.items || [];
   const itemRows = items.length
     ? items
-        .map((it) => {
+        .map((it, idx) => {
           const name = [it.productName, it.variantLabel, it.grindLabel]
             .filter(Boolean)
             .join(' · ');
+          const border =
+            idx === items.length - 1 ? 'none' : `1px solid ${C.line}`;
           return `<tr>
-            <td style="padding:8px 0;border-bottom:1px solid #3d3229;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;">${escapeHtml(name)} <span style="color:#a89888;">×${it.quantity}</span></td>
-            <td style="padding:8px 0;border-bottom:1px solid #3d3229;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#f5efe6;text-align:right;white-space:nowrap;">${escapeHtml(formatMoney(it.lineTotal, order.currency))}</td>
+            <td style="padding:12px 0;border-bottom:${border};font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:${C.soft};">
+              ${escapeHtml(name)}
+              <span style="display:inline-block;margin-left:8px;padding:2px 8px;border:1px solid ${C.line};font-size:11px;letter-spacing:0.06em;color:${C.muted};">×${it.quantity}</span>
+            </td>
+            <td style="padding:12px 0;border-bottom:${border};font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${C.cream};text-align:right;white-space:nowrap;vertical-align:top;">${escapeHtml(formatMoney(it.lineTotal, order.currency))}</td>
           </tr>`;
         })
         .join('')
-    : `<tr><td colspan="2" style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a89888;">Kalem yok</td></tr>`;
+    : `<tr><td colspan="2" style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${C.muted};">Kalem yok</td></tr>`;
 
   const ship = formatAddress(order.shippingAddress);
   const bill = order.billingAddress
     ? formatAddress(order.billingAddress)
     : null;
 
-  const personalBlock = includePersonal
-    ? `
-    <p style="margin:20px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Müşteri</p>
-    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(
-      [
-        order.customerName,
-        order.customerEmail,
-        order.customerPhone,
-      ]
+  const itemsBlock = `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;background:#241e1a;border:1px solid ${C.line};">
+    <tr>
+      <td style="padding:16px 18px;">
+        ${sectionLabel('Sipariş içeriği')}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${itemRows}</table>
+      </td>
+    </tr>
+  </table>`;
+
+  if (!includePersonal) return itemsBlock;
+
+  const personalBlock = infoCard(
+    'Müşteri',
+    `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${C.soft};white-space:pre-line;">${escapeHtml(
+      [order.customerName, order.customerEmail, order.customerPhone]
         .filter(Boolean)
         .join('\n'),
-    )}</p>
-    <p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Teslimat adresi</p>
-    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(ship)}</p>
-    ${
-      bill && bill !== ship
-        ? `<p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Fatura adresi</p>
-    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(bill)}</p>`
-        : ''
-    }
-    ${
-      order.notes
-        ? `<p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Not</p>
-    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;">${escapeHtml(order.notes)}</p>`
-        : ''
-    }`
+    )}</p>`,
+  );
+
+  const shipBlock = infoCard(
+    'Teslimat adresi',
+    `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${C.soft};white-space:pre-line;">${escapeHtml(ship)}</p>`,
+  );
+
+  const billBlock =
+    bill && bill !== ship
+      ? infoCard(
+          'Fatura adresi',
+          `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${C.soft};white-space:pre-line;">${escapeHtml(bill)}</p>`,
+        )
+      : '';
+
+  const notesBlock = order.notes
+    ? infoCard(
+        'Not',
+        `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${C.soft};">${escapeHtml(order.notes)}</p>`,
+      )
     : '';
 
-  return `
-    <p style="margin:20px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Sipariş içeriği</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${itemRows}</table>
-    ${personalBlock}
-  `;
+  return `${itemsBlock}${personalBlock}${shipBlock}${billBlock}${notesBlock}`;
 }
 
 export function buildOrderDetailsText(
@@ -232,29 +286,53 @@ export function renderBrandedEmail(input: {
   metaRows?: { label: string; value: string }[];
   /** Önceden escape edilmiş / güvenli HTML (sipariş tablosu vb.) */
   extraHtml?: string;
+  /** Logo için vitrin kök URL (https://kiliccoffeeroaster.com.tr) */
+  siteUrl?: string;
 }): string {
   const preheader = input.preheader || input.title;
+  const site = (input.siteUrl || process.env.FRONTEND_URL || DEFAULT_SITE_URL).replace(
+    /\/$/,
+    '',
+  );
+  const logo = brandLogoUrl(site);
+
   const rows = (input.metaRows || [])
-    .map(
-      (r) => `
+    .map((r, idx, arr) => {
+      const isLast = idx === arr.length - 1;
+      const border = isLast ? 'none' : `1px solid ${C.line}`;
+      const valueColor = isLast ? C.accentSoft : C.cream;
+      const valueWeight = isLast ? '700' : '400';
+      return `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #3d3229;font-family:Georgia,serif;font-size:13px;color:#a89888;text-transform:uppercase;letter-spacing:0.06em;">${escapeHtml(r.label)}</td>
-        <td style="padding:10px 0;border-bottom:1px solid #3d3229;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#f5efe6;text-align:right;">${escapeHtml(r.value)}</td>
-      </tr>`,
-    )
+        <td style="padding:11px 0;border-bottom:${border};font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:${C.muted};">${escapeHtml(r.label)}</td>
+        <td style="padding:11px 0;border-bottom:${border};font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${valueColor};font-weight:${valueWeight};text-align:right;">${escapeHtml(r.value)}</td>
+      </tr>`;
+    })
     .join('');
 
   const paras = input.paragraphs
     .map(
       (p) =>
-        `<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#e8ddd0;">${p}</p>`,
+        `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${C.soft};">${p}</p>`,
     )
     .join('');
 
   const cta = input.cta
-    ? `<p style="margin:28px 0 8px;">
-        <a href="${escapeHtml(input.cta.href)}" style="display:inline-block;background:#c4a574;color:#1a1410;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:14px 28px;">${escapeHtml(input.cta.label)}</a>
-      </p>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 4px;">
+        <tr>
+          <td style="background:${C.accent};">
+            <a href="${escapeHtml(input.cta.href)}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#ffffff;text-decoration:none;">${escapeHtml(input.cta.label)}</a>
+          </td>
+        </tr>
+      </table>`
+    : '';
+
+  const metaBlock = rows
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 8px;background:#241e1a;border:1px solid ${C.line};">
+        <tr><td style="padding:6px 18px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+        </td></tr>
+      </table>`
     : '';
 
   return `<!DOCTYPE html>
@@ -262,36 +340,46 @@ export function renderBrandedEmail(input: {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
   <title>${escapeHtml(input.title)}</title>
 </head>
-<body style="margin:0;padding:0;background:#0f0c0a;">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(preheader)}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0c0a;padding:32px 12px;">
+<body style="margin:0;padding:0;background:${C.page};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(preheader)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.page};padding:28px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#1a1410;border:1px solid #3d3229;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:${C.card};border:1px solid ${C.line};">
           <tr>
-            <td style="padding:28px 28px 20px;border-bottom:1px solid #3d3229;">
-              <p style="margin:0;font-family:Georgia,serif;font-size:22px;letter-spacing:0.04em;color:#f5efe6;">${BRAND}</p>
-              <p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#c4a574;">Torbalı · İzmir</p>
+            <td style="padding:28px 28px 22px;background:${C.header};border-bottom:3px solid ${C.accent};text-align:center;">
+              <a href="${escapeHtml(site)}" style="text-decoration:none;">
+                <img src="${escapeHtml(logo)}" width="220" alt="${escapeHtml(BRAND)}" style="display:block;margin:0 auto;width:220px;max-width:72%;height:auto;border:0;outline:none;" />
+              </a>
+              <p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.accent};">Torbalı · İzmir</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:28px;">
-              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">${escapeHtml(input.title)}</p>
-              <h1 style="margin:0 0 20px;font-family:Georgia,serif;font-size:26px;line-height:1.25;font-weight:400;color:#f5efe6;">${escapeHtml(input.greeting)}</h1>
+            <td style="height:3px;background:${C.accent};font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:30px 28px 8px;">
+              <p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${C.accentSoft};">${escapeHtml(input.title)}</p>
+              <h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;font-weight:400;color:${C.cream};">${escapeHtml(input.greeting)}</h1>
               ${paras}
-              ${rows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 12px;">${rows}</table>` : ''}
+              ${metaBlock}
               ${input.extraHtml || ''}
               ${cta}
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 28px;border-top:1px solid #3d3229;background:#14100d;">
-              <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#a89888;">${BRAND}</p>
-              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a6b5c;">
-                <a href="mailto:${BRAND_EMAIL}" style="color:#c4a574;text-decoration:none;">${BRAND_EMAIL}</a>
-                · +90 541 214 79 63
+            <td style="padding:24px 28px 28px;border-top:1px solid ${C.line};background:${C.footer};">
+              <p style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:15px;color:${C.cream};">${BRAND}</p>
+              <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${C.muted};">
+                <a href="mailto:${BRAND_EMAIL}" style="color:${C.accentSoft};text-decoration:none;">${BRAND_EMAIL}</a>
+                &nbsp;·&nbsp;
+                <a href="tel:+905412147963" style="color:${C.muted};text-decoration:none;">${BRAND_PHONE}</a>
+              </p>
+              <p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6d5f52;">
+                <a href="${escapeHtml(site)}" style="color:#6d5f52;text-decoration:none;">kiliccoffeeroaster.com.tr</a>
               </p>
             </td>
           </tr>
@@ -313,6 +401,7 @@ export function buildEmailContent(
   const trackUrl = trackUrlFor(ctx);
   const label = ctx.statusLabel || statusLabel(ctx.order.status);
   const ordersUrl = `${ctx.frontendUrl}/hesabim`;
+  const siteUrl = ctx.frontendUrl;
   const detailsHtml = buildOrderDetailsHtml(ctx.order, {
     includePersonal: true,
   });
@@ -320,16 +409,19 @@ export function buildEmailContent(
     includePersonal: true,
   });
   const totals = orderTotalMetaRows(ctx.order);
+  const mail = (
+    opts: Omit<Parameters<typeof renderBrandedEmail>[0], 'siteUrl'>,
+  ) => renderBrandedEmail({ ...opts, siteUrl });
 
   switch (template) {
     case 'order_received':
       return {
         subject: `Siparişiniz alındı — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Sipariş alındı',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> numaralı siparişiniz alındı. Ödeme tamamlandığında hazırlığa başlıyoruz.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> numaralı siparişiniz alındı. Ödeme tamamlandığında hazırlığa başlıyoruz.`,
           ],
           metaRows: totals,
           extraHtml: detailsHtml,
@@ -348,13 +440,13 @@ export function buildEmailContent(
         subject: isPaid
           ? `Yeni ödeme — ${orderNo} · ${formatMoney(ctx.order.total, ctx.order.currency)}`
           : `Yeni sipariş — ${orderNo} · ${formatMoney(ctx.order.total, ctx.order.currency)}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: isPaid ? 'Yeni ödeme' : 'Yeni sipariş',
           greeting: isPaid ? 'Ödeme alındı' : 'Sipariş oluşturuldu',
           paragraphs: [
             isPaid
-              ? `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> ödemesi tamamlandı. Hazırlığa başlayabilirsiniz.`
-              : `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> oluşturuldu (ödeme bekleniyor).`,
+              ? `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> ödemesi tamamlandı. Hazırlığa başlayabilirsiniz.`
+              : `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> oluşturuldu (ödeme bekleniyor).`,
             `${escapeHtml(ctx.order.customerName)} · ${escapeHtml(ctx.order.customerEmail)} · ${escapeHtml(ctx.order.customerPhone)}`,
           ],
           metaRows: totals,
@@ -370,11 +462,11 @@ export function buildEmailContent(
     case 'order_paid':
       return {
         subject: `Ödemeniz alındı — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Ödeme alındı',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> numaralı siparişinizin ödemesi alındı. Kahveniz hazırlanmaya başlıyor.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> numaralı siparişinizin ödemesi alındı. Kahveniz hazırlanmaya başlıyor.`,
           ],
           metaRows: totals,
           extraHtml: detailsHtml,
@@ -385,11 +477,11 @@ export function buildEmailContent(
     case 'order_status':
       return {
         subject: `Sipariş durumu: ${label} — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Sipariş güncellemesi',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> siparişinizin yeni durumu: <strong style="color:#c4a574;">${escapeHtml(label)}</strong>.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> siparişinizin yeni durumu: <strong style="color:${C.accentSoft};">${escapeHtml(label)}</strong>.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -404,11 +496,11 @@ export function buildEmailContent(
     case 'return_requested':
       return {
         subject: `İade / iptal talebiniz alındı — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Talep alındı',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> için iptal/iade talebiniz alındı. İnceleme sonrası size bilgi vereceğiz.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> için iptal/iade talebiniz alındı. İnceleme sonrası size bilgi vereceğiz.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -422,11 +514,11 @@ export function buildEmailContent(
     case 'return_approved':
       return {
         subject: `İade / iptal talebiniz onaylandı — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Talep onaylandı',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> için talebiniz onaylandı. Ödeme iadesi tamamlandığında bildirim alacaksınız.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> için talebiniz onaylandı. Ödeme iadesi tamamlandığında bildirim alacaksınız.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -440,11 +532,11 @@ export function buildEmailContent(
     case 'return_rejected':
       return {
         subject: `İade / iptal talebiniz — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Talep sonucu',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> için talebiniz şu an onaylanamadı. Detay için bizimle iletişime geçebilirsiniz.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> için talebiniz şu an onaylanamadı. Detay için bizimle iletişime geçebilirsiniz.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -458,11 +550,11 @@ export function buildEmailContent(
     case 'shipment_created':
       return {
         subject: `Kargoya verildi — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Kargoya verildi',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> siparişiniz kargoya verildi.`,
+            `<strong style="color:${C.cream};">${escapeHtml(orderNo)}</strong> siparişiniz kargoya verildi.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -484,11 +576,11 @@ export function buildEmailContent(
     case 'shipment_status':
       return {
         subject: `Kargo güncellemesi: ${label} — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Kargo güncellemesi',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `Kargo durumunuz güncellendi: <strong style="color:#c4a574;">${escapeHtml(label)}</strong>.`,
+            `Kargo durumunuz güncellendi: <strong style="color:${C.accentSoft};">${escapeHtml(label)}</strong>.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -504,11 +596,11 @@ export function buildEmailContent(
     default:
       return {
         subject: `${BRAND} bildirimi — ${orderNo}`,
-        html: renderBrandedEmail({
+        html: mail({
           title: 'Sipariş bildirimi',
           greeting: `Merhaba ${name},`,
           paragraphs: [
-            `Siparişiniz hakkında bir güncelleme var: <strong style="color:#c4a574;">${escapeHtml(label)}</strong>.`,
+            `Siparişiniz hakkında bir güncelleme var: <strong style="color:${C.accentSoft};">${escapeHtml(label)}</strong>.`,
           ],
           metaRows: [
             { label: 'Sipariş', value: orderNo },
@@ -643,8 +735,8 @@ export function buildAbandonedCartEmail(input: {
       greeting: `Merhaba ${input.name},`,
       paragraphs: [
         isSecond
-          ? `Sepetinizdeki <strong style="color:#f5efe6;">${input.itemCount}</strong> ürün hâlâ sizi bekliyor. Siparişinizi tamamlamak için son bir hatırlatma.`
-          : `Sepetinizde <strong style="color:#f5efe6;">${input.itemCount}</strong> ürün kaldı. Siparişinizi tamamlayın — taze kavrumlar tükenmeden.`,
+          ? `Sepetinizdeki <strong style="color:${C.cream};">${input.itemCount}</strong> ürün hâlâ sizi bekliyor. Siparişinizi tamamlamak için son bir hatırlatma.`
+          : `Sepetinizde <strong style="color:${C.cream};">${input.itemCount}</strong> ürün kaldı. Siparişinizi tamamlayın — taze kavrumlar tükenmeden.`,
       ],
       cta: { label: 'Sepete dön', href: input.cartUrl },
     }),
@@ -664,7 +756,7 @@ export function buildLowStockEmail(input: {
       title: 'Admin stok uyarısı',
       greeting: 'Merhaba,',
       paragraphs: [
-        `<strong style="color:#f5efe6;">${escapeHtml(input.label)}</strong> stok seviyesi eşik altına düştü.`,
+        `<strong style="color:${C.cream};">${escapeHtml(input.label)}</strong> stok seviyesi eşik altına düştü.`,
       ],
       metaRows: [
         { label: 'Stok', value: String(input.stock) },
