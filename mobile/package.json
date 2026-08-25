@@ -36,7 +36,7 @@
     "pretty-format": "30.4.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-native": "~0.86.2",
+    "react-native": "~0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.2",
     "react-native-svg": "15.15.5",
