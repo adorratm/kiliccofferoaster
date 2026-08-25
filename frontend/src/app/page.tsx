@@ -114,8 +114,14 @@ export default async function HomePage() {
   const [sections, settings, featuredPage, catalogPage] = await Promise.all([
     getContentSections("home"),
     getSiteSettings(),
-    getProductsPaged({ featured: true, limit: 12 }),
-    getProductsPaged({ limit: 12, sort: "name", order: "asc" }),
+    getProductsPaged(
+      { featured: true, limit: 12 },
+      { cache: "no-store", next: { revalidate: 0 } },
+    ),
+    getProductsPaged(
+      { limit: 12, sort: "name", order: "asc" },
+      { cache: "no-store", next: { revalidate: 0 } },
+    ),
   ]);
 
   const hero = sectionContent(sections, "hero", FALLBACK_HERO);
@@ -168,11 +174,11 @@ export default async function HomePage() {
   );
   const faqSchema = faqJsonLd(faqItems);
 
-  const featuredPool = featuredPage.items.filter((p) => p.isFeatured);
-  const featured = (featuredPool.length ? featuredPool : catalogPage.items).slice(
-    0,
-    3,
-  );
+  // API zaten featured=true ile süzüyor; tekrar filtreleme boş listeye düşürüp
+  // yanlışlıkla genel kataloga fallback yapıyordu.
+  const featured = (
+    featuredPage.items.length ? featuredPage.items : catalogPage.items
+  ).slice(0, 3);
   const { contact } = settings;
 
   return (

@@ -134,6 +134,7 @@ export async function getProducts(
 
 export async function getProductsPaged(
   params?: ProductQuery,
+  fetchOptions?: Pick<FetchOptions, "cache" | "next">,
 ): Promise<Paginated<Product>> {
   try {
     const qs = toQuery({
@@ -152,6 +153,7 @@ export async function getProductsPaged(
     });
     const data = await apiFetch<Product[] | Paginated<Product>>(
       `/products${qs}`,
+      fetchOptions,
     );
     if (Array.isArray(data)) {
       return {
@@ -200,7 +202,10 @@ export async function globalSearch(
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    return await apiFetch<Product>(`/products/${encodeURIComponent(slug)}`);
+    return await apiFetch<Product>(`/products/${encodeURIComponent(slug)}`, {
+      cache: "no-store",
+      next: { revalidate: 0 },
+    });
   } catch {
     return null;
   }

@@ -18,6 +18,7 @@ import { shopAddCartItem, shopProduct, shopToggleWishlist } from '../../lib/shop
 import { getShopToken } from '../../lib/api';
 import { formatMoney, stockQty } from '../../lib/format';
 import { availableGrindOptions, type GrindValue } from '../../lib/grind';
+import { sortByWeightLabel } from '../../lib/weight-sort';
 import { productOrigin, roastLabel } from '../../lib/order-status';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
 import type { Product, ProductVariant } from '../../lib/shop-types';
@@ -37,7 +38,9 @@ export function ProductScreen({ navigation, route }: Props) {
     void shopProduct(route.params.slug)
       .then((p) => {
         setProduct(p);
-        const active = (p.variants || []).filter((v) => v.isActive !== false);
+        const active = sortByWeightLabel(
+          (p.variants || []).filter((v) => v.isActive !== false),
+        );
         const firstInStock = active.find((v) => stockQty(v.stock) > 0) ?? active[0];
         setVariantId(firstInStock?.id ?? null);
         const choices = availableGrindOptions(
@@ -51,7 +54,10 @@ export function ProductScreen({ navigation, route }: Props) {
   }, [route.params.slug]);
 
   const variants = useMemo(
-    () => (product?.variants || []).filter((v) => v.isActive !== false),
+    () =>
+      sortByWeightLabel(
+        (product?.variants || []).filter((v) => v.isActive !== false),
+      ),
     [product],
   );
   const grindChoices = useMemo(
@@ -69,7 +75,7 @@ export function ProductScreen({ navigation, route }: Props) {
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
   const roast = roastLabel(product?.roastLevel);
-  const showGrindPicker = grindChoices.length > 1;
+  const showGrindPicker = grindChoices.length > 0;
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)

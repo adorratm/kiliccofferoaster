@@ -215,11 +215,29 @@ export class CreateProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
   @IsBoolean()
   isFeatured?: boolean;
 
@@ -242,6 +260,15 @@ export class CreateProductDto {
     default: true,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
   @IsBoolean()
   allowWholeBean?: boolean;
 
@@ -250,6 +277,15 @@ export class CreateProductDto {
     default: true,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
   @IsBoolean()
   allowGround?: boolean;
 

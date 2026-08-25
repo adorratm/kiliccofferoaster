@@ -20,6 +20,7 @@ import {
 import { LowStockService } from '@modules/catalog/low-stock.service';
 import { CampaignsService } from '@modules/campaigns/campaigns.service';
 import { COFFEE_KINDS } from '@common/constants/grind-options';
+import { sortByWeightLabel } from '@common/utils/weight-sort';
 
 @Injectable()
 export class ProductsService {
@@ -161,6 +162,10 @@ export class ProductsService {
       .take(limit)
       .getManyAndCount();
 
+    for (const item of items) {
+      this.sortProductVariants(item);
+    }
+
     return paginateResult(items, total, page, limit);
   }
 
@@ -172,6 +177,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Ürün bulunamadı');
     }
+    this.sortProductVariants(product);
     return (await this.campaigns.decorateProduct(product)) as Product;
   }
 
@@ -183,6 +189,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Ürün bulunamadı');
     }
+    this.sortProductVariants(product);
     return product;
   }
 
@@ -264,13 +271,30 @@ export class ProductsService {
           : product.seoDescription,
       categoryId:
         rest.categoryId !== undefined ? rest.categoryId : product.categoryId,
+      allowWholeBean:
+        rest.allowWholeBean !== undefined
+          ? rest.allowWholeBean
+          : product.allowWholeBean,
+      allowGround:
+        rest.allowGround !== undefined
+          ? rest.allowGround
+          : product.allowGround,
     });
+    if (rest.vatRate !== undefined) {
+      product.vatRate = String(rest.vatRate);
+    }
     await this.em.save(product);
     if (variants !== undefined) {
       await this.syncVariants(product.id, variants);
     }
     await this.safeLowStockCheck(product.id);
     return this.findById(product.id);
+  }
+
+  private sortProductVariants(product: Product): void {
+    if (product.variants?.length) {
+      product.variants = sortByWeightLabel(product.variants);
+    }
   }
 
   private async syncVariants(

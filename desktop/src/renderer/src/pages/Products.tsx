@@ -4,6 +4,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
 import { api, uploadMedia } from '../lib/api';
 import { asArray, asPaged, formatMoney, inputClass, slugify } from '../lib/format';
+import { sortByWeightLabel } from '../lib/weight-sort';
 
 type Category = { id: string; name: string };
 
@@ -129,7 +130,7 @@ function emptyForm(): FormState {
 function formFromProduct(p: Product): FormState {
   const variants =
     p.variants && p.variants.length
-      ? p.variants.map((v) => ({
+      ? sortByWeightLabel(p.variants).map((v) => ({
           id: v.id,
           sku: v.sku || '',
           weightLabel: v.weightLabel || '',

@@ -8,6 +8,7 @@ import {
   availableGrindOptions,
   type GrindValue,
 } from "@/lib/grind";
+import { sortByWeightLabel } from "@/lib/weight-sort";
 import type { Product, ProductVariant } from "@/lib/types";
 
 type Props = {
@@ -16,7 +17,10 @@ type Props = {
 
 export function ProductBuyBox({ product }: Props) {
   const variants = useMemo(
-    () => (product.variants || []).filter((v) => v.isActive !== false),
+    () =>
+      sortByWeightLabel(
+        (product.variants || []).filter((v) => v.isActive !== false),
+      ),
     [product.variants],
   );
   const grindChoices = useMemo(
@@ -44,7 +48,16 @@ export function ProductBuyBox({ product }: Props) {
     }
   }, [grindChoices, grind]);
 
-  const showGrindPicker = grindChoices.length > 1;
+  useEffect(() => {
+    if (
+      variants.length > 0 &&
+      !variants.some((v) => v.id === variantId)
+    ) {
+      setVariantId(variants[0].id);
+    }
+  }, [variants, variantId]);
+
+  const showGrindPicker = grindChoices.length > 0;
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)

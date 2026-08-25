@@ -97,8 +97,7 @@ export default function ProductsCatalog() {
           order: "desc",
           limit: 6,
         });
-        let suggested = featured.items.filter((p) => p.isFeatured);
-        if (!suggested.length) suggested = featured.items;
+        let suggested = featured.items;
         if (!suggested.length) {
           const fallback = await getProductsPaged({
             sort: "createdAt",

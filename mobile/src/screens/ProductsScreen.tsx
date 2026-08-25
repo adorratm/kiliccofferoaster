@@ -15,6 +15,7 @@ import type { RootStack } from '../../App';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
 import { api, asArray, uploadMedia } from '../lib/api';
+import { sortByWeightLabel } from '../lib/weight-sort';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
 type ProductVariant = {
@@ -156,7 +157,7 @@ function emptyForm(): FormState {
 function formFromProduct(p: Product): FormState {
   const variants =
     p.variants && p.variants.length
-      ? p.variants.map((v) => ({
+      ? sortByWeightLabel(p.variants).map((v) => ({
           id: v.id,
           sku: v.sku || '',
           weightLabel: v.weightLabel || '',

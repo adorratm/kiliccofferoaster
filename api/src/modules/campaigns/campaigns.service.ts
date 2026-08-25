@@ -144,26 +144,28 @@ export class CampaignsService {
     }
   > {
     const info = await this.priceForProduct(product.id, product.basePrice);
+    const decorated = product as T & {
+      salePrice?: string | null;
+      compareAtPrice?: string | null;
+      campaignName?: string | null;
+    };
     if (!info) {
-      return {
-        ...product,
-        salePrice: null,
-        compareAtPrice: null,
-        campaignName: null,
-      };
+      decorated.salePrice = null;
+      decorated.compareAtPrice = null;
+      decorated.campaignName = null;
+      return decorated;
     }
-    return {
-      ...product,
-      salePrice: info.salePrice,
-      compareAtPrice: info.compareAtPrice,
-      campaignName: info.campaignName,
-      variants: product.variants?.map((v) => ({
+    decorated.salePrice = info.salePrice;
+    decorated.compareAtPrice = info.compareAtPrice;
+    decorated.campaignName = info.campaignName;
+    if (product.variants?.length) {
+      decorated.variants = product.variants.map((v) => ({
         ...v,
-        // UI: gösterilen fiyat indirimli; orijinal compareAtPrice
         price: this.applyPercent(v.price, info.discountPercent),
         compareAtPrice: Number(v.price).toFixed(2),
-      })) as T['variants'],
-    };
+      })) as T['variants'];
+    }
+    return decorated;
   }
 
   async decorateProducts<T extends {
@@ -181,32 +183,34 @@ export class CampaignsService {
   > {
     const active = await this.listActiveNow();
     return products.map((product) => {
+      const decorated = product as T & {
+        salePrice?: string | null;
+        compareAtPrice?: string | null;
+        campaignName?: string | null;
+      };
       const campaign =
         active.find(
           (c) =>
             !c.productIds?.length || c.productIds.includes(product.id),
         ) || null;
       if (!campaign) {
-        return {
-          ...product,
-          salePrice: null,
-          compareAtPrice: null,
-          campaignName: null,
-        };
+        decorated.salePrice = null;
+        decorated.compareAtPrice = null;
+        decorated.campaignName = null;
+        return decorated;
       }
       const percent = Number(campaign.discountPercent);
-      const salePrice = this.applyPercent(product.basePrice, percent);
-      return {
-        ...product,
-        salePrice,
-        compareAtPrice: Number(product.basePrice).toFixed(2),
-        campaignName: campaign.name,
-        variants: product.variants?.map((v) => ({
+      decorated.salePrice = this.applyPercent(product.basePrice, percent);
+      decorated.compareAtPrice = Number(product.basePrice).toFixed(2);
+      decorated.campaignName = campaign.name;
+      if (product.variants?.length) {
+        decorated.variants = product.variants.map((v) => ({
           ...v,
           price: this.applyPercent(v.price, percent),
           compareAtPrice: Number(v.price).toFixed(2),
-        })) as T['variants'],
-      };
+        })) as T['variants'];
+      }
+      return decorated;
     });
   }
 
