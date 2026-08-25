@@ -11,10 +11,11 @@ import {
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID?.trim() || "";
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "";
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "";
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "";
 
 /**
- * Çerez onayı olmadan GA4 / GTM / Meta Pixel yüklenmez.
- * analytics → GA4 + GTM; marketing → Meta Pixel.
+ * Çerez onayı olmadan GA4 / GTM / Google Ads / Meta Pixel yüklenmez.
+ * analytics → GA4 + GTM; marketing → Google Ads + Meta Pixel.
  */
 export function AnalyticsScripts() {
   const [consent, setConsent] = useState<CookieConsent | null>(null);
@@ -31,14 +32,18 @@ export function AnalyticsScripts() {
 
   if (!consent) return null;
 
-  const loadAnalytics = consent.analytics && (!!GA4_ID || !!GTM_ID);
-  const loadMarketing = consent.marketing && !!META_PIXEL_ID;
+  const loadGtm = consent.analytics && !!GTM_ID;
+  const loadGa4 = consent.analytics && !!GA4_ID && !GTM_ID;
+  const loadGoogleAds = consent.marketing && !!GOOGLE_ADS_ID;
+  const loadMeta = consent.marketing && !!META_PIXEL_ID;
+  const loadGtag = loadGa4 || loadGoogleAds;
+  const gtagScriptId = GA4_ID || GOOGLE_ADS_ID;
 
-  if (!loadAnalytics && !loadMarketing) return null;
+  if (!loadGtm && !loadGtag && !loadMeta) return null;
 
   return (
     <>
-      {consent.analytics && GTM_ID ? (
+      {loadGtm ? (
         <Script id="gtm" strategy="afterInteractive">{`
           (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -48,22 +53,23 @@ export function AnalyticsScripts() {
         `}</Script>
       ) : null}
 
-      {consent.analytics && GA4_ID && !GTM_ID ? (
+      {loadGtag ? (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${gtagScriptId}`}
             strategy="afterInteractive"
           />
-          <Script id="ga4" strategy="afterInteractive">{`
+          <Script id="gtag-init" strategy="afterInteractive">{`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA4_ID}', { anonymize_ip: true });
+            ${loadGa4 ? `gtag('config', '${GA4_ID}', { anonymize_ip: true });` : ""}
+            ${loadGoogleAds ? `gtag('config', '${GOOGLE_ADS_ID}');` : ""}
           `}</Script>
         </>
       ) : null}
 
-      {consent.marketing && META_PIXEL_ID ? (
+      {loadMeta ? (
         <Script id="meta-pixel" strategy="afterInteractive">{`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

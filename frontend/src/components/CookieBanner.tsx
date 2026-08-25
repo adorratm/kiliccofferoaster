@@ -108,7 +108,7 @@ export function CookieBanner() {
                   onChange={(e) => setMarketing(e.target.checked)}
                   className="accent-primary"
                 />
-                Pazarlama (Meta Pixel)
+                Pazarlama (Google Ads / Meta Pixel)
               </label>
             </div>
             <div className="flex flex-wrap gap-3">
