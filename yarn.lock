@@ -105,9 +105,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:^3.1117.0":
-  version: 3.1117.0
-  resolution: "@aws-sdk/client-s3@npm:3.1117.0"
+"@aws-sdk/client-s3@npm:^3.1118.0":
+  version: 3.1118.0
+  resolution: "@aws-sdk/client-s3@npm:3.1118.0"
   dependencies:
     "@aws-sdk/checksums": "npm:^3.1000.29"
     "@aws-sdk/core": "npm:^3.977.9"
@@ -120,7 +120,7 @@ __metadata:
     "@smithy/node-http-handler": "npm:^4.11.3"
     "@smithy/types": "npm:^4.17.2"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/8934461585d9b0be2aeca491aa2424bc90ffc4f3cbbe5fc5435ba2f2d6d9866e32b5c54601c303db7170eea67e9ed443de2bd06ecb0b754fecbd02718087db34
+  checksum: 10c0/6d0f53236f4bfd0f4a4db88dfaad00873565d983730d6ecd53e4f0213a2a1860dc08c1698224e28ecd07cff32d339aaaad83b43790bb2872729ecb7f7c4ec571
   languageName: node
   linkType: hard
 
@@ -3428,8 +3428,8 @@ __metadata:
     echarts: "npm:^6.1.0"
     echarts-for-react: "npm:^3.0.6"
     eslint: "npm:^10.9.1"
-    eslint-config-next: "npm:16.3.2"
-    next: "npm:16.3.2"
+    eslint-config-next: "npm:16.3.3"
+    next: "npm:16.3.3"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
     socket.io-client: "npm:^4.8.3"
@@ -3442,7 +3442,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kilic/api@workspace:api"
   dependencies:
-    "@aws-sdk/client-s3": "npm:^3.1117.0"
+    "@aws-sdk/client-s3": "npm:^3.1118.0"
     "@bull-board/api": "npm:9.4.0"
     "@bull-board/express": "npm:9.4.0"
     "@bull-board/nestjs": "npm:9.4.0"
@@ -3452,18 +3452,18 @@ __metadata:
     "@nestjs/bull-shared": "npm:^11.0.5"
     "@nestjs/bullmq": "npm:^11.0.5"
     "@nestjs/cli": "npm:^11.0.24"
-    "@nestjs/common": "npm:^11.2.2"
+    "@nestjs/common": "npm:^11.2.3"
     "@nestjs/config": "npm:^4.0.4"
-    "@nestjs/core": "npm:^11.2.2"
+    "@nestjs/core": "npm:^11.2.3"
     "@nestjs/jwt": "npm:^11.0.2"
     "@nestjs/passport": "npm:^11.0.5"
-    "@nestjs/platform-express": "npm:^11.2.2"
-    "@nestjs/platform-socket.io": "npm:^11.2.2"
+    "@nestjs/platform-express": "npm:^11.2.3"
+    "@nestjs/platform-socket.io": "npm:^11.2.3"
     "@nestjs/schematics": "npm:^11.1.0"
     "@nestjs/swagger": "npm:^11.4.7"
-    "@nestjs/testing": "npm:^11.2.2"
+    "@nestjs/testing": "npm:^11.2.3"
     "@nestjs/typeorm": "npm:^11.0.3"
-    "@nestjs/websockets": "npm:^11.2.2"
+    "@nestjs/websockets": "npm:^11.2.3"
     "@types/bcrypt": "npm:^6.0.0"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/express": "npm:^5.0.6"
@@ -3482,7 +3482,7 @@ __metadata:
     axios: "npm:^1.19.0"
     bcrypt: "npm:^6.0.0"
     bcryptjs: "npm:^3.0.3"
-    bullmq: "npm:^6.2.1"
+    bullmq: "npm:^6.2.2"
     class-transformer: "npm:^0.5.1"
     class-validator: "npm:^0.15.1"
     dotenv: "npm:^17.4.2"
@@ -3558,8 +3558,8 @@ __metadata:
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.5"
     eslint: "npm:^10.9.1"
-    eslint-config-next: "npm:16.3.2"
-    next: "npm:16.3.2"
+    eslint-config-next: "npm:16.3.3"
+    next: "npm:16.3.3"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
     socket.io-client: "npm:^4.8.3"
@@ -3768,9 +3768,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/common@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/common@npm:11.2.2"
+"@nestjs/common@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/common@npm:11.2.3"
   dependencies:
     file-type: "npm:21.3.4"
     iterare: "npm:1.2.1"
@@ -3787,7 +3787,7 @@ __metadata:
       optional: true
     class-validator:
       optional: true
-  checksum: 10c0/e9bd6a1e3951a53a0c1f137ae38975b96924b9662480f7fdeab706e860ce65800a49ad8032b944c42f432aee26de89706162f9cde9be74e0b8b6020b7964f9dc
+  checksum: 10c0/b8712fc715645ba541d437e9adb1f826c52714105c47dc735fafe787785129f2bbe5b852525299b2803e8e38eab0e3740a2fd88ddbefb36a7dadddf87b968936
   languageName: node
   linkType: hard
 
@@ -3805,9 +3805,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/core@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/core@npm:11.2.2"
+"@nestjs/core@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/core@npm:11.2.3"
   dependencies:
     fast-safe-stringify: "npm:2.1.1"
     iterare: "npm:1.2.1"
@@ -3828,7 +3828,7 @@ __metadata:
       optional: true
     "@nestjs/websockets":
       optional: true
-  checksum: 10c0/1805a9cf6d0bedbd1f7e06ea596351d897b97a1a02416030b48dc9c540f5cb61bef7fbbf617a46448d510eec5a07b1be6c828f6ef00cb9cc643c5a14ee2692a9
+  checksum: 10c0/6af518ef8867c292f8dde3ddcd202baefbaf61ea1dfbf3f5d375ce53459396b0f909b53eda0838355fb22c1c3002e62afc2f4b4006d3c6ebeaa0b89bda9556d6
   languageName: node
   linkType: hard
 
@@ -3871,9 +3871,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/platform-express@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/platform-express@npm:11.2.2"
+"@nestjs/platform-express@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/platform-express@npm:11.2.3"
   dependencies:
     cors: "npm:2.8.6"
     express: "npm:5.2.1"
@@ -3883,13 +3883,13 @@ __metadata:
   peerDependencies:
     "@nestjs/common": ^11.0.0
     "@nestjs/core": ^11.0.0
-  checksum: 10c0/a3e2b1af7f58308cfc159382820a07c46d566fe46cff01f85be189bd6eb836cdd5b6c774fcbc3042d5b22dcd3c5edf779d82ef06f9fb3c823cbaffb9d0344d32
+  checksum: 10c0/a4c42544c54d11580a56d2567f0e5608f2529c1336893bc3031d6c12a4efaec3ab139a09039a64a59b5cb49adaf7175f89362a6c16043cc1afea825da67bde41
   languageName: node
   linkType: hard
 
-"@nestjs/platform-socket.io@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/platform-socket.io@npm:11.2.2"
+"@nestjs/platform-socket.io@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/platform-socket.io@npm:11.2.3"
   dependencies:
     socket.io: "npm:4.8.3"
     tslib: "npm:2.8.1"
@@ -3897,7 +3897,7 @@ __metadata:
     "@nestjs/common": ^11.0.0
     "@nestjs/websockets": ^11.0.0
     rxjs: ^7.1.0
-  checksum: 10c0/202fc4e81871afbc33f622769c2d5b240e3c26e1e093eefe54df4f169eab96a6593375fa5a0e6c67544c5b11aae0b7b7dea531c103b76fa7e177b9181a56b90c
+  checksum: 10c0/0bd70f807455c2486ba2648f46aace56e5aceaa8912572daec8d16c81d105ab81c5386e995c2ebdb58055e32a3a5865ef4d9ba012b1d30b725a7889ef01e6607
   languageName: node
   linkType: hard
 
@@ -3948,9 +3948,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/testing@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/testing@npm:11.2.2"
+"@nestjs/testing@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/testing@npm:11.2.3"
   dependencies:
     tslib: "npm:2.8.1"
   peerDependencies:
@@ -3963,7 +3963,7 @@ __metadata:
       optional: true
     "@nestjs/platform-express":
       optional: true
-  checksum: 10c0/db2347a9bd77eae60080a76f7ad7ec52646733fbeb14bcf893e8269c5178cc687ebf99e7018522bc73b7476bbaae8bff03450bbc1c5eda771fcaf03fe6364a6e
+  checksum: 10c0/e687f1bec4e3ee2c0ced6e2574fb54c68c36bb0eae6eec0cb77d0f7044292a8acd264c3e900d2ba7532c258558d278413785c527d370066e9617ff473eee89c7
   languageName: node
   linkType: hard
 
@@ -3980,9 +3980,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/websockets@npm:^11.2.2":
-  version: 11.2.2
-  resolution: "@nestjs/websockets@npm:11.2.2"
+"@nestjs/websockets@npm:^11.2.3":
+  version: 11.2.3
+  resolution: "@nestjs/websockets@npm:11.2.3"
   dependencies:
     iterare: "npm:1.2.1"
     object-hash: "npm:3.0.0"
@@ -3996,79 +3996,79 @@ __metadata:
   peerDependenciesMeta:
     "@nestjs/platform-socket.io":
       optional: true
-  checksum: 10c0/fb5d5a53a5792bfe051f33478aa267c9f3ff55f10db569f07939e16c32cfd3b5a789cdad37bc122b589d55f8d01a9f41bcd3820b75801772f4286fe39ebfc68a
+  checksum: 10c0/2fc12e25256709bffd9ba203afce0ebd90a3b0dba765319ebcb53185a8581ca9b825d27443671079fbaff00347deb092efb700e5f9b6601c80225a5521d42701
   languageName: node
   linkType: hard
 
-"@next/env@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/env@npm:16.3.2"
-  checksum: 10c0/d64422a05b74674b5c10252ef0f4228fb56a215773c669684bef26e83b28a8bdc4cce516d6220b1fb87ee128aef9643266bd2175d6616ba587182157d3c7d743
+"@next/env@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/env@npm:16.3.3"
+  checksum: 10c0/6f300379d8ddc476d09897e97c26d593b60973bf425b093b96fdb4459f9547e8d05f3aca82a59bf0c1711b96b6a615b3483a396aec1c36a91526b9617260ba92
   languageName: node
   linkType: hard
 
-"@next/eslint-plugin-next@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/eslint-plugin-next@npm:16.3.2"
+"@next/eslint-plugin-next@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/eslint-plugin-next@npm:16.3.3"
   dependencies:
     "@eslint-community/eslint-utils": "npm:4.9.1"
     fast-glob: "npm:3.3.1"
-  checksum: 10c0/1c1403efe341db3bb8aee1ca1039a4cfecc245a71992264ac72c78f5733b24dbc4527be03cbeab2ac63796441a3910aa50e5ff205b72897079ca5b17d38408d6
+  checksum: 10c0/c26f959d47f42c3842f8397d1d6d06829e47ff3bcb743d2dda3fc3a94448a3b34ae2862360089a7795bd516dc5675706d21394927ec9ae7b67c543033b3515a5
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-arm64@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-darwin-arm64@npm:16.3.2"
+"@next/swc-darwin-arm64@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-darwin-arm64@npm:16.3.3"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-darwin-x64@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-darwin-x64@npm:16.3.2"
+"@next/swc-darwin-x64@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-darwin-x64@npm:16.3.3"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-gnu@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-linux-arm64-gnu@npm:16.3.2"
+"@next/swc-linux-arm64-gnu@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-linux-arm64-gnu@npm:16.3.3"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-arm64-musl@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-linux-arm64-musl@npm:16.3.2"
+"@next/swc-linux-arm64-musl@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-linux-arm64-musl@npm:16.3.3"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-gnu@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-linux-x64-gnu@npm:16.3.2"
+"@next/swc-linux-x64-gnu@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-linux-x64-gnu@npm:16.3.3"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@next/swc-linux-x64-musl@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-linux-x64-musl@npm:16.3.2"
+"@next/swc-linux-x64-musl@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-linux-x64-musl@npm:16.3.3"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@next/swc-win32-arm64-msvc@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-win32-arm64-msvc@npm:16.3.2"
+"@next/swc-win32-arm64-msvc@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-win32-arm64-msvc@npm:16.3.3"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@next/swc-win32-x64-msvc@npm:16.3.2":
-  version: 16.3.2
-  resolution: "@next/swc-win32-x64-msvc@npm:16.3.2"
+"@next/swc-win32-x64-msvc@npm:16.3.3":
+  version: 16.3.3
+  resolution: "@next/swc-win32-x64-msvc@npm:16.3.3"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -7527,9 +7527,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bullmq@npm:^6.2.1":
-  version: 6.2.1
-  resolution: "bullmq@npm:6.2.1"
+"bullmq@npm:^6.2.2":
+  version: 6.2.2
+  resolution: "bullmq@npm:6.2.2"
   dependencies:
     cron-parser: "npm:5.10.0"
     msgpackr: "npm:2.0.5"
@@ -7550,7 +7550,7 @@ __metadata:
       optional: true
     redis:
       optional: true
-  checksum: 10c0/eccf31e34dcd217f45abc81737d0a814abf9568db6f0869762c126b8a32532103febc80f62e226d25c1c19a8a9f5793987964ff50282e3c1aa548cc9cd0aa1e2
+  checksum: 10c0/f758832a65d74c7808b566a6ee7b3ea9019babf2cc0dd8efc1dcfb49092354309385545352983024c279665cdca8ff9559ee83abff24436702948919a11065c3
   languageName: node
   linkType: hard
 
@@ -9323,11 +9323,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:16.3.2":
-  version: 16.3.2
-  resolution: "eslint-config-next@npm:16.3.2"
+"eslint-config-next@npm:16.3.3":
+  version: 16.3.3
+  resolution: "eslint-config-next@npm:16.3.3"
   dependencies:
-    "@next/eslint-plugin-next": "npm:16.3.2"
+    "@next/eslint-plugin-next": "npm:16.3.3"
     eslint-import-resolver-node: "npm:^0.3.6"
     eslint-import-resolver-typescript: "npm:^3.5.2"
     eslint-plugin-import: "npm:^2.32.0"
@@ -9342,7 +9342,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 10c0/5ec78b54891f4c0c71d3b382e42e8e7747bc250b8c0853db68d9fa53af6e767d427f56aea094661a070d884c1bdce5545bf5c297d1da06f30d40c42e8bab6350
+  checksum: 10c0/b9054500e7eede0932014b432b8542b2fec929bcab0465bab96e1a2f50f9e76b530ae8028f449407928d7c90161d0a27ca120306b35545b4b44e98dc677dc8be
   languageName: node
   linkType: hard
 
@@ -13860,19 +13860,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:16.3.2":
-  version: 16.3.2
-  resolution: "next@npm:16.3.2"
+"next@npm:16.3.3":
+  version: 16.3.3
+  resolution: "next@npm:16.3.3"
   dependencies:
-    "@next/env": "npm:16.3.2"
-    "@next/swc-darwin-arm64": "npm:16.3.2"
-    "@next/swc-darwin-x64": "npm:16.3.2"
-    "@next/swc-linux-arm64-gnu": "npm:16.3.2"
-    "@next/swc-linux-arm64-musl": "npm:16.3.2"
-    "@next/swc-linux-x64-gnu": "npm:16.3.2"
-    "@next/swc-linux-x64-musl": "npm:16.3.2"
-    "@next/swc-win32-arm64-msvc": "npm:16.3.2"
-    "@next/swc-win32-x64-msvc": "npm:16.3.2"
+    "@next/env": "npm:16.3.3"
+    "@next/swc-darwin-arm64": "npm:16.3.3"
+    "@next/swc-darwin-x64": "npm:16.3.3"
+    "@next/swc-linux-arm64-gnu": "npm:16.3.3"
+    "@next/swc-linux-arm64-musl": "npm:16.3.3"
+    "@next/swc-linux-x64-gnu": "npm:16.3.3"
+    "@next/swc-linux-x64-musl": "npm:16.3.3"
+    "@next/swc-win32-arm64-msvc": "npm:16.3.3"
+    "@next/swc-win32-x64-msvc": "npm:16.3.3"
     "@swc/helpers": "npm:0.5.23"
     baseline-browser-mapping: "npm:^2.9.19"
     caniuse-lite: "npm:^1.0.30001579"
@@ -13916,7 +13916,7 @@ __metadata:
       optional: true
   bin:
     next: dist/bin/next
-  checksum: 10c0/c9540afeb626bfaf1dc80e9b7a0fc3c846cf5197792bed2a16b9ecaf131aac54e2ff22c28bd69d16c31e4c8c2dbf594514695eaca0dd75a88b30a45c551d0fcc
+  checksum: 10c0/2c8c27085771fa522468a69ecaae9a7bc603fb1e6e6badfd9fb22b85a8085d3285e9af3d6a457012780ff2c778b983705fa71a2da5d1ba2282aa6134c4d0e2ec
   languageName: node
   linkType: hard
 
