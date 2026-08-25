@@ -25,24 +25,30 @@ function isInstagramCdn(host: string) {
   );
 }
 
+function shouldUseNativeImg(host: string | null) {
+  if (!host) return false;
+  // S3: next/image (unoptimized olsa bile) bazen crossOrigin/preload ile
+  // Origin gönderir. Origin’süz + immutable cache’lenmiş yanıtta ACAO yokken
+  // tarayıcı sahte CORS hatası verir ve görsel kırılır. Native <img> yeterli.
+  return isS3Host(host) || isInstagramCdn(host);
+}
+
 /**
- * S3: next/image unoptimized (doğrudan bucket URL).
- * Instagram CDN: native <img> (Meta CORS vermez).
- * crossOrigin koyma: görüntüleme için gerekmez; S3’te cache’lenmiş
- * Origin’süz yanıt + crossOrigin tarayıcıda sahte CORS hatası üretir.
+ * S3 ve Instagram CDN: native <img> (CORS gerekmez, görüntüleme bozulmaz).
+ * Diğer remote URL’ler: next/image.
  */
 export function AppImage({ unoptimized, ...props }: ImageProps) {
   const host = hostnameOf(props.src);
   const src = props.src;
 
-  if (host && isInstagramCdn(host) && typeof src === "string") {
+  if (shouldUseNativeImg(host) && typeof src === "string") {
     const { alt, className, fill, width, height, style, priority, loading } =
       props;
     const imgClass = fill
       ? ["absolute inset-0 h-full w-full", className].filter(Boolean).join(" ")
       : className;
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- IG CDN CORS yok
+      // eslint-disable-next-line @next/next/no-img-element -- S3/IG: CORS’suz native img
       <img
         src={src}
         alt={alt || ""}
@@ -57,6 +63,5 @@ export function AppImage({ unoptimized, ...props }: ImageProps) {
     );
   }
 
-  const s3 = Boolean(host && isS3Host(host));
-  return <Image {...props} unoptimized={unoptimized ?? s3} />;
+  return <Image {...props} unoptimized={unoptimized} />;
 }

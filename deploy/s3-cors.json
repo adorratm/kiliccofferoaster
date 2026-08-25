@@ -6,9 +6,12 @@
       "https://kiliccoffeeroaster.com.tr",
       "https://www.kiliccoffeeroaster.com.tr",
       "https://admin.kiliccoffeeroaster.com.tr",
+      "https://api.kiliccoffeeroaster.com.tr",
       "http://localhost:3000",
       "http://localhost:3001",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001"
     ],
     "ExposeHeaders": ["ETag", "Content-Length", "Content-Type"],
     "MaxAgeSeconds": 86400

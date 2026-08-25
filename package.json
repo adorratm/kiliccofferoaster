@@ -27,7 +27,8 @@
     "migration:run": "yarn workspace @kilic/api migration:run",
     "migration:generate": "yarn workspace @kilic/api migration:generate",
     "lint": "yarn workspaces foreach -Apt run lint",
-    "stock:upload": "node scripts/upload-stock-images.mjs"
+    "stock:upload": "node scripts/upload-stock-images.mjs",
+    "s3:cors": "node scripts/apply-s3-cors.cjs"
   },
   "resolutions": {
     "qs": "^6.15.3",

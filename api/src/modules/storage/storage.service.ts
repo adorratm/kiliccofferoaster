@@ -81,7 +81,9 @@ export class StorageService {
           Key: key,
           Body: buffer,
           ContentType: mimeType,
-          CacheControl: 'public, max-age=31536000, immutable',
+          // immutable kullanma: Origin’süz yanıt cache’lenince sonraki
+          // CORS’lu isteklerde tarayıcı ACAO eksik yanıtı yeniden kullanabiliyor.
+          CacheControl: 'public, max-age=604800',
         }),
       );
 
