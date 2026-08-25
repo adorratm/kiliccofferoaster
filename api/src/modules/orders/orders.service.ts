@@ -117,8 +117,8 @@ export class OrdersService {
 
     const orderNumber = await this.generateOrderNumber();
 
-    return this.em.transaction(async (tx) => {
-      const order = tx.create(Order, {
+    const order = await this.em.transaction(async (tx) => {
+      const created = tx.create(Order, {
         orderNumber,
         userId: userId ?? null,
         status: OrderStatus.PENDING_PAYMENT,
@@ -142,14 +142,14 @@ export class OrdersService {
         notes: dto.notes ?? null,
         sourceCartId: cart!.id,
       });
-      await tx.save(order);
+      await tx.save(created);
 
       // Kupon kullanımı ödeme PAID olunca confirm edilir (başarısız ödemede yanmasın)
 
       const orderItems = cart!.items.map((item: CartItem) => {
         const grind = resolveGrindOption(item.product?.kind, item.grindOption);
         return tx.create(OrderItem, {
-          orderId: order.id,
+          orderId: created.id,
           productId: item.productId,
           variantId: item.variantId,
           productName: item.product?.name || 'Ürün',
@@ -164,7 +164,7 @@ export class OrdersService {
       await tx.save(orderItems);
 
       const payment = tx.create(Payment, {
-        orderId: order.id,
+        orderId: created.id,
         provider: 'paytr',
         status: PaymentStatus.PENDING,
         amount: total.toFixed(2),
@@ -175,10 +175,31 @@ export class OrdersService {
       // Sepet ödeme başarılı olunca temizlenir (PENDING_PAYMENT'da kalır)
 
       return tx.findOneOrFail(Order, {
-        where: { id: order.id },
+        where: { id: created.id },
         relations: { items: true, payment: true },
       });
     });
+
+    try {
+      await this.notifications.enqueueOrderStatus(
+        order.id,
+        'order_received',
+        ['email', 'whatsapp'],
+        {
+          status: OrderStatus.PENDING_PAYMENT,
+          statusLabel: statusLabel(OrderStatus.PENDING_PAYMENT),
+        },
+      );
+      await this.notifications.enqueueOrderOpsAlert(order.id, 'received');
+    } catch (err) {
+      this.logger.warn(
+        `Order received notifications failed for ${order.id}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+
+    return order;
   }
 
   async listForUser(userId: string): Promise<Order[]> {

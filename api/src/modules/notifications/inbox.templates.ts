@@ -22,6 +22,17 @@ export function customerOrderCopy(input: {
 }): InboxCopy | null {
   const { template, orderNumber, orderId, statusLabel, trackingNumber } = input;
   const href = `/hesabim/siparisler/${orderId}`;
+  if (template === 'order_received') {
+    return {
+      audience: InboxAudience.USER,
+      category: InboxCategory.ORDERS,
+      type: template,
+      title: 'Siparişin alındı',
+      body: `${orderNumber} oluşturuldu. Ödeme tamamlanınca hazırlığa başlıyoruz.`,
+      href,
+      orderId,
+    };
+  }
   if (template === 'order_paid') {
     return {
       audience: InboxAudience.USER,
@@ -111,6 +122,17 @@ export function opsOrderCopy(input: {
   customerName: string;
 }): InboxCopy | null {
   const { template, orderNumber, orderId, customerName } = input;
+  if (template === 'order_received') {
+    return {
+      audience: InboxAudience.OPS,
+      category: InboxCategory.OPS_ORDERS,
+      type: 'ops_order_received',
+      title: 'Yeni sipariş',
+      body: `${customerName} · ${orderNumber} (ödeme bekleniyor).`,
+      href: `/siparisler/${orderId}`,
+      orderId,
+    };
+  }
   if (template === 'order_paid') {
     return {
       audience: InboxAudience.OPS,

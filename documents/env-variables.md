@@ -58,6 +58,7 @@ Bildirim URL: `{API_URL}/payments/paytr/callback`. Detay: [payments-iyzico.md](p
 | Değişken | Açıklama |
 |----------|----------|
 | `MAIL_FROM` / `MAIL_HOST` / `MAIL_PORT` / `MAIL_SECURE` / `MAIL_USER` / `MAIL_PASS` | SMTP |
+| `ORDER_ALERT_EMAILS` | Sipariş admin bildirimi (virgülle). Boşsa info@ + `ADMIN_ALLOWLIST` |
 | `WHATSAPP_PROVIDER` | `console` veya `meta` |
 | `WHATSAPP_FROM` | E.164 |
 | `META_WA_TOKEN` / `META_WA_PHONE_NUMBER_ID` | Cloud API |

@@ -78,6 +78,14 @@ export default () => ({
     secure: process.env.MAIL_SECURE === 'true',
     user: process.env.MAIL_USER || '',
     pass: process.env.MAIL_PASS || '',
+    /**
+     * Yeni sipariş / ödeme admin e-postaları.
+     * Boşsa info@ + ADMIN_ALLOWLIST kullanılır.
+     */
+    orderAlertEmails: (process.env.ORDER_ALERT_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
   },
   whatsapp: {
     /** console | meta — otomatik sipariş WhatsApp’ı için Meta Cloud API */

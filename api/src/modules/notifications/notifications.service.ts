@@ -5,6 +5,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Order } from '@entities/order.entity';
 import { Shipment } from '@entities/shipment.entity';
+import { AdminAllowlist } from '@entities/admin-allowlist.entity';
 import {
   NotificationChannel,
   NotificationLog,
@@ -41,6 +42,8 @@ const DEFAULT_ORDER_CHANNELS: NotificationChannelName[] = [
   'whatsapp',
 ];
 
+const DEFAULT_ORDER_ALERT_EMAIL = 'info@kiliccoffeeroaster.com.tr';
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -72,6 +75,36 @@ export class NotificationsService {
       removeOnComplete: 100,
       removeOnFail: 200,
     });
+  }
+
+  /**
+   * Admin / info@ sipariş bildirimi — ürün, adres, telefon dahil.
+   * Alıcılar: ORDER_ALERT_EMAILS ∪ ADMIN_ALLOWLIST ∪ DB allowlist (yoksa info@).
+   */
+  async enqueueOrderOpsAlert(
+    orderId: string,
+    event: 'received' | 'paid',
+  ): Promise<void> {
+    const emails = await this.resolveOrderAlertEmails();
+    if (!emails.length) {
+      this.logger.warn('Order ops alert skipped — no recipients');
+      return;
+    }
+    for (const recipientEmail of emails) {
+      const payload: NotificationJobPayload = {
+        orderId,
+        template: 'order_ops_alert',
+        channels: ['email'],
+        recipientEmail,
+        context: { opsEvent: event },
+      };
+      await this.notifyQueue.add('order_ops_alert', payload, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 3000 },
+        removeOnComplete: 100,
+        removeOnFail: 200,
+      });
+    }
   }
 
   async enqueueShipmentStatus(
@@ -265,6 +298,7 @@ export class NotificationsService {
 
     const order = await this.em.findOne(Order, {
       where: { id: payload.orderId },
+      relations: { items: true },
     });
     if (!order) {
       this.logger.warn(`Order not found for notification: ${payload.orderId}`);
@@ -279,6 +313,16 @@ export class NotificationsService {
     }
 
     const frontendUrl = resolveFrontendUrl(this.config);
+    const adminUrl = (
+      this.config.get<string>('adminUrl') ||
+      'https://admin.kiliccoffeeroaster.com.tr'
+    ).replace(/\/$/, '');
+    const opsEventRaw = payload.context?.opsEvent;
+    const opsEvent: 'received' | 'paid' | undefined =
+      opsEventRaw === 'paid' || opsEventRaw === 'received'
+        ? opsEventRaw
+        : undefined;
+
     const ctx = {
       order,
       shipment,
@@ -295,23 +339,61 @@ export class NotificationsService {
           ? payload.context.trackingUrl
           : undefined,
       frontendUrl,
+      adminUrl,
+      opsEvent,
     };
+
+    const recipientOverride = payload.recipientEmail?.trim() || undefined;
 
     for (const channel of payload.channels) {
       if (channel === 'email') {
-        await this.sendEmail(order, shipment, payload.template, ctx);
-      } else if (channel === 'whatsapp' || channel === 'sms') {
-        // sms kanalı geriye dönük işler için WhatsApp'a yönlendirilir
+        await this.sendEmail(
+          order,
+          shipment,
+          payload.template,
+          ctx,
+          recipientOverride,
+        );
+      } else if (
+        (channel === 'whatsapp' || channel === 'sms') &&
+        payload.template !== 'order_ops_alert'
+      ) {
         await this.sendWhatsApp(order, shipment, payload.template, ctx);
       }
     }
 
-    await this.inbox.fromOrderTemplate(
-      payload.template,
-      order,
-      shipment,
-      ctx.statusLabel,
-    );
+    if (payload.template !== 'order_ops_alert') {
+      await this.inbox.fromOrderTemplate(
+        payload.template,
+        order,
+        shipment,
+        ctx.statusLabel,
+      );
+    }
+  }
+
+  private async resolveOrderAlertEmails(): Promise<string[]> {
+    const configured =
+      this.config.get<string[]>('mail.orderAlertEmails') || [];
+    const allowlist = this.config.get<string[]>('adminAllowlist') || [];
+    let dbEmails: string[] = [];
+    try {
+      const rows = await this.em.find(AdminAllowlist, {
+        where: { active: true },
+      });
+      dbEmails = rows.map((r) => r.email);
+    } catch {
+      /* tablo yoksa yoksay */
+    }
+    const merged = [
+      ...new Set(
+        [...configured, ...allowlist, ...dbEmails]
+          .map((e) => e.toLowerCase().trim())
+          .filter(Boolean),
+      ),
+    ];
+    if (merged.length) return merged;
+    return [DEFAULT_ORDER_ALERT_EMAIL];
   }
 
   private async sendEmail(
@@ -319,10 +401,12 @@ export class NotificationsService {
     shipment: Shipment | null,
     template: string,
     ctx: Parameters<typeof buildEmailContent>[1],
+    recipientOverride?: string,
   ) {
+    const to = recipientOverride || order.customerEmail;
     const log = this.em.create(NotificationLog, {
       channel: NotificationChannel.EMAIL,
-      recipient: order.customerEmail,
+      recipient: to,
       template,
       orderId: order.id,
       shipmentId: shipment?.id ?? null,
@@ -334,7 +418,7 @@ export class NotificationsService {
     try {
       const content = buildEmailContent(template, ctx);
       const result = await this.email.send({
-        to: order.customerEmail,
+        to,
         subject: content.subject,
         html: content.html,
         text: content.text,

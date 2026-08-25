@@ -8,6 +8,9 @@ export type NotificationTemplateContext = {
   statusLabel?: string;
   trackingUrl?: string;
   frontendUrl: string;
+  adminUrl?: string;
+  /** Admin sipariş maili: received | paid */
+  opsEvent?: 'received' | 'paid';
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,6 +49,169 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function formatMoney(amount: string | number, currency = 'TRY'): string {
+  const n = Number(amount);
+  const formatted = Number.isFinite(n)
+    ? n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : String(amount);
+  return currency === 'TRY' ? `${formatted} ₺` : `${formatted} ${currency}`;
+}
+
+function formatAddress(
+  addr: Record<string, string> | null | undefined,
+): string {
+  if (!addr) return '—';
+  const lines = [
+    addr.fullName,
+    addr.phone,
+    addr.addressLine,
+    [addr.neighborhood, addr.district, addr.city].filter(Boolean).join(', '),
+    addr.postalCode,
+  ].filter((x) => Boolean(x && String(x).trim()));
+  return lines.length ? lines.join('\n') : '—';
+}
+
+function formatAddressOneLine(
+  addr: Record<string, string> | null | undefined,
+): string {
+  return formatAddress(addr).replace(/\n/g, ' · ');
+}
+
+function orderItemsList(order: Order): string {
+  const items = order.items || [];
+  if (!items.length) return '—';
+  return items
+    .map((it) => {
+      const parts = [it.productName];
+      if (it.variantLabel) parts.push(it.variantLabel);
+      if (it.grindLabel) parts.push(it.grindLabel);
+      return `${parts.join(' · ')} ×${it.quantity} — ${formatMoney(it.lineTotal, order.currency)}`;
+    })
+    .join('\n');
+}
+
+/** Sipariş özeti HTML bloğu (ürünler + iletişim + adres + tutarlar) */
+export function buildOrderDetailsHtml(
+  order: Order,
+  opts?: { includePersonal?: boolean },
+): string {
+  const includePersonal = opts?.includePersonal !== false;
+  const items = order.items || [];
+  const itemRows = items.length
+    ? items
+        .map((it) => {
+          const name = [it.productName, it.variantLabel, it.grindLabel]
+            .filter(Boolean)
+            .join(' · ');
+          return `<tr>
+            <td style="padding:8px 0;border-bottom:1px solid #3d3229;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;">${escapeHtml(name)} <span style="color:#a89888;">×${it.quantity}</span></td>
+            <td style="padding:8px 0;border-bottom:1px solid #3d3229;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#f5efe6;text-align:right;white-space:nowrap;">${escapeHtml(formatMoney(it.lineTotal, order.currency))}</td>
+          </tr>`;
+        })
+        .join('')
+    : `<tr><td colspan="2" style="padding:8px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#a89888;">Kalem yok</td></tr>`;
+
+  const ship = formatAddress(order.shippingAddress);
+  const bill = order.billingAddress
+    ? formatAddress(order.billingAddress)
+    : null;
+
+  const personalBlock = includePersonal
+    ? `
+    <p style="margin:20px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Müşteri</p>
+    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(
+      [
+        order.customerName,
+        order.customerEmail,
+        order.customerPhone,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )}</p>
+    <p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Teslimat adresi</p>
+    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(ship)}</p>
+    ${
+      bill && bill !== ship
+        ? `<p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Fatura adresi</p>
+    <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;white-space:pre-line;">${escapeHtml(bill)}</p>`
+        : ''
+    }
+    ${
+      order.notes
+        ? `<p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Not</p>
+    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#e8ddd0;">${escapeHtml(order.notes)}</p>`
+        : ''
+    }`
+    : '';
+
+  return `
+    <p style="margin:20px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c4a574;">Sipariş içeriği</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${itemRows}</table>
+    ${personalBlock}
+  `;
+}
+
+export function buildOrderDetailsText(
+  order: Order,
+  opts?: { includePersonal?: boolean },
+): string {
+  const includePersonal = opts?.includePersonal !== false;
+  const lines = [
+    `Sipariş: ${order.orderNumber}`,
+    `Durum: ${statusLabel(order.status)}`,
+    '',
+    'Ürünler:',
+    orderItemsList(order),
+    '',
+    `Ara toplam: ${formatMoney(order.subtotal, order.currency)}`,
+    Number(order.discountAmount) > 0
+      ? `İndirim: −${formatMoney(order.discountAmount, order.currency)}${order.couponCode ? ` (${order.couponCode})` : ''}`
+      : null,
+    `Kargo: ${formatMoney(order.shippingFee, order.currency)}${order.shippingProvider ? ` · ${order.shippingProvider}` : ''}`,
+    `Toplam: ${formatMoney(order.total, order.currency)}`,
+  ];
+  if (includePersonal) {
+    lines.push(
+      '',
+      `Müşteri: ${order.customerName}`,
+      `E-posta: ${order.customerEmail}`,
+      `Telefon: ${order.customerPhone}`,
+      `Teslimat: ${formatAddressOneLine(order.shippingAddress)}`,
+    );
+    if (order.billingAddress) {
+      lines.push(
+        `Fatura: ${formatAddressOneLine(order.billingAddress)}`,
+      );
+    }
+    if (order.notes) lines.push(`Not: ${order.notes}`);
+  }
+  return lines.filter((x) => x !== null).join('\n');
+}
+
+function orderTotalMetaRows(
+  order: Order,
+): { label: string; value: string }[] {
+  const rows: { label: string; value: string }[] = [
+    { label: 'Sipariş', value: order.orderNumber },
+    { label: 'Durum', value: statusLabel(order.status) },
+    { label: 'Ara toplam', value: formatMoney(order.subtotal, order.currency) },
+  ];
+  if (Number(order.discountAmount) > 0) {
+    rows.push({
+      label: order.couponCode ? `İndirim (${order.couponCode})` : 'İndirim',
+      value: `−${formatMoney(order.discountAmount, order.currency)}`,
+    });
+  }
+  rows.push(
+    {
+      label: 'Kargo',
+      value: `${formatMoney(order.shippingFee, order.currency)}${order.shippingProvider ? ` · ${order.shippingProvider}` : ''}`,
+    },
+    { label: 'Toplam', value: formatMoney(order.total, order.currency) },
+  );
+  return rows;
+}
+
 function trackUrlFor(ctx: NotificationTemplateContext): string {
   const trackCode = ctx.shipment?.trackingNumber;
   return (
@@ -64,6 +230,8 @@ export function renderBrandedEmail(input: {
   paragraphs: string[];
   cta?: { label: string; href: string };
   metaRows?: { label: string; value: string }[];
+  /** Önceden escape edilmiş / güvenli HTML (sipariş tablosu vb.) */
+  extraHtml?: string;
 }): string {
   const preheader = input.preheader || input.title;
   const rows = (input.metaRows || [])
@@ -114,6 +282,7 @@ export function renderBrandedEmail(input: {
               <h1 style="margin:0 0 20px;font-family:Georgia,serif;font-size:26px;line-height:1.25;font-weight:400;color:#f5efe6;">${escapeHtml(input.greeting)}</h1>
               ${paras}
               ${rows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 12px;">${rows}</table>` : ''}
+              ${input.extraHtml || ''}
               ${cta}
             </td>
           </tr>
@@ -144,8 +313,60 @@ export function buildEmailContent(
   const trackUrl = trackUrlFor(ctx);
   const label = ctx.statusLabel || statusLabel(ctx.order.status);
   const ordersUrl = `${ctx.frontendUrl}/hesabim`;
+  const detailsHtml = buildOrderDetailsHtml(ctx.order, {
+    includePersonal: true,
+  });
+  const detailsText = buildOrderDetailsText(ctx.order, {
+    includePersonal: true,
+  });
+  const totals = orderTotalMetaRows(ctx.order);
 
   switch (template) {
+    case 'order_received':
+      return {
+        subject: `Siparişiniz alındı — ${orderNo}`,
+        html: renderBrandedEmail({
+          title: 'Sipariş alındı',
+          greeting: `Merhaba ${name},`,
+          paragraphs: [
+            `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> numaralı siparişiniz alındı. Ödeme tamamlandığında hazırlığa başlıyoruz.`,
+          ],
+          metaRows: totals,
+          extraHtml: detailsHtml,
+          cta: { label: 'Siparişlerim', href: ordersUrl },
+        }),
+        text: `Merhaba ${name},\n\n${orderNo} siparişiniz alındı.\n\n${detailsText}\n\n${ordersUrl}`,
+      };
+    case 'order_ops_alert': {
+      const isPaid = ctx.opsEvent === 'paid' || ctx.order.status === 'paid';
+      const adminBase = (
+        ctx.adminUrl ||
+        process.env.ADMIN_URL ||
+        'https://admin.kiliccoffeeroaster.com.tr'
+      ).replace(/\/$/, '');
+      return {
+        subject: isPaid
+          ? `Yeni ödeme — ${orderNo} · ${formatMoney(ctx.order.total, ctx.order.currency)}`
+          : `Yeni sipariş — ${orderNo} · ${formatMoney(ctx.order.total, ctx.order.currency)}`,
+        html: renderBrandedEmail({
+          title: isPaid ? 'Yeni ödeme' : 'Yeni sipariş',
+          greeting: isPaid ? 'Ödeme alındı' : 'Sipariş oluşturuldu',
+          paragraphs: [
+            isPaid
+              ? `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> ödemesi tamamlandı. Hazırlığa başlayabilirsiniz.`
+              : `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> oluşturuldu (ödeme bekleniyor).`,
+            `${escapeHtml(ctx.order.customerName)} · ${escapeHtml(ctx.order.customerEmail)} · ${escapeHtml(ctx.order.customerPhone)}`,
+          ],
+          metaRows: totals,
+          extraHtml: detailsHtml,
+          cta: {
+            label: 'Admin siparişler',
+            href: `${adminBase}/siparisler`,
+          },
+        }),
+        text: `${isPaid ? 'Yeni ödeme' : 'Yeni sipariş'}: ${orderNo}\n\n${detailsText}`,
+      };
+    }
     case 'order_paid':
       return {
         subject: `Ödemeniz alındı — ${orderNo}`,
@@ -155,13 +376,11 @@ export function buildEmailContent(
           paragraphs: [
             `<strong style="color:#f5efe6;">${escapeHtml(orderNo)}</strong> numaralı siparişinizin ödemesi alındı. Kahveniz hazırlanmaya başlıyor.`,
           ],
-          metaRows: [
-            { label: 'Sipariş', value: orderNo },
-            { label: 'Durum', value: 'Ödeme alındı' },
-          ],
+          metaRows: totals,
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} ödemesi alındı. ${ordersUrl}`,
+        text: `Merhaba ${name},\n\n${orderNo} ödemesi alındı.\n\n${detailsText}\n\n${ordersUrl}`,
       };
     case 'order_status':
       return {
@@ -175,10 +394,12 @@ export function buildEmailContent(
           metaRows: [
             { label: 'Sipariş', value: orderNo },
             { label: 'Durum', value: label },
+            { label: 'Toplam', value: formatMoney(ctx.order.total, ctx.order.currency) },
           ],
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} durumu: ${label}. ${ordersUrl}`,
+        text: `Merhaba ${name},\n\n${orderNo} durumu: ${label}.\n\n${detailsText}\n\n${ordersUrl}`,
       };
     case 'return_requested':
       return {
@@ -193,9 +414,10 @@ export function buildEmailContent(
             { label: 'Sipariş', value: orderNo },
             { label: 'Durum', value: 'Talep incelemede' },
           ],
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz alındı. ${ordersUrl}`,
+        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz alındı.\n\n${detailsText}\n\n${ordersUrl}`,
       };
     case 'return_approved':
       return {
@@ -210,9 +432,10 @@ export function buildEmailContent(
             { label: 'Sipariş', value: orderNo },
             { label: 'Durum', value: label || 'Onaylandı' },
           ],
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz onaylandı. ${ordersUrl}`,
+        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz onaylandı.\n\n${detailsText}\n\n${ordersUrl}`,
       };
     case 'return_rejected':
       return {
@@ -227,9 +450,10 @@ export function buildEmailContent(
             { label: 'Sipariş', value: orderNo },
             { label: 'Durum', value: 'Reddedildi' },
           ],
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz onaylanamadı. ${ordersUrl}`,
+        text: `Merhaba ${name}, ${orderNo} iptal/iade talebiniz onaylanamadı.\n\n${ordersUrl}`,
       };
     case 'shipment_created':
       return {
@@ -245,10 +469,17 @@ export function buildEmailContent(
             ...(trackCode
               ? [{ label: 'Takip kodu', value: trackCode }]
               : []),
+            {
+              label: 'Teslimat',
+              value: formatAddressOneLine(ctx.order.shippingAddress),
+            },
           ],
+          extraHtml: buildOrderDetailsHtml(ctx.order, {
+            includePersonal: false,
+          }),
           cta: { label: 'Kargo takip', href: trackUrl },
         }),
-        text: `Merhaba ${name}, ${orderNo} kargoya verildi. Takip: ${trackCode || trackUrl}`,
+        text: `Merhaba ${name}, ${orderNo} kargoya verildi. Takip: ${trackCode || trackUrl}\n\n${detailsText}`,
       };
     case 'shipment_status':
       return {
@@ -283,9 +514,10 @@ export function buildEmailContent(
             { label: 'Sipariş', value: orderNo },
             { label: 'Durum', value: label },
           ],
+          extraHtml: detailsHtml,
           cta: { label: 'Siparişlerim', href: ordersUrl },
         }),
-        text: `Merhaba ${name}, sipariş güncellemesi: ${label}.`,
+        text: `Merhaba ${name}, sipariş güncellemesi: ${label}.\n\n${detailsText}`,
       };
   }
 }
@@ -301,6 +533,8 @@ export function buildWhatsAppBody(
   const trackUrl = trackUrlFor(ctx);
 
   switch (template) {
+    case 'order_received':
+      return `Merhaba ${name},\n\n${orderNo} numaralı siparişiniz alındı. Ödeme tamamlandığında hazırlığa başlıyoruz.\n\n${BRAND}`;
     case 'order_paid':
       return `Merhaba ${name},\n\n${orderNo} numaralı siparişinizin ödemesi alındı. Kahveniz hazırlanmaya başlıyor.\n\n${BRAND}`;
     case 'shipment_created':

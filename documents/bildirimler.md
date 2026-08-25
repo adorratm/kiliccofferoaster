@@ -19,7 +19,9 @@ flowchart TD
 | `MAIL_HOST` / `MAIL_PORT` / `MAIL_SECURE` | SMTP |
 | `MAIL_USER` / `MAIL_PASS` | Kimlik |
 
-Boş SMTP: mesaj konsola yazılır (şifre sıfırlama linki logda görünür). Şablonlar: sipariş durumu, kargo, terk edilen sepet, düşük stok, şifre sıfırlama.
+Boş SMTP: mesaj konsola yazılır (şifre sıfırlama linki logda görünür). Şablonlar: sipariş alındı / ödeme / durum, kargo, terk edilen sepet, düşük stok, şifre sıfırlama.
+
+Sipariş admin maili (`ORDER_ALERT_EMAILS`, yoksa `info@` + `ADMIN_ALLOWLIST`): checkout ve ödeme sonrası ürün kalemleri, adres, telefon ve tutarlarla gider. Müşteri mailleri `MAIL_FROM` (info@) üzerinden her aşamada gönderilir.
 
 ## WhatsApp
 

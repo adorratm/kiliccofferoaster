@@ -62,6 +62,7 @@ export class PaymentFulfillmentService {
           statusLabel: statusLabel(OrderStatus.PAID),
         },
       );
+      await this.notifications.enqueueOrderOpsAlert(order.id, 'paid');
     }
 
     return {
