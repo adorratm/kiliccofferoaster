@@ -443,6 +443,8 @@ export function CheckoutScreen({ navigation }: Props) {
             </View>
           ) : null}
         </>
+      )}
+        </>
       ) : null}
 
       {!isPickup ? (
