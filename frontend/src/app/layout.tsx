@@ -6,6 +6,7 @@ import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { GoogleConsentTags } from "@/components/GoogleConsentTags";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { WhatsAppChat } from "@/components/WhatsAppChat";
 import { getSiteSettings } from "@/lib/cms";
 import {
   JsonLd,
@@ -13,6 +14,7 @@ import {
   organizationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo";
+import { resolveWhatsAppPhone } from "@/lib/whatsapp";
 import "./globals.css";
 
 const anton = Anton({
@@ -80,6 +82,16 @@ export default async function RootLayout({
         <SiteHeader settings={settings} />
         <main className="flex-1 pt-20">{children}</main>
         <SiteFooter settings={settings} />
+        <WhatsAppChat
+          enabled={settings.whatsapp.enabled}
+          phone={resolveWhatsAppPhone({
+            whatsappPhone: settings.whatsapp.phone,
+            contactPhone: settings.contact.phone,
+          })}
+          brandName={settings.brand.name}
+          greeting={settings.whatsapp.greeting}
+          presets={settings.whatsapp.presets}
+        />
         <CookieBanner />
         <AnalyticsScripts />
       </body>

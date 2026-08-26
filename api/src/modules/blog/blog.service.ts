@@ -97,6 +97,7 @@ export class BlogService {
       coverImageUrl: dto.coverImageUrl ?? null,
       authorName: dto.authorName ?? null,
       tags: dto.tags ?? [],
+      relatedProductSlugs: normalizeSlugs(dto.relatedProductSlugs),
       seoTitle: dto.seoTitle ?? null,
       seoDescription: dto.seoDescription ?? null,
       isPublished: dto.isPublished ?? false,
@@ -137,6 +138,10 @@ export class BlogService {
           ? post.seoDescription
           : dto.seoDescription || null,
       tags: dto.tags === undefined ? post.tags : dto.tags,
+      relatedProductSlugs:
+        dto.relatedProductSlugs === undefined
+          ? post.relatedProductSlugs
+          : normalizeSlugs(dto.relatedProductSlugs),
     });
 
     if (dto.isPublished === true && !wasPublished) {
@@ -167,4 +172,19 @@ export class BlogService {
       order: { publishedAt: 'DESC' },
     });
   }
+}
+
+function normalizeSlugs(value?: string[] | null): string[] {
+  if (!value?.length) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of value) {
+    const slug = String(raw || '')
+      .trim()
+      .toLowerCase();
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push(slug);
+  }
+  return out;
 }

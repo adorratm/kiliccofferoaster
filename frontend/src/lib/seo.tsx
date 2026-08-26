@@ -369,11 +369,17 @@ function parsePostalCode(address: string | undefined | null) {
 
 export function organizationJsonLd(settings: SiteSettings) {
   const { brand, contact, social, seo } = settings;
-  const sameAs = [social.instagram, social.facebook, social.googleMaps]
+  const sameAs = [
+    social.instagram,
+    social.facebook,
+    social.googleMaps,
+    social.googleReviewUrl,
+  ]
     .map((u) => u?.trim())
     .filter(Boolean) as string[];
   const openingHoursSpecification = parseOpeningHours(contact.hours);
   const postalCode = parsePostalCode(contact.address);
+  const mapsUrl = social.googleMaps?.trim();
 
   return {
     "@context": "https://schema.org",
@@ -402,6 +408,7 @@ export function organizationJsonLd(settings: SiteSettings) {
     email: contact.email || undefined,
     telephone: contact.phone || undefined,
     openingHours: contact.hours || undefined,
+    ...(mapsUrl ? { hasMap: mapsUrl } : {}),
     ...(openingHoursSpecification ? { openingHoursSpecification } : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };

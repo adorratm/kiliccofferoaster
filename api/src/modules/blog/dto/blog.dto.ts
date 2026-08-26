@@ -50,6 +50,15 @@ export class CreateBlogPostDto {
   @IsString({ each: true })
   tags?: string[];
 
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'İlgili ürün slug listesi',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  relatedProductSlugs?: string[];
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

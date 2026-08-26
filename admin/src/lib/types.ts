@@ -164,6 +164,7 @@ export type BlogPost = {
   coverImageUrl?: string | null;
   authorName?: string | null;
   tags?: string[];
+  relatedProductSlugs?: string[];
   seoTitle?: string | null;
   seoDescription?: string | null;
   isPublished: boolean;
@@ -195,6 +196,8 @@ export type DashboardStats = {
   ordersToday?: number;
   lowStockCount?: number;
   revenueToday?: number;
+  cashRevenueToday?: number;
+  totalRevenueToday?: number;
   pendingOrders?: number;
   marketplaceSync?: {
     platform: string;
@@ -202,7 +205,12 @@ export type DashboardStats = {
     lastSyncAt?: string | null;
     lastSyncStatus?: string | null;
   }[];
-  series?: { date: string; orders: number; revenue: number }[];
+  series?: {
+    date: string;
+    orders: number;
+    revenue: number;
+    cashRevenue?: number;
+  }[];
   byStatus?: { status: string; label: string; count: number }[];
   topProducts?: { name: string; quantity: number; revenue: number }[];
 };

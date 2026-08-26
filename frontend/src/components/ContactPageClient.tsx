@@ -4,9 +4,14 @@ import { FormEvent, useState } from "react";
 import { Reveal } from "@/components/Reveal";
 import { submitContact } from "@/lib/api";
 import type { SiteSettings } from "@/lib/cms";
+import {
+  buildWhatsAppUrl,
+  resolveWhatsAppPhone,
+} from "@/lib/whatsapp";
 
 type Props = {
   contact: SiteSettings["contact"];
+  whatsapp?: SiteSettings["whatsapp"];
   brandName: string;
   title: string;
   subtitle: string;
@@ -14,6 +19,7 @@ type Props = {
 
 export function ContactPageClient({
   contact,
+  whatsapp,
   brandName,
   title,
   subtitle,
@@ -51,6 +57,17 @@ export function ContactPageClient({
     ? `tel:${contact.phone.replace(/\s/g, "")}`
     : undefined;
   const mailHref = contact.email ? `mailto:${contact.email}` : undefined;
+  const waEnabled = whatsapp?.enabled !== false;
+  const waPhone = resolveWhatsAppPhone({
+    whatsappPhone: whatsapp?.phone,
+    contactPhone: contact.phone,
+  });
+  const waHref = waEnabled
+    ? buildWhatsAppUrl(
+        waPhone,
+        `Merhaba, ${brandName} iletişim sayfasından yazıyorum.`,
+      )
+    : undefined;
 
   return (
     <div>
@@ -104,6 +121,19 @@ export function ContactPageClient({
                     <span className="text-on-surface-variant">E-posta · </span>
                     <a href={mailHref} className="text-primary hover:underline">
                       {contact.email}
+                    </a>
+                  </p>
+                ) : null}
+                {waHref ? (
+                  <p>
+                    <span className="text-on-surface-variant">WhatsApp · </span>
+                    <a
+                      href={waHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Hemen yaz
                     </a>
                   </p>
                 ) : null}

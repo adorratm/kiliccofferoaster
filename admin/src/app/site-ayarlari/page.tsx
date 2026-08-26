@@ -4,6 +4,10 @@ import { FormEvent, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { MediaUpload } from '@/components/MediaUpload';
 import { LinkListEditor } from '@/components/LinkListEditor';
+import {
+  WhatsAppPresetEditor,
+  type WhatsAppPresetRow,
+} from '@/components/WhatsAppPresetEditor';
 
 type SettingRow = {
   key: string;
@@ -22,6 +26,47 @@ type Social = {
   instagram: string;
   facebook: string;
   googleMaps: string;
+  googleReviewUrl: string;
+};
+
+type WhatsAppSettings = {
+  enabled: boolean;
+  phone: string;
+  greeting: string;
+  presets: WhatsAppPresetRow[];
+};
+
+const DEFAULT_WHATSAPP: WhatsAppSettings = {
+  enabled: true,
+  phone: '',
+  greeting:
+    'Merhaba — Kılıç Coffee Roaster. Size nasıl yardımcı olabiliriz?',
+  presets: [
+    {
+      label: 'Sipariş durumu',
+      message:
+        'Merhaba, sipariş durumum hakkında bilgi almak istiyorum.',
+    },
+    {
+      label: 'Kavrum önerisi',
+      message:
+        'Merhaba, damak zevkime / demleme yöntemime uygun kavrum önerisi alabilir miyim?',
+    },
+    {
+      label: 'Toptan / işletme',
+      message:
+        'Merhaba, toptan / işletme siparişi hakkında yazıyorum.',
+    },
+    {
+      label: 'Kargo & teslimat',
+      message:
+        'Merhaba, kargo süresi ve teslimat seçenekleri hakkında yazıyorum.',
+    },
+    {
+      label: 'Başka bir konu',
+      message: 'Merhaba, Kılıç Coffee Roaster hakkında yazıyorum.',
+    },
+  ],
 };
 
 function asNavLinks(value: unknown): NavLink[] {
@@ -36,6 +81,39 @@ function asNavLinks(value: unknown): NavLink[] {
       return { href: link.href, label: link.label };
     })
     .filter((item): item is NavLink => item !== null);
+}
+
+function asWhatsApp(value: unknown): WhatsAppSettings {
+  if (!value || typeof value !== 'object') {
+    return {
+      ...DEFAULT_WHATSAPP,
+      presets: DEFAULT_WHATSAPP.presets.map((p) => ({ ...p })),
+    };
+  }
+  const row = value as Record<string, unknown>;
+  const presets = Array.isArray(row.presets)
+    ? row.presets
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const p = item as { label?: unknown; message?: unknown };
+          if (typeof p.label !== 'string' || typeof p.message !== 'string') {
+            return null;
+          }
+          return { label: p.label, message: p.message };
+        })
+        .filter((item): item is WhatsAppPresetRow => item !== null)
+    : [];
+  return {
+    enabled: typeof row.enabled === 'boolean' ? row.enabled : true,
+    phone: typeof row.phone === 'string' ? row.phone : '',
+    greeting:
+      typeof row.greeting === 'string' && row.greeting.trim()
+        ? row.greeting
+        : DEFAULT_WHATSAPP.greeting,
+    presets: presets.length
+      ? presets
+      : DEFAULT_WHATSAPP.presets.map((p) => ({ ...p })),
+  };
 }
 
 export default function SiteSettingsPage() {
@@ -63,7 +141,11 @@ export default function SiteSettingsPage() {
     instagram: '',
     facebook: '',
     googleMaps: '',
+    googleReviewUrl: '',
   });
+  const [whatsapp, setWhatsapp] = useState<WhatsAppSettings>(() =>
+    asWhatsApp(null),
+  );
   const [footer, setFooter] = useState({
     description: '',
     copyrightSuffix: '',
@@ -103,6 +185,7 @@ export default function SiteSettingsPage() {
         }
         if (map.social)
           setSocial((s) => ({ ...s, ...(map.social as typeof s) }));
+        setWhatsapp(asWhatsApp(map.whatsapp));
         if (map.footer)
           setFooter((s) => ({ ...s, ...(map.footer as typeof s) }));
         if (map.navigation) {
@@ -128,6 +211,13 @@ export default function SiteSettingsPage() {
     setError(null);
     setSaved(false);
     try {
+      const cleanedPresets = whatsapp.presets
+        .map((p) => ({
+          label: p.label.trim(),
+          message: p.message.trim(),
+        }))
+        .filter((p) => p.label && p.message);
+
       await api('/cms/admin/settings', {
         method: 'PATCH',
         body: {
@@ -146,6 +236,16 @@ export default function SiteSettingsPage() {
               group: 'seo',
             },
             { key: 'social', value: social, group: 'social' },
+            {
+              key: 'whatsapp',
+              value: {
+                enabled: whatsapp.enabled,
+                phone: whatsapp.phone.trim(),
+                greeting: whatsapp.greeting.trim(),
+                presets: cleanedPresets,
+              },
+              group: 'whatsapp',
+            },
             { key: 'footer', value: footer, group: 'footer' },
             { key: 'navigation', value: navigation, group: 'navigation' },
           ],
@@ -166,8 +266,8 @@ export default function SiteSettingsPage() {
       <div>
         <h2 className="text-lg font-semibold">Site Ayarları</h2>
         <p className="text-sm text-muted">
-          Marka, iletişim, SEO, sosyal ve navigasyon bilgileri frontend&apos;de
-          dinamik kullanılır.
+          Marka, iletişim, SEO, sosyal, WhatsApp ve navigasyon bilgileri
+          frontend&apos;de dinamik kullanılır.
         </p>
       </div>
 
@@ -212,7 +312,7 @@ export default function SiteSettingsPage() {
           [
             ['address', 'Adres'],
             ['email', 'E-posta'],
-            ['phone', 'Telefon'],
+            ['phone', 'Telefon (görünen / tel: link)'],
             ['hours', 'Çalışma saatleri'],
             ['locationLabel', 'Konum etiketi'],
           ] as const
@@ -230,19 +330,72 @@ export default function SiteSettingsPage() {
         ))}
       </fieldset>
 
+      <fieldset className="space-y-4 border border-border-muted p-4">
+        <legend className="mono px-2 text-xs uppercase text-muted">
+          WhatsApp sohbet
+        </legend>
+        <p className="text-xs text-muted">
+          Numara boş bırakılırsa yukarıdaki iletişim telefonu kullanılır.
+          Kurumsal WhatsApp hattı farklıysa yalnızca buraya yazın.
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={whatsapp.enabled}
+            onChange={(e) =>
+              setWhatsapp((s) => ({ ...s, enabled: e.target.checked }))
+            }
+            className="accent-accent"
+          />
+          Sitede WhatsApp sohbetini göster
+        </label>
+        <label className="block text-sm">
+          <span className="mono text-[10px] uppercase text-muted">
+            WhatsApp numarası (opsiyonel)
+          </span>
+          <input
+            value={whatsapp.phone}
+            onChange={(e) =>
+              setWhatsapp((s) => ({ ...s, phone: e.target.value }))
+            }
+            placeholder={contact.phone || '+90 5xx xxx xx xx'}
+            className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mono text-[10px] uppercase text-muted">
+            Panel karşılama metni
+          </span>
+          <textarea
+            rows={2}
+            value={whatsapp.greeting}
+            onChange={(e) =>
+              setWhatsapp((s) => ({ ...s, greeting: e.target.value }))
+            }
+            className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+          />
+        </label>
+        <WhatsAppPresetEditor
+          presets={whatsapp.presets}
+          onChange={(presets) => setWhatsapp((s) => ({ ...s, presets }))}
+        />
+      </fieldset>
+
       <fieldset className="space-y-3 border border-border-muted p-4">
         <legend className="mono px-2 text-xs uppercase text-muted">
           Sosyal / sameAs
         </legend>
         <p className="text-xs text-muted">
           Dolu URL&apos;ler schema.org sameAs ve footer&apos;da görünür. Maps
-          profil linki (işletme hazır olunca) yerel SEO için önemlidir.
+          profil linki (işletme hazır olunca) yerel SEO için önemlidir. Google
+          yorum URL&apos;si /yorum sayfası ve QR için kullanılır.
         </p>
         {(
           [
             ['instagram', 'Instagram URL'],
             ['facebook', 'Facebook URL'],
             ['googleMaps', 'Google Maps / GBP URL'],
+            ['googleReviewUrl', 'Google yorum URL (g.page / search)'],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className="block text-sm">

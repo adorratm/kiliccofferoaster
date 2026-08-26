@@ -1,8 +1,13 @@
 import { AppImage as Image } from "@/components/AppImage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
-import { getBlogPostBySlug, getBlogPosts } from "@/lib/api";
+import {
+  getBlogPostBySlug,
+  getBlogPosts,
+  getProductBySlug,
+} from "@/lib/api";
 import { getSiteSettings } from "@/lib/cms";
 import { productImage } from "@/lib/format";
 import {
@@ -11,6 +16,7 @@ import {
   breadcrumbJsonLd,
   buildBlogPostMetadata,
 } from "@/lib/seo";
+import type { Product } from "@/lib/types";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -56,6 +62,12 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   const cover = productImage(post.coverImageUrl, post.slug);
+  const relatedSlugs = (post.relatedProductSlugs || []).filter(Boolean);
+  const relatedProducts = (
+    await Promise.all(
+      relatedSlugs.map((s) => getProductBySlug(s).catch(() => null)),
+    )
+  ).filter((p): p is Product => Boolean(p && p.isActive !== false));
 
   return (
     <article>
@@ -110,6 +122,25 @@ export default async function BlogPostPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </Reveal>
+
+        {relatedProducts.length ? (
+          <Reveal delay={100} className="mt-16 border-t border-outline-variant/20 pt-10">
+            <p className="font-meta text-[10px] uppercase tracking-widest text-primary">
+              İlgili kavrumlar
+            </p>
+            <h2 className="mt-2 font-display text-3xl uppercase md:text-4xl">
+              Bu yazıdan ürünlere
+            </h2>
+            <p className="mt-3 max-w-xl font-meta text-xs uppercase text-on-surface-variant">
+              Önerilen çekirdekleri Kılıç Coffee Roaster’dan inceleyebilirsiniz.
+            </p>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </Reveal>
+        ) : null}
 
         <Reveal delay={120} className="mt-14 border-t border-outline-variant/20 pt-8">
           <Link href="/blog" className="btn-ghost px-5 py-3 text-[10px]">

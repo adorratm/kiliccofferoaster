@@ -25,6 +25,15 @@ export class BlogPost extends BaseEntity {
   @Column({ name: 'tags', type: 'text', array: true, default: '{}' })
   tags!: string[];
 
+  /** Vitrinde “İlgili kavrumlar” — ürün slug listesi */
+  @Column({
+    name: 'related_product_slugs',
+    type: 'text',
+    array: true,
+    default: '{}',
+  })
+  relatedProductSlugs!: string[];
+
   @Column({ name: 'seo_title', type: 'varchar', length: 220, nullable: true })
   seoTitle!: string | null;
 

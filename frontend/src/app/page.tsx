@@ -65,17 +65,17 @@ type FaqContent = {
 
 const FALLBACK_HERO: HeroContent = {
   imageUrl: stockImage("hero"),
-  eyebrow: "EST. 2026 / TORBALI · İZMİR",
+  eyebrow: "EST. 2026 / AYRANCILAR · TORBALI · İZMİR",
   titleLine1: "Kılıç Coffee",
   titleLine2: "Roaster",
   description:
-    "Engineered Precision. Artisanal Depth. Seçkin profesyoneller için yüksek teknolojili kavrum.",
+    "İzmir Torbalı Ayrancılar’da taze kavrulmuş specialty kahve çekirdekleri. Espresso, filtre ve Türk kahvesi için kavrumları keşfedin.",
   ctaPrimary: { label: "Koleksiyonu Keşfet", href: "/urunler" },
-  ctaSecondary: { label: "Ethos", href: "#ethos" },
+  ctaSecondary: { label: "Sana uygun kahve", href: "/oner" },
   sidebar: [
     { label: "System_Status", value: "Optimal" },
     { label: "Latency", value: "14ms" },
-    { label: "Grid", value: "Torbalı / İzmir" },
+    { label: "Grid", value: "Ayrancılar / Torbalı" },
   ],
 };
 

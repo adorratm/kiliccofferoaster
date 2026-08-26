@@ -14,6 +14,7 @@ import {
   buildProductMetadata,
   productJsonLd,
 } from "@/lib/seo";
+import { resolveWhatsAppPhone } from "@/lib/whatsapp";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -181,7 +182,14 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
 
           <div>
-            <ProductBuyBox product={product} />
+            <ProductBuyBox
+              product={product}
+              whatsappEnabled={settings.whatsapp.enabled}
+              whatsappPhone={resolveWhatsAppPhone({
+                whatsappPhone: settings.whatsapp.phone,
+                contactPhone: settings.contact.phone,
+              })}
+            />
             <div
               lang="en"
               className="mt-4 flex justify-between font-meta text-[10px] uppercase tracking-widest text-on-surface-variant"

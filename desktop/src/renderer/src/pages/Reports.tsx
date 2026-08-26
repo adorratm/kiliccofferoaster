@@ -9,6 +9,7 @@ type Turnover = {
   web: { count: number; total: string };
   invoices: { count: number; total: string; vat: string };
   okc: { count: number; total: string; vat: string; cash: string; card: string };
+  cashRegister?: { count: number; total: string };
   combined: string;
 };
 
@@ -44,10 +45,15 @@ export function ReportsPage() {
       <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">07 // Raporlar</p>
       <h1 className="mt-1 text-2xl font-semibold">Ciro, KDV, stok</h1>
       {turnover ? (
-        <div className="mt-4 grid grid-cols-4 gap-3">
+        <div className="mt-4 grid grid-cols-5 gap-3">
           <Stat label="Web" value={turnover.web.total} meta={`${turnover.web.count} sipariş`} />
           <Stat label="Fatura" value={turnover.invoices.total} meta={`KDV ${turnover.invoices.vat}`} />
           <Stat label="ÖKC" value={turnover.okc.total} meta={`Nakit ${turnover.okc.cash}`} />
+          <Stat
+            label="Kasa"
+            value={turnover.cashRegister?.total || '0.00'}
+            meta={`${turnover.cashRegister?.count || 0} giriş`}
+          />
           <Stat label="Birleşik" value={turnover.combined} meta={`${turnover.from} → ${turnover.to}`} />
         </div>
       ) : null}
@@ -62,8 +68,12 @@ export function ReportsPage() {
                   { name: 'Web', value: Number(turnover.web.total) || 0 },
                   { name: 'Fatura', value: Number(turnover.invoices.total) || 0 },
                   { name: 'ÖKC', value: Number(turnover.okc.total) || 0 },
+                  {
+                    name: 'Kasa',
+                    value: Number(turnover.cashRegister?.total) || 0,
+                  },
                 ],
-                [CHART.accent, CHART.accentSoft, CHART.success],
+                [CHART.accent, CHART.accentSoft, CHART.success, CHART.warning],
               )}
               height={260}
             />

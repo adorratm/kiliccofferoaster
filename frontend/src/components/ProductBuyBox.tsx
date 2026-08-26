@@ -10,12 +10,26 @@ import {
 } from "@/lib/grind";
 import { sortByWeightLabel } from "@/lib/weight-sort";
 import type { Product, ProductVariant } from "@/lib/types";
+import {
+  DEFAULT_WHATSAPP_PHONE,
+  buildWhatsAppUrl,
+  productWhatsAppMessage,
+} from "@/lib/whatsapp";
 
 type Props = {
   product: Product;
+  whatsappEnabled?: boolean;
+  whatsappPhone?: string | null;
 };
 
-export function ProductBuyBox({ product }: Props) {
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+export function ProductBuyBox({
+  product,
+  whatsappEnabled = true,
+  whatsappPhone = DEFAULT_WHATSAPP_PHONE,
+}: Props) {
   const variants = useMemo(
     () =>
       sortByWeightLabel(
@@ -179,6 +193,23 @@ export function ProductBuyBox({ product }: Props) {
         </div>
         <FavoriteButton productId={product.id} size="lg" />
       </div>
+
+      {whatsappEnabled ? (
+        <a
+          href={buildWhatsAppUrl(
+            whatsappPhone,
+            productWhatsAppMessage(
+              product.name,
+              `${SITE_URL}/urunler/${product.slug}`,
+            ),
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost flex w-full items-center justify-center px-4 py-3 text-xs"
+        >
+          WhatsApp ile sor
+        </a>
+      ) : null}
     </div>
   );
 }

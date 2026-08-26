@@ -11,6 +11,7 @@ type Turnover = {
   web: { count: number; total: string };
   invoices: { count: number; total: string; vat: string };
   okc: { count: number; total: string; vat: string; cash: string; card: string };
+  cashRegister?: { count: number; total: string };
   combined: string;
 };
 
@@ -60,9 +61,10 @@ export function ReportsScreen() {
             <Text style={muted}>{turnover.web.count} sipariş</Text>
           </View>
           <View style={card}>
-            <Text style={muted}>FATURA · ÖKC · BİRLEŞİK</Text>
+            <Text style={muted}>FATURA · ÖKC · KASA · BİRLEŞİK</Text>
             <Text style={{ color: colors.text, marginTop: 6 }}>
-              Fatura {turnover.invoices.total} ₺ · ÖKC {turnover.okc.total} ₺
+              Fatura {turnover.invoices.total} ₺ · ÖKC {turnover.okc.total} ₺ ·
+              Kasa {turnover.cashRegister?.total || '0.00'} ₺
             </Text>
             <Text style={{ color: colors.accent, marginTop: 4 }}>{turnover.combined} ₺</Text>
           </View>
@@ -74,8 +76,12 @@ export function ReportsScreen() {
                   { name: 'Web', value: Number(turnover.web.total) || 0 },
                   { name: 'Fatura', value: Number(turnover.invoices.total) || 0 },
                   { name: 'ÖKC', value: Number(turnover.okc.total) || 0 },
+                  {
+                    name: 'Kasa',
+                    value: Number(turnover.cashRegister?.total) || 0,
+                  },
                 ],
-                [CHART.accent, CHART.accentSoft, CHART.success],
+                [CHART.accent, CHART.accentSoft, CHART.success, CHART.warning],
               )}
               height={240}
             />

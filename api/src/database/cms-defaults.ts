@@ -21,15 +21,18 @@ export const DEFAULT_SITE_SETTINGS: Record<
     locationLabel: 'Torbalı / İzmir',
   },
   seo: {
-    title: 'Kılıç Coffee Roaster',
+    title: 'Kılıç Coffee Roaster | Ayrancılar, Torbalı İzmir',
     description:
-      'Engineered Precision. Artisanal Depth. Torbalı / İzmir özel kahve kavurucusu.',
+      'İzmir Torbalı Ayrancılar’da taze kavrulmuş specialty kahve çekirdekleri. Espresso, filtre ve Türk kahvesi için kavrumları online veya atölyeden alın.',
     keywords: [
       'kahve',
       'kavurma',
       'specialty coffee',
+      'Ayrancılar',
       'Torbalı',
       'İzmir',
+      'kahve çekirdeği',
+      'taze kavrulmuş kahve',
       'Kılıç Coffee Roaster',
     ],
     ogImage: apiStockImage('og'),
@@ -71,6 +74,45 @@ export const DEFAULT_SITE_SETTINGS: Record<
     instagram: 'https://www.instagram.com/kiliccoffeeroaster/',
     facebook: '',
     googleMaps: '',
+    /** Google İşletme Profili “yorum yaz” kısa linki */
+    googleReviewUrl: '',
+  },
+  whatsapp: {
+    /** false ise floating sohbet gizlenir; footer/ürün linkleri de kapanır */
+    enabled: true,
+    /**
+     * Boş bırakılırsa contact.phone kullanılır.
+     * Kurumsal WhatsApp hattı farklıysa buraya yazın.
+     */
+    phone: '',
+    greeting:
+      'Merhaba — Kılıç Coffee Roaster. Size nasıl yardımcı olabiliriz?',
+    presets: [
+      {
+        label: 'Sipariş durumu',
+        message:
+          'Merhaba, sipariş durumum hakkında bilgi almak istiyorum.',
+      },
+      {
+        label: 'Kavrum önerisi',
+        message:
+          'Merhaba, damak zevkime / demleme yöntemime uygun kavrum önerisi alabilir miyim?',
+      },
+      {
+        label: 'Toptan / işletme',
+        message:
+          'Merhaba, toptan / işletme siparişi hakkında bilgi almak istiyorum.',
+      },
+      {
+        label: 'Kargo & teslimat',
+        message:
+          'Merhaba, kargo süresi ve teslimat seçenekleri hakkında yazıyorum.',
+      },
+      {
+        label: 'Başka bir konu',
+        message: 'Merhaba, Kılıç Coffee Roaster hakkında yazıyorum.',
+      },
+    ],
   },
   footer: {
     description:
@@ -91,9 +133,9 @@ export const DEFAULT_HOME_SECTIONS = [
       titleLine1: 'Kılıç Coffee',
       titleLine2: 'Roaster',
       description:
-        'Engineered Precision. Artisanal Depth. Seçkin profesyoneller için yüksek teknolojili kavrum.',
+        'İzmir Torbalı Ayrancılar’daki kahve kavurma atölyemizde özenle kavrulan specialty çekirdekleri keşfedin. Espresso, filtre ve Türk kahvesi için taze kavrum.',
       ctaPrimary: { label: 'Koleksiyonu Keşfet', href: '/urunler' },
-      ctaSecondary: { label: 'Ethos', href: '#ethos' },
+      ctaSecondary: { label: 'Sana uygun kahve', href: '/oner' },
       sidebar: [
         { label: 'System_Status', value: 'Optimal' },
         { label: 'Latency', value: '14ms' },

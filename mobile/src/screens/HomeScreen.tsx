@@ -53,9 +53,16 @@ export function HomeScreen({ navigation }: Props) {
   const [stats, setStats] = useState<{
     ordersToday: number;
     revenueToday: number;
+    cashRevenueToday?: number;
+    totalRevenueToday?: number;
     pendingOrders: number;
     lowStockCount: number;
-    series: { date: string; orders: number; revenue: number }[];
+    series: {
+      date: string;
+      orders: number;
+      revenue: number;
+      cashRevenue?: number;
+    }[];
     byStatus: { status: string; label: string; count: number }[];
   } | null>(null);
 
@@ -110,9 +117,16 @@ export function HomeScreen({ navigation }: Props) {
             <View style={[card, { flex: 1, marginTop: 0 }]}>
               <Text style={muted}>CİRO</Text>
               <Text style={{ color: colors.accent, fontSize: 16, marginTop: 4 }}>
-                {Math.round(stats.revenueToday)} ₺
+                {Math.round(
+                  stats.totalRevenueToday ??
+                    stats.revenueToday + (stats.cashRevenueToday || 0),
+                )}{' '}
+                ₺
               </Text>
-              <Text style={muted}>hazırlanan {stats.pendingOrders}</Text>
+              <Text style={muted}>
+                web {Math.round(stats.revenueToday)} · kasa{' '}
+                {Math.round(stats.cashRevenueToday || 0)}
+              </Text>
             </View>
           </View>
           {stats.series?.length ? (

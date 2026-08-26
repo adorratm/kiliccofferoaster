@@ -4,6 +4,7 @@ import { EntityManager, MoreThanOrEqual } from 'typeorm';
 import { Order, OrderStatus } from '@entities/order.entity';
 import { OrderItem } from '@entities/order-item.entity';
 import { MarketplaceAccount } from '@entities/marketplace-account.entity';
+import { CashEntry, CashEntryType } from '@entities/cash-entry.entity';
 import { LowStockService } from '@modules/catalog/low-stock.service';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,12 +21,18 @@ export type DashboardDayPoint = {
   date: string;
   orders: number;
   revenue: number;
+  /** Manuel kasa girişi (nakit/POS kayıt) */
+  cashRevenue: number;
 };
 
 export type DashboardStats = {
   ordersToday: number;
   lowStockCount: number;
   revenueToday: number;
+  /** Bugünkü manuel kasa girişi toplamı */
+  cashRevenueToday: number;
+  /** Mağaza sipariş + manuel kasa */
+  totalRevenueToday: number;
   pendingOrders: number;
   marketplaceSync: {
     platform: string;
@@ -49,6 +56,8 @@ export class AdminService {
     const start = startOfIstanbulDay(0);
     const start14 = startOfIstanbulDay(13);
     const start30 = startOfIstanbulDay(29);
+    const todayKey = istanbulDateKey(0);
+    const from14Key = istanbulDateKey(13);
 
     const threshold =
       lowStockThreshold !== undefined && Number.isFinite(lowStockThreshold)
@@ -59,9 +68,11 @@ export class AdminService {
       ordersToday,
       lowStockRows,
       revenueRow,
+      cashTodayRow,
       pendingOrders,
       accounts,
       dailyRows,
+      cashDailyRows,
       statusRows,
       topRows,
     ] = await Promise.all([
@@ -75,15 +86,20 @@ export class AdminService {
         .where('o.created_at >= :start', { start })
         .andWhere("o.status NOT IN ('cancelled', 'pending_payment')")
         .getRawOne<{ sum: string }>(),
+      this.em
+        .createQueryBuilder(CashEntry, 'e')
+        .select('COALESCE(SUM(e.amount), 0)', 'sum')
+        .where('e.type = :t', { t: CashEntryType.IN })
+        .andWhere("(e.source IS NULL OR e.source = 'manual')")
+        .andWhere('e.entry_date = :today', { today: todayKey })
+        .getRawOne<{ sum: string }>(),
       this.em.count(Order, {
         where: { status: OrderStatus.PROCESSING },
       }),
       this.em.find(MarketplaceAccount, {
         order: { updatedAt: 'DESC' },
       }),
-      this.em.query<
-        { day: string; orders: string; revenue: string }[]
-      >(
+      this.em.query<{ day: string; orders: string; revenue: string }[]>(
         `
         SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'Europe/Istanbul'), 'YYYY-MM-DD') AS day,
                COUNT(*)::int AS orders,
@@ -94,6 +110,19 @@ export class AdminService {
         ORDER BY 1
         `,
         [start14],
+      ),
+      this.em.query<{ day: string; cash: string }[]>(
+        `
+        SELECT to_char(entry_date, 'YYYY-MM-DD') AS day,
+               COALESCE(SUM(amount), 0) AS cash
+        FROM cash_entries
+        WHERE type = 'in'
+          AND (source IS NULL OR source = 'manual')
+          AND entry_date >= $1::date
+        GROUP BY 1
+        ORDER BY 1
+        `,
+        [from14Key],
       ),
       this.em.query<{ status: string; count: string }[]>(
         `SELECT status::text AS status, COUNT(*)::int AS count FROM orders GROUP BY 1`,
@@ -117,14 +146,28 @@ export class AdminService {
     const dailyMap = new Map(
       dailyRows.map((r) => [
         r.day,
-        { orders: Number(r.orders), revenue: Number(r.revenue) },
+        { orders: Number(r.orders), revenue: Number(r.revenue), cashRevenue: 0 },
       ]),
     );
+    for (const row of cashDailyRows) {
+      const prev = dailyMap.get(row.day) || {
+        orders: 0,
+        revenue: 0,
+        cashRevenue: 0,
+      };
+      prev.cashRevenue = Number(row.cash) || 0;
+      dailyMap.set(row.day, prev);
+    }
+
+    const revenueToday = Number(revenueRow?.sum || 0);
+    const cashRevenueToday = Number(cashTodayRow?.sum || 0);
 
     return {
       ordersToday,
       lowStockCount: lowStockRows.length,
-      revenueToday: Number(revenueRow?.sum || 0),
+      revenueToday,
+      cashRevenueToday,
+      totalRevenueToday: revenueToday + cashRevenueToday,
       pendingOrders,
       marketplaceSync: accounts.map((a) => ({
         platform: a.platform,
@@ -157,20 +200,25 @@ function startOfIstanbulDay(daysAgo: number): Date {
   return istanbul;
 }
 
+function istanbulDateKey(daysAgo: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+}
+
 function fillDays(
   days: number,
-  map: Map<string, { orders: number; revenue: number }>,
+  map: Map<string, { orders: number; revenue: number; cashRevenue: number }>,
 ): DashboardDayPoint[] {
   const out: DashboardDayPoint[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+    const key = istanbulDateKey(i);
     const row = map.get(key);
     out.push({
       date: key,
       orders: row?.orders ?? 0,
       revenue: row?.revenue ?? 0,
+      cashRevenue: row?.cashRevenue ?? 0,
     });
   }
   return out;

@@ -1,5 +1,10 @@
 import { getApiBase } from "@/lib/api";
 import { stockImage } from "@/lib/stock-images";
+import {
+  DEFAULT_WHATSAPP_SETTINGS,
+  mergeWhatsAppSettings,
+  type WhatsAppSettings,
+} from "@/lib/whatsapp";
 
 export type NavLink = { href: string; label: string };
 
@@ -33,7 +38,9 @@ export type SiteSettings = {
     instagram: string;
     facebook: string;
     googleMaps: string;
+    googleReviewUrl: string;
   };
+  whatsapp: WhatsAppSettings;
   footer: {
     description: string;
     copyrightSuffix: string;
@@ -68,15 +75,18 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     locationLabel: "Torbalı / İzmir",
   },
   seo: {
-    title: "Kılıç Coffee Roaster",
+    title: "Kılıç Coffee Roaster | Ayrancılar, Torbalı İzmir",
     description:
-      "Engineered Precision. Artisanal Depth. Torbalı / İzmir özel kahve kavurucusu.",
+      "İzmir Torbalı Ayrancılar’da taze kavrulmuş specialty kahve çekirdekleri. Espresso, filtre ve Türk kahvesi için kavrumları online veya atölyeden alın.",
     keywords: [
       "kahve",
       "kavurma",
       "specialty coffee",
+      "Ayrancılar",
       "Torbalı",
       "İzmir",
+      "kahve çekirdeği",
+      "taze kavrulmuş kahve",
       "Kılıç Coffee Roaster",
     ],
     ogImage: stockImage("og"),
@@ -98,6 +108,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
       { href: "/medya", label: "Medya" },
       { href: "/iletisim", label: "İletişim" },
       { href: "/siparis-sorgula", label: "Sipariş Sorgula" },
+      { href: "/oner", label: "Kahve Seçici" },
+      { href: "/toptan", label: "Toptan" },
+      { href: "/yorum", label: "Google Yorum" },
       { href: "/takip", label: "Kargo Takip" },
       { href: "/sepet", label: "Sepet" },
       { href: "/hesabim", label: "Hesabım" },
@@ -119,7 +132,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     instagram: "https://www.instagram.com/kiliccoffeeroaster/",
     facebook: "",
     googleMaps: "",
+    googleReviewUrl: "",
   },
+  whatsapp: { ...DEFAULT_WHATSAPP_SETTINGS, presets: [...DEFAULT_WHATSAPP_SETTINGS.presets] },
   footer: {
     description:
       "Ampirik veri ve zanaat sezgisiyle mükemmel kavrum profilini mühendislik seviyesinde üretir. Torbalı / İzmir.",
@@ -149,6 +164,7 @@ function mergeSettings(
         DEFAULT_SETTINGS.navigation.footerLegal,
     },
     social: { ...DEFAULT_SETTINGS.social, ...(raw.social as object) },
+    whatsapp: mergeWhatsAppSettings(raw.whatsapp),
     footer: { ...DEFAULT_SETTINGS.footer, ...(raw.footer as object) },
   };
 }

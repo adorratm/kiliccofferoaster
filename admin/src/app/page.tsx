@@ -69,13 +69,23 @@ export default function DashboardPage() {
           if (typeof stats.lowStockCount === 'number') {
             setLowStock(stats.lowStockCount);
           }
-          if (typeof stats.revenueToday === 'number') {
+          if (typeof stats.totalRevenueToday === 'number') {
             setRevenueToday(
               new Intl.NumberFormat('tr-TR', {
                 style: 'currency',
                 currency: 'TRY',
                 maximumFractionDigits: 0,
-              }).format(stats.revenueToday),
+              }).format(stats.totalRevenueToday),
+            );
+          } else if (typeof stats.revenueToday === 'number') {
+            setRevenueToday(
+              new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: 'TRY',
+                maximumFractionDigits: 0,
+              }).format(
+                stats.revenueToday + (stats.cashRevenueToday || 0),
+              ),
             );
           }
           if (typeof stats.pendingOrders === 'number') {

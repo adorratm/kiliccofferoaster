@@ -3,7 +3,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Invoice, InvoiceDirection, InvoiceStatus } from '@entities/invoice.entity';
 import { OkcSale } from '@entities/okc-sale.entity';
-import { CashEntry } from '@entities/cash-entry.entity';
+import { CashEntry, CashEntryType } from '@entities/cash-entry.entity';
 import { Order, OrderStatus } from '@entities/order.entity';
 import { Party } from '@entities/party.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
@@ -44,6 +44,14 @@ export class ReportsService {
       .andWhere('o.created_at < :to', { to: `${to}T23:59:59.999Z` })
       .getMany();
 
+    /** Manuel kasa girişi (ÖKC/PayTR eşlemesi çift sayılmasın). */
+    const cashRegister = await this.em
+      .createQueryBuilder(CashEntry, 'e')
+      .where('e.type = :t', { t: CashEntryType.IN })
+      .andWhere("(e.source IS NULL OR e.source = 'manual')")
+      .andWhere('e.entry_date BETWEEN :from AND :to', { from, to })
+      .getMany();
+
     const invoiceTotal = invoices.reduce((s, i) => s + parseMoney(i.total), 0);
     const invoiceVat = invoices.reduce((s, i) => s + parseMoney(i.taxAmount), 0);
     const okcTotal = okc.reduce((s, i) => s + parseMoney(i.total), 0);
@@ -51,6 +59,7 @@ export class ReportsService {
     const okcCash = okc.reduce((s, i) => s + parseMoney(i.cashAmount), 0);
     const okcCard = okc.reduce((s, i) => s + parseMoney(i.cardAmount), 0);
     const webTotal = web.reduce((s, i) => s + parseMoney(i.total), 0);
+    const cashTotal = cashRegister.reduce((s, i) => s + parseMoney(i.amount), 0);
 
     return {
       from,
@@ -64,7 +73,8 @@ export class ReportsService {
         cash: money(okcCash),
         card: money(okcCard),
       },
-      combined: money(invoiceTotal + okcTotal),
+      cashRegister: { count: cashRegister.length, total: money(cashTotal) },
+      combined: money(invoiceTotal + okcTotal + cashTotal),
     };
   }
 

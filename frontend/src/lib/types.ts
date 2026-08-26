@@ -282,6 +282,7 @@ export type BlogPost = {
   coverImageUrl: string | null;
   authorName: string | null;
   tags: string[];
+  relatedProductSlugs?: string[];
   seoTitle: string | null;
   seoDescription: string | null;
   isPublished: boolean;

@@ -19,6 +19,7 @@ type FormState = {
   coverImageUrl: string;
   authorName: string;
   tags: string;
+  relatedProductSlugs: string;
   seoTitle: string;
   seoDescription: string;
   isPublished: boolean;
@@ -32,6 +33,7 @@ const emptyForm = (): FormState => ({
   coverImageUrl: '',
   authorName: 'Kılıç Coffee Roaster',
   tags: '',
+  relatedProductSlugs: '',
   seoTitle: '',
   seoDescription: '',
   isPublished: false,
@@ -93,6 +95,7 @@ function BlogAdminPageInner() {
       coverImageUrl: post.coverImageUrl || '',
       authorName: post.authorName || '',
       tags: (post.tags || []).join(', '),
+      relatedProductSlugs: (post.relatedProductSlugs || []).join(', '),
       seoTitle: post.seoTitle || '',
       seoDescription: post.seoDescription || '',
       isPublished: post.isPublished,
@@ -113,6 +116,10 @@ function BlogAdminPageInner() {
       coverImageUrl: form.coverImageUrl || undefined,
       authorName: form.authorName || undefined,
       tags: form.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+      relatedProductSlugs: form.relatedProductSlugs
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
@@ -281,6 +288,25 @@ function BlogAdminPageInner() {
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              İlgili ürün slug’ları (virgülle)
+            </span>
+            <input
+              value={form.relatedProductSlugs}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  relatedProductSlugs: e.target.value,
+                }))
+              }
+              placeholder="kolombiya-supremo, etiyopya-yirgacheffe"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+            <span className="mt-1 block text-xs text-muted">
+              Yazı sonunda “İlgili kavrumlar” olarak gösterilir.
+            </span>
           </label>
           <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">

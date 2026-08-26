@@ -47,7 +47,12 @@ export function baseOption(): EChartsOption {
 }
 
 export function revenueSeriesOption(
-  series: { date: string; orders: number; revenue: number }[],
+  series: {
+    date: string;
+    orders: number;
+    revenue: number;
+    cashRevenue?: number;
+  }[],
 ): EChartsOption {
   const labels = series.map((s) => {
     const [, m, d] = s.date.split('-');
@@ -61,7 +66,10 @@ export function revenueSeriesOption(
       borderColor: CHART.border,
       textStyle: { color: CHART.text },
     },
-    legend: { data: ['Ciro', 'Sipariş'], textStyle: { color: CHART.muted } },
+    legend: {
+      data: ['Toplam ciro', 'Kasa', 'Sipariş'],
+      textStyle: { color: CHART.muted },
+    },
     xAxis: { type: 'category', data: labels, ...axis },
     yAxis: [
       {
@@ -79,14 +87,22 @@ export function revenueSeriesOption(
     ],
     series: [
       {
-        name: 'Ciro',
+        name: 'Toplam ciro',
         type: 'line',
         smooth: true,
         symbol: 'circle',
         symbolSize: 6,
         itemStyle: { color: CHART.accent },
         areaStyle: { color: 'rgba(204,91,62,0.18)' },
-        data: series.map((s) => Math.round(s.revenue)),
+        data: series.map((s) =>
+          Math.round(s.revenue + (s.cashRevenue || 0)),
+        ),
+      },
+      {
+        name: 'Kasa',
+        type: 'bar',
+        itemStyle: { color: CHART.success },
+        data: series.map((s) => Math.round(s.cashRevenue || 0)),
       },
       {
         name: 'Sipariş',

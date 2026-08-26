@@ -25,6 +25,7 @@ export default async function ContactPage() {
   return (
     <ContactPageClient
       contact={settings.contact}
+      whatsapp={settings.whatsapp}
       brandName={settings.brand.name}
       title={header.title}
       subtitle={header.subtitle}

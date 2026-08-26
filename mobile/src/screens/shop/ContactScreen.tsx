@@ -17,6 +17,7 @@ import { ScreenLoader } from '../../components/shop/ScreenLoader';
 import { SectionLabel } from '../../components/shop/SectionLabel';
 import { shopCmsSettings, shopContact } from '../../lib/shop-api';
 import { DEFAULT_CONTACT, type SiteContact } from '../../lib/cms';
+import { SHOP_URL } from '../../lib/api';
 import { btn, btnText, colors, muted } from '../../ui';
 
 const PROTOCOLS = [
@@ -30,6 +31,7 @@ type Props = NativeStackScreenProps<ShopStackParamList, 'Contact'>;
 
 export function ContactScreen(_props: Props) {
   const [contact, setContact] = useState<SiteContact>(DEFAULT_CONTACT);
+  const [reviewUrl, setReviewUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<'idle' | 'ok' | 'err'>('idle');
@@ -46,6 +48,9 @@ export function ContactScreen(_props: Props) {
         try {
           const settings = await shopCmsSettings();
           setContact({ ...DEFAULT_CONTACT, ...settings.contact });
+          const social = (settings as { social?: { googleReviewUrl?: string } })
+            .social;
+          setReviewUrl(social?.googleReviewUrl?.trim() || '');
         } catch {
           /* varsayılan */
         } finally {
@@ -72,6 +77,12 @@ export function ContactScreen(_props: Props) {
   if (loading) return <ScreenLoader />;
 
   const tel = contact.phone.replace(/\s/g, '');
+  const waDigits = tel.replace(/\D/g, '').replace(/^0/, '90');
+  const waUrl = waDigits
+    ? `https://wa.me/${waDigits}?text=${encodeURIComponent(
+        'Merhaba, Kılıç Coffee Roaster hakkında yazıyorum.',
+      )}`
+    : null;
 
   return (
     <ScrollView
@@ -103,7 +114,28 @@ export function ContactScreen(_props: Props) {
             <InfoRow icon="mail" text={contact.email} accent />
           </Pressable>
         ) : null}
+        {waUrl ? (
+          <Pressable onPress={() => void Linking.openURL(waUrl)}>
+            <InfoRow icon="message-circle" text="WhatsApp ile yaz" accent />
+          </Pressable>
+        ) : null}
+        {reviewUrl ? (
+          <Pressable onPress={() => void Linking.openURL(reviewUrl)}>
+            <InfoRow icon="star" text="Google’da değerlendir" accent />
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => void Linking.openURL(`${SHOP_URL}/yorum`)}>
+            <InfoRow icon="star" text="Google yorum sayfası" accent />
+          </Pressable>
+        )}
       </View>
+
+      <Pressable
+        onPress={() => void Linking.openURL(`${SHOP_URL}/toptan`)}
+        style={[btn, { marginTop: 16, backgroundColor: colors.surface }]}
+      >
+        <Text style={[btnText, { color: colors.accentSoft }]}>Toptan / B2B talep</Text>
+      </Pressable>
 
       <SectionLabel index="01" label="Mesaj" />
       <Field title="Ad soyad" value={form.senderName} onChangeText={(senderName) => setForm((f) => ({ ...f, senderName }))} />
@@ -149,7 +181,7 @@ function InfoRow({
   text,
   accent,
 }: {
-  icon: 'map-pin' | 'clock' | 'phone' | 'mail';
+  icon: 'map-pin' | 'clock' | 'phone' | 'mail' | 'message-circle' | 'star';
   text: string;
   accent?: boolean;
 }) {

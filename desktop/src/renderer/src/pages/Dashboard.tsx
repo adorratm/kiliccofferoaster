@@ -13,15 +13,23 @@ type Turnover = {
   web: { count: number; total: string };
   invoices: { count: number; total: string };
   okc: { count: number; total: string; cash: string; card: string };
+  cashRegister?: { count: number; total: string };
   combined: string;
 };
 
 type DashboardStats = {
   ordersToday: number;
   revenueToday: number;
+  cashRevenueToday?: number;
+  totalRevenueToday?: number;
   pendingOrders: number;
   lowStockCount: number;
-  series: { date: string; orders: number; revenue: number }[];
+  series: {
+    date: string;
+    orders: number;
+    revenue: number;
+    cashRevenue?: number;
+  }[];
   byStatus: { status: string; label: string; count: number }[];
   topProducts: { name: string; quantity: number; revenue: number }[];
 };
@@ -50,11 +58,16 @@ export function DashboardPage() {
       <h1 className="mt-1 text-2xl font-semibold">Günlük ciro</h1>
       {error ? <p className="mt-4 text-warning">{error}</p> : null}
       {data ? (
-        <div className="mt-6 grid grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-5 gap-4">
           <Card label="Web sipariş" value={data.web.total} meta={`${data.web.count} adet`} />
           <Card label="Faturalar" value={data.invoices.total} meta={`${data.invoices.count} adet`} />
           <Card label="ÖKC" value={data.okc.total} meta={`Nakit ${data.okc.cash} · Kart ${data.okc.card}`} />
-          <Card label="Toplam" value={data.combined} meta="fatura + ökc" />
+          <Card
+            label="Kasa"
+            value={data.cashRegister?.total || '0.00'}
+            meta={`${data.cashRegister?.count || 0} manuel giriş`}
+          />
+          <Card label="Toplam" value={data.combined} meta="fatura + ökc + kasa" />
         </div>
       ) : null}
 
@@ -80,8 +93,12 @@ export function DashboardPage() {
                   { name: 'Web', value: Number(data.web.total) || 0 },
                   { name: 'Fatura', value: Number(data.invoices.total) || 0 },
                   { name: 'ÖKC', value: Number(data.okc.total) || 0 },
+                  {
+                    name: 'Kasa',
+                    value: Number(data.cashRegister?.total) || 0,
+                  },
                 ],
-                [CHART.accent, CHART.accentSoft, CHART.success],
+                [CHART.accent, CHART.accentSoft, CHART.success, CHART.warning],
               )}
               height={260}
             />

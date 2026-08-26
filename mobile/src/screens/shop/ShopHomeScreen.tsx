@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,6 +16,7 @@ import { PageHeader } from '../../components/shop/PageHeader';
 import { ScreenLoader } from '../../components/shop/ScreenLoader';
 import { SearchBar } from '../../components/shop/SearchBar';
 import { SectionLabel } from '../../components/shop/SectionLabel';
+import { SHOP_URL } from '../../lib/api';
 import { shopCategories, shopProducts } from '../../lib/shop-api';
 import type { Category, Product } from '../../lib/shop-types';
 import { colors } from '../../ui';
@@ -66,7 +68,7 @@ export function ShopHomeScreen({ navigation }: Props) {
       <PageHeader
         kicker="01 // Kavrum"
         heading="Mağaza"
-        subtitle="Torbalı’dan taze kavrulmuş specialty coffee. Batch bazlı, izlenebilir çekirdek."
+        subtitle="Ayrancılar / Torbalı’dan taze kavrulmuş specialty coffee. Batch bazlı, izlenebilir çekirdek."
       />
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
@@ -136,6 +138,18 @@ export function ShopHomeScreen({ navigation }: Props) {
 
       <SectionLabel index="05" label="Keşfet" />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <ExploreTile
+          icon="compass"
+          label="Kahve seçici"
+          hint="Sana uygun kavrum"
+          onPress={() => void Linking.openURL(`${SHOP_URL}/oner`)}
+        />
+        <ExploreTile
+          icon="briefcase"
+          label="Toptan"
+          hint="Cafe & işletme"
+          onPress={() => void Linking.openURL(`${SHOP_URL}/toptan`)}
+        />
         <ExploreTile
           icon="info"
           label="Hakkımızda"

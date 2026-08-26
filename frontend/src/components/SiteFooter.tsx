@@ -5,17 +5,36 @@ import { FooterNavLinks } from "@/components/FooterNavLinks";
 import { PaymentCardLogos } from "@/components/PaymentCardLogos";
 import type { SiteSettings } from "@/lib/cms";
 import { DEFAULT_SETTINGS } from "@/lib/cms";
+import {
+  buildWhatsAppUrl,
+  resolveWhatsAppPhone,
+} from "@/lib/whatsapp";
 
 type Props = {
   settings?: SiteSettings;
 };
 
 export function SiteFooter({ settings = DEFAULT_SETTINGS }: Props) {
-  const { brand, contact, footer, navigation, social } = settings;
+  const { brand, contact, footer, navigation, social, whatsapp } = settings;
+  const waPhone = resolveWhatsAppPhone({
+    whatsappPhone: whatsapp.phone,
+    contactPhone: contact.phone,
+  });
   const socialLinks = [
     { href: social.instagram, label: "Instagram" },
     { href: social.facebook, label: "Facebook" },
+    {
+      href:
+        whatsapp.enabled && waPhone
+          ? buildWhatsAppUrl(
+              waPhone,
+              `Merhaba, ${brand.name} hakkında yazıyorum.`,
+            )
+          : "",
+      label: "WhatsApp",
+    },
     { href: social.googleMaps, label: "Harita" },
+    { href: social.googleReviewUrl, label: "Google Yorum" },
   ].filter((l) => l.href?.trim());
 
   return (
