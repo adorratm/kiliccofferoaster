@@ -4,6 +4,9 @@ export type ProductVariant = {
   sku: string;
   weightLabel: string;
   price: string;
+  /** Kampanya varsa orijinal fiyat (API decorate) */
+  compareAtPrice?: string | null;
+  barcode?: string | null;
   stock: number;
   isActive: boolean;
 };

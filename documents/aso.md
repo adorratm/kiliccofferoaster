@@ -37,8 +37,9 @@ Deep link örnekleri (`/urunler/:slug`, `/takip/:kod`) native tab’lere düşer
 
 ## Merchant / SEO
 
-Ürün feed: `https://kiliccoffeeroaster.com.tr/feed/google-merchant.xml`  
-Google Merchant Center’a bu URL’yi ekleyin. Search Console: `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.
+Ürün feed (Google): `https://kiliccoffeeroaster.com.tr/feed/google-merchant.xml`  
+Ürün feed (Meta / Instagram Shop, varyantlı): `https://kiliccoffeeroaster.com.tr/feed/meta-catalog.xml`  
+Google Merchant Center / Meta Commerce Manager’a ilgili URL’yi scheduled feed olarak ekleyin. Search Console: `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.
 
 Vitrin `/sitemap.xml`, `/robots.txt`; özel sayfalar (`/hesabim`, `/odeme`, `/siparis-sorgula`) `noindex`.
 
