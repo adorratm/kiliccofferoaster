@@ -44,13 +44,17 @@ const shouldSynchronize =
       ? false
       : process.env.NODE_ENV !== 'production';
 
-/** Prod'da synchronize kapalıyken bekleyen migration'ları API açılışında uygula. */
+/**
+ * Production deploy: migration'lar `node dist/migrate.js` (one-shot) ile çalışır.
+ * API boot'ta varsayılan kapalı — başarısız migration canlıyı düşürmesin.
+ * Yerel/acil: DATABASE_MIGRATIONS_RUN=true
+ */
 const shouldRunMigrations =
   process.env.DATABASE_MIGRATIONS_RUN === 'true'
     ? true
     : process.env.DATABASE_MIGRATIONS_RUN === 'false'
       ? false
-      : !shouldSynchronize;
+      : process.env.NODE_ENV !== 'production' && !shouldSynchronize;
 
 @Module({
   imports: [

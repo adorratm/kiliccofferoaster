@@ -79,7 +79,7 @@ BullMQ Redis’e bağlanır (`REDIS_URL`). Kuyruk listesi: [kuyruklar.md](kuyruk
 
 ## Ortam
 
-Geliştirmede `synchronize: true` (`NODE_ENV !== production` ve `DATABASE_SYNCHRONIZE` boş). Production’da migrations zorunlu (`migrationsRun`).
+Geliştirmede `synchronize: true` (`NODE_ENV !== production` ve `DATABASE_SYNCHRONIZE` boş). Production’da migrations zorunlu; canlıda **deploy one-shot** (`node dist/migrate.js`), API boot’ta `DATABASE_MIGRATIONS_RUN=false`.
 
 ## Domain planı (Hetzner)
 

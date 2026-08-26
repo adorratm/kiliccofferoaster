@@ -86,6 +86,17 @@ bash deploy/sync-tten-nginx.sh https
 bash deploy/migrate-local-to-prod.sh export|import
 ```
 
+## Sıfır / düşük kesinti deploy
+
+`deploy/deploy.sh` akışı:
+
+1. Çalışan api/frontend/admin image’lerini `:rollback` olarak etiketler  
+2. Yeni image’leri build eder (eski container’lar ayakta kalır)  
+3. **Migration one-shot** (`node dist/migrate.js`) — başarısızsa container’lara dokunulmaz  
+4. Servisleri **tek tek** recreate eder; health fail olursa `:rollback` image’e döner  
+
+API boot’ta `DATABASE_MIGRATIONS_RUN=false` (compose). Migration yalnızca deploy script’inde çalışır.
+
 ## Acil kurtarma (tüm siteler 404 / nginx -t fail)
 
 Bozuk `kiliccoffee.conf` (genelde eksik SSL cert) Docker nginx’i düşürebilir:

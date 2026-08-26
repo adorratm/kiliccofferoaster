@@ -29,6 +29,8 @@ Asıl runbook: [`deploy/README.md`](../deploy/README.md). Compose: `docker-compo
 
 Host portlar (TTEN / portfolio ile çakışmaz): frontend **3200**, admin **3201**, api **3202**, postgres **5434**, redis **6381**. Edge: paylaşımlı `ttengamesstudio-nginx`.
 
+Deploy kesintiyi azaltmak için: önce build → migration one-shot → rolling recreate + health/rollback. Detay: `deploy/README.md` § Sıfır / düşük kesinti deploy.
+
 ```mermaid
 flowchart LR
   nginx[paylasimli_nginx] --> fe[3200]

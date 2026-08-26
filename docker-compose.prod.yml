@@ -1,11 +1,20 @@
 # Kılıç Coffee Roaster — production (Hetzner, paylaşımlı VPS)
 # Host portları TTEN (3000/4000) ve Portfolio (3100–3102 / 5433 / 6380) ile çakışmaz.
-# Kullanım: docker compose -f docker-compose.prod.yml --env-file deploy/.env up -d --build
+# Kullanım: bash deploy/deploy.sh
 #
 # TTEN ağı: compose ile DEĞİL, deploy/sync-tten-nginx.sh ile bağlanır.
 # Sebep: compose service adı "frontend" TTEN nginx upstream'i (frontend:3000) ile çakışır.
+#
+# Zero-downtime yaklaşımı (deploy.sh):
+# 1) Image build (eski container'lar ayakta)
+# 2) migrate one-shot (fail → eski container'lara dokunulmaz)
+# 3) Servisleri tek tek recreate + health; fail → :rollback image
 
 name: kiliccoffee-prod
+
+x-api-build: &api-build
+  context: .
+  dockerfile: docker/api.Dockerfile
 
 services:
   postgres:
@@ -52,9 +61,8 @@ services:
       - kiliccoffee
 
   api:
-    build:
-      context: .
-      dockerfile: docker/api.Dockerfile
+    image: kiliccoffee-prod-api:live
+    build: *api-build
     container_name: kiliccoffee-prod-api
     restart: unless-stopped
     depends_on:
@@ -74,15 +82,29 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-kiliccoffeeroaster}
       REDIS_URL: redis://redis:6379
       DATABASE_SYNCHRONIZE: ${DATABASE_SYNCHRONIZE:-false}
-      DATABASE_MIGRATIONS_RUN: ${DATABASE_MIGRATIONS_RUN:-true}
+      # Migration deploy.sh one-shot; boot'ta çalıştırma
+      DATABASE_MIGRATIONS_RUN: "false"
     ports:
       - "${API_HOST_PORT:-3202}:4000"
     volumes:
       - kiliccoffee_uploads:/app/api/uploads
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
     networks:
       - kiliccoffee
 
   frontend:
+    image: kiliccoffee-prod-frontend:live
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
@@ -108,7 +130,8 @@ services:
     container_name: kiliccoffee-prod-frontend
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -122,10 +145,23 @@ services:
     volumes:
       # scp → host path; Next public/downloads (rebuild gerekmez)
       - ./frontend/public/downloads:/app/frontend/public/downloads
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 60s
     networks:
       - kiliccoffee
 
   admin:
+    image: kiliccoffee-prod-admin:live
     build:
       context: .
       dockerfile: docker/admin.Dockerfile
@@ -137,7 +173,8 @@ services:
     container_name: kiliccoffee-prod-admin
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -145,6 +182,18 @@ services:
       API_INTERNAL_URL: http://api:4000
     ports:
       - "${ADMIN_HOST_PORT:-3201}:3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+      start_period: 60s
     networks:
       - kiliccoffee
 
