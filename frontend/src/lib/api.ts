@@ -204,7 +204,6 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     return await apiFetch<Product>(`/products/${encodeURIComponent(slug)}`, {
       cache: "no-store",
-      next: { revalidate: 0 },
     });
   } catch {
     return null;
