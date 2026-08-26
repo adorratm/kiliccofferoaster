@@ -15,6 +15,13 @@ type BlogSeed = {
   relatedProductSlugs: string[];
 };
 
+/** TypeORM JS dizisini parametre olarak yayar; PG text[] literal string kullan. */
+function pgTextArrayLiteral(values: string[]): string {
+  return `{${values
+    .map((v) => `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`)
+    .join(',')}}`;
+}
+
 const POSTS: BlogSeed[] = [
   {
     slug: 'turk-kahvesi-nasil-demlenir',
@@ -163,16 +170,15 @@ export class TurkishCoffeeBlogPosts1792000000000
           post.content,
           `${S3_BASE}/stock/${post.coverKey}.jpg`,
           'Kılıç Coffee Roaster',
-          post.tags,
-          post.relatedProductSlugs,
+          pgTextArrayLiteral(post.tags),
+          pgTextArrayLiteral(post.relatedProductSlugs),
           post.seoTitle,
           post.seoDescription,
         ],
       );
     }
 
-    await queryRunner.query(
-      `
+    await queryRunner.query(`
       UPDATE "blog_posts"
       SET
         "related_product_slugs" = ARRAY['turk-kahvesi']::text[],
@@ -182,8 +188,7 @@ export class TurkishCoffeeBlogPosts1792000000000
           "related_product_slugs" IS NULL
           OR cardinality("related_product_slugs") = 0
         )
-      `,
-    );
+    `);
 
     await queryRunner.query(
       `
@@ -207,13 +212,12 @@ export class TurkishCoffeeBlogPosts1792000000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    const slugs = POSTS.map((p) => p.slug);
     await queryRunner.query(
       `
       DELETE FROM "blog_posts"
       WHERE "slug" = ANY($1::text[])
       `,
-      [slugs],
+      [pgTextArrayLiteral(POSTS.map((p) => p.slug))],
     );
   }
 }
