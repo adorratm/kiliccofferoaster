@@ -34,7 +34,7 @@ export function WholesalePageClient({
           whatsappPhone: whatsapp.phone,
           contactPhone: contact.phone,
         }),
-        `Merhaba, ${brandName} toptan / işletme kahve tedariki hakkında yazıyorum. Ücretsiz numune talebim var.`,
+        `Merhaba, ${brandName} toptan / işletme kahve tedariki hakkında yazıyorum.`,
       )
     : undefined;
 
@@ -69,7 +69,7 @@ export function WholesalePageClient({
         </h1>
         <p className="mt-4 max-w-xl font-meta text-xs uppercase leading-relaxed tracking-widest text-on-surface-variant">
           Cafe, restoran, otel ve ofisler için Ayrancılar’da kavrulan specialty
-          kahve. Ücretsiz numune ve düzenli tedarik için yazın.
+          kahve. Düzenli tedarik için yazın.
         </p>
         {waHref ? (
           <a
@@ -92,7 +92,6 @@ export function WholesalePageClient({
             <ul className="mt-6 space-y-4 font-meta text-xs uppercase leading-relaxed text-secondary">
               <li>Taze kavrum · Torbalı / Ayrancılar atölye</li>
               <li>Espresso & filtre için profil seçenekleri</li>
-              <li>Ücretsiz numune bırakabiliriz</li>
               <li>Düzenli B2B teslimat</li>
             </ul>
             {contact.phone ? (
@@ -138,7 +137,7 @@ export function WholesalePageClient({
                   required
                   rows={5}
                   className="field-input resize-y"
-                  placeholder="Aylık kg, demleme tipi, numune isteği…"
+                  placeholder="Aylık kg, demleme tipi…"
                   value={form.message}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, message: e.target.value }))

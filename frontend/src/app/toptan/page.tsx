@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     title: "Toptan Kahve Tedariki",
     description:
-      "Cafe, restoran ve işletmeler için Ayrancılar’da taze kavrulmuş specialty kahve tedariki. Ücretsiz numune.",
+      "Cafe, restoran ve işletmeler için Ayrancılar’da taze kavrulmuş specialty kahve tedariki.",
     path: "/toptan",
     settings,
     keywords: [
