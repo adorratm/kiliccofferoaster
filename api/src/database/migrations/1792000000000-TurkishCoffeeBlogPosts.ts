@@ -15,11 +15,13 @@ type BlogSeed = {
   relatedProductSlugs: string[];
 };
 
-/** TypeORM JS dizisini parametre olarak yayar; PG text[] literal string kullan. */
-function pgTextArrayLiteral(values: string[]): string {
-  return `{${values
-    .map((v) => `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`)
-    .join(',')}}`;
+function sqlString(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function sqlTextArray(values: string[]): string {
+  if (values.length === 0) return `ARRAY[]::text[]`;
+  return `ARRAY[${values.map(sqlString).join(', ')}]::text[]`;
 }
 
 const POSTS: BlogSeed[] = [
@@ -122,6 +124,8 @@ export class TurkishCoffeeBlogPosts1792000000000
     `);
 
     for (const post of POSTS) {
+      // $1'i SELECT + WHERE'de yeniden kullanmak PG'de "inconsistent types" verir.
+      // text[] alanlarını parametreyle değil SQL literal ile yazıyoruz.
       await queryRunner.query(
         `
         INSERT INTO "blog_posts" (
@@ -152,15 +156,15 @@ export class TurkishCoffeeBlogPosts1792000000000
           $4,
           $5,
           $6,
-          $7::text[],
-          $8::text[],
-          $9,
-          $10,
+          ${sqlTextArray(post.tags)},
+          ${sqlTextArray(post.relatedProductSlugs)},
+          $7,
+          $8,
           true,
           now(),
           'tr'
         WHERE NOT EXISTS (
-          SELECT 1 FROM "blog_posts" WHERE "slug" = $1
+          SELECT 1 FROM "blog_posts" WHERE "slug" = $9
         )
         `,
         [
@@ -170,10 +174,9 @@ export class TurkishCoffeeBlogPosts1792000000000
           post.content,
           `${S3_BASE}/stock/${post.coverKey}.jpg`,
           'Kılıç Coffee Roaster',
-          pgTextArrayLiteral(post.tags),
-          pgTextArrayLiteral(post.relatedProductSlugs),
           post.seoTitle,
           post.seoDescription,
+          post.slug,
         ],
       );
     }
@@ -190,14 +193,14 @@ export class TurkishCoffeeBlogPosts1792000000000
         )
     `);
 
-    await queryRunner.query(
-      `
+    const reviewUrl = 'https://g.page/r/CdfE3W3I-W53EAI/review';
+    await queryRunner.query(`
       UPDATE site_settings
       SET
         value = jsonb_set(
           COALESCE(value, '{}'::jsonb),
           '{googleReviewUrl}',
-          to_jsonb($1::text),
+          to_jsonb(${sqlString(reviewUrl)}::text),
           true
         ),
         updated_at = now()
@@ -206,18 +209,14 @@ export class TurkishCoffeeBlogPosts1792000000000
           COALESCE(value->>'googleReviewUrl', '') = ''
           OR NOT (COALESCE(value, '{}'::jsonb) ? 'googleReviewUrl')
         )
-      `,
-      ['https://g.page/r/CdfE3W3I-W53EAI/review'],
-    );
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `
+    const slugs = POSTS.map((p) => sqlString(p.slug)).join(', ');
+    await queryRunner.query(`
       DELETE FROM "blog_posts"
-      WHERE "slug" = ANY($1::text[])
-      `,
-      [pgTextArrayLiteral(POSTS.map((p) => p.slug))],
-    );
+      WHERE "slug" IN (${slugs})
+    `);
   }
 }
