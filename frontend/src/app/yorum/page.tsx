@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/cms";
@@ -6,6 +7,9 @@ import {
   buildWhatsAppUrl,
   resolveWhatsAppPhone,
 } from "@/lib/whatsapp";
+
+const DEFAULT_REVIEW_URL =
+  "https://g.page/r/CdfE3W3I-W53EAI/review";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
@@ -23,7 +27,7 @@ export default async function ReviewPage() {
   const settings = await getSiteSettings();
   const reviewUrl = settings.social.googleReviewUrl?.trim();
   const mapsUrl = settings.social.googleMaps?.trim();
-  const target = reviewUrl || mapsUrl;
+  const target = reviewUrl || mapsUrl || DEFAULT_REVIEW_URL;
   const wa = settings.whatsapp.enabled
     ? buildWhatsAppUrl(
         resolveWhatsAppPhone({
@@ -47,7 +51,8 @@ export default async function ReviewPage() {
         </h1>
         <p className="mt-4 max-w-xl font-meta text-xs uppercase leading-relaxed tracking-widest text-on-surface-variant">
           Mağazamızı ziyaret ettiyseniz Google’da kısa bir değerlendirme yerel
-          görünürlüğümüze çok yardımcı olur. QR kodu bu sayfaya yönlendirebilirsiniz.
+          görünürlüğümüze çok yardımcı olur. QR kodu tarayın veya aşağıdaki
+          bağlantıya tıklayın.
         </p>
       </header>
 
@@ -56,21 +61,38 @@ export default async function ReviewPage() {
           <p className="font-meta text-xs uppercase tracking-widest text-primary">
             Kahvemizi denediysen deneyimini paylaş
           </p>
-          {target ? (
-            <a
-              href={target}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-cta mt-8 inline-flex px-8 py-4 text-xs"
-            >
-              Google’da değerlendir
-            </a>
-          ) : (
-            <p className="mt-6 font-meta text-sm uppercase leading-relaxed text-secondary">
-              Google yorum linki henüz tanımlanmadı. Admin → Site Ayarları →
-              Sosyal’de “Google yorum URL” alanını doldurun.
-            </p>
-          )}
+
+          <a
+            href={target}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 flex flex-col items-center gap-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Google’da değerlendir — QR kodu tarayın"
+          >
+            <span className="bg-white p-4">
+              <Image
+                src="/images/google-review-qr.png"
+                alt="Google yorum QR kodu"
+                width={220}
+                height={220}
+                className="h-[220px] w-[220px]"
+                priority
+              />
+            </span>
+            <span className="font-meta text-[11px] uppercase tracking-widest text-on-surface-variant">
+              QR kodu tarayın
+            </span>
+          </a>
+
+          <a
+            href={target}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-cta mt-8 inline-flex px-8 py-4 text-xs"
+          >
+            Google’da değerlendir
+          </a>
+
           <div className="mt-8 flex flex-wrap gap-4 font-meta text-[11px] uppercase tracking-widest">
             <Link href="/urunler" className="text-secondary underline hover:text-primary">
               Kavrumlar

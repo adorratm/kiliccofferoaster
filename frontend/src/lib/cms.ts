@@ -132,7 +132,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     instagram: "https://www.instagram.com/kiliccoffeeroaster/",
     facebook: "",
     googleMaps: "",
-    googleReviewUrl: "",
+    googleReviewUrl: "https://g.page/r/CdfE3W3I-W53EAI/review",
   },
   whatsapp: { ...DEFAULT_WHATSAPP_SETTINGS, presets: [...DEFAULT_WHATSAPP_SETTINGS.presets] },
   footer: {

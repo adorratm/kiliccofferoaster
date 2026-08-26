@@ -141,7 +141,7 @@ export default function SiteSettingsPage() {
     instagram: '',
     facebook: '',
     googleMaps: '',
-    googleReviewUrl: '',
+    googleReviewUrl: 'https://g.page/r/CdfE3W3I-W53EAI/review',
   });
   const [whatsapp, setWhatsapp] = useState<WhatsAppSettings>(() =>
     asWhatsApp(null),

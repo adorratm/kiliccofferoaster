@@ -75,7 +75,7 @@ export const DEFAULT_SITE_SETTINGS: Record<
     facebook: '',
     googleMaps: '',
     /** Google İşletme Profili “yorum yaz” kısa linki */
-    googleReviewUrl: '',
+    googleReviewUrl: 'https://g.page/r/CdfE3W3I-W53EAI/review',
   },
   whatsapp: {
     /** false ise floating sohbet gizlenir; footer/ürün linkleri de kapanır */
@@ -190,7 +190,7 @@ export const DEFAULT_HOME_SECTIONS = [
       subtitle: 'Physical Node',
       titleLines: ['Visit The', 'Workshop'],
       description:
-        'Hassasiyeti deneyimleyin. Torbalı merkezimizde tadım laboratuvarı ve endüstriyel kavrum hattı bir arada.',
+        'Hassasiyeti deneyimleyin. Torbalı merkezimizde endüstriyel kavrum hattı bir arada.',
       imageUrl: apiStockImage('workshop'),
       ctaLabel: 'İletişime Geç',
       ctaHref: '/iletisim',

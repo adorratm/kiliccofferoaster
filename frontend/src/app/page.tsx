@@ -157,7 +157,7 @@ export default async function HomePage() {
     subtitle: "Physical Node",
     titleLines: ["Visit The", "Workshop"],
     description:
-      "Hassasiyeti deneyimleyin. Torbalı merkezimizde tadım laboratuvarı ve endüstriyel kavrum hattı bir arada.",
+      "Hassasiyeti deneyimleyin. Torbalı merkezimizde endüstriyel kavrum hattı bir arada.",
     imageUrl: stockImage("workshop"),
     ctaLabel: "İletişime Geç",
     ctaHref: "/iletisim",

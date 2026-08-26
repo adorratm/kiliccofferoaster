@@ -17,6 +17,7 @@ import { GalleryItems1788000000000 } from './1788000000000-GalleryItems';
 import { GalleryUrlText1789000000000 } from './1789000000000-GalleryUrlText';
 import { ProductGrindAvailability1790000000000 } from './1790000000000-ProductGrindAvailability';
 import { LocalSeoWhatsappBlogProducts1791000000000 } from './1791000000000-LocalSeoWhatsappBlogProducts';
+import { TurkishCoffeeBlogPosts1792000000000 } from './1792000000000-TurkishCoffeeBlogPosts';
 
 /**
  * Webpack Nest build migration glob'larını dist'e kopyalamaz.
@@ -42,4 +43,5 @@ export const ALL_MIGRATIONS = [
   GalleryUrlText1789000000000,
   ProductGrindAvailability1790000000000,
   LocalSeoWhatsappBlogProducts1791000000000,
+  TurkishCoffeeBlogPosts1792000000000,
 ];
