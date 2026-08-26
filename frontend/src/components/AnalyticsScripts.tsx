@@ -8,38 +8,57 @@ import {
   type CookieConsent,
 } from "@/lib/cookie-consent";
 
-const GA4_ID = process.env.NEXT_PUBLIC_GA4_ID?.trim() || "";
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "";
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "";
-const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "";
+
+function applyGtagConsent(consent: CookieConsent | null) {
+  if (typeof window === "undefined") return;
+  if (typeof window.gtag !== "function") return;
+
+  const analytics = consent?.analytics ?? false;
+  const marketing = consent?.marketing ?? false;
+
+  window.gtag("consent", "update", {
+    ad_storage: marketing ? "granted" : "denied",
+    ad_user_data: marketing ? "granted" : "denied",
+    ad_personalization: marketing ? "granted" : "denied",
+    analytics_storage: analytics ? "granted" : "denied",
+  });
+}
 
 /**
- * Çerez onayı olmadan GA4 / GTM / Google Ads / Meta Pixel yüklenmez.
- * analytics → GA4 + GTM; marketing → Google Ads + Meta Pixel.
+ * GTM (analitik onayı) + Meta Pixel (pazarlama onayı).
+ * Google Ads / GA4: GoogleConsentTags + Consent Mode; burada yalnızca consent update.
  */
 export function AnalyticsScripts() {
   const [consent, setConsent] = useState<CookieConsent | null>(null);
 
   useEffect(() => {
-    setConsent(readCookieConsent());
+    const current = readCookieConsent();
+    setConsent(current);
+    applyGtagConsent(current);
+
     function onConsent(e: Event) {
       const detail = (e as CustomEvent<CookieConsent>).detail;
-      setConsent(detail ?? readCookieConsent());
+      const next = detail ?? readCookieConsent();
+      setConsent(next);
+      applyGtagConsent(next);
     }
     window.addEventListener(COOKIE_CONSENT_EVENT, onConsent);
     return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onConsent);
   }, []);
 
-  if (!consent) return null;
+  // gtag henüz yüklenmemiş olabilir — kısa süre sonra tekrar dene
+  useEffect(() => {
+    if (!consent) return;
+    const t = window.setTimeout(() => applyGtagConsent(consent), 600);
+    return () => window.clearTimeout(t);
+  }, [consent]);
 
-  const loadGtm = consent.analytics && !!GTM_ID;
-  const loadGa4 = consent.analytics && !!GA4_ID && !GTM_ID;
-  const loadGoogleAds = consent.marketing && !!GOOGLE_ADS_ID;
-  const loadMeta = consent.marketing && !!META_PIXEL_ID;
-  const loadGtag = loadGa4 || loadGoogleAds;
-  const gtagScriptId = GA4_ID || GOOGLE_ADS_ID;
+  const loadGtm = !!consent?.analytics && !!GTM_ID;
+  const loadMeta = !!consent?.marketing && !!META_PIXEL_ID;
 
-  if (!loadGtm && !loadGtag && !loadMeta) return null;
+  if (!loadGtm && !loadMeta) return null;
 
   return (
     <>
@@ -51,22 +70,6 @@ export function AnalyticsScripts() {
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','${GTM_ID}');
         `}</Script>
-      ) : null}
-
-      {loadGtag ? (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${gtagScriptId}`}
-            strategy="afterInteractive"
-          />
-          <Script id="gtag-init" strategy="afterInteractive">{`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            ${loadGa4 ? `gtag('config', '${GA4_ID}', { anonymize_ip: true });` : ""}
-            ${loadGoogleAds ? `gtag('config', '${GOOGLE_ADS_ID}');` : ""}
-          `}</Script>
-        </>
       ) : null}
 
       {loadMeta ? (

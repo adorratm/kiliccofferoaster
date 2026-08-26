@@ -131,8 +131,9 @@ Detay: [bildirimler.md](bildirimler.md).
 | `NEXT_PUBLIC_PLAY_STORE_URL` | Play Store |
 | `NEXT_PUBLIC_APP_STORE_URL` | App Store |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console meta doğrulama |
-| `NEXT_PUBLIC_GA4_ID` | GA4 (çerez analytics) |
-| `NEXT_PUBLIC_GTM_ID` | GTM doluysa GA4 script atlanır |
+| `NEXT_PUBLIC_GA4_ID` | GA4 (Consent Mode; analytics onayı) |
+| `NEXT_PUBLIC_GTM_ID` | GTM (doluysa doğrudan gtag atlanır) |
+| `NEXT_PUBLIC_GOOGLE_ADS_ID` | Google Ads AW-… (Consent Mode; etiket her zaman yüklenir) |
 | `NEXT_PUBLIC_META_PIXEL_ID` | Meta Pixel (çerez marketing) |
 
 App Links runtime (vitrin container): `APPLE_TEAM_ID`, `ANDROID_SHA256_FINGERPRINTS` — bkz. [aso.md](aso.md). Merchant feed: `/feed/google-merchant.xml`.

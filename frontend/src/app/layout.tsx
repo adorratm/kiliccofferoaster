@@ -3,6 +3,7 @@ import { Anton, Inter, JetBrains_Mono } from "next/font/google";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AppShellMark } from "@/components/AppShellMark";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
+import { GoogleConsentTags } from "@/components/GoogleConsentTags";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getSiteSettings } from "@/lib/cms";
@@ -72,6 +73,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-background text-on-background antialiased">
+        <GoogleConsentTags />
         <JsonLd data={organizationJsonLd(settings)} />
         <JsonLd data={websiteJsonLd(settings)} />
         <AppShellMark />
