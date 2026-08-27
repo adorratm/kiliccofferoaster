@@ -39,6 +39,7 @@ const NAV: { title: string; items: NavItem[] }[] = [
   {
     title: 'Sistem',
     items: [
+      { to: '/kullanicilar', label: 'Kullanıcılar', code: '17a', adminOnly: true },
       { to: '/personel-talepleri', label: 'Personel onayları', code: '17b', adminOnly: true },
       { to: '/ayarlar', label: 'Ayarlar', code: '18' },
       { to: '/bildirimler', label: 'Bildirimler', code: '19' },

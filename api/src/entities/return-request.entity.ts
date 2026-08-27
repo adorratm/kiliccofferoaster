@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Order } from '@entities/order.entity';
-import { User } from '@entities/user.entity';
+import type { Order } from '@entities/order.entity';
+import type { User } from '@entities/user.entity';
 
 export enum ReturnRequestType {
   /** Kargoya verilmeden iptal */
@@ -19,7 +19,7 @@ export enum ReturnRequestStatus {
 
 @Entity('return_requests')
 export class ReturnRequest extends BaseEntity {
-  @ManyToOne(() => Order, { onDelete: 'CASCADE' })
+  @ManyToOne('Order', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;
 
@@ -27,7 +27,7 @@ export class ReturnRequest extends BaseEntity {
   @Column({ name: 'order_id', type: 'uuid' })
   orderId!: string;
 
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('User', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'user_id' })
   user!: User | null;
 

@@ -25,7 +25,7 @@ Kök `.env` (örnek: `.env.example`).
 | `JWT_EXPIRES_IN` | Süre (ör. `7d`) |
 | `FRONTEND_URL` | CORS + OAuth yönlendirme |
 | `ADMIN_URL` | CORS + admin redirect |
-| `ADMIN_ALLOWLIST` | Virgülle e-postalar |
+| `ADMIN_ALLOWLIST` | **Kullanımdan kalktı (auth).** İsteğe bağlı: yalnızca `yarn seed` ile ilk `admin_allowlist` satırı. Günlük yetki: Kullanıcılar UI |
 | `DESKTOP_DEV_URL` | Electron Vite origin (CORS) |
 | `OPS_MOBILE_CALLBACK_URL` | Mobil ops OAuth (`kilicops://auth/callback`) |
 | `OPS_WEB_URL` | Expo web origin |
@@ -58,7 +58,7 @@ Bildirim URL: `{API_URL}/payments/paytr/callback`. Detay: [payments-iyzico.md](p
 | Değişken | Açıklama |
 |----------|----------|
 | `MAIL_FROM` / `MAIL_HOST` / `MAIL_PORT` / `MAIL_SECURE` / `MAIL_USER` / `MAIL_PASS` | SMTP |
-| `ORDER_ALERT_EMAILS` | Sipariş admin bildirimi (virgülle). Boşsa info@ + `ADMIN_ALLOWLIST` |
+| `ORDER_ALERT_EMAILS` | Sipariş admin bildirimi (virgülle). Boşsa DB `admin_allowlist`, yoksa info@ |
 | `WHATSAPP_PROVIDER` | `console` veya `meta` |
 | `WHATSAPP_FROM` | E.164 |
 | `META_WA_TOKEN` / `META_WA_PHONE_NUMBER_ID` | Cloud API |

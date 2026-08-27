@@ -113,17 +113,17 @@ export function WhatsAppChat({
           role="dialog"
           aria-modal="false"
           aria-label="WhatsApp sohbet"
-          className="pointer-events-auto banner-enter w-[min(100vw-2rem,22rem)] overflow-hidden border border-outline-variant/40 bg-surface-container-lowest shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+          className="pointer-events-auto banner-enter flex max-h-[min(52dvh,22rem)] w-[min(100vw-2rem,22rem)] flex-col overflow-hidden border border-outline-variant/40 bg-surface-container-lowest shadow-[0_12px_40px_rgba(0,0,0,0.45)] sm:max-h-[min(70vh,28rem)]"
         >
-          <div className="flex items-start justify-between gap-3 border-b border-outline-variant/25 bg-surface-container-low px-4 py-3">
+          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-outline-variant/25 bg-surface-container-low px-4 py-2.5 sm:py-3">
             <div>
               <p className="font-meta text-[10px] uppercase tracking-widest text-primary">
                 [ Channel: WhatsApp ]
               </p>
-              <p className="mt-1 font-display text-xl leading-none tracking-tight text-on-surface">
+              <p className="mt-1 font-display text-lg leading-none tracking-tight text-on-surface sm:text-xl">
                 Canlı destek
               </p>
-              <p className="mt-2 font-meta text-[10px] uppercase leading-relaxed text-on-surface-variant">
+              <p className="mt-1.5 hidden font-meta text-[10px] uppercase leading-relaxed text-on-surface-variant sm:block">
                 Hazır soru seçin veya yazın · {phone}
               </p>
             </div>
@@ -137,20 +137,20 @@ export function WhatsAppChat({
             </button>
           </div>
 
-          <div className="space-y-3 px-4 py-4">
-            <div className="industrial-border bg-surface-container px-3 py-3">
-              <p className="font-meta text-[11px] uppercase leading-relaxed text-secondary">
+          <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain px-4 py-3 sm:space-y-3 sm:py-4">
+            <div className="industrial-border bg-surface-container px-3 py-2 sm:py-3">
+              <p className="font-meta text-[10px] uppercase leading-relaxed text-secondary sm:text-[11px]">
                 {greeting}
               </p>
             </div>
 
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-1.5 sm:gap-2">
               {list.map((preset, index) => (
                 <li key={`${preset.label}-${index}`}>
                   <button
                     type="button"
                     onClick={() => sendPreset(preset)}
-                    className="w-full border border-outline-variant/35 bg-surface px-3 py-2.5 text-left font-meta text-[11px] uppercase tracking-widest text-on-surface transition-colors hover:border-primary hover:text-primary"
+                    className="w-full border border-outline-variant/35 bg-surface px-3 py-2 text-left font-meta text-[10px] uppercase tracking-widest text-on-surface transition-colors hover:border-primary hover:text-primary sm:py-2.5 sm:text-[11px]"
                   >
                     {preset.label}
                   </button>
@@ -160,20 +160,20 @@ export function WhatsAppChat({
 
             <form
               onSubmit={onCustomSubmit}
-              className="space-y-2 border-t border-outline-variant/20 pt-3"
+              className="space-y-2 border-t border-outline-variant/20 pt-2.5 sm:pt-3"
             >
               <label className="field-label" htmlFor={`${panelId}-msg`}>
                 Kendi mesajınız
               </label>
               <textarea
                 id={`${panelId}-msg`}
-                rows={3}
+                rows={2}
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
                 placeholder="Mesajınızı yazın…"
-                className="field-input resize-y text-sm normal-case tracking-normal"
+                className="field-input resize-none text-sm normal-case tracking-normal sm:resize-y"
               />
-              <button type="submit" className="btn-cta w-full py-3 text-xs">
+              <button type="submit" className="btn-cta w-full py-2.5 text-xs sm:py-3">
                 WhatsApp&apos;ta gönder
               </button>
             </form>

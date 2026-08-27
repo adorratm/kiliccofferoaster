@@ -1,3 +1,21 @@
+import { existsSync } from 'fs';
+
+/** Compose içindeki `redis` hostname'ini host'ta localhost'a çevir. */
+function resolveRedisUrl(): string {
+  const url = process.env.REDIS_URL || 'redis://localhost:6379';
+  if (existsSync('/.dockerenv')) return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'redis') {
+      parsed.hostname = 'localhost';
+      return parsed.href;
+    }
+  } catch {
+    /* geçersiz URL — olduğu gibi bırak */
+  }
+  return url;
+}
+
 export default () => ({
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPort: parseInt(process.env.API_PORT || '4000', 10),
@@ -7,6 +25,10 @@ export default () => ({
   opsMobileCallbackUrl:
     process.env.OPS_MOBILE_CALLBACK_URL || 'kilicops://auth/callback',
   opsWebUrl: process.env.OPS_WEB_URL || 'http://localhost:8081',
+  /**
+   * @deprecated Auth/yetki için kullanılmaz — `admin_allowlist` tablosu + Kullanıcılar UI.
+   * Yalnızca `yarn seed` ilk bootstrap’ta DB’ye yazmak için okunur.
+   */
   adminAllowlist: (process.env.ADMIN_ALLOWLIST || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -66,7 +88,7 @@ export default () => ({
     cdnUrl: process.env.AWS_CDN_URL || '',
   },
   redis: {
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    url: resolveRedisUrl(),
   },
   mail: {
     from:
@@ -80,7 +102,7 @@ export default () => ({
     pass: process.env.MAIL_PASS || '',
     /**
      * Yeni sipariş / ödeme admin e-postaları.
-     * Boşsa info@ + ADMIN_ALLOWLIST kullanılır.
+     * Boşsa aktif `admin_allowlist` kayıtları; o da yoksa info@ kullanılır.
      */
     orderAlertEmails: (process.env.ORDER_ALERT_EMAILS || '')
       .split(',')

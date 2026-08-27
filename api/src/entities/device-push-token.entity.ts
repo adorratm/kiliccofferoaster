@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
+import type { User } from '@entities/user.entity';
 
 export enum PushPlatform {
   IOS = 'ios',
@@ -12,7 +12,7 @@ export enum PushPlatform {
 
 @Entity('device_push_tokens')
 export class DevicePushToken extends BaseEntity {
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne('User', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

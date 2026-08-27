@@ -21,6 +21,9 @@ nsis:
   allowToChangeInstallationDirectory: true
   artifactName: KilicCoffeeRoaster-Setup.${ext}
 mac:
+  # SHA-1 hash — isimdeki “Ç” codesign’da bozuluyor; özel sign hash kullanır
+  identity: "412838A0CBDC36164BC57EC091E51EC7E7364604"
+  sign: ./scripts/mac-sign.cjs
   category: public.app-category.shopping
   target:
     - target: dmg

@@ -4,19 +4,22 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { createRequire } from 'module';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { AppModule } from '@/app.module';
 
 function resolveSwaggerUiPath(): string {
-  // Webpack bundle'da __dirname/require bozulduğu için cwd üzerinden çöz
+  // Bundled çıktıda __dirname/require bozulduğu için cwd üzerinden çöz.
+  // index.js tarayıcı bundle'ını yükler; package.json yolu bunu tetiklemez.
   const requireFromRoot = createRequire(join(process.cwd(), 'package.json'));
   try {
-    return requireFromRoot('swagger-ui-dist').getAbsoluteFSPath() as string;
+    return dirname(requireFromRoot.resolve('swagger-ui-dist/package.json'));
   } catch {
     const requireFromMonorepo = createRequire(
       join(process.cwd(), '..', 'package.json'),
     );
-    return requireFromMonorepo('swagger-ui-dist').getAbsoluteFSPath() as string;
+    return dirname(
+      requireFromMonorepo.resolve('swagger-ui-dist/package.json'),
+    );
   }
 }
 
@@ -31,7 +34,7 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // Webpack swagger-ui asset çözümü. index:false zorunlu —
+  // Bundled swagger-ui asset çözümü. index:false zorunlu —
   // aksi halde swagger-ui-dist'in varsayılan Petstore index.html'i servis edilir.
   const swaggerUiPath = resolveSwaggerUiPath();
   app.useStaticAssets(swaggerUiPath, {

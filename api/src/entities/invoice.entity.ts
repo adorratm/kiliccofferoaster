@@ -7,9 +7,9 @@ import {
   OneToMany,
 } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Party } from '@entities/party.entity';
-import { InvoiceLine } from '@entities/invoice-line.entity';
-import { Order } from '@entities/order.entity';
+import type { Party } from '@entities/party.entity';
+import type { InvoiceLine } from '@entities/invoice-line.entity';
+import type { Order } from '@entities/order.entity';
 
 export enum InvoiceDirection {
   SALES = 'sales',
@@ -55,14 +55,14 @@ export class Invoice extends BaseEntity {
   })
   edocumentType!: EDocumentType;
 
-  @ManyToOne(() => Party, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Party', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'party_id' })
   party!: Party | null;
 
   @Column({ name: 'party_id', type: 'uuid', nullable: true })
   partyId!: string | null;
 
-  @ManyToOne(() => Order, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Order', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'order_id' })
   order!: Order | null;
 
@@ -114,6 +114,6 @@ export class Invoice extends BaseEntity {
   @Column({ name: 'client_id', type: 'varchar', length: 80, nullable: true })
   clientId!: string | null;
 
-  @OneToMany(() => InvoiceLine, (line) => line.invoice, { cascade: true })
+  @OneToMany('InvoiceLine', 'invoice', { cascade: true })
   lines!: InvoiceLine[];
 }

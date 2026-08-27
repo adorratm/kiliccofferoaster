@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Product } from '@entities/product.entity';
+import type { Product } from '@entities/product.entity';
 
 @Entity('categories')
 export class Category extends BaseEntity {
@@ -26,6 +26,6 @@ export class Category extends BaseEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
-  @OneToMany(() => Product, (product) => product.category)
+  @OneToMany('Product', 'category')
   products!: Product[];
 }

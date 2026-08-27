@@ -2,9 +2,11 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -22,6 +24,10 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
   CreateOpsUserDto,
+  ListUsersQueryDto,
+  UpdateManagedUserDto,
+  CreateAllowlistDto,
+  UpdateAllowlistDto,
   AppleLoginDto,
 } from '@modules/auth/dto/auth.dto';
 import { Public } from '@common/decorators/public.decorator';
@@ -86,7 +92,7 @@ export class AuthController {
   @Post('ops-access-requests/:id/approve')
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Admin: personel erişimini onayla (staff)' })
+  @ApiOperation({ summary: 'Admin: personel erişimini onayla (staff/accountant)' })
   approveOpsAccess(
     @Param('id') id: string,
     @Body() body: { role?: 'staff' | 'accountant' } = {},
@@ -104,15 +110,82 @@ export class AuthController {
     return this.authService.rejectOpsAccess(id);
   }
 
+  @Get('users')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: kullanıcı listesi (rol / arama)' })
+  listUsers(@Query() query: ListUsersQueryDto) {
+    return this.authService.listManagedUsers(query);
+  }
+
+  @Patch('users/:id')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: kullanıcı rolü / aktiflik güncelle' })
+  updateUser(
+    @CurrentUser() actor: User,
+    @Param('id') id: string,
+    @Body() dto: UpdateManagedUserDto,
+  ) {
+    const roleMap = {
+      customer: UserRole.CUSTOMER,
+      staff: UserRole.STAFF,
+      accountant: UserRole.ACCOUNTANT,
+      admin: UserRole.ADMIN,
+    } as const;
+    return this.authService.updateManagedUser(actor.id, id, {
+      role: dto.role ? roleMap[dto.role] : undefined,
+      isActive: dto.isActive,
+    });
+  }
+
   @Post('ops-users')
   @ApiBearerAuth()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Admin: staff / accountant hesabı oluştur' })
+  @ApiOperation({ summary: 'Admin: staff / accountant / admin hesabı oluştur' })
   createOpsUser(@Body() dto: CreateOpsUserDto) {
+    const role =
+      dto.role === 'admin'
+        ? UserRole.ADMIN
+        : dto.role === 'accountant'
+          ? UserRole.ACCOUNTANT
+          : UserRole.STAFF;
     return this.authService.createOpsUser({
       ...dto,
-      role: dto.role === 'accountant' ? UserRole.ACCOUNTANT : UserRole.STAFF,
+      role,
     });
+  }
+
+  @Get('admin-allowlist')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Google/admin allowlist' })
+  listAllowlist() {
+    return this.authService.listAllowlist();
+  }
+
+  @Post('admin-allowlist')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: allowlist e-posta ekle (çoklu admin)' })
+  addAllowlist(@Body() dto: CreateAllowlistDto) {
+    return this.authService.addAllowlist(dto);
+  }
+
+  @Patch('admin-allowlist/:id')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: allowlist güncelle' })
+  updateAllowlist(@Param('id') id: string, @Body() dto: UpdateAllowlistDto) {
+    return this.authService.updateAllowlist(id, dto);
+  }
+
+  @Delete('admin-allowlist/:id')
+  @ApiBearerAuth()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: allowlist kaydını pasifleştir' })
+  removeAllowlist(@Param('id') id: string) {
+    return this.authService.removeAllowlist(id);
   }
 
   @Public()

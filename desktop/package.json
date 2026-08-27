@@ -14,7 +14,7 @@
     "preview": "electron-vite preview",
     "icons": "node ../scripts/make-desktop-ico.cjs",
     "pack:win": "node ../scripts/make-desktop-ico.cjs && electron-vite build && electron-builder --win nsis",
-    "pack:mac": "electron-vite build && electron-builder --mac dmg",
+    "pack:mac": "electron-vite build && electron-builder --mac dmg --config electron-builder.yml",
     "pack:linux": "electron-vite build && electron-builder --linux AppImage deb",
     "postinstall": "node ./scripts/postinstall.cjs"
   },
@@ -36,9 +36,9 @@
     "@types/react-dom": "^19.2.5",
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^6.1.0",
-    "electron": "43.4.1",
+    "electron": "44.0.0",
     "electron-builder": "26.15.7",
-    "electron-vite": "^5.0.0",
+    "electron-vite": "6.0.0-beta.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.2.2"

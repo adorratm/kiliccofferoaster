@@ -272,7 +272,7 @@ export class AuthService {
     password: string;
     firstName?: string;
     lastName?: string;
-    role: UserRole.STAFF | UserRole.ACCOUNTANT;
+    role: UserRole.STAFF | UserRole.ACCOUNTANT | UserRole.ADMIN;
   }): Promise<PublicUser> {
     const email = dto.email.toLowerCase().trim();
     const existing = await this.em.findOne(User, { where: { email } });
@@ -292,7 +292,199 @@ export class AuthService {
       opsAccessRequestedAt: null,
     });
     await this.em.save(user);
+    if (dto.role === UserRole.ADMIN) {
+      await this.ensureAllowlist(email, 'Admin olarak oluşturuldu');
+    }
     return this.sanitize(user);
+  }
+
+  async listManagedUsers(query: {
+    role?: 'customer' | 'staff' | 'accountant' | 'admin' | 'ops';
+    q?: string;
+    active?: 'true' | 'false';
+    page?: number;
+    limit?: number;
+  }) {
+    const page = query.page && query.page > 0 ? query.page : 1;
+    const limit =
+      query.limit && query.limit > 0 ? Math.min(query.limit, 100) : 40;
+    const qb = this.em.createQueryBuilder(User, 'u').orderBy('u.created_at', 'DESC');
+
+    if (query.role === 'ops') {
+      qb.andWhere('u.role IN (:...ops)', { ops: [...OPS_ROLES] });
+    } else if (query.role) {
+      qb.andWhere('u.role = :role', { role: query.role });
+    }
+
+    if (query.active === 'true') qb.andWhere('u.is_active = true');
+    else if (query.active === 'false') qb.andWhere('u.is_active = false');
+
+    if (query.q?.trim()) {
+      const q = `%${query.q.trim().toLowerCase()}%`;
+      qb.andWhere(
+        "(LOWER(u.email) LIKE :q OR LOWER(COALESCE(u.firstName, '')) LIKE :q OR LOWER(COALESCE(u.lastName, '')) LIKE :q)",
+        { q },
+      );
+    }
+
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      items: rows.map((u) => this.sanitize(u)),
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit) || 1),
+    };
+  }
+
+  async updateManagedUser(
+    actorId: string,
+    userId: string,
+    dto: { role?: UserRole; isActive?: boolean },
+  ): Promise<PublicUser> {
+    const user = await this.em.findOne(User, { where: { id: userId } });
+    if (!user) throw new NotFoundException('Kullanıcı bulunamadı');
+
+    const wasAdmin = user.role === UserRole.ADMIN;
+    const nextRole = dto.role ?? user.role;
+    const nextActive = dto.isActive ?? user.isActive;
+
+    if (userId === actorId) {
+      if (nextRole !== UserRole.ADMIN) {
+        throw new ForbiddenException('Kendi admin yetkinizi kaldıramazsınız');
+      }
+      if (nextActive === false) {
+        throw new ForbiddenException('Kendi hesabınızı pasifleştiremezsiniz');
+      }
+    }
+
+    if (
+      wasAdmin &&
+      (nextRole !== UserRole.ADMIN || nextActive === false)
+    ) {
+      const adminCount = await this.em.count(User, {
+        where: { role: UserRole.ADMIN, isActive: true },
+      });
+      if (adminCount <= 1) {
+        throw new ConflictException('En az bir aktif admin kalmalı');
+      }
+    }
+
+    user.role = nextRole;
+    user.isActive = nextActive;
+    if (nextRole !== UserRole.CUSTOMER) {
+      user.opsAccessRequestedAt = null;
+    }
+    await this.em.save(user);
+
+    if (nextRole === UserRole.ADMIN && nextActive) {
+      await this.ensureAllowlist(user.email, 'Rol: admin');
+    } else if (wasAdmin && (nextRole !== UserRole.ADMIN || !nextActive)) {
+      await this.setAllowlistActive(user.email, false);
+    }
+
+    return this.sanitize(user);
+  }
+
+  async listAllowlist() {
+    return this.em.find(AdminAllowlist, { order: { email: 'ASC' } });
+  }
+
+  async addAllowlist(dto: {
+    email: string;
+    note?: string;
+    promoteUser?: boolean;
+  }) {
+    const email = dto.email.toLowerCase().trim();
+    let row = await this.em.findOne(AdminAllowlist, { where: { email } });
+    if (row) {
+      row.active = true;
+      row.note = dto.note ?? row.note;
+    } else {
+      row = this.em.create(AdminAllowlist, {
+        email,
+        active: true,
+        note: dto.note ?? null,
+      });
+    }
+    await this.em.save(row);
+
+    let user: PublicUser | null = null;
+    if (dto.promoteUser !== false) {
+      const existing = await this.em.findOne(User, { where: { email } });
+      if (existing) {
+        existing.role = UserRole.ADMIN;
+        existing.isActive = true;
+        existing.opsAccessRequestedAt = null;
+        await this.em.save(existing);
+        user = this.sanitize(existing);
+      }
+    }
+    return { allowlist: row, user };
+  }
+
+  async updateAllowlist(
+    id: string,
+    dto: { active?: boolean; note?: string },
+  ) {
+    const row = await this.em.findOne(AdminAllowlist, { where: { id } });
+    if (!row) throw new NotFoundException('Allowlist kaydı yok');
+    if (dto.active !== undefined) row.active = dto.active;
+    if (dto.note !== undefined) row.note = dto.note;
+    await this.em.save(row);
+
+    if (dto.active === false) {
+      const user = await this.em.findOne(User, { where: { email: row.email } });
+      if (user?.role === UserRole.ADMIN) {
+        const adminCount = await this.em.count(User, {
+          where: { role: UserRole.ADMIN, isActive: true },
+        });
+        if (adminCount <= 1 && user.isActive) {
+          throw new ConflictException(
+            'Son aktif admin allowlist’ten çıkarılamaz; önce başka admin ekleyin',
+          );
+        }
+        user.role = UserRole.STAFF;
+        await this.em.save(user);
+      }
+    }
+    return row;
+  }
+
+  async removeAllowlist(id: string) {
+    return this.updateAllowlist(id, { active: false });
+  }
+
+  private async ensureAllowlist(email: string, note?: string) {
+    const normalized = email.toLowerCase().trim();
+    let row = await this.em.findOne(AdminAllowlist, {
+      where: { email: normalized },
+    });
+    if (!row) {
+      row = this.em.create(AdminAllowlist, {
+        email: normalized,
+        active: true,
+        note: note ?? null,
+      });
+    } else {
+      row.active = true;
+      if (note) row.note = note;
+    }
+    await this.em.save(row);
+    return row;
+  }
+
+  private async setAllowlistActive(email: string, active: boolean) {
+    const row = await this.em.findOne(AdminAllowlist, {
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (!row) return;
+    row.active = active;
+    await this.em.save(row);
   }
 
   /**
@@ -649,10 +841,8 @@ export class AuthService {
   async isAdminEmail(email: string): Promise<boolean> {
     const normalized = email.toLowerCase().trim();
     if (!normalized) return false;
-    const envList = this.config.get<string[]>('adminAllowlist') || [];
-    if (envList.includes(normalized)) {
-      return true;
-    }
+    // Yetki kaynağı: admin_allowlist tablosu (Kullanıcılar / allowlist UI).
+    // ADMIN_ALLOWLIST env artık auth için kullanılmaz.
     const row = await this.em.findOne(AdminAllowlist, {
       where: { email: normalized, active: true },
     });

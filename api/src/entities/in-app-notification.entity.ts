@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
+import type { User } from '@entities/user.entity';
 
 export enum InboxAudience {
   USER = 'user',
@@ -22,7 +22,7 @@ export enum InboxCategory {
 
 @Entity('in_app_notifications')
 export class InAppNotification extends BaseEntity {
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne('User', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

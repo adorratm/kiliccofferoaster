@@ -994,62 +994,11 @@ export default function CheckoutPage() {
           </Reveal>
           ) : null}
 
-          <Reveal variant="left" delay={200}>
-          <section className="panel-motion industrial-border bg-surface-container-low p-6 md:p-8">
-            <h2 className="mb-6 font-display text-2xl">Yasal Onaylar</h2>
-            <div className="space-y-4 font-meta text-xs uppercase text-secondary">
-              <Check
-                checked={form.mesafeliSatis}
-                onChange={(v) => setField("mesafeliSatis", v)}
-                label={
-                  <>
-                    <Link href="/mesafeli-satis" className="text-primary underline">
-                      Mesafeli satış sözleşmesini
-                    </Link>{" "}
-                    okudum, kabul ediyorum.
-                  </>
-                }
-              />
-              <Check
-                checked={form.onBilgilendirme}
-                onChange={(v) => setField("onBilgilendirme", v)}
-                label={
-                  <>
-                    <Link href="/on-bilgilendirme" className="text-primary underline">
-                      Ön bilgilendirme formunu
-                    </Link>{" "}
-                    okudum.
-                  </>
-                }
-              />
-              <Check
-                checked={form.kvkk}
-                onChange={(v) => setField("kvkk", v)}
-                label={
-                  <>
-                    <Link href="/kvkk" className="text-primary underline">
-                      KVKK
-                    </Link>{" "}
-                    metnini kabul ediyorum.{" "}
-                    <Link href="/guvenli-alisveris" className="text-primary underline">
-                      Güvenli alışveriş
-                    </Link>{" "}
-                    ve{" "}
-                    <Link href="/iptal-iade" className="text-primary underline">
-                      iade politikası
-                    </Link>{" "}
-                    bilgilendirmelerini okudum.
-                  </>
-                }
-              />
-            </div>
-          </section>
-          </Reveal>
         </div>
 
         <aside className="lg:col-span-4">
-          <Reveal variant="right" delay={100}>
-          <div className="sticky top-28 border border-outline-variant/30 bg-surface-container-low p-6 panel-motion">
+          {/* sticky: Reveal transform kullanma */}
+          <div className="sticky top-28 z-10 border border-outline-variant/30 bg-surface-container-low p-6 panel-motion">
             <h2 className="mb-6 font-display text-2xl">Özet</h2>
             <div className="mb-6 space-y-2">
               <label className="field-label">Kupon kodu</label>
@@ -1118,15 +1067,63 @@ export default function CheckoutPage() {
                 {error}
               </p>
             ) : null}
+            <div className="mt-6 space-y-3 border-t border-outline-variant/20 pt-5 font-meta text-[10px] uppercase leading-relaxed text-secondary">
+              <p className="font-meta text-[10px] tracking-widest text-on-surface-variant">
+                Yasal onaylar
+              </p>
+              <Check
+                checked={form.mesafeliSatis}
+                onChange={(v) => setField("mesafeliSatis", v)}
+                label={
+                  <>
+                    <Link href="/mesafeli-satis" className="text-primary underline">
+                      Mesafeli satış sözleşmesini
+                    </Link>{" "}
+                    okudum, kabul ediyorum.
+                  </>
+                }
+              />
+              <Check
+                checked={form.onBilgilendirme}
+                onChange={(v) => setField("onBilgilendirme", v)}
+                label={
+                  <>
+                    <Link href="/on-bilgilendirme" className="text-primary underline">
+                      Ön bilgilendirme formunu
+                    </Link>{" "}
+                    okudum.
+                  </>
+                }
+              />
+              <Check
+                checked={form.kvkk}
+                onChange={(v) => setField("kvkk", v)}
+                label={
+                  <>
+                    <Link href="/kvkk" className="text-primary underline">
+                      KVKK
+                    </Link>{" "}
+                    metnini kabul ediyorum.{" "}
+                    <Link href="/guvenli-alisveris" className="text-primary underline">
+                      Güvenli alışveriş
+                    </Link>{" "}
+                    ve{" "}
+                    <Link href="/iptal-iade" className="text-primary underline">
+                      iade politikası
+                    </Link>{" "}
+                    bilgilendirmelerini okudum.
+                  </>
+                }
+              />
+            </div>
             <button
               type="submit"
               disabled={submitting}
-              className="btn-cta mt-6 w-full py-4 text-xs"
+              className="btn-cta mt-5 w-full py-4 text-xs"
             >
               {submitting ? "Yönlendiriliyor…" : "PayTR ile Güvenli Öde"}
             </button>
           </div>
-          </Reveal>
         </aside>
       </form>
     </div>

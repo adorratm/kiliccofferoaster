@@ -9,6 +9,8 @@ const STAFF_SCREENS = new Set<keyof StaffStackParamList>([
   'Parties',
   'Invoices',
   'Cash',
+  'Stock',
+  'Okc',
   'Reports',
   'Products',
   'ProductEdit',
@@ -21,10 +23,19 @@ const STAFF_SCREENS = new Set<keyof StaffStackParamList>([
   'Shipping',
   'Messages',
   'Newsletter',
+  'Marketplace',
+  'LegalAdmin',
+  'BlogAdmin',
+  'GalleryAdmin',
+  'SiteSettings',
+  'MediaAdmin',
   'Search',
   'Customers',
   'CustomerDetail',
   'Notifications',
+  'Settings',
+  'StaffRequests',
+  'Users',
 ]);
 
 export function navigate(name: string, params?: object) {
@@ -51,7 +62,11 @@ export type OpsHrefTarget =
   | { name: 'Products' }
   | { name: 'ProductEdit'; params: { id?: string } }
   | { name: 'Customers' }
-  | { name: 'CustomerDetail'; params: { id: string } };
+  | { name: 'CustomerDetail'; params: { id: string } }
+  | { name: 'Stock' }
+  | { name: 'StaffRequests' }
+  | { name: 'Settings' }
+  | { name: 'Users' };
 
 function hrefToTarget(href: string | null | undefined): OpsHrefTarget {
   if (!href) return { name: 'Notifications' };
@@ -60,7 +75,12 @@ function hrefToTarget(href: string | null | undefined): OpsHrefTarget {
   const params = new URLSearchParams(query);
   if (path.startsWith('/siparisler')) return { name: 'ShopOrders' };
   if (path.startsWith('/personel-onaylari') || path.startsWith('/personel-talepleri')) {
-    return { name: 'Notifications' };
+    return { name: 'StaffRequests' };
+  }
+  if (path.startsWith('/kullanicilar')) return { name: 'Users' };
+  if (path.startsWith('/stok')) return { name: 'Stock' };
+  if (path.startsWith('/ayarlar') || path.startsWith('/muhasebe-ayarlari')) {
+    return { name: 'Settings' };
   }
   if (path.startsWith('/iadeler')) return { name: 'Returns' };
   if (path.startsWith('/mesajlar')) return { name: 'Messages' };

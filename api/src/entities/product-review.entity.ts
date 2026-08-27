@@ -1,12 +1,12 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Product } from '@entities/product.entity';
-import { User } from '@entities/user.entity';
+import type { Product } from '@entities/product.entity';
+import type { User } from '@entities/user.entity';
 
 @Entity('product_reviews')
 @Unique(['productId', 'userId'])
 export class ProductReview extends BaseEntity {
-  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @ManyToOne('Product', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product!: Product;
 
@@ -14,7 +14,7 @@ export class ProductReview extends BaseEntity {
   @Column({ name: 'product_id', type: 'uuid' })
   productId!: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne('User', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

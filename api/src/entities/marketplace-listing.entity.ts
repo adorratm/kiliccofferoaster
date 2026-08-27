@@ -1,12 +1,12 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { MarketplaceAccount } from '@entities/marketplace-account.entity';
-import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { MarketplaceAccount } from '@entities/marketplace-account.entity';
+import type { Product } from '@entities/product.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 
 @Entity('marketplace_listings')
 export class MarketplaceListing extends BaseEntity {
-  @ManyToOne(() => MarketplaceAccount, (account) => account.listings, {
+  @ManyToOne('MarketplaceAccount', 'listings', {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'account_id' })
@@ -15,14 +15,14 @@ export class MarketplaceListing extends BaseEntity {
   @Column({ name: 'account_id', type: 'uuid' })
   accountId!: string;
 
-  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @ManyToOne('Product', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product!: Product;
 
   @Column({ name: 'product_id', type: 'uuid' })
   productId!: string;
 
-  @ManyToOne(() => ProductVariant, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('ProductVariant', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'variant_id' })
   variant!: ProductVariant | null;
 

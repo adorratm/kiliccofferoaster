@@ -79,7 +79,7 @@ export class NotificationsService {
 
   /**
    * Admin / info@ sipariş bildirimi — ürün, adres, telefon dahil.
-   * Alıcılar: ORDER_ALERT_EMAILS ∪ ADMIN_ALLOWLIST ∪ DB allowlist (yoksa info@).
+   * Alıcılar: ORDER_ALERT_EMAILS ∪ DB admin_allowlist (yoksa info@).
    */
   async enqueueOrderOpsAlert(
     orderId: string,
@@ -375,7 +375,6 @@ export class NotificationsService {
   private async resolveOrderAlertEmails(): Promise<string[]> {
     const configured =
       this.config.get<string[]>('mail.orderAlertEmails') || [];
-    const allowlist = this.config.get<string[]>('adminAllowlist') || [];
     let dbEmails: string[] = [];
     try {
       const rows = await this.em.find(AdminAllowlist, {
@@ -387,7 +386,7 @@ export class NotificationsService {
     }
     const merged = [
       ...new Set(
-        [...configured, ...allowlist, ...dbEmails]
+        [...configured, ...dbEmails]
           .map((e) => e.toLowerCase().trim())
           .filter(Boolean),
       ),

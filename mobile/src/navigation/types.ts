@@ -49,6 +49,8 @@ export type StaffStackParamList = {
   Parties: undefined;
   Invoices: undefined;
   Cash: undefined;
+  Stock: undefined;
+  Okc: undefined;
   Reports: undefined;
   Products: undefined;
   ProductEdit: { id?: string };
@@ -61,10 +63,19 @@ export type StaffStackParamList = {
   Shipping: undefined;
   Messages: undefined;
   Newsletter: undefined;
+  Marketplace: undefined;
+  LegalAdmin: undefined;
+  BlogAdmin: undefined;
+  GalleryAdmin: undefined;
+  SiteSettings: undefined;
+  MediaAdmin: undefined;
   Search: undefined;
   Customers: undefined;
   CustomerDetail: { id: string };
   Notifications: undefined;
+  Settings: undefined;
+  StaffRequests: undefined;
+  Users: undefined;
 };
 
 export type RootTabParamList = {

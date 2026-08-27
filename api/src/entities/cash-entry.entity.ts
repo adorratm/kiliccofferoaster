@@ -1,8 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { CashAccount } from '@entities/cash-account.entity';
-import { Party } from '@entities/party.entity';
-import { Invoice } from '@entities/invoice.entity';
+import type { CashAccount } from '@entities/cash-account.entity';
+import type { Party } from '@entities/party.entity';
+import type { Invoice } from '@entities/invoice.entity';
 
 export enum CashEntryType {
   IN = 'in',
@@ -11,7 +11,7 @@ export enum CashEntryType {
 
 @Entity('cash_entries')
 export class CashEntry extends BaseEntity {
-  @ManyToOne(() => CashAccount, { onDelete: 'CASCADE' })
+  @ManyToOne('CashAccount', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
   account!: CashAccount;
 
@@ -31,14 +31,14 @@ export class CashEntry extends BaseEntity {
   @Column({ type: 'varchar', length: 240, nullable: true })
   description!: string | null;
 
-  @ManyToOne(() => Party, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Party', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'party_id' })
   party!: Party | null;
 
   @Column({ name: 'party_id', type: 'uuid', nullable: true })
   partyId!: string | null;
 
-  @ManyToOne(() => Invoice, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Invoice', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'invoice_id' })
   invoice!: Invoice | null;
 

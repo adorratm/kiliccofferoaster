@@ -7,8 +7,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Category } from '@entities/category.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { Category } from '@entities/category.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 import { numericTransformer } from '@common/utils/numeric';
 
 @Entity('products')
@@ -131,7 +131,7 @@ export class Product extends BaseEntity {
   @Column({ name: 'rating_count', type: 'int', default: 0 })
   ratingCount!: number;
 
-  @ManyToOne(() => Category, (category) => category.products, {
+  @ManyToOne('Category', 'products', {
     nullable: true,
     onDelete: 'SET NULL',
   })
@@ -141,6 +141,6 @@ export class Product extends BaseEntity {
   @Column({ name: 'category_id', type: 'uuid', nullable: true })
   categoryId!: string | null;
 
-  @OneToMany(() => ProductVariant, (variant) => variant.product)
+  @OneToMany('ProductVariant', 'product')
   variants!: ProductVariant[];
 }

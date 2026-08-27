@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { Product } from '@entities/product.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 import { numericTransformer } from '@common/utils/numeric';
 
 export enum StockMovementType {
@@ -16,14 +16,14 @@ export enum StockMovementType {
 
 @Entity('stock_movements')
 export class StockMovement extends BaseEntity {
-  @ManyToOne(() => Product, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Product', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'product_id' })
   product!: Product | null;
 
   @Column({ name: 'product_id', type: 'uuid', nullable: true })
   productId!: string | null;
 
-  @ManyToOne(() => ProductVariant, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('ProductVariant', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'variant_id' })
   variant!: ProductVariant | null;
 

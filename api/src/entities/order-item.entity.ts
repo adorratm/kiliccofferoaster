@@ -1,26 +1,26 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Order } from '@entities/order.entity';
-import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { Order } from '@entities/order.entity';
+import type { Product } from '@entities/product.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 
 @Entity('order_items')
 export class OrderItem extends BaseEntity {
-  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
+  @ManyToOne('Order', 'items', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;
 
   @Column({ name: 'order_id', type: 'uuid' })
   orderId!: string;
 
-  @ManyToOne(() => Product, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Product', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'product_id' })
   product!: Product | null;
 
   @Column({ name: 'product_id', type: 'uuid', nullable: true })
   productId!: string | null;
 
-  @ManyToOne(() => ProductVariant, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('ProductVariant', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'variant_id' })
   variant!: ProductVariant | null;
 

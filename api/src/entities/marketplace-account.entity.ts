@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { MarketplaceListing } from '@entities/marketplace-listing.entity';
-import { MarketplaceOrder } from '@entities/marketplace-order.entity';
+import type { MarketplaceListing } from '@entities/marketplace-listing.entity';
+import type { MarketplaceOrder } from '@entities/marketplace-order.entity';
 
 export enum MarketplacePlatform {
   TRENDYOL = 'trendyol',
@@ -29,9 +29,9 @@ export class MarketplaceAccount extends BaseEntity {
   @Column({ name: 'last_sync_status', type: 'varchar', length: 40, nullable: true })
   lastSyncStatus!: string | null;
 
-  @OneToMany(() => MarketplaceListing, (listing) => listing.account)
+  @OneToMany('MarketplaceListing', 'account')
   listings!: MarketplaceListing[];
 
-  @OneToMany(() => MarketplaceOrder, (order) => order.account)
+  @OneToMany('MarketplaceOrder', 'account')
   marketplaceOrders!: MarketplaceOrder[];
 }

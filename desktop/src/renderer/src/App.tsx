@@ -23,11 +23,20 @@ import { NewsletterPage } from './pages/Newsletter';
 import { CustomersPage } from './pages/Customers';
 import { NotificationsPage } from './pages/Notifications';
 import { StaffRequestsPage } from './pages/StaffRequests';
+import { UsersPage } from './pages/Users';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = getUser();
   if (!getToken() || !user || !isOpsRole(user.role)) {
     return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const user = getUser();
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 }
@@ -55,8 +64,30 @@ export default function App() {
                 <Route path="/siparisler" element={<OrdersPage />} />
                 <Route path="/siparisler/:id" element={<OrdersPage />} />
                 <Route path="/musteriler" element={<CustomersPage />} />
-                <Route path="/personel-talepleri" element={<StaffRequestsPage />} />
-                <Route path="/personel-onaylari" element={<StaffRequestsPage />} />
+                <Route
+                  path="/kullanicilar"
+                  element={
+                    <RequireAdmin>
+                      <UsersPage />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="/personel-talepleri"
+                  element={
+                    <RequireAdmin>
+                      <StaffRequestsPage />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="/personel-onaylari"
+                  element={
+                    <RequireAdmin>
+                      <StaffRequestsPage />
+                    </RequireAdmin>
+                  }
+                />
                 <Route path="/bildirimler" element={<NotificationsPage />} />
                 <Route path="/iadeler" element={<ReturnsPage />} />
                 <Route path="/kuponlar" element={<CouponsPage />} />

@@ -25,10 +25,13 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TYPE "parties_type_enum" AS ENUM ('customer', 'supplier')
+      DO $$ BEGIN
+        CREATE TYPE "parties_type_enum" AS ENUM ('customer', 'supplier');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TABLE "parties" (
+      CREATE TABLE IF NOT EXISTS "parties" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -50,22 +53,31 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_parties_tax_number" ON "parties" ("tax_number")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_parties_tax_number" ON "parties" ("tax_number")`,
     );
 
     await queryRunner.query(`
-      CREATE TYPE "invoices_direction_enum" AS ENUM ('sales', 'purchase')
+      DO $$ BEGIN
+        CREATE TYPE "invoices_direction_enum" AS ENUM ('sales', 'purchase');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TYPE "invoices_status_enum" AS ENUM (
-        'draft', 'queued', 'sent', 'accepted', 'rejected', 'cancelled'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "invoices_status_enum" AS ENUM (
+          'draft', 'queued', 'sent', 'accepted', 'rejected', 'cancelled'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TYPE "invoices_edocument_type_enum" AS ENUM ('earchive', 'einvoice', 'none')
+      DO $$ BEGIN
+        CREATE TYPE "invoices_edocument_type_enum" AS ENUM ('earchive', 'einvoice', 'none');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TABLE "invoices" (
+      CREATE TABLE IF NOT EXISTS "invoices" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -98,7 +110,7 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "invoice_lines" (
+      CREATE TABLE IF NOT EXISTS "invoice_lines" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -122,10 +134,13 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TYPE "cash_accounts_kind_enum" AS ENUM ('cash', 'bank', 'paytr', 'pos')
+      DO $$ BEGIN
+        CREATE TYPE "cash_accounts_kind_enum" AS ENUM ('cash', 'bank', 'paytr', 'pos');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TABLE "cash_accounts" (
+      CREATE TABLE IF NOT EXISTS "cash_accounts" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -140,10 +155,13 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TYPE "cash_entries_type_enum" AS ENUM ('in', 'out')
+      DO $$ BEGIN
+        CREATE TYPE "cash_entries_type_enum" AS ENUM ('in', 'out');
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TABLE "cash_entries" (
+      CREATE TABLE IF NOT EXISTS "cash_entries" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -164,16 +182,19 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_cash_entries_date" ON "cash_entries" ("entry_date")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_cash_entries_date" ON "cash_entries" ("entry_date")`,
     );
 
     await queryRunner.query(`
-      CREATE TYPE "stock_movements_type_enum" AS ENUM (
-        'in', 'out', 'count', 'sale', 'return', 'purchase'
-      )
+      DO $$ BEGIN
+        CREATE TYPE "stock_movements_type_enum" AS ENUM (
+          'in', 'out', 'count', 'sale', 'return', 'purchase'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL;
+      END $$
     `);
     await queryRunner.query(`
-      CREATE TABLE "stock_movements" (
+      CREATE TABLE IF NOT EXISTS "stock_movements" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -192,11 +213,11 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_stock_movements_source" ON "stock_movements" ("source_id")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_stock_movements_source" ON "stock_movements" ("source_id")`,
     );
 
     await queryRunner.query(`
-      CREATE TABLE "okc_sales" (
+      CREATE TABLE IF NOT EXISTS "okc_sales" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -219,7 +240,7 @@ export class AccountingAndCatalog1782000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE TABLE "accounting_settings" (
+      CREATE TABLE IF NOT EXISTS "accounting_settings" (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),

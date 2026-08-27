@@ -7,7 +7,7 @@ API açılışında `migrationsRun` otomatik açıktır (`DATABASE_SYNCHRONIZE=f
 `kiliccoffee-prod-api` ayağa kalkarken uygulanır — ekstra manuel adım gerekmez.
 
 Migration sınıfları `api/src/database/migrations/index.ts` içinde listelenir
-(Nest webpack build glob dosyalarını dist'e kopyalamadığı için).
+(Nest rspack build glob dosyalarını dist'e kopyalamadığı için).
 
 Kapatmak için: `DATABASE_MIGRATIONS_RUN=false`
 

@@ -1,12 +1,17 @@
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
+  Max,
+  Min,
   MinLength,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class RegisterDto {
   @ApiProperty({ example: 'ornek@email.com' })
@@ -129,7 +134,91 @@ export class CreateOpsUserDto {
   @MaxLength(120)
   lastName?: string;
 
-  @ApiProperty({ enum: ['staff', 'accountant'] })
-  @IsIn(['staff', 'accountant'])
-  role!: 'staff' | 'accountant';
+  @ApiProperty({ enum: ['staff', 'accountant', 'admin'] })
+  @IsIn(['staff', 'accountant', 'admin'])
+  role!: 'staff' | 'accountant' | 'admin';
+}
+
+export class ListUsersQueryDto {
+  @ApiPropertyOptional({
+    enum: ['customer', 'staff', 'accountant', 'admin', 'ops'],
+  })
+  @IsOptional()
+  @IsIn(['customer', 'staff', 'accountant', 'admin', 'ops'])
+  role?: 'customer' | 'staff' | 'accountant' | 'admin' | 'ops';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  q?: string;
+
+  @ApiPropertyOptional({ enum: ['true', 'false'] })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  active?: 'true' | 'false';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+}
+
+export class UpdateManagedUserDto {
+  @ApiPropertyOptional({
+    enum: ['customer', 'staff', 'accountant', 'admin'],
+  })
+  @IsOptional()
+  @IsIn(['customer', 'staff', 'accountant', 'admin'])
+  role?: 'customer' | 'staff' | 'accountant' | 'admin';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class CreateAllowlistDto {
+  @ApiProperty()
+  @IsEmail()
+  email!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  note?: string;
+
+  @ApiPropertyOptional({
+    description: 'true ise mevcut kullanıcıyı admin yapar',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  promoteUser?: boolean;
+}
+
+export class UpdateAllowlistDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  active?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  note?: string;
 }

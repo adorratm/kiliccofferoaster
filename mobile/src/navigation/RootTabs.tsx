@@ -49,6 +49,17 @@ import { PartiesScreen } from '../screens/PartiesScreen';
 import { ProductEditScreen, ProductsScreen } from '../screens/ProductsScreen';
 import { ReportsScreen } from '../screens/ReportsScreen';
 import { SearchScreen } from '../screens/SearchScreen';
+import { StockScreen } from '../screens/StockScreen';
+import { OkcScreen } from '../screens/OkcScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { StaffRequestsScreen } from '../screens/StaffRequestsScreen';
+import { UsersScreen } from '../screens/UsersScreen';
+import { MarketplaceScreen } from '../screens/MarketplaceScreen';
+import { LegalAdminScreen } from '../screens/LegalAdminScreen';
+import { BlogAdminScreen } from '../screens/BlogAdminScreen';
+import { GalleryAdminScreen } from '../screens/GalleryAdminScreen';
+import { SiteSettingsScreen } from '../screens/SiteSettingsScreen';
+import { MediaAdminScreen } from '../screens/MediaAdminScreen';
 import {
   CampaignsScreen,
   CategoriesScreen,
@@ -269,6 +280,8 @@ function StaffStackNavigator() {
       <StaffStack.Screen name="Parties" component={PartiesScreen} options={{ title: 'Cari' }} />
       <StaffStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Faturalar' }} />
       <StaffStack.Screen name="Cash" component={CashScreen} options={{ title: 'Kasa' }} />
+      <StaffStack.Screen name="Stock" component={StockScreen} options={{ title: 'Stok' }} />
+      <StaffStack.Screen name="Okc" component={OkcScreen} options={{ title: 'ÖKC' }} />
       <StaffStack.Screen name="Reports" component={ReportsScreen} options={{ title: 'Raporlar' }} />
       <StaffStack.Screen name="Products" component={ProductsScreen} options={{ title: 'Ürünler' }} />
       <StaffStack.Screen name="ProductEdit" component={ProductEditScreen} options={{ title: 'Ürün' }} />
@@ -287,11 +300,24 @@ function StaffStackNavigator() {
       <StaffStack.Screen name="Shipping" component={ShippingScreen} options={{ title: 'Kargo' }} />
       <StaffStack.Screen name="Messages" component={MessagesScreen} options={{ title: 'Mesajlar' }} />
       <StaffStack.Screen name="Newsletter" component={NewsletterScreen} options={{ title: 'Bülten' }} />
+      <StaffStack.Screen name="Marketplace" component={MarketplaceScreen} options={{ title: 'Pazaryeri' }} />
+      <StaffStack.Screen name="LegalAdmin" component={LegalAdminScreen} options={{ title: 'Sözleşmeler' }} />
+      <StaffStack.Screen name="BlogAdmin" component={BlogAdminScreen} options={{ title: 'Blog' }} />
+      <StaffStack.Screen name="GalleryAdmin" component={GalleryAdminScreen} options={{ title: 'Galeri' }} />
+      <StaffStack.Screen name="MediaAdmin" component={MediaAdminScreen} options={{ title: 'Medya' }} />
+      <StaffStack.Screen name="SiteSettings" component={SiteSettingsScreen} options={{ title: 'Site ayarları' }} />
       <StaffStack.Screen name="Search" component={SearchScreen} options={{ title: 'Ara' }} />
       <StaffStack.Screen
         name="Notifications"
         component={NotificationsScreen}
         options={{ title: 'Bildirimler' }}
+      />
+      <StaffStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ayarlar' }} />
+      <StaffStack.Screen name="Users" component={UsersScreen} options={{ title: 'Kullanıcılar' }} />
+      <StaffStack.Screen
+        name="StaffRequests"
+        component={StaffRequestsScreen}
+        options={{ title: 'Personel onayları' }}
       />
     </StaffStack.Navigator>
   );

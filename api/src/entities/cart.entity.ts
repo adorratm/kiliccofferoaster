@@ -1,11 +1,11 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
-import { CartItem } from '@entities/cart-item.entity';
+import type { User } from '@entities/user.entity';
+import type { CartItem } from '@entities/cart-item.entity';
 
 @Entity('carts')
 export class Cart extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.carts, {
+  @ManyToOne('User', 'carts', {
     nullable: true,
     onDelete: 'CASCADE',
   })
@@ -35,6 +35,6 @@ export class Cart extends BaseEntity {
   guestEmail!: string | null;
 
   /** cascade verme: boş items ile save kalemleri silebilir */
-  @OneToMany(() => CartItem, (item) => item.cart)
+  @OneToMany('CartItem', 'cart')
   items!: CartItem[];
 }

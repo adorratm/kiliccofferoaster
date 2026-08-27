@@ -9,7 +9,7 @@ flowchart TD
     google[Google_Facebook_Apple] --> jwt
   end
   subgraph adminPanel [Admin]
-    gAdmin[Google_admin] --> allow[ADMIN_ALLOWLIST]
+    gAdmin[Google_admin] --> allow[admin_allowlist_DB]
     allow --> jwtAdmin[JWT_role_admin]
   end
   subgraph personel [Personel]
@@ -44,13 +44,12 @@ Vitrin: `/sifremi-unuttum`, `/sifre-sifirla?token=`. Google-only: Hesabım → *
 
 ## Admin
 
-- Yalnızca Google OAuth: `GET /auth/google/admin`
-- Callback: `GOOGLE_ADMIN_CALLBACK_URL`
-- Kullanıcı e-postası şu kaynaklarda olmalıdır:
-  - `ADMIN_ALLOWLIST` env
-  - veya `admin_allowlist` tablosu (seed: `ADMIN_ALLOWLIST` doluysa eklenir)
-- Başarılı girişte `role = admin`
-- Allowlist dışı: `/login?error=...`
+- Google OAuth: `GET /auth/google/admin` (veya ops e-posta + admin rolü)
+- Yetki kaynağı: `admin_allowlist` tablosu + `users.role = admin` (Kullanıcılar ekranı)
+- `ADMIN_ALLOWLIST` env auth’ta **kullanılmaz**; yalnızca isteğe bağlı seed bootstrap
+- Yeni admin: Kullanıcılar → hesap oluştur / allowlist’e e-posta ekle
+- Allowlist dışı Google admin girişi reddedilir
+- Başarılı allowlist girişinde `role = admin`
 
 ## Personel (desktop / mobil StaffTab)
 

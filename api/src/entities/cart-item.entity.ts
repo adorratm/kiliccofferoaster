@@ -1,26 +1,26 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Cart } from '@entities/cart.entity';
-import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { Cart } from '@entities/cart.entity';
+import type { Product } from '@entities/product.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 
 @Entity('cart_items')
 export class CartItem extends BaseEntity {
-  @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
+  @ManyToOne('Cart', 'items', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'cart_id' })
   cart!: Cart;
 
   @Column({ name: 'cart_id', type: 'uuid' })
   cartId!: string;
 
-  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @ManyToOne('Product', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product!: Product;
 
   @Column({ name: 'product_id', type: 'uuid' })
   productId!: string;
 
-  @ManyToOne(() => ProductVariant, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('ProductVariant', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'variant_id' })
   variant!: ProductVariant | null;
 

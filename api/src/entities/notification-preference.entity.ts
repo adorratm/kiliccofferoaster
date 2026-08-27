@@ -1,10 +1,10 @@
 import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
+import type { User } from '@entities/user.entity';
 
 @Entity('notification_preferences')
 export class NotificationPreference extends BaseEntity {
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @OneToOne('User', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

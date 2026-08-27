@@ -144,14 +144,13 @@ export class LowStockService {
   }
 
   private async resolveRecipients(): Promise<string[]> {
-    const envList = this.config.get<string[]>('adminAllowlist') || [];
     const extra = this.config.get<string[]>('lowStock.alertEmails') || [];
     const rows = await this.em.find(AdminAllowlist, {
       where: { active: true },
     });
     return [
       ...new Set(
-        [...envList, ...extra, ...rows.map((r) => r.email)]
+        [...extra, ...rows.map((r) => r.email)]
           .map((e) => e.toLowerCase().trim())
           .filter(Boolean),
       ),

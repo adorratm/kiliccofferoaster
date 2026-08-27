@@ -1,11 +1,11 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Product } from '@entities/product.entity';
+import type { Product } from '@entities/product.entity';
 import { numericTransformer } from '@common/utils/numeric';
 
 @Entity('product_variants')
 export class ProductVariant extends BaseEntity {
-  @ManyToOne(() => Product, (product) => product.variants, {
+  @ManyToOne('Product', 'variants', {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'product_id' })

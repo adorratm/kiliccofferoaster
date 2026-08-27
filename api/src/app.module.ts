@@ -37,24 +37,22 @@ import { AccountingModule } from '@modules/accounting/accounting.module';
 import { EinvoiceModule } from '@modules/einvoice/einvoice.module';
 import { GalleryModule } from '@modules/gallery/gallery.module';
 
-const shouldSynchronize =
-  process.env.DATABASE_SYNCHRONIZE === 'true'
-    ? true
-    : process.env.DATABASE_SYNCHRONIZE === 'false'
-      ? false
-      : process.env.NODE_ENV !== 'production';
+function shouldSynchronize(): boolean {
+  if (process.env.DATABASE_SYNCHRONIZE === 'true') return true;
+  if (process.env.DATABASE_SYNCHRONIZE === 'false') return false;
+  return process.env.NODE_ENV !== 'production';
+}
 
 /**
  * Production deploy: migration'lar `node dist/migrate.js` (one-shot) ile çalışır.
  * API boot'ta varsayılan kapalı — başarısız migration canlıyı düşürmesin.
  * Yerel/acil: DATABASE_MIGRATIONS_RUN=true
  */
-const shouldRunMigrations =
-  process.env.DATABASE_MIGRATIONS_RUN === 'true'
-    ? true
-    : process.env.DATABASE_MIGRATIONS_RUN === 'false'
-      ? false
-      : process.env.NODE_ENV !== 'production' && !shouldSynchronize;
+function shouldRunMigrations(synchronize: boolean): boolean {
+  if (process.env.DATABASE_MIGRATIONS_RUN === 'true') return true;
+  if (process.env.DATABASE_MIGRATIONS_RUN === 'false') return false;
+  return process.env.NODE_ENV !== 'production' && !synchronize;
+}
 
 @Module({
   imports: [
@@ -75,21 +73,24 @@ const shouldRunMigrations =
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres' as const,
-        driver: pg,
-        host: config.get<string>('database.host'),
-        port: config.get<number>('database.port'),
-        username: config.get<string>('database.username'),
-        password: config.get<string>('database.password'),
-        database: config.get<string>('database.name'),
-        entities: ALL_ENTITIES,
-        migrations: ALL_MIGRATIONS,
-        migrationsRun: shouldRunMigrations,
-        migrationsTransactionMode: 'each' as const,
-        synchronize: shouldSynchronize,
-        logging: process.env.TYPEORM_LOGGING === 'true',
-      }),
+      useFactory: (config: ConfigService) => {
+        const synchronize = shouldSynchronize();
+        return {
+          type: 'postgres' as const,
+          driver: pg,
+          host: config.get<string>('database.host'),
+          port: config.get<number>('database.port'),
+          username: config.get<string>('database.username'),
+          password: config.get<string>('database.password'),
+          database: config.get<string>('database.name'),
+          entities: ALL_ENTITIES,
+          migrations: ALL_MIGRATIONS,
+          migrationsRun: shouldRunMigrations(synchronize),
+          migrationsTransactionMode: 'each' as const,
+          synchronize,
+          logging: process.env.TYPEORM_LOGGING === 'true',
+        };
+      },
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],

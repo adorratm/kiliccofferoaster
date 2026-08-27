@@ -36,6 +36,8 @@ async function seed() {
     .trim()
     .toLowerCase();
 
+  // İsteğe bağlı bootstrap: env doluysa ilk admin satırını DB’ye yazar.
+  // Günlük yetki yönetimi Kullanıcılar / admin_allowlist üzerinden yapılır.
   if (adminEmail) {
     let allow = await em.findOne(AdminAllowlist, {
       where: { email: adminEmail },
@@ -44,13 +46,15 @@ async function seed() {
       allow = em.create(AdminAllowlist, {
         email: adminEmail,
         active: true,
-        note: 'Seed admin',
+        note: 'Seed bootstrap (ADMIN_ALLOWLIST)',
       });
       await em.save(allow);
-      console.log('Admin allowlist:', adminEmail);
+      console.log('Admin allowlist (seed bootstrap):', adminEmail);
     }
   } else {
-    console.log('ADMIN_ALLOWLIST boş — admin allowlist seed atlandı');
+    console.log(
+      'ADMIN_ALLOWLIST boş — seed atlandı; admin’i Kullanıcılar ekranından ekleyin',
+    );
   }
 
   // Ön muhasebe kategorileri

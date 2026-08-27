@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { api, asArray } from '../lib/api';
+import { formatMoney } from '../lib/format';
+import { orderStatusLabel } from '../lib/order-status';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 import { Switch } from '../components/Switch';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -52,9 +54,42 @@ export function CategoriesScreen() {
   );
 }
 
+type OrderItem = {
+  id: string;
+  productName: string;
+  variantLabel?: string | null;
+  grindLabel?: string | null;
+  quantity: number;
+  unitPrice?: string | number;
+  lineTotal?: string | number;
+};
+
+type OrderDetail = Order & {
+  customerEmail?: string;
+  customerPhone?: string;
+  subtotal?: string | number;
+  shippingFee?: string | number;
+  discountAmount?: string | number;
+  shippingAddress?: Record<string, string>;
+  shippingProvider?: string | null;
+  notes?: string | null;
+  items?: OrderItem[];
+};
+
+const STAFF_ORDER_STATUSES = [
+  'pending_payment',
+  'paid',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'refunded',
+] as const;
+
 export function ShopOrdersScreen() {
   const [items, setItems] = useState<Order[]>([]);
-  const [selected, setSelected] = useState<Order | null>(null);
+  const [selected, setSelected] = useState<OrderDetail | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function load() {
     setItems(asArray<Order>(await api('/orders/admin/all?limit=40')));
@@ -62,15 +97,22 @@ export function ShopOrdersScreen() {
   useEffect(() => { void load(); }, []);
 
   async function open(id: string) {
-    setSelected(await api<Order>(`/orders/${id}`));
+    setSelected(await api<OrderDetail>(`/orders/${id}`));
   }
 
   async function setStatus(status: string) {
-    if (!selected) return;
-    await api(`/orders/${selected.id}/status`, { method: 'PATCH', body: { status } });
-    await open(selected.id);
-    await load();
+    if (!selected || saving) return;
+    setSaving(true);
+    try {
+      await api(`/orders/${selected.id}/status`, { method: 'PATCH', body: { status } });
+      await open(selected.id);
+      await load();
+    } finally {
+      setSaving(false);
+    }
   }
+
+  const address = selected?.shippingAddress;
 
   return (
     <ScrollView style={screen}>
@@ -79,17 +121,118 @@ export function ShopOrdersScreen() {
         <Pressable key={o.id} onPress={() => void open(o.id)} style={card}>
           <Text style={{ color: colors.accentSoft }}>{o.orderNumber}</Text>
           <Text style={{ color: colors.text }}>{o.customerName}</Text>
-          <Text style={muted}>{o.status} · {o.total} ₺</Text>
+          <Text style={muted}>
+            {orderStatusLabel(o.status)} · {formatMoney(o.total)}
+          </Text>
         </Pressable>
       ))}
       {selected ? (
-        <View style={card}>
-          <Text style={{ color: colors.text }}>{selected.orderNumber}</Text>
-          {['paid', 'processing', 'shipped', 'delivered', 'cancelled'].map((s) => (
-            <Pressable key={s} onPress={() => void setStatus(s)} style={{ marginTop: 8 }}>
-              <Text style={{ color: selected.status === s ? colors.accent : colors.muted }}>{s}</Text>
-            </Pressable>
+        <View style={[card, { marginTop: 8 }]}>
+          <Text style={{ color: colors.accentSoft, fontSize: 12, letterSpacing: 1 }}>
+            SİPARİŞ DETAYI
+          </Text>
+          <Text style={{ color: colors.text, fontSize: 18, marginTop: 6 }}>
+            {selected.orderNumber}
+          </Text>
+          <Text style={{ color: colors.text, marginTop: 4 }}>{selected.customerName}</Text>
+          {selected.customerPhone ? (
+            <Text style={muted}>{selected.customerPhone}</Text>
+          ) : null}
+          {selected.customerEmail ? (
+            <Text style={muted}>{selected.customerEmail}</Text>
+          ) : null}
+
+          <Text style={{ color: colors.accentSoft, marginTop: 14, fontSize: 11, letterSpacing: 1 }}>
+            ÜRÜNLER
+          </Text>
+          {(selected.items || []).map((item) => (
+            <View
+              key={item.id}
+              style={{
+                marginTop: 8,
+                borderWidth: 1,
+                borderColor: colors.borderMuted,
+                padding: 10,
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
+              <Text style={muted}>
+                {[item.variantLabel, item.grindLabel].filter(Boolean).join(' · ')}
+                {item.quantity ? ` · ${item.quantity} adet` : ''}
+              </Text>
+              <Text style={{ color: colors.accentSoft, marginTop: 4 }}>
+                {formatMoney(item.lineTotal || item.unitPrice)}
+              </Text>
+            </View>
           ))}
+
+          {address ? (
+            <View style={{ marginTop: 14 }}>
+              <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 1 }}>
+                TESLİMAT
+              </Text>
+              <Text style={[muted, { marginTop: 6, lineHeight: 20 }]}>
+                {[
+                  address.fullName,
+                  address.addressLine || address.line1,
+                  [address.district, address.city].filter(Boolean).join(' / '),
+                  address.phone,
+                ]
+                  .filter(Boolean)
+                  .join('\n')}
+              </Text>
+              {selected.shippingProvider ? (
+                <Text style={[muted, { marginTop: 4 }]}>
+                  Kargo: {selected.shippingProvider}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={{ marginTop: 14, gap: 4 }}>
+            <Text style={muted}>Ara toplam · {formatMoney(selected.subtotal)}</Text>
+            <Text style={muted}>Kargo · {formatMoney(selected.shippingFee)}</Text>
+            {Number(selected.discountAmount) ? (
+              <Text style={muted}>İndirim · −{formatMoney(selected.discountAmount)}</Text>
+            ) : null}
+            <Text style={{ color: colors.text, fontWeight: '600', marginTop: 4 }}>
+              Toplam · {formatMoney(selected.total)}
+            </Text>
+          </View>
+
+          <Text style={{ color: colors.accentSoft, marginTop: 16, fontSize: 11, letterSpacing: 1 }}>
+            DURUM GÜNCELLE
+          </Text>
+          <Text style={[muted, { marginTop: 4, marginBottom: 8 }]}>
+            Şu an: {orderStatusLabel(selected.status)}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {STAFF_ORDER_STATUSES.map((s) => {
+              const active = selected.status === s;
+              return (
+                <Pressable
+                  key={s}
+                  disabled={saving || active}
+                  onPress={() => void setStatus(s)}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: active ? colors.accent : colors.borderMuted,
+                    backgroundColor: active ? '#2a1a16' : 'transparent',
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                    opacity: saving ? 0.6 : 1,
+                  }}
+                >
+                  <Text style={{ color: active ? colors.accentSoft : colors.text, fontSize: 12 }}>
+                    {orderStatusLabel(s)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Pressable onPress={() => setSelected(null)} style={{ marginTop: 12 }}>
+            <Text style={{ color: colors.muted, textAlign: 'center' }}>Detayı kapat</Text>
+          </Pressable>
         </View>
       ) : null}
     </ScrollView>

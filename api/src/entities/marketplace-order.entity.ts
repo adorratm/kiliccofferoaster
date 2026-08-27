@@ -1,11 +1,11 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { MarketplaceAccount } from '@entities/marketplace-account.entity';
-import { Order } from '@entities/order.entity';
+import type { MarketplaceAccount } from '@entities/marketplace-account.entity';
+import type { Order } from '@entities/order.entity';
 
 @Entity('marketplace_orders')
 export class MarketplaceOrder extends BaseEntity {
-  @ManyToOne(() => MarketplaceAccount, (account) => account.marketplaceOrders, {
+  @ManyToOne('MarketplaceAccount', 'marketplaceOrders', {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'account_id' })
@@ -24,7 +24,7 @@ export class MarketplaceOrder extends BaseEntity {
   @Column({ name: 'payload', type: 'jsonb', default: {} })
   payload!: Record<string, unknown>;
 
-  @ManyToOne(() => Order, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Order', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'internal_order_id' })
   internalOrder!: Order | null;
 

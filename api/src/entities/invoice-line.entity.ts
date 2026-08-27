@@ -1,12 +1,12 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Invoice } from '@entities/invoice.entity';
-import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
+import type { Invoice } from '@entities/invoice.entity';
+import type { Product } from '@entities/product.entity';
+import type { ProductVariant } from '@entities/product-variant.entity';
 
 @Entity('invoice_lines')
 export class InvoiceLine extends BaseEntity {
-  @ManyToOne(() => Invoice, (invoice) => invoice.lines, { onDelete: 'CASCADE' })
+  @ManyToOne('Invoice', 'lines', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invoice_id' })
   invoice!: Invoice;
 
@@ -19,14 +19,14 @@ export class InvoiceLine extends BaseEntity {
   @Column({ name: 'description', type: 'varchar', length: 300 })
   description!: string;
 
-  @ManyToOne(() => Product, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('Product', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'product_id' })
   product!: Product | null;
 
   @Column({ name: 'product_id', type: 'uuid', nullable: true })
   productId!: string | null;
 
-  @ManyToOne(() => ProductVariant, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne('ProductVariant', { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'variant_id' })
   variant!: ProductVariant | null;
 

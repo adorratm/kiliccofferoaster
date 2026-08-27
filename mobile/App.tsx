@@ -5,6 +5,7 @@ import {
 } from '@react-navigation/native';
 import type { LinkingOptions } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AccountingSyncRuntime } from './src/components/AccountingSyncRuntime';
 import { BootGate } from './src/components/BootGate';
@@ -107,18 +108,20 @@ const linking: LinkingOptions<RootTabParamList> = {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <BootGate>
-        <StaffSessionProvider>
-          <ShopCartProvider>
-            <AccountingSyncRuntime />
-            <NavigationContainer ref={navigationRef} theme={theme} linking={linking}>
-              <StatusBar style="light" />
-              <RootTabs />
-            </NavigationContainer>
-          </ShopCartProvider>
-        </StaffSessionProvider>
-      </BootGate>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <BootGate>
+          <StaffSessionProvider>
+            <ShopCartProvider>
+              <AccountingSyncRuntime />
+              <NavigationContainer ref={navigationRef} theme={theme} linking={linking}>
+                <StatusBar style="light" />
+                <RootTabs />
+              </NavigationContainer>
+            </ShopCartProvider>
+          </StaffSessionProvider>
+        </BootGate>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

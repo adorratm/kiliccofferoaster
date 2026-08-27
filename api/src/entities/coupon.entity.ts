@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { CouponRedemption } from '@entities/coupon-redemption.entity';
+import type { CouponRedemption } from '@entities/coupon-redemption.entity';
 
 export enum CouponType {
   PERCENT = 'percent',
@@ -43,6 +43,6 @@ export class Coupon extends BaseEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
-  @OneToMany(() => CouponRedemption, (r) => r.coupon)
+  @OneToMany('CouponRedemption', 'coupon')
   redemptions!: CouponRedemption[];
 }

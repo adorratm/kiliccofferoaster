@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { RootStack } from '../../App';
 import { EChart } from '../components/EChart';
@@ -13,14 +13,25 @@ import { useStaffSession } from '../lib/staff-session';
 import { btn, btnText, card, colors, muted } from '../ui';
 
 type Props = NativeStackScreenProps<RootStack, 'Home'>;
+type StaffLink = Exclude<
+  keyof RootStack,
+  'StaffLogin' | 'CustomerDetail' | 'ProductEdit'
+>;
 
-const GROUPS: { title: string; links: { label: string; to: Exclude<keyof RootStack, 'StaffLogin' | 'CustomerDetail' | 'ProductEdit'> }[] }[] = [
+type Group = {
+  title: string;
+  links: { label: string; to: StaffLink; adminOnly?: boolean }[];
+};
+
+const GROUPS: Group[] = [
   {
     title: 'Muhasebe',
     links: [
       { label: 'Cari', to: 'Parties' },
       { label: 'Faturalar', to: 'Invoices' },
       { label: 'Kasa', to: 'Cash' },
+      { label: 'Stok', to: 'Stock' },
+      { label: 'ÖKC', to: 'Okc' },
       { label: 'Raporlar', to: 'Reports' },
     ],
   },
@@ -38,11 +49,27 @@ const GROUPS: { title: string; links: { label: string; to: Exclude<keyof RootSta
       { label: 'Kargo', to: 'Shipping' },
       { label: 'Mesajlar', to: 'Messages' },
       { label: 'Bülten', to: 'Newsletter' },
+      { label: 'Pazaryeri', to: 'Marketplace', adminOnly: true },
+    ],
+  },
+  {
+    title: 'İçerik',
+    links: [
+      { label: 'Blog', to: 'BlogAdmin', adminOnly: true },
+      { label: 'Site galerisi', to: 'GalleryAdmin', adminOnly: true },
+      { label: 'Medya', to: 'MediaAdmin', adminOnly: true },
+      { label: 'Site ayarları', to: 'SiteSettings', adminOnly: true },
+      { label: 'Sözleşmeler', to: 'LegalAdmin', adminOnly: true },
     ],
   },
   {
     title: 'Sistem',
-    links: [{ label: 'Bildirimler', to: 'Notifications' }],
+    links: [
+      { label: 'Bildirimler', to: 'Notifications' },
+      { label: 'Ayarlar', to: 'Settings' },
+      { label: 'Kullanıcılar', to: 'Users', adminOnly: true },
+      { label: 'Personel onayları', to: 'StaffRequests', adminOnly: true },
+    ],
   },
 ];
 
@@ -50,6 +77,7 @@ export function HomeScreen({ navigation }: Props) {
   const { refreshStaff } = useStaffSession();
   const [pending, setPending] = useState(0);
   const [msg, setMsg] = useState('');
+  const [role, setRole] = useState<string | null>(null);
   const [stats, setStats] = useState<{
     ordersToday: number;
     revenueToday: number;
@@ -74,7 +102,9 @@ export function HomeScreen({ navigation }: Props) {
           await setToken(null);
           openShopTab(navigation);
           navigation.replace('StaffLogin');
+          return;
         }
+        setRole(me.role);
       } catch {
         navigation.replace('StaffLogin');
       }
@@ -84,6 +114,14 @@ export function HomeScreen({ navigation }: Props) {
       .then(setStats)
       .catch(() => undefined);
   }, [navigation]);
+
+  const groups = useMemo(() => {
+    const isAdmin = role === 'admin';
+    return GROUPS.map((g) => ({
+      ...g,
+      links: g.links.filter((l) => !l.adminOnly || isAdmin),
+    })).filter((g) => g.links.length > 0);
+  }, [role]);
 
   async function sync() {
     try {
@@ -143,7 +181,7 @@ export function HomeScreen({ navigation }: Props) {
           ) : null}
         </View>
       ) : null}
-      {GROUPS.map((g) => (
+      {groups.map((g) => (
         <View key={g.title}>
           <Text style={[muted, { marginTop: 20, letterSpacing: 2 }]}>{g.title.toUpperCase()}</Text>
           {g.links.map((l) => (

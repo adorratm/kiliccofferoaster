@@ -1,11 +1,11 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Coupon } from '@entities/coupon.entity';
-import { Order } from '@entities/order.entity';
+import type { Coupon } from '@entities/coupon.entity';
+import type { Order } from '@entities/order.entity';
 
 @Entity('coupon_redemptions')
 export class CouponRedemption extends BaseEntity {
-  @ManyToOne(() => Coupon, (c) => c.redemptions, { onDelete: 'CASCADE' })
+  @ManyToOne('Coupon', 'redemptions', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'coupon_id' })
   coupon!: Coupon;
 
@@ -13,7 +13,7 @@ export class CouponRedemption extends BaseEntity {
   @Column({ name: 'coupon_id', type: 'uuid' })
   couponId!: string;
 
-  @ManyToOne(() => Order, { onDelete: 'CASCADE' })
+  @ManyToOne('Order', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;
 

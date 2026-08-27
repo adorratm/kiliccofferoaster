@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { AuthProvider, User } from '@entities/user.entity';
+import { AuthProvider, type User } from '@entities/user.entity';
 
 /**
  * Bir kullanıcının birden fazla giriş kimliği (Google, Apple, …).
@@ -13,7 +13,7 @@ export class UserIdentity extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
 
-  @ManyToOne(() => User, (user) => user.identities, { onDelete: 'CASCADE' })
+  @ManyToOne('User', 'identities', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

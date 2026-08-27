@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Order } from '@entities/order.entity';
+import type { Order } from '@entities/order.entity';
 
 export enum PaymentStatus {
   PENDING = 'pending',
@@ -11,7 +11,7 @@ export enum PaymentStatus {
 
 @Entity('payments')
 export class Payment extends BaseEntity {
-  @OneToOne(() => Order, (order) => order.payment, { onDelete: 'CASCADE' })
+  @OneToOne('Order', 'payment', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;
 

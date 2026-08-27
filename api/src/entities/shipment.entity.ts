@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Order } from '@entities/order.entity';
+import type { Order } from '@entities/order.entity';
 
 export enum ShipmentStatus {
   PENDING = 'pending',
@@ -23,7 +23,7 @@ export enum ShippingProviderCode {
 
 @Entity('shipments')
 export class Shipment extends BaseEntity {
-  @ManyToOne(() => Order, (order) => order.shipments, { onDelete: 'CASCADE' })
+  @ManyToOne('Order', 'shipments', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order!: Order;
 

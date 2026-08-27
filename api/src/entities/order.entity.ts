@@ -8,10 +8,10 @@ import {
   OneToOne,
 } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
-import { OrderItem } from '@entities/order-item.entity';
-import { Payment } from '@entities/payment.entity';
-import { Shipment } from '@entities/shipment.entity';
+import type { User } from '@entities/user.entity';
+import type { OrderItem } from '@entities/order-item.entity';
+import type { Payment } from '@entities/payment.entity';
+import type { Shipment } from '@entities/shipment.entity';
 
 export enum OrderStatus {
   PENDING_PAYMENT = 'pending_payment',
@@ -29,7 +29,7 @@ export class Order extends BaseEntity {
   @Column({ name: 'order_number', type: 'varchar', length: 40 })
   orderNumber!: string;
 
-  @ManyToOne(() => User, (user) => user.orders, {
+  @ManyToOne('User', 'orders', {
     nullable: true,
     onDelete: 'SET NULL',
   })
@@ -106,12 +106,12 @@ export class Order extends BaseEntity {
   @Column({ name: 'delivered_at', type: 'timestamptz', nullable: true })
   deliveredAt!: Date | null;
 
-  @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
+  @OneToMany('OrderItem', 'order', { cascade: true })
   items!: OrderItem[];
 
-  @OneToOne(() => Payment, (payment) => payment.order)
+  @OneToOne('Payment', 'order')
   payment!: Payment | null;
 
-  @OneToMany(() => Shipment, (shipment) => shipment.order)
+  @OneToMany('Shipment', 'order')
   shipments!: Shipment[];
 }

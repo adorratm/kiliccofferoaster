@@ -20,7 +20,7 @@ import { LocalSeoWhatsappBlogProducts1791000000000 } from './1791000000000-Local
 import { TurkishCoffeeBlogPosts1792000000000 } from './1792000000000-TurkishCoffeeBlogPosts';
 
 /**
- * Webpack Nest build migration glob'larını dist'e kopyalamaz.
+ * Nest rspack build migration glob'larını dist'e kopyalamaz.
  * Sınıfları açıkça bağlayarak bundle'a dahil ederiz (prod migrationsRun için zorunlu).
  */
 export const ALL_MIGRATIONS = [

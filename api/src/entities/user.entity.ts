@@ -1,8 +1,8 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { Address } from '@entities/address.entity';
-import { Order } from '@entities/order.entity';
-import { Cart } from '@entities/cart.entity';
+import type { Address } from '@entities/address.entity';
+import type { Order } from '@entities/order.entity';
+import type { Cart } from '@entities/cart.entity';
 import type { UserIdentity } from '@entities/user-identity.entity';
 
 export enum AuthProvider {
@@ -97,13 +97,13 @@ export class User extends BaseEntity {
   })
   opsAccessRequestedAt!: Date | null;
 
-  @OneToMany(() => Address, (address) => address.user)
+  @OneToMany('Address', 'user')
   addresses!: Address[];
 
-  @OneToMany(() => Order, (order) => order.user)
+  @OneToMany('Order', 'user')
   orders!: Order[];
 
-  @OneToMany(() => Cart, (cart) => cart.user)
+  @OneToMany('Cart', 'user')
   carts!: Cart[];
 
   @OneToMany('UserIdentity', 'user')

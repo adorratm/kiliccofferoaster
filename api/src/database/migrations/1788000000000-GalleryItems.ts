@@ -5,7 +5,7 @@ export class GalleryItems1788000000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "gallery_items" (
+      CREATE TABLE IF NOT EXISTS "gallery_items" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -24,13 +24,13 @@ export class GalleryItems1788000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
-      CREATE UNIQUE INDEX "IDX_gallery_items_instagram_id"
+      CREATE UNIQUE INDEX IF NOT EXISTS "IDX_gallery_items_instagram_id"
       ON "gallery_items" ("instagram_id")
       WHERE "instagram_id" IS NOT NULL
     `);
 
     await queryRunner.query(`
-      CREATE INDEX "IDX_gallery_items_source_visible"
+      CREATE INDEX IF NOT EXISTS "IDX_gallery_items_source_visible"
       ON "gallery_items" ("source", "is_visible", "sort_order")
     `);
 

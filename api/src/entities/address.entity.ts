@@ -1,10 +1,10 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '@entities/base.entity';
-import { User } from '@entities/user.entity';
+import type { User } from '@entities/user.entity';
 
 @Entity('addresses')
 export class Address extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
+  @ManyToOne('User', 'addresses', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
