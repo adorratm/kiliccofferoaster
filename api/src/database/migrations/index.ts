@@ -18,6 +18,7 @@ import { GalleryUrlText1789000000000 } from './1789000000000-GalleryUrlText';
 import { ProductGrindAvailability1790000000000 } from './1790000000000-ProductGrindAvailability';
 import { LocalSeoWhatsappBlogProducts1791000000000 } from './1791000000000-LocalSeoWhatsappBlogProducts';
 import { TurkishCoffeeBlogPosts1792000000000 } from './1792000000000-TurkishCoffeeBlogPosts';
+import { MarketplaceTrendyolGoMarket1793000000000 } from './1793000000000-MarketplaceTrendyolGoMarket';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -44,4 +45,5 @@ export const ALL_MIGRATIONS = [
   ProductGrindAvailability1790000000000,
   LocalSeoWhatsappBlogProducts1791000000000,
   TurkishCoffeeBlogPosts1792000000000,
+  MarketplaceTrendyolGoMarket1793000000000,
 ];

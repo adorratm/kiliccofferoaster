@@ -32,6 +32,7 @@ const NAV: { title: string; items: NavItem[] }[] = [
       { to: '/kampanyalar', label: 'Kampanyalar', code: '13' },
       { to: '/yorumlar', label: 'Yorumlar', code: '14' },
       { to: '/kargo', label: 'Kargo', code: '15' },
+      { to: '/pazaryeri', label: 'Pazaryeri', code: '15a' },
       { to: '/mesajlar', label: 'Mesajlar', code: '16' },
       { to: '/bulten', label: 'Bülten', code: '17' },
     ],

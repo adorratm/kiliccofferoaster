@@ -9,6 +9,7 @@ import { StockPage } from './pages/Stock';
 import { CashPage } from './pages/Cash';
 import { OkcPage } from './pages/Okc';
 import { ReportsPage } from './pages/Reports';
+import { MarketplacePage } from './pages/Marketplace';
 import { SettingsPage } from './pages/Settings';
 import { ProductsPage } from './pages/Products';
 import { CategoriesPage } from './pages/Categories';
@@ -94,6 +95,7 @@ export default function App() {
                 <Route path="/kampanyalar" element={<CampaignsPage />} />
                 <Route path="/yorumlar" element={<ReviewsPage />} />
                 <Route path="/kargo" element={<ShippingPage />} />
+                <Route path="/pazaryeri" element={<MarketplacePage />} />
                 <Route path="/mesajlar" element={<MessagesPage />} />
                 <Route path="/bulten" element={<NewsletterPage />} />
                 <Route path="/ayarlar" element={<SettingsPage />} />

@@ -7,10 +7,12 @@ import { Checkbox } from '@/components/Checkbox';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import type { MarketplaceAccount, Product } from '@/lib/types';
 
-const PLATFORMS = ['trendyol', 'hepsiburada', 'n11'] as const;
+const PLATFORMS = ['trendyol', 'trendyol_go_market', 'hepsiburada', 'n11'] as const;
 const CREDENTIAL_HINTS: Record<string, string> = {
   trendyol:
     '{\n  "apiKey": "",\n  "apiSecret": "",\n  "sellerId": "",\n  "storeFrontCode": "TR",\n  "brandId": "",\n  "categoryId": ""\n}',
+  trendyol_go_market:
+    '{\n  "apiKey": "",\n  "apiSecret": "",\n  "sellerId": "",\n  "storeId": "",\n  "token": "",\n  "brandId": "",\n  "categoryId": "",\n  "integratorName": "KilicCoffeeRoaster",\n  "executorEmail": "integration@kiliccofferoaster.local",\n  "integrationReferenceCode": ""\n}',
   hepsiburada: '{\n  "merchantId": "",\n  "username": "",\n  "password": ""\n}',
   n11: '{\n  "appKey": "",\n  "appSecret": "",\n  "categoryId": "",\n  "shipmentTemplate": ""\n}',
 };
@@ -401,7 +403,7 @@ export default function MarketplacePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Trendyol · Hepsiburada · N11 — gerçek HTTP (credentials yoksa mock)
+          Trendyol · Trendyol Go Market · Hepsiburada · N11 — gerçek HTTP (credentials yoksa mock)
         </p>
         <button
           type="button"

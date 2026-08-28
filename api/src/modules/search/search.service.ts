@@ -63,7 +63,7 @@ const ADMIN_PAGES: PageShortcut[] = [
   { keywords: ['kampanya'], title: 'Kampanyalar', href: '/kampanyalar' },
   { keywords: ['yorum'], title: 'Yorumlar', href: '/yorumlar' },
   { keywords: ['kargo', 'shipping'], title: 'Kargo', href: '/kargo' },
-  { keywords: ['pazaryeri', 'trendyol', 'hepsiburada', 'n11'], title: 'Pazaryeri', href: '/pazaryeri' },
+  { keywords: ['pazaryeri', 'trendyol', 'trendyol go', 'hepsiburada', 'n11'], title: 'Pazaryeri', href: '/pazaryeri' },
   { keywords: ['sözleşme', 'sozlesme', 'yasal'], title: 'Sözleşmeler', href: '/sozlesmeler' },
   { keywords: ['mesaj', 'iletişim', 'iletisim'], title: 'Mesajlar', href: '/mesajlar' },
   { keywords: ['bülten', 'bulten'], title: 'Bülten', href: '/bulten' },

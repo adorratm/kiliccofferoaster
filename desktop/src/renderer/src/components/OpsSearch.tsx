@@ -37,6 +37,7 @@ const SEE_ALL: Record<string, string> = {
   returns: '/iadeler',
   reviews: '/yorumlar',
   shipping: '/kargo',
+  marketplace: '/pazaryeri',
   messages: '/mesajlar',
   newsletter: '/bulten',
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { api, asArray } from '../lib/api';
+import { marketplacePlatformLabel } from '../lib/marketplace';
 import { btn, btnText, card, colors, muted, screen, title } from '../ui';
 
 type Account = {
@@ -66,7 +67,8 @@ export function MarketplaceScreen() {
     <ScrollView style={screen}>
       <Text style={title}>Pazaryeri</Text>
       <Text style={[muted, { marginTop: 6 }]}>
-        Hesap senkronu. Yeni hesap ekleme web admin üzerinden yapılır.
+        Trendyol · Trendyol Go Market · Hepsiburada · N11 senkronu. Yeni hesap ekleme web admin
+        üzerinden yapılır.
       </Text>
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
@@ -79,7 +81,9 @@ export function MarketplaceScreen() {
       </Pressable>
       {rows.map((a) => (
         <View key={a.id} style={card}>
-          <Text style={{ color: colors.accentSoft }}>{a.platform}</Text>
+          <Text style={{ color: colors.accentSoft }}>
+            {marketplacePlatformLabel(a.platform)}
+          </Text>
           <Text style={{ color: colors.text, marginTop: 4 }}>{a.storeName}</Text>
           <Text style={muted}>{a.isEnabled ? 'Aktif' : 'Pasif'}</Text>
           <Pressable

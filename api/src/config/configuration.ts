@@ -168,6 +168,12 @@ export default () => ({
         process.env.TRENDYOL_API_BASE_URL ||
         'https://apigw.trendyol.com/integration',
     },
+    trendyolGoMarket: {
+      /** Varsayılan stage; prod deploy'da TRENDYOL_GO_MARKET_API_BASE_URL=https://api.tgoapis.com */
+      baseUrl:
+        process.env.TRENDYOL_GO_MARKET_API_BASE_URL ||
+        'https://stageapi.tgoapis.com',
+    },
     hepsiburada: {
       listingBaseUrl:
         process.env.HEPSIBURADA_LISTING_BASE_URL ||

@@ -16,6 +16,7 @@ import { ProductVariant } from '@entities/product-variant.entity';
 import { IMarketplaceAdapter } from '@modules/marketplace/adapters/marketplace.adapter';
 import {
   TrendyolAdapter,
+  TrendyolGoMarketAdapter,
   HepsiburadaAdapter,
   N11Adapter,
 } from '@modules/marketplace/adapters/providers';
@@ -70,9 +71,11 @@ export class MarketplaceService {
     trendyol: TrendyolAdapter,
     hepsiburada: HepsiburadaAdapter,
     n11: N11Adapter,
+    trendyolGoMarket: TrendyolGoMarketAdapter,
   ) {
     this.adapters = new Map<MarketplacePlatform, IMarketplaceAdapter>([
       [MarketplacePlatform.TRENDYOL, trendyol],
+      [MarketplacePlatform.TRENDYOL_GO_MARKET, trendyolGoMarket],
       [MarketplacePlatform.HEPSIBURADA, hepsiburada],
       [MarketplacePlatform.N11, n11],
     ]);

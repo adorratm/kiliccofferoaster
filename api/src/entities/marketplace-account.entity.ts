@@ -5,6 +5,7 @@ import type { MarketplaceOrder } from '@entities/marketplace-order.entity';
 
 export enum MarketplacePlatform {
   TRENDYOL = 'trendyol',
+  TRENDYOL_GO_MARKET = 'trendyol_go_market',
   HEPSIBURADA = 'hepsiburada',
   N11 = 'n11',
 }

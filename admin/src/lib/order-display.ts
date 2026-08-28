@@ -1,11 +1,11 @@
 /** Admin sipariş kaynak tespiti (web vs pazaryeri) */
 
 export type OrderSource = {
-  kind: 'web' | 'trendyol' | 'hepsiburada' | 'n11' | 'marketplace';
+  kind: 'web' | 'trendyol' | 'trendyol_go_market' | 'hepsiburada' | 'n11' | 'marketplace';
   label: string;
 };
 
-const MP_CODES = new Set(['trendyol', 'hepsiburada', 'n11']);
+const MP_CODES = new Set(['trendyol', 'trendyol_go_market', 'hepsiburada', 'n11']);
 
 export function resolveOrderSource(order: {
   shippingProvider?: string | null;
@@ -16,6 +16,8 @@ export function resolveOrderSource(order: {
   if (legal?.marketplaceImport) {
     const p = String(legal.platform || '').toLowerCase();
     if (p === 'trendyol') return { kind: 'trendyol', label: 'Trendyol' };
+    if (p === 'trendyol_go_market')
+      return { kind: 'trendyol_go_market', label: 'Trendyol Go Market' };
     if (p === 'hepsiburada') return { kind: 'hepsiburada', label: 'Hepsiburada' };
     if (p === 'n11') return { kind: 'n11', label: 'N11' };
     return { kind: 'marketplace', label: 'Pazaryeri' };
@@ -24,12 +26,16 @@ export function resolveOrderSource(order: {
   const provider = (order.shippingProvider || '').toLowerCase();
   if (MP_CODES.has(provider)) {
     if (provider === 'trendyol') return { kind: 'trendyol', label: 'Trendyol' };
+    if (provider === 'trendyol_go_market')
+      return { kind: 'trendyol_go_market', label: 'Trendyol Go Market' };
     if (provider === 'hepsiburada')
       return { kind: 'hepsiburada', label: 'Hepsiburada' };
     if (provider === 'n11') return { kind: 'n11', label: 'N11' };
   }
 
   const notes = order.notes || '';
+  if (/trendyol go/i.test(notes))
+    return { kind: 'trendyol_go_market', label: 'Trendyol Go Market' };
   if (/trendyol/i.test(notes)) return { kind: 'trendyol', label: 'Trendyol' };
   if (/hepsiburada/i.test(notes))
     return { kind: 'hepsiburada', label: 'Hepsiburada' };

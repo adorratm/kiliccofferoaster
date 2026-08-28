@@ -302,6 +302,8 @@ export class MarketplaceOrderImportService {
     switch (platform) {
       case MarketplacePlatform.TRENDYOL:
         return parseTrendyol(payload, mOrder);
+      case MarketplacePlatform.TRENDYOL_GO_MARKET:
+        return parseTrendyolGoMarket(payload, mOrder);
       case MarketplacePlatform.HEPSIBURADA:
         return parseHepsiburada(payload, mOrder);
       case MarketplacePlatform.N11:
@@ -341,9 +343,11 @@ export class MarketplaceOrderImportService {
     const tag =
       platform === MarketplacePlatform.TRENDYOL
         ? 'TY'
-        : platform === MarketplacePlatform.HEPSIBURADA
-          ? 'HB'
-          : 'N11';
+        : platform === MarketplacePlatform.TRENDYOL_GO_MARKET
+          ? 'TGM'
+          : platform === MarketplacePlatform.HEPSIBURADA
+            ? 'HB'
+            : 'N11';
     const prefix = `KLC-${tag}-${y}${m}${d}-`;
 
     const latest = await this.em
@@ -450,6 +454,81 @@ function parseTrendyol(
     ),
     currency: 'TRY',
     notes: `Trendyol #${mOrder.externalOrderId}`,
+  };
+}
+
+function parseTrendyolGoMarket(
+  payload: Record<string, unknown>,
+  mOrder: MarketplaceOrder,
+): ParsedMarketplaceOrder {
+  const addr = (payload.shipmentAddress ||
+    payload.invoiceAddress ||
+    payload.address ||
+    {}) as Record<string, unknown>;
+  const customer = (payload.customer || {}) as Record<string, unknown>;
+
+  const linesRaw = (payload.lines ||
+    payload.products ||
+    payload.orderLines ||
+    []) as Array<Record<string, unknown>>;
+
+  const lines: ParsedLine[] = linesRaw.flatMap((l) => {
+    const barcode = str(l.barcode);
+    const qty = num(l.quantity, 1);
+    const unit = num(l.price ?? l.amount ?? l.unitSellingPrice, 0);
+    const total = num(l.lineTotalPrice ?? l.amount, unit * qty);
+    const base: ParsedLine = {
+      barcode,
+      sku: str(l.stockCode || l.merchantSku || l.sku),
+      name:
+        str(l.name || l.productName) ||
+        str((l.product as Record<string, unknown> | undefined)?.name) ||
+        'Ürün',
+      quantity: qty,
+      unitPrice: unit,
+      lineTotal: total,
+    };
+
+    const nestedItems = (l.items || []) as Array<Record<string, unknown>>;
+    if (nestedItems.length) {
+      return nestedItems.map((item) => ({
+        ...base,
+        barcode: barcode || str(item.barcode),
+        quantity: num(item.quantity, 1),
+        unitPrice: num(item.price, base.unitPrice),
+        lineTotal: num(item.price, base.unitPrice) * num(item.quantity, 1),
+      }));
+    }
+    return [base];
+  });
+
+  const customerName =
+    [str(customer.firstName), str(customer.lastName)].filter(Boolean).join(' ') ||
+    str(addr.firstName) ||
+    'Trendyol Go Müşteri';
+
+  return {
+    customerName,
+    customerEmail:
+      str(customer.email || addr.email) ||
+      `tgo+${mOrder.externalOrderId}@marketplace.local`,
+    customerPhone:
+      str(addr.phone || customer.phone || customer.gsm) || '0000000000',
+    shippingAddress: {
+      fullName: customerName,
+      phone: str(addr.phone) || '0000000000',
+      addressLine: str(addr.address1 || addr.fullAddress || addr.address),
+      district: str(addr.district),
+      city: str(addr.city),
+      postalCode: str(addr.postalCode),
+      country: 'TR',
+    },
+    lines,
+    shippingFee: num(payload.cargoProviderPrice ?? payload.cargoPrice, 0),
+    discountAmount: num(payload.totalDiscount, 0),
+    total: num(payload.totalPrice ?? payload.packageTotalPrice, 0),
+    currency: 'TRY',
+    notes: `Trendyol Go Market #${mOrder.externalOrderId}`,
   };
 }
 

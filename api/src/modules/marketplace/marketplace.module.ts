@@ -8,6 +8,7 @@ import { MarketplaceSyncScheduler } from '@modules/marketplace/marketplace-sync.
 import { MarketplaceOrderImportService } from '@modules/marketplace/marketplace-order-import.service';
 import {
   TrendyolAdapter,
+  TrendyolGoMarketAdapter,
   HepsiburadaAdapter,
   N11Adapter,
 } from '@modules/marketplace/adapters/providers';
@@ -29,6 +30,7 @@ import { CatalogModule } from '@modules/catalog/catalog.module';
     TrendyolAdapter,
     HepsiburadaAdapter,
     N11Adapter,
+    TrendyolGoMarketAdapter,
   ],
   exports: [MarketplaceService, MarketplaceSyncService],
 })
