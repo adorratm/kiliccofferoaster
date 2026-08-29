@@ -19,6 +19,7 @@ import { OrderItem } from '@entities/order-item.entity';
 import { AccountingSettings } from '@entities/accounting-settings.entity';
 import {
   CreateInvoiceDto,
+  ConvertToInvoiceDto,
   InvoiceLineInputDto,
   InvoiceQueryDto,
   UpdateInvoiceDto,
@@ -31,6 +32,7 @@ import {
 import { EinvoiceGateway } from '@modules/einvoice/einvoice.gateway';
 import { StockLedgerService } from '@modules/accounting/stock-ledger.service';
 import { StockMovementType } from '@entities/stock-movement.entity';
+import { OkcSale } from '@entities/okc-sale.entity';
 
 @Injectable()
 export class InvoicesService {
@@ -55,6 +57,21 @@ export class InvoicesService {
     }
     if (query.partyId) {
       qb.andWhere('i.party_id = :partyId', { partyId: query.partyId });
+    }
+    if (query.orderId) {
+      qb.andWhere('i.order_id = :orderId', { orderId: query.orderId });
+    }
+    if (query.okcSaleId) {
+      qb.andWhere('i.okc_sale_id = :okcSaleId', { okcSaleId: query.okcSaleId });
+    }
+    if (query.edocumentType) {
+      qb.andWhere('i.edocument_type = :edocumentType', {
+        edocumentType: query.edocumentType,
+      });
+    } else if (query.receiptOnly === true) {
+      qb.andWhere('i.edocument_type = :none', { none: EDocumentType.NONE });
+    } else if (query.receiptOnly === false) {
+      qb.andWhere('i.edocument_type != :none', { none: EDocumentType.NONE });
     }
     if (query.q?.trim()) {
       const q = `%${query.q.trim()}%`;
@@ -84,6 +101,12 @@ export class InvoicesService {
     if (!dto.lines?.length) {
       throw new BadRequestException('Faturada en az bir satır olmalı');
     }
+    if (dto.okcSaleId) {
+      const existing = await this.em.findOne(Invoice, {
+        where: { okcSaleId: dto.okcSaleId },
+      });
+      if (existing) return this.findOne(existing.id);
+    }
     const invoiceNumber = await this.nextNumber(dto.direction);
     const edocumentType = await this.resolveEdocumentType(dto);
     const { subtotal, taxAmount, total, lines } = await this.buildLines(dto.lines);
@@ -95,6 +118,7 @@ export class InvoicesService {
       edocumentType,
       partyId: dto.partyId ?? null,
       orderId: dto.orderId ?? null,
+      okcSaleId: dto.okcSaleId ?? null,
       issueDate: dto.issueDate,
       dueDate: dto.dueDate ?? null,
       currency: 'TRY',
@@ -141,6 +165,7 @@ export class InvoicesService {
     if (dto.notes !== undefined) invoice.notes = dto.notes || null;
     if (dto.edocumentType) invoice.edocumentType = dto.edocumentType;
     if (dto.orderId !== undefined) invoice.orderId = dto.orderId || null;
+    if (dto.okcSaleId !== undefined) invoice.okcSaleId = dto.okcSaleId || null;
     await this.em.save(invoice);
     if (dto.lines) {
       await this.applyStock(invoice.id, invoice.direction, 'create');
@@ -154,6 +179,7 @@ export class InvoicesService {
     if (invoice.status !== InvoiceStatus.DRAFT) {
       throw new BadRequestException('Yalnızca taslak kuyruğa alınır');
     }
+    this.assertGibAllowed(invoice);
     if (invoice.edocumentType === EDocumentType.NONE) {
       throw new BadRequestException(
         'e-belge tipi yok; GİB gönderimi için e-arşiv veya e-fatura seçin',
@@ -174,6 +200,7 @@ export class InvoicesService {
     ) {
       throw new BadRequestException('Bu fatura gönderilemez');
     }
+    this.assertGibAllowed(invoice);
     if (invoice.edocumentType === EDocumentType.NONE) {
       throw new BadRequestException('e-belge tipi yok');
     }
@@ -233,12 +260,93 @@ export class InvoicesService {
     );
     return this.create({
       direction: InvoiceDirection.SALES,
-      edocumentType: EDocumentType.EARCHIVE,
+      edocumentType: EDocumentType.NONE,
       orderId: order.id,
       issueDate: new Date().toISOString().slice(0, 10),
       notes: `Web siparişi ${order.orderNumber}`,
       lines,
     });
+  }
+
+  async fromOkcSale(okcSaleId: string): Promise<Invoice> {
+    const existing = await this.em.findOne(Invoice, {
+      where: { okcSaleId },
+    });
+    if (existing) return this.findOne(existing.id);
+    const sale = await this.em.findOne(OkcSale, { where: { id: okcSaleId } });
+    if (!sale) throw new NotFoundException('ÖKC satışı bulunamadı');
+    const total = parseMoney(sale.total);
+    const taxAmount = parseMoney(sale.taxAmount);
+    const net = Math.max(total - taxAmount, 0);
+    const vatRate =
+      net > 0 && taxAmount > 0
+        ? Math.round((taxAmount / net) * 1000) / 10
+        : 20;
+    const receiptLabel = sale.receiptNo || sale.externalKey;
+    return this.create({
+      direction: InvoiceDirection.SALES,
+      edocumentType: EDocumentType.NONE,
+      okcSaleId: sale.id,
+      issueDate: sale.saleDate,
+      notes: `ÖKC fiş ${receiptLabel}${sale.zNo ? ` · Z ${sale.zNo}` : ''}`,
+      lines: [
+        {
+          description:
+            sale.description?.trim() ||
+            `ÖKC satış ${receiptLabel}`,
+          quantity: 1,
+          unit: 'adet',
+          unitPrice: total,
+          vatRate,
+        },
+      ],
+    });
+  }
+
+  async toInvoice(
+    id: string,
+    dto: ConvertToInvoiceDto = {},
+  ): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+    if (invoice.status !== InvoiceStatus.DRAFT) {
+      throw new BadRequestException(
+        'Yalnızca taslak belgeler faturaya çevrilebilir',
+      );
+    }
+    if (invoice.direction !== InvoiceDirection.SALES) {
+      throw new BadRequestException('Yalnızca satış belgeleri faturaya çevrilir');
+    }
+    if (dto.edocumentType) {
+      invoice.edocumentType = dto.edocumentType;
+    } else {
+      invoice.edocumentType = await this.resolveInvoiceEdocumentType(
+        invoice.partyId,
+      );
+    }
+    await this.em.save(invoice);
+    return this.findOne(id);
+  }
+
+  async toReceipt(id: string): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+    if (
+      invoice.status !== InvoiceStatus.DRAFT &&
+      invoice.status !== InvoiceStatus.REJECTED
+    ) {
+      throw new BadRequestException(
+        'GİB’e gitmiş veya kuyruktaki belge fişe çevrilemez',
+      );
+    }
+    invoice.edocumentType = EDocumentType.NONE;
+    invoice.status = InvoiceStatus.DRAFT;
+    invoice.ettn = null;
+    invoice.gibUuid = null;
+    invoice.providerStatus = null;
+    invoice.providerPayload = null;
+    invoice.queuedAt = null;
+    invoice.sentAt = null;
+    await this.em.save(invoice);
+    return this.findOne(id);
   }
 
   async printModel(id: string) {
@@ -247,15 +355,30 @@ export class InvoicesService {
     return { invoice, settings };
   }
 
+  private assertGibAllowed(invoice: Invoice): void {
+    if (invoice.okcSaleId) {
+      throw new BadRequestException(
+        'ÖKC mali fişine bağlı belge GİB’e gönderilemez (çift belge engeli)',
+      );
+    }
+  }
+
+  /**
+   * Oluşturmada varsayılan: fiş (none). e-belge yalnızca açık seçilince.
+   */
   private async resolveEdocumentType(
     dto: CreateInvoiceDto,
   ): Promise<EDocumentType> {
     if (dto.edocumentType) return dto.edocumentType;
-    if (dto.direction === InvoiceDirection.PURCHASE) {
-      return EDocumentType.NONE;
-    }
-    if (!dto.partyId) return EDocumentType.EARCHIVE;
-    const party = await this.em.findOne(Party, { where: { id: dto.partyId } });
+    return EDocumentType.NONE;
+  }
+
+  /** Fiş → fatura dönüşümünde cari/VKN’ye göre tip. */
+  private async resolveInvoiceEdocumentType(
+    partyId: string | null,
+  ): Promise<EDocumentType> {
+    if (!partyId) return EDocumentType.EARCHIVE;
+    const party = await this.em.findOne(Party, { where: { id: partyId } });
     if (party?.isEinvoice || party?.taxNumber) {
       const check = await this.einvoice.checkTaxpayer(party.taxNumber || '');
       return check.isEinvoice ? EDocumentType.EINVOICE : EDocumentType.EARCHIVE;
@@ -343,7 +466,8 @@ export class InvoicesService {
       relations: { lines: true },
     });
     if (!invoice?.lines?.length) return;
-    if (invoice.orderId) return;
+    // Web sipariş ve ÖKC: stok başka kanalda düşmüş / mali fişte satılmış
+    if (invoice.orderId || invoice.okcSaleId) return;
     const sign =
       direction === InvoiceDirection.SALES
         ? mode === 'create'

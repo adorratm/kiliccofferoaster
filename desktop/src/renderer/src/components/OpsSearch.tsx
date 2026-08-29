@@ -30,6 +30,7 @@ const SEE_ALL: Record<string, string> = {
   categories: '/kategoriler',
   parties: '/cari',
   invoices: '/faturalar',
+  receipts: '/fisler',
   cash: '/kasa',
   okc: '/okc',
   coupons: '/kuponlar',

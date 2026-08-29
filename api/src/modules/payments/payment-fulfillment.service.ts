@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Order, OrderStatus } from '@entities/order.entity';
@@ -8,15 +8,19 @@ import { statusLabel } from '@modules/notifications/notification.templates';
 import { InventoryService } from '@modules/catalog/inventory.service';
 import { CartService } from '@modules/cart/cart.service';
 import { CouponsService } from '@modules/coupons/coupons.service';
+import { InvoicesService } from '@modules/accounting/invoices.service';
 
 @Injectable()
 export class PaymentFulfillmentService {
+  private readonly logger = new Logger(PaymentFulfillmentService.name);
+
   constructor(
     @InjectEntityManager() private readonly em: EntityManager,
     private readonly notifications: NotificationsService,
     private readonly inventory: InventoryService,
     private readonly carts: CartService,
     private readonly coupons: CouponsService,
+    private readonly invoices: InvoicesService,
   ) {}
 
   async applyResult(
@@ -63,6 +67,15 @@ export class PaymentFulfillmentService {
         },
       );
       await this.notifications.enqueueOrderOpsAlert(order.id, 'paid');
+      try {
+        await this.invoices.fromOrder(order.id);
+      } catch (err) {
+        this.logger.warn(
+          `Sipariş ${order.orderNumber} için otomatik fiş oluşturulamadı: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
     }
 
     return {

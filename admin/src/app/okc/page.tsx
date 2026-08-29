@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { asPaged } from '@/lib/utils';
 
@@ -13,6 +14,12 @@ type Sale = {
   total: string;
   cashAmount: string;
   cardAmount: string;
+  invoice?: {
+    id: string;
+    invoiceNumber: string;
+    edocumentType: string;
+    status: string;
+  } | null;
 };
 
 const SAMPLE =
@@ -68,7 +75,7 @@ export default function OkcAdminPage() {
         { method: 'POST', body: { rows } },
       );
       setMessage(
-        `${result.imported} içe alındı, ${result.skipped} atlandı. e-belge üretilmedi.`,
+        `${result.imported} içe alındı, ${result.skipped} atlandı. İç satış fişi oluşturuldu (GİB yok).`,
       );
       await load();
     } catch (err) {
@@ -83,8 +90,8 @@ export default function OkcAdminPage() {
       <div>
         <h2 className="text-lg font-semibold">ÖKC import</h2>
         <p className="text-sm text-muted">
-          Beko X30TR CSV / Z özeti. Nakit ve kart kasa hareketi oluşur; aynı
-          satış için e-arşiv kesilmez.
+          Beko X30TR CSV / Z özeti. Nakit ve kart kasa hareketi + iç satış fişi
+          oluşur; ÖKC mali fiş için GİB e-belgesi gönderilmez.
         </p>
       </div>
 
@@ -123,7 +130,8 @@ export default function OkcAdminPage() {
             <thead className="border-b border-border-muted bg-surface mono text-[10px] uppercase text-muted">
               <tr>
                 <th className="px-3 py-2">Tarih</th>
-                <th className="px-3 py-2">Fiş</th>
+                <th className="px-3 py-2">ÖKC fiş</th>
+                <th className="px-3 py-2">İç fiş</th>
                 <th className="px-3 py-2">Toplam</th>
                 <th className="px-3 py-2">Nakit</th>
                 <th className="px-3 py-2">Kart</th>
@@ -136,6 +144,18 @@ export default function OkcAdminPage() {
                   <td className="mono px-3 py-2">
                     {s.receiptNo || s.externalKey} / Z {s.zNo || '—'}
                   </td>
+                  <td className="mono px-3 py-2">
+                    {s.invoice ? (
+                      <Link
+                        href="/fisler"
+                        className="text-accent hover:underline"
+                      >
+                        {s.invoice.invoiceNumber}
+                      </Link>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-accent">{s.total} ₺</td>
                   <td className="px-3 py-2">{s.cashAmount}</td>
                   <td className="px-3 py-2">{s.cardAmount}</td>
@@ -143,7 +163,7 @@ export default function OkcAdminPage() {
               ))}
               {!items.length ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-6 text-muted">
+                  <td colSpan={6} className="px-3 py-6 text-muted">
                     Henüz ÖKC satışı yok
                   </td>
                 </tr>

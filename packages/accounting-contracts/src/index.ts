@@ -74,6 +74,17 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 export const EDOCUMENT_TYPES = ['earchive', 'einvoice', 'none'] as const;
 export type EDocumentType = (typeof EDOCUMENT_TYPES)[number];
 
+export const EDOCUMENT_TYPE_LABELS: Record<EDocumentType, string> = {
+  none: 'Fiş',
+  earchive: 'e-Arşiv',
+  einvoice: 'e-Fatura',
+};
+
+/** edocumentType none → fiş; earchive/einvoice → fatura */
+export function isReceiptDocument(edocumentType: EDocumentType): boolean {
+  return edocumentType === 'none';
+}
+
 export const CASH_ACCOUNT_KINDS = ['cash', 'bank', 'paytr', 'pos'] as const;
 export type CashAccountKind = (typeof CASH_ACCOUNT_KINDS)[number];
 

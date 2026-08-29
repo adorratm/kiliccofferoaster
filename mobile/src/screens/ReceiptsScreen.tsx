@@ -11,15 +11,9 @@ type Invoice = {
   total: string;
   direction?: string;
   edocumentType?: string;
-  okcSaleId?: string | null;
 };
 
-function edocLabel(type?: string) {
-  if (type === 'einvoice') return 'e-Fatura';
-  return 'e-Arşiv';
-}
-
-export function InvoicesScreen() {
+export function ReceiptsScreen() {
   const [items, setItems] = useState<Invoice[]>([]);
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -29,7 +23,7 @@ export function InvoicesScreen() {
   async function load() {
     try {
       const data = await api<{ items: Invoice[] }>(
-        '/accounting/invoices?limit=50&receiptOnly=false',
+        '/accounting/invoices?limit=50&receiptOnly=true',
       );
       setItems(data.items);
       setError('');
@@ -47,13 +41,13 @@ export function InvoicesScreen() {
     setMsg('');
     const payload = {
       direction: 'sales',
-      edocumentType: 'earchive',
+      edocumentType: 'none',
       issueDate: new Date().toISOString().slice(0, 10),
       lines: [{ description, quantity: 1, unitPrice: Number(price), vatRate: 20 }],
     };
     try {
       await api('/accounting/invoices', { method: 'POST', body: payload });
-      setMsg('Taslak fatura kaydedildi');
+      setMsg('Satış fişi kaydedildi');
     } catch {
       await enqueue({
         id: crypto.randomUUID(),
@@ -68,31 +62,21 @@ export function InvoicesScreen() {
     await load();
   }
 
-  async function toReceipt(id: string) {
+  async function toInvoice(id: string) {
     try {
-      await api(`/accounting/invoices/${id}/to-receipt`, { method: 'POST' });
-      setMsg('Fişe çevrildi — Fişler ekranında görünür');
+      await api(`/accounting/invoices/${id}/to-invoice`, { method: 'POST', body: {} });
+      setMsg('Faturaya çevrildi — Faturalar ekranında görünür');
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Dönüşüm hatası');
     }
   }
 
-  async function sendGib(id: string) {
-    try {
-      await api(`/accounting/invoices/${id}/send`, { method: 'POST' });
-      setMsg('GİB gönderildi');
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Gönderim hatası');
-    }
-  }
-
   return (
     <ScrollView style={screen}>
-      <Text style={title}>Faturalar</Text>
+      <Text style={title}>Fişler</Text>
       <Text style={[muted, { marginTop: 6 }]}>
-        e-Arşiv / e-Fatura. Taslakken fişe çevrilebilir; GİB gönderimi internet gerektirir.
+        İç satış fişleri. Faturaya çevirmek için satır aksiyonunu kullanın.
       </Text>
       <TextInput
         placeholder="Açıklama"
@@ -110,35 +94,24 @@ export function InvoicesScreen() {
         style={[input, { marginTop: 8 }]}
       />
       <Pressable onPress={() => void save()} style={btn}>
-        <Text style={btnText}>Fatura kaydet</Text>
+        <Text style={btnText}>Fiş kaydet</Text>
       </Pressable>
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
 
-      {items.map((i) => {
-        const canGib =
-          !i.okcSaleId && (i.status === 'draft' || i.status === 'queued');
-        return (
-          <View key={i.id} style={card}>
-            <Text style={{ color: colors.text }}>{i.invoiceNumber}</Text>
-            <Text style={muted}>
-              {edocLabel(i.edocumentType)} · {i.status} · {i.total}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
-              {i.status === 'draft' || i.status === 'rejected' ? (
-                <Pressable onPress={() => void toReceipt(i.id)}>
-                  <Text style={{ color: colors.accentSoft }}>Fişe çevir</Text>
-                </Pressable>
-              ) : null}
-              {canGib ? (
-                <Pressable onPress={() => void sendGib(i.id)}>
-                  <Text style={{ color: colors.accentSoft }}>GİB</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        );
-      })}
+      {items.map((i) => (
+        <View key={i.id} style={card}>
+          <Text style={{ color: colors.text }}>{i.invoiceNumber}</Text>
+          <Text style={muted}>
+            {i.status} · {i.total}
+          </Text>
+          {i.status === 'draft' ? (
+            <Pressable onPress={() => void toInvoice(i.id)} style={{ marginTop: 8 }}>
+              <Text style={{ color: colors.accentSoft }}>Faturaya çevir</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
     </ScrollView>
   );
 }

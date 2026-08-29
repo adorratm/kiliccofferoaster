@@ -28,6 +28,7 @@ const GROUPS: Group[] = [
     title: 'Muhasebe',
     links: [
       { label: 'Cari', to: 'Parties' },
+      { label: 'Fişler', to: 'Receipts' },
       { label: 'Faturalar', to: 'Invoices' },
       { label: 'Kasa', to: 'Cash' },
       { label: 'Stok', to: 'Stock' },
@@ -185,8 +186,11 @@ export function HomeScreen({ navigation }: Props) {
         <View key={g.title}>
           <Text style={[muted, { marginTop: 20, letterSpacing: 2 }]}>{g.title.toUpperCase()}</Text>
           {g.links.map((l) => (
-            <Pressable key={l.to} onPress={() => navigation.navigate(l.to)} style={card}>
-              <Text style={{ color: colors.accentSoft }}>{l.label}</Text>
+            <Pressable
+              key={l.to}
+              onPress={() => navigation.navigate(l.to as never)}
+              style={card}
+            >              <Text style={{ color: colors.accentSoft }}>{l.label}</Text>
             </Pressable>
           ))}
         </View>

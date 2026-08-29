@@ -7,6 +7,7 @@ const STAFF_SCREENS = new Set<keyof StaffStackParamList>([
   'StaffLogin',
   'Home',
   'Parties',
+  'Receipts',
   'Invoices',
   'Cash',
   'Stock',

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api, isOnline } from '../lib/api';
 
 type Sale = {
@@ -10,6 +11,12 @@ type Sale = {
   total: string;
   cashAmount: string;
   cardAmount: string;
+  invoice?: {
+    id: string;
+    invoiceNumber: string;
+    edocumentType: string;
+    status: string;
+  } | null;
 };
 
 export function OkcPage() {
@@ -49,7 +56,9 @@ export function OkcPage() {
       '/accounting/okc/import',
       { method: 'POST', body: { rows } },
     );
-    setMsg(`${result.imported} içe alındı, ${result.skipped} atlandı. e-belge üretilmedi.`);
+    setMsg(
+      `${result.imported} içe alındı, ${result.skipped} atlandı. İç satış fişi oluşturuldu.`,
+    );
     await load();
   }
 
@@ -58,8 +67,8 @@ export function OkcPage() {
       <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">06 // ÖKC</p>
       <h1 className="mt-1 text-2xl font-semibold">Beko X30TR import</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
-        Satış kasada kalır. CSV / Z özeti buraya yüklenir; nakit ve kart kasa hareketi oluşur.
-        Aynı satış için e-arşiv kesilmez.
+        CSV / Z özeti → kasa hareketi + iç satış fişi. ÖKC mali fiş için GİB e-belgesi
+        gönderilmez.
       </p>
       <form onSubmit={onSubmit} className="mt-4">
         <textarea
@@ -75,7 +84,8 @@ export function OkcPage() {
         <thead>
           <tr className="border-b border-border-muted text-left text-muted">
             <th className="py-2">Tarih</th>
-            <th>Fiş</th>
+            <th>ÖKC fiş</th>
+            <th>İç fiş</th>
             <th>Toplam</th>
             <th>Nakit</th>
             <th>Kart</th>
@@ -87,6 +97,15 @@ export function OkcPage() {
               <td className="py-2">{s.saleDate}</td>
               <td className="mono">
                 {s.receiptNo || s.externalKey} / Z {s.zNo || '—'}
+              </td>
+              <td className="mono">
+                {s.invoice ? (
+                  <Link className="text-accent" to="/fisler">
+                    {s.invoice.invoiceNumber}
+                  </Link>
+                ) : (
+                  '—'
+                )}
               </td>
               <td>{s.total}</td>
               <td>{s.cashAmount}</td>

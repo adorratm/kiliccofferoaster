@@ -26,6 +26,7 @@ import {
   CreateCashAccountDto,
   CreateCashEntryDto,
   CreateInvoiceDto,
+  ConvertToInvoiceDto,
   CreatePartyDto,
   CreateStockMovementDto,
   ImportOkcDto,
@@ -41,6 +42,7 @@ import {
   UpdatePartyDto,
   AccountingQueryDto,
 } from '@modules/accounting/dto/accounting.dto';
+import { EDocumentType } from '@entities/invoice.entity';
 
 @ApiTags('accounting')
 @ApiBearerAuth()
@@ -113,6 +115,21 @@ export class AccountingController {
     return this.invoices.fromOrder(orderId);
   }
 
+  @Post('invoices/:id/to-invoice')
+  @ApiOperation({ summary: 'Fişi e-arşiv/e-faturaya çevir' })
+  toInvoice(
+    @Param('id') id: string,
+    @Body() dto: ConvertToInvoiceDto,
+  ) {
+    return this.invoices.toInvoice(id, dto);
+  }
+
+  @Post('invoices/:id/to-receipt')
+  @ApiOperation({ summary: 'Faturayı iç fişe geri çevir (taslak)' })
+  toReceipt(@Param('id') id: string) {
+    return this.invoices.toReceipt(id);
+  }
+
   @Get('invoices/:id')
   getInvoice(@Param('id') id: string) {
     return this.invoices.findOne(id);
@@ -147,6 +164,12 @@ export class AccountingController {
   @Get('invoices/:id/html')
   async invoiceHtml(@Param('id') id: string, @Res() res: Response) {
     const { invoice, settings } = await this.invoices.printModel(id);
+    const isReceipt = invoice.edocumentType === EDocumentType.NONE;
+    const docLabel = isReceipt
+      ? 'Satış Fişi'
+      : invoice.edocumentType === EDocumentType.EINVOICE
+        ? 'e-Fatura'
+        : 'e-Arşiv Fatura';
     const lines = (invoice.lines || [])
       .map(
         (l) =>
@@ -162,14 +185,14 @@ td,th{border:1px solid #57423d;padding:8px;text-align:left;font-size:13px}
 .meta{color:#a58b84;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
 .accent{color:#cc5b3e}
 </style></head><body>
-<p class="meta">Kılıç Coffee Roaster // e-belge taslak</p>
+<p class="meta">Kılıç Coffee Roaster // ${escapeHtml(docLabel)}</p>
 <h1>${escapeHtml(settings.companyTitle)}</h1>
-<p>${escapeHtml(invoice.invoiceNumber)} · ${invoice.issueDate} · <span class="accent">${invoice.direction}</span></p>
+<p>${escapeHtml(invoice.invoiceNumber)} · ${invoice.issueDate} · <span class="accent">${escapeHtml(docLabel)}</span></p>
 <p>Cari: ${escapeHtml(invoice.party?.title || '—')} ${invoice.party?.taxNumber || ''}</p>
 <table><thead><tr><th>Açıklama</th><th>Miktar</th><th>Birim</th><th>KDV</th><th>Toplam</th></tr></thead>
 <tbody>${lines}</tbody></table>
 <p>Ara ${invoice.subtotal} · KDV ${invoice.taxAmount} · <strong>Genel ${invoice.total} ${invoice.currency}</strong></p>
-<p class="meta">GİB gönderimi internet bağlantısı gerektirir. Durum: ${invoice.status}</p>
+<p class="meta">${isReceipt ? 'İç satış fişi · GİB gönderimi yok' : `GİB gönderimi internet bağlantısı gerektirir. Durum: ${invoice.status}`}</p>
 </body></html>`;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

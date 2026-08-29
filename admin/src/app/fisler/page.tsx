@@ -27,12 +27,7 @@ function istanbulToday() {
   });
 }
 
-function edocLabel(type?: string) {
-  if (type === 'einvoice') return 'e-Fatura';
-  return 'e-Arşiv';
-}
-
-export default function InvoicesAdminPage() {
+export default function ReceiptsAdminPage() {
   const [items, setItems] = useState<Invoice[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
   const [direction, setDirection] = useState<'sales' | 'purchase'>('sales');
@@ -41,9 +36,6 @@ export default function InvoicesAdminPage() {
   const [qty, setQty] = useState('1');
   const [price, setPrice] = useState('');
   const [vatRate, setVatRate] = useState('20');
-  const [edocumentType, setEdocumentType] = useState<'earchive' | 'einvoice'>(
-    'earchive',
-  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +46,7 @@ export default function InvoicesAdminPage() {
     setError(null);
     try {
       const [inv, p] = await Promise.all([
-        api<unknown>('/accounting/invoices?limit=100&receiptOnly=false'),
+        api<unknown>('/accounting/invoices?limit=100&receiptOnly=true'),
         api<unknown>('/accounting/parties?limit=100'),
       ]);
       setItems(asPaged<Invoice>(inv).items);
@@ -80,7 +72,7 @@ export default function InvoicesAdminPage() {
         method: 'POST',
         body: {
           direction,
-          edocumentType,
+          edocumentType: 'none',
           partyId: partyId || undefined,
           issueDate: istanbulToday(),
           lines: [
@@ -95,7 +87,7 @@ export default function InvoicesAdminPage() {
       });
       setDescription('');
       setPrice('');
-      setMessage('Taslak fatura oluşturuldu');
+      setMessage('Satış fişi oluşturuldu');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kayıt başarısız');
@@ -104,32 +96,16 @@ export default function InvoicesAdminPage() {
     }
   }
 
-  async function toReceipt(id: string) {
+  async function toInvoice(id: string) {
     try {
-      await api(`/accounting/invoices/${id}/to-receipt`, { method: 'POST' });
-      setMessage('Fişe çevrildi — Fişler listesinde görünür');
+      await api(`/accounting/invoices/${id}/to-invoice`, {
+        method: 'POST',
+        body: {},
+      });
+      setMessage('Faturaya çevrildi — Faturalar listesinde görünür');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Dönüşüm hatası');
-    }
-  }
-
-  async function queue(id: string) {
-    try {
-      await api(`/accounting/invoices/${id}/queue`, { method: 'POST' });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kuyruk hatası');
-    }
-  }
-
-  async function send(id: string) {
-    try {
-      await api(`/accounting/invoices/${id}/send`, { method: 'POST' });
-      setMessage('GİB gönderim isteği tamamlandı');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gönderim hatası');
     }
   }
 
@@ -153,9 +129,9 @@ export default function InvoicesAdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Faturalar</h2>
+        <h2 className="text-lg font-semibold">Fişler</h2>
         <p className="text-sm text-muted">
-          e-Arşiv / e-Fatura. Taslakken fişe çevrilebilir; GİB kuyruk ve gönderim.
+          İç satış fişleri. Faturaya çevirmek için satırdaki aksiyonu kullanın.
         </p>
       </div>
 
@@ -180,86 +156,59 @@ export default function InvoicesAdminPage() {
                 <thead className="border-b border-border-muted bg-surface mono text-[10px] uppercase text-muted">
                   <tr>
                     <th className="px-3 py-2">No</th>
-                    <th className="px-3 py-2">Tip</th>
                     <th className="px-3 py-2">Cari</th>
+                    <th className="px-3 py-2">Yön</th>
                     <th className="px-3 py-2">Durum</th>
                     <th className="px-3 py-2">Tutar</th>
                     <th className="px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((inv) => {
-                    const canGib =
-                      !inv.okcSaleId &&
-                      (inv.status === 'draft' || inv.status === 'queued');
-                    return (
-                      <tr
-                        key={inv.id}
-                        className="border-b border-border-muted/60"
-                      >
-                        <td className="mono px-3 py-2">{inv.invoiceNumber}</td>
-                        <td className="px-3 py-2">
-                          {edocLabel(inv.edocumentType)}
-                        </td>
-                        <td className="px-3 py-2">
-                          {inv.party?.title || '—'}
-                        </td>
-                        <td className="px-3 py-2">{inv.status}</td>
-                        <td className="px-3 py-2 text-accent">
-                          {inv.total} ₺
-                        </td>
-                        <td className="space-x-2 whitespace-nowrap px-3 py-2 text-xs">
-                          {inv.status === 'draft' ||
-                          inv.status === 'rejected' ? (
-                            <button
-                              type="button"
-                              className="text-accent hover:underline"
-                              onClick={() => void toReceipt(inv.id)}
-                            >
-                              Fişe çevir
-                            </button>
-                          ) : null}
-                          {canGib && inv.status === 'draft' ? (
-                            <button
-                              type="button"
-                              className="text-accent hover:underline"
-                              onClick={() => void queue(inv.id)}
-                            >
-                              Kuyruk
-                            </button>
-                          ) : null}
-                          {canGib ? (
-                            <button
-                              type="button"
-                              className="text-accent hover:underline"
-                              onClick={() => void send(inv.id)}
-                            >
-                              GİB
-                            </button>
-                          ) : null}
-                          {inv.orderId ? (
-                            <Link
-                              href={`/siparisler/${inv.orderId}`}
-                              className="text-muted hover:underline"
-                            >
-                              Sipariş
-                            </Link>
-                          ) : null}
+                  {items.map((inv) => (
+                    <tr
+                      key={inv.id}
+                      className="border-b border-border-muted/60"
+                    >
+                      <td className="mono px-3 py-2">{inv.invoiceNumber}</td>
+                      <td className="px-3 py-2">{inv.party?.title || '—'}</td>
+                      <td className="px-3 py-2">
+                        {inv.direction === 'purchase' ? 'Alış' : 'Satış'}
+                      </td>
+                      <td className="px-3 py-2">{inv.status}</td>
+                      <td className="px-3 py-2 text-accent">{inv.total} ₺</td>
+                      <td className="space-x-2 whitespace-nowrap px-3 py-2 text-xs">
+                        {inv.status === 'draft' &&
+                        inv.direction === 'sales' ? (
                           <button
                             type="button"
-                            className="text-muted hover:underline"
-                            onClick={() => void printHtml(inv.id)}
+                            className="text-accent hover:underline"
+                            onClick={() => void toInvoice(inv.id)}
                           >
-                            Yazdır
+                            Faturaya çevir
                           </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        ) : null}
+                        {inv.orderId ? (
+                          <Link
+                            href={`/siparisler/${inv.orderId}`}
+                            className="text-muted hover:underline"
+                          >
+                            Sipariş
+                          </Link>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="text-muted hover:underline"
+                          onClick={() => void printHtml(inv.id)}
+                        >
+                          Yazdır
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                   {!items.length ? (
                     <tr>
                       <td colSpan={6} className="px-3 py-6 text-muted">
-                        Fatura yok
+                        Fiş yok
                       </td>
                     </tr>
                   ) : null}
@@ -273,7 +222,7 @@ export default function InvoicesAdminPage() {
           onSubmit={onSubmit}
           className="space-y-3 border border-border-muted p-4 lg:col-span-2"
         >
-          <p className="mono text-[10px] uppercase text-muted">Taslak fatura</p>
+          <p className="mono text-[10px] uppercase text-muted">Yeni fiş</p>
           <select
             value={direction}
             onChange={(e) =>
@@ -283,16 +232,6 @@ export default function InvoicesAdminPage() {
           >
             <option value="sales">Satış</option>
             <option value="purchase">Alış</option>
-          </select>
-          <select
-            value={edocumentType}
-            onChange={(e) =>
-              setEdocumentType(e.target.value as 'earchive' | 'einvoice')
-            }
-            className="w-full border border-border-muted bg-background px-3 py-2 text-sm"
-          >
-            <option value="earchive">e-Arşiv</option>
-            <option value="einvoice">e-Fatura</option>
           </select>
           <select
             value={partyId}
@@ -339,7 +278,7 @@ export default function InvoicesAdminPage() {
             disabled={saving}
             className="btn-motion bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
           >
-            {saving ? 'Kaydediliyor…' : 'Fatura oluştur'}
+            {saving ? 'Kaydediliyor…' : 'Fiş oluştur'}
           </button>
         </form>
       </div>

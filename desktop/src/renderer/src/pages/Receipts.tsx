@@ -12,18 +12,12 @@ type Invoice = {
   issueDate: string;
   party?: { title?: string } | null;
   edocumentType?: string;
-  okcSaleId?: string | null;
   orderId?: string | null;
 };
 
 type Party = { id: string; title: string; type: string };
 
-function edocLabel(type?: string) {
-  if (type === 'einvoice') return 'e-Fatura';
-  return 'e-Arşiv';
-}
-
-export function InvoicesPage() {
+export function ReceiptsPage() {
   const [items, setItems] = useState<Invoice[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
   const [direction, setDirection] = useState<'sales' | 'purchase'>('sales');
@@ -32,21 +26,19 @@ export function InvoicesPage() {
   const [qty, setQty] = useState('1');
   const [price, setPrice] = useState('');
   const [vatRate, setVatRate] = useState('20');
-  const [edocumentType, setEdocumentType] = useState<'earchive' | 'einvoice'>('earchive');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   async function load() {
     if (!isOnline()) {
       const cached = ((await window.ops.cacheGet('invoices')) as Invoice[]) || [];
-      setItems(cached.filter((i) => i.edocumentType && i.edocumentType !== 'none'));
+      setItems(cached.filter((i) => !i.edocumentType || i.edocumentType === 'none'));
       return;
     }
     const data = await api<{ items: Invoice[] }>(
-      '/accounting/invoices?limit=100&receiptOnly=false',
+      '/accounting/invoices?limit=100&receiptOnly=true',
     );
     setItems(data.items);
-    await window.ops.cacheSet('invoices', data.items);
     const p = await api<{ items: Party[] }>('/accounting/parties?limit=100');
     setParties(p.items);
   }
@@ -59,7 +51,7 @@ export function InvoicesPage() {
     e.preventDefault();
     const payload = {
       direction,
-      edocumentType,
+      edocumentType: 'none' as const,
       partyId: partyId || undefined,
       issueDate: new Date().toISOString().slice(0, 10),
       lines: [
@@ -79,39 +71,20 @@ export function InvoicesPage() {
       }
       setDescription('');
       setPrice('');
-      setMessage('Taslak fatura kaydedildi');
+      setMessage('Satış fişi kaydedildi');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kayıt hatası');
     }
   }
 
-  async function toReceipt(id: string) {
+  async function toInvoice(id: string) {
     try {
-      await api(`/accounting/invoices/${id}/to-receipt`, { method: 'POST' });
-      setMessage('Fişe çevrildi — Fişler ekranında görünür');
+      await api(`/accounting/invoices/${id}/to-invoice`, { method: 'POST', body: {} });
+      setMessage('Faturaya çevrildi — Faturalar ekranında görünür');
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Dönüşüm hatası');
-    }
-  }
-
-  async function queue(id: string) {
-    try {
-      await api(`/accounting/invoices/${id}/queue`, { method: 'POST' });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kuyruk hatası');
-    }
-  }
-
-  async function send(id: string) {
-    try {
-      await api(`/accounting/invoices/${id}/send`, { method: 'POST' });
-      setMessage('GİB gönderildi');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gönderim hatası');
     }
   }
 
@@ -132,15 +105,14 @@ export function InvoicesPage() {
   return (
     <div className="grid grid-cols-5 gap-6">
       <div className="col-span-3">
-        <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">03b // Faturalar</p>
-        <h1 className="mt-1 text-2xl font-semibold">e-Arşiv / e-Fatura</h1>
+        <p className="mono text-[10px] uppercase tracking-[0.16em] text-muted">03 // Fişler</p>
+        <h1 className="mt-1 text-2xl font-semibold">Satış fişleri</h1>
         {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
         {message ? <p className="mt-2 text-sm text-success">{message}</p> : null}
         <table className="mt-4 w-full text-sm">
           <thead>
             <tr className="border-b border-border-muted text-left text-muted">
               <th className="py-2">No</th>
-              <th>Tip</th>
               <th>Cari</th>
               <th>Durum</th>
               <th>Tutar</th>
@@ -148,49 +120,34 @@ export function InvoicesPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((inv) => {
-              const canGib =
-                !inv.okcSaleId && (inv.status === 'draft' || inv.status === 'queued');
-              return (
-                <tr key={inv.id} className="border-b border-border-muted/40">
-                  <td className="py-2 mono">{inv.invoiceNumber}</td>
-                  <td>{edocLabel(inv.edocumentType)}</td>
-                  <td>{inv.party?.title || '—'}</td>
-                  <td>{inv.status}</td>
-                  <td>{inv.total}</td>
-                  <td className="space-x-2 whitespace-nowrap text-xs">
-                    {inv.status === 'draft' || inv.status === 'rejected' ? (
-                      <button className="text-accent" onClick={() => void toReceipt(inv.id)}>
-                        Fişe çevir
-                      </button>
-                    ) : null}
-                    {canGib && inv.status === 'draft' ? (
-                      <button className="text-accent" onClick={() => void queue(inv.id)}>
-                        Kuyruk
-                      </button>
-                    ) : null}
-                    {canGib ? (
-                      <button className="text-accent" onClick={() => void send(inv.id)}>
-                        GİB
-                      </button>
-                    ) : null}
-                    {inv.orderId ? (
-                      <Link className="text-muted" to={`/siparisler/${inv.orderId}`}>
-                        Sipariş
-                      </Link>
-                    ) : null}
-                    <button className="text-muted" onClick={() => void printHtml(inv.id)}>
-                      Yazdır
+            {items.map((inv) => (
+              <tr key={inv.id} className="border-b border-border-muted/40">
+                <td className="py-2 mono">{inv.invoiceNumber}</td>
+                <td>{inv.party?.title || '—'}</td>
+                <td>{inv.status}</td>
+                <td>{inv.total}</td>
+                <td className="space-x-2 whitespace-nowrap text-xs">
+                  {inv.status === 'draft' && inv.direction === 'sales' ? (
+                    <button className="text-accent" onClick={() => void toInvoice(inv.id)}>
+                      Faturaya çevir
                     </button>
-                  </td>
-                </tr>
-              );
-            })}
+                  ) : null}
+                  {inv.orderId ? (
+                    <Link className="text-muted" to={`/siparisler/${inv.orderId}`}>
+                      Sipariş
+                    </Link>
+                  ) : null}
+                  <button className="text-muted" onClick={() => void printHtml(inv.id)}>
+                    Yazdır
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
       <form onSubmit={onSubmit} className="col-span-2 border border-border-muted bg-surface p-4">
-        <p className="mono text-[10px] uppercase text-muted">Taslak fatura</p>
+        <p className="mono text-[10px] uppercase text-muted">Yeni fiş</p>
         <select
           className="mt-3 w-full border border-border-muted bg-background px-3 py-2"
           value={direction}
@@ -198,14 +155,6 @@ export function InvoicesPage() {
         >
           <option value="sales">Satış</option>
           <option value="purchase">Alış</option>
-        </select>
-        <select
-          className="mt-2 w-full border border-border-muted bg-background px-3 py-2"
-          value={edocumentType}
-          onChange={(e) => setEdocumentType(e.target.value as 'earchive' | 'einvoice')}
-        >
-          <option value="earchive">e-Arşiv</option>
-          <option value="einvoice">e-Fatura</option>
         </select>
         <select
           className="mt-2 w-full border border-border-muted bg-background px-3 py-2"
@@ -247,10 +196,7 @@ export function InvoicesPage() {
             placeholder="KDV"
           />
         </div>
-        <button className="mt-4 w-full bg-accent py-2 text-white">Fatura kaydet</button>
-        <p className="mt-2 text-xs text-muted">
-          GİB gönderimi yalnızca online. ÖKC kaynaklı belgeler GİB’e gitmez.
-        </p>
+        <button className="mt-4 w-full bg-accent py-2 text-white">Fiş kaydet</button>
       </form>
     </div>
   );

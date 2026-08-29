@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { IyzicoService } from '@modules/payments/iyzico.service';
 import { PaytrService } from '@modules/payments/paytr.service';
 import { PaymentsService } from '@modules/payments/payments.service';
@@ -8,6 +8,7 @@ import { NotificationsModule } from '@modules/notifications/notifications.module
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CartModule } from '@modules/cart/cart.module';
 import { CouponsModule } from '@modules/coupons/coupons.module';
+import { AccountingModule } from '@modules/accounting/accounting.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CouponsModule } from '@modules/coupons/coupons.module';
     CatalogModule,
     CartModule,
     CouponsModule,
+    forwardRef(() => AccountingModule),
   ],
   controllers: [PaymentsController],
   providers: [

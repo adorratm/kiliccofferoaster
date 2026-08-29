@@ -13,7 +13,8 @@ const NAV: { title: string; items: NavItem[] }[] = [
     items: [
       { to: '/', label: 'Dashboard', code: '01' },
       { to: '/cari', label: 'Cari', code: '02' },
-      { to: '/faturalar', label: 'Faturalar', code: '03' },
+      { to: '/fisler', label: 'Fişler', code: '03' },
+      { to: '/faturalar', label: 'Faturalar', code: '03b' },
       { to: '/stok', label: 'Stok', code: '04' },
       { to: '/kasa', label: 'Kasa / Banka', code: '05' },
       { to: '/okc', label: 'ÖKC Import', code: '06' },

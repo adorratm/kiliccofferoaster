@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { api, asArray } from '../lib/api';
+import { api } from '../lib/api';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
 type Sale = {
@@ -12,6 +12,12 @@ type Sale = {
   total: string;
   cashAmount: string;
   cardAmount: string;
+  invoice?: {
+    id: string;
+    invoiceNumber: string;
+    edocumentType: string;
+    status: string;
+  } | null;
 };
 
 const SAMPLE =
@@ -25,8 +31,9 @@ export function OkcScreen() {
 
   async function load() {
     try {
-      const data = await api<unknown>('/accounting/okc?limit=100');
-      setItems(asArray<Sale>(data));
+      const data = await api<{ items?: Sale[] } | Sale[]>('/accounting/okc?limit=100');
+      const items = Array.isArray(data) ? data : data.items || [];
+      setItems(items);
       setError('');
     } catch {
       setError('ÖKC satışları yüklenemedi');
@@ -59,7 +66,7 @@ export function OkcScreen() {
         '/accounting/okc/import',
         { method: 'POST', body: { rows } },
       );
-      setMsg(`${result.imported} içe alındı, ${result.skipped} atlandı.`);
+      setMsg(`${result.imported} içe alındı, ${result.skipped} atlandı. İç fiş oluştu.`);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İçe aktarma başarısız');
@@ -70,8 +77,8 @@ export function OkcScreen() {
     <ScrollView style={screen}>
       <Text style={title}>ÖKC import</Text>
       <Text style={[muted, { marginTop: 6, lineHeight: 18 }]}>
-        Beko X30TR CSV / Z özeti. Nakit ve kart kasa hareketi oluşur; aynı satış için
-        e-arşiv kesilmez.
+        Beko X30TR CSV / Z özeti. Kasa hareketi + iç satış fişi oluşur; ÖKC için GİB
+        e-belgesi gönderilmez.
       </Text>
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
@@ -97,6 +104,11 @@ export function OkcScreen() {
           <Text style={{ color: colors.accentSoft, marginTop: 6 }}>
             {s.total} ₺ · nakit {s.cashAmount} · kart {s.cardAmount}
           </Text>
+          {s.invoice ? (
+            <Text style={[muted, { marginTop: 4 }]}>
+              İç fiş · {s.invoice.invoiceNumber}
+            </Text>
+          ) : null}
         </View>
       ))}
     </ScrollView>

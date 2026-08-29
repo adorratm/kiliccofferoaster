@@ -20,10 +20,18 @@ type Order = {
   items?: { productName: string; quantity: number; lineTotal: string | number }[];
 };
 
+type LinkedInvoice = {
+  id: string;
+  invoiceNumber: string;
+  edocumentType?: string;
+  status: string;
+};
+
 export function OrdersPage() {
   const { id: routeId } = useParams<{ id?: string }>();
   const [items, setItems] = useState<Order[]>([]);
   const [selected, setSelected] = useState<Order | null>(null);
+  const [linkedInvoice, setLinkedInvoice] = useState<LinkedInvoice | null>(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +47,14 @@ export function OrdersPage() {
   async function open(id: string) {
     const order = await api<Order>(`/orders/${id}`);
     setSelected(order);
+    try {
+      const inv = await api<{ items: LinkedInvoice[] }>(
+        `/accounting/invoices?orderId=${id}&limit=1`,
+      );
+      setLinkedInvoice(inv.items?.[0] ?? null);
+    } catch {
+      setLinkedInvoice(null);
+    }
   }
 
   useEffect(() => {
@@ -54,6 +70,19 @@ export function OrdersPage() {
     await api(`/orders/${selected.id}/status`, { method: 'PATCH', body: { status: next } });
     await open(selected.id);
     await load();
+  }
+
+  async function ensureReceipt() {
+    if (!selected) return;
+    try {
+      const inv = await api<LinkedInvoice>(
+        `/accounting/invoices/from-order/${selected.id}`,
+        { method: 'POST' },
+      );
+      setLinkedInvoice(inv);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fiş oluşturulamadı');
+    }
   }
 
   return (
@@ -115,6 +144,32 @@ export function OrdersPage() {
             <h2 className="mt-1 text-lg font-semibold">{selected.customerName}</h2>
             <p className="text-sm text-muted">{selected.customerEmail}</p>
             <p className="mt-2 text-xl text-accent">{formatMoney(selected.total)}</p>
+            <div className="mt-3 border border-border-muted p-3 text-sm">
+              <p className="mono text-[10px] uppercase text-muted">Satış fişi</p>
+              {linkedInvoice ? (
+                <p className="mt-1">
+                  <span className="mono">{linkedInvoice.invoiceNumber}</span>
+                  <span className="text-muted">
+                    {' '}
+                    ·{' '}
+                    {!linkedInvoice.edocumentType || linkedInvoice.edocumentType === 'none'
+                      ? 'Fiş'
+                      : linkedInvoice.edocumentType === 'einvoice'
+                        ? 'e-Fatura'
+                        : 'e-Arşiv'}{' '}
+                    · {linkedInvoice.status}
+                  </span>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  className="mt-1 text-accent"
+                  onClick={() => void ensureReceipt()}
+                >
+                  Fiş oluştur
+                </button>
+              )}
+            </div>
             <select
               className={inputClass}
               value={selected.status}

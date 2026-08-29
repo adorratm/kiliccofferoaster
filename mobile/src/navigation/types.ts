@@ -47,6 +47,7 @@ export type StaffStackParamList = {
   StaffLogin: undefined;
   Home: undefined;
   Parties: undefined;
+  Receipts: undefined;
   Invoices: undefined;
   Cash: undefined;
   Stock: undefined;

@@ -43,6 +43,7 @@ import { CashScreen } from '../screens/CashScreen';
 import { CustomersScreen, CustomerDetailScreen } from '../screens/CustomersScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { InvoicesScreen } from '../screens/InvoicesScreen';
+import { ReceiptsScreen } from '../screens/ReceiptsScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { PartiesScreen } from '../screens/PartiesScreen';
@@ -278,6 +279,7 @@ function StaffStackNavigator() {
         })}
       />
       <StaffStack.Screen name="Parties" component={PartiesScreen} options={{ title: 'Cari' }} />
+      <StaffStack.Screen name="Receipts" component={ReceiptsScreen} options={{ title: 'Fişler' }} />
       <StaffStack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Faturalar' }} />
       <StaffStack.Screen name="Cash" component={CashScreen} options={{ title: 'Kasa' }} />
       <StaffStack.Screen name="Stock" component={StockScreen} options={{ title: 'Stok' }} />

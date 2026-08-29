@@ -89,6 +89,12 @@ const STAFF_ORDER_STATUSES = [
 export function ShopOrdersScreen() {
   const [items, setItems] = useState<Order[]>([]);
   const [selected, setSelected] = useState<OrderDetail | null>(null);
+  const [linkedInvoice, setLinkedInvoice] = useState<{
+    id: string;
+    invoiceNumber: string;
+    edocumentType?: string;
+    status: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -98,6 +104,19 @@ export function ShopOrdersScreen() {
 
   async function open(id: string) {
     setSelected(await api<OrderDetail>(`/orders/${id}`));
+    try {
+      const inv = await api<{
+        items?: Array<{
+          id: string;
+          invoiceNumber: string;
+          edocumentType?: string;
+          status: string;
+        }>;
+      }>(`/accounting/invoices?orderId=${id}&limit=1`);
+      setLinkedInvoice(inv.items?.[0] ?? null);
+    } catch {
+      setLinkedInvoice(null);
+    }
   }
 
   async function setStatus(status: string) {
@@ -109,6 +128,21 @@ export function ShopOrdersScreen() {
       await load();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function ensureReceipt() {
+    if (!selected) return;
+    try {
+      const inv = await api<{
+        id: string;
+        invoiceNumber: string;
+        edocumentType?: string;
+        status: string;
+      }>(`/accounting/invoices/from-order/${selected.id}`, { method: 'POST' });
+      setLinkedInvoice(inv);
+    } catch {
+      /* ignore */
     }
   }
 
@@ -198,6 +232,27 @@ export function ShopOrdersScreen() {
             <Text style={{ color: colors.text, fontWeight: '600', marginTop: 4 }}>
               Toplam · {formatMoney(selected.total)}
             </Text>
+          </View>
+
+          <View style={{ marginTop: 14 }}>
+            <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 1 }}>
+              SATIŞ FİŞİ
+            </Text>
+            {linkedInvoice ? (
+              <Text style={[muted, { marginTop: 6 }]}>
+                {linkedInvoice.invoiceNumber} ·{' '}
+                {!linkedInvoice.edocumentType || linkedInvoice.edocumentType === 'none'
+                  ? 'Fiş'
+                  : linkedInvoice.edocumentType === 'einvoice'
+                    ? 'e-Fatura'
+                    : 'e-Arşiv'}{' '}
+                · {linkedInvoice.status}
+              </Text>
+            ) : (
+              <Pressable onPress={() => void ensureReceipt()} style={{ marginTop: 8 }}>
+                <Text style={{ color: colors.accentSoft }}>Fiş oluştur</Text>
+              </Pressable>
+            )}
           </View>
 
           <Text style={{ color: colors.accentSoft, marginTop: 16, fontSize: 11, letterSpacing: 1 }}>

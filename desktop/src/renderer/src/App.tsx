@@ -5,6 +5,7 @@ import { LoginPage } from './pages/Login';
 import { DashboardPage } from './pages/Dashboard';
 import { PartiesPage } from './pages/Parties';
 import { InvoicesPage } from './pages/Invoices';
+import { ReceiptsPage } from './pages/Receipts';
 import { StockPage } from './pages/Stock';
 import { CashPage } from './pages/Cash';
 import { OkcPage } from './pages/Okc';
@@ -54,6 +55,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/cari" element={<PartiesPage />} />
+                <Route path="/fisler" element={<ReceiptsPage />} />
                 <Route path="/faturalar" element={<InvoicesPage />} />
                 <Route path="/stok" element={<StockPage />} />
                 <Route path="/kasa" element={<CashPage />} />

@@ -194,6 +194,11 @@ export class CreateInvoiceDto {
   @IsUUID()
   orderId?: string;
 
+  @ApiPropertyOptional({ description: 'ÖKC satışına bağlı iç fiş' })
+  @IsOptional()
+  @IsUUID()
+  okcSaleId?: string;
+
   @ApiProperty({ example: '2026-08-18' })
   @IsDateString()
   issueDate!: string;
@@ -234,10 +239,48 @@ export class InvoiceQueryDto extends AccountingQueryDto {
   @IsEnum(InvoiceStatus)
   status?: InvoiceStatus;
 
+  @ApiPropertyOptional({ enum: EDocumentType })
+  @IsOptional()
+  @IsEnum(EDocumentType)
+  edocumentType?: EDocumentType;
+
+  @ApiPropertyOptional({
+    description: 'true = yalnızca fiş (none); false = e-arşiv/e-fatura',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (value === true || value === 'true' || value === '1') return true;
+    if (value === false || value === 'false' || value === '0') return false;
+    return undefined;
+  })
+  @IsBoolean()
+  receiptOnly?: boolean;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
   partyId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  orderId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  okcSaleId?: string;
+}
+
+export class ConvertToInvoiceDto {
+  @ApiPropertyOptional({
+    enum: [EDocumentType.EARCHIVE, EDocumentType.EINVOICE],
+    description: 'Belirtilmezse cari/VKN’ye göre seçilir',
+  })
+  @IsOptional()
+  @IsIn([EDocumentType.EARCHIVE, EDocumentType.EINVOICE])
+  edocumentType?: EDocumentType.EARCHIVE | EDocumentType.EINVOICE;
 }
 
 export class CreateCashAccountDto {

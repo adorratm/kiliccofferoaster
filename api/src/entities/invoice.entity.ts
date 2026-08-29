@@ -10,6 +10,7 @@ import { BaseEntity } from '@entities/base.entity';
 import type { Party } from '@entities/party.entity';
 import type { InvoiceLine } from '@entities/invoice-line.entity';
 import type { Order } from '@entities/order.entity';
+import type { OkcSale } from '@entities/okc-sale.entity';
 
 export enum InvoiceDirection {
   SALES = 'sales',
@@ -68,6 +69,14 @@ export class Invoice extends BaseEntity {
 
   @Column({ name: 'order_id', type: 'uuid', nullable: true })
   orderId!: string | null;
+
+  @ManyToOne('OkcSale', { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'okc_sale_id' })
+  okcSale!: OkcSale | null;
+
+  @Index({ unique: true, where: '"okc_sale_id" IS NOT NULL' })
+  @Column({ name: 'okc_sale_id', type: 'uuid', nullable: true })
+  okcSaleId!: string | null;
 
   @Column({ name: 'issue_date', type: 'date' })
   issueDate!: string;

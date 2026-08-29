@@ -48,19 +48,30 @@ export default function OrderDetailPage() {
   const [shipping, setShipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [linkedInvoice, setLinkedInvoice] = useState<{
+    id: string;
+    invoiceNumber: string;
+    edocumentType?: string;
+    status: string;
+  } | null>(null);
+  const [receiptBusy, setReceiptBusy] = useState(false);
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const [orderData, providerData, notifData] = await Promise.all([
+      const [orderData, providerData, notifData, invData] = await Promise.all([
         api<Order>(`/orders/${id}`),
         api<unknown>('/shipping/providers').catch(() => []),
         api<unknown>(`/notifications/order/${id}`).catch(() => []),
+        api<{ items?: Array<{ id: string; invoiceNumber: string; edocumentType?: string; status: string }> }>(
+          `/accounting/invoices?orderId=${id}&limit=1`,
+        ).catch(() => ({ items: [] })),
       ]);
       setOrder(orderData);
       setStatus(orderData.status);
       setNotifications(asArray(notifData));
+      setLinkedInvoice(invData.items?.[0] ?? null);
       const list = asArray<ShippingProviderConfig>(providerData).filter(
         (p) => p.isEnabled,
       );
@@ -125,6 +136,26 @@ export default function OrderDetailPage() {
       setError(err instanceof Error ? err.message : 'Kargo oluşturulamadı');
     } finally {
       setShipping(false);
+    }
+  }
+
+  async function ensureReceipt() {
+    setReceiptBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const inv = await api<{
+        id: string;
+        invoiceNumber: string;
+        edocumentType?: string;
+        status: string;
+      }>(`/accounting/invoices/from-order/${id}`, { method: 'POST' });
+      setLinkedInvoice(inv);
+      setMessage(`Fiş: ${inv.invoiceNumber}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fiş oluşturulamadı');
+    } finally {
+      setReceiptBusy(false);
     }
   }
 
@@ -279,6 +310,44 @@ export default function OrderDetailPage() {
                 ) : null}
               </div>
             ) : null}
+          </div>
+
+          <div className="border border-border-muted bg-surface p-4 space-y-2 text-sm">
+            <p className="mono text-[10px] uppercase text-muted">Satış fişi</p>
+            {linkedInvoice ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="mono font-medium">{linkedInvoice.invoiceNumber}</p>
+                  <p className="text-xs text-muted">
+                    {linkedInvoice.edocumentType === 'none' ||
+                    !linkedInvoice.edocumentType
+                      ? 'Fiş'
+                      : linkedInvoice.edocumentType === 'einvoice'
+                        ? 'e-Fatura'
+                        : 'e-Arşiv'}{' '}
+                    · {linkedInvoice.status}
+                  </p>
+                </div>
+                <Link
+                  href="/fisler"
+                  className="text-sm text-accent hover:underline"
+                >
+                  Fişler →
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-muted">Henüz fiş yok</p>
+                <button
+                  type="button"
+                  disabled={receiptBusy}
+                  onClick={() => void ensureReceipt()}
+                  className="text-sm text-accent hover:underline disabled:opacity-50"
+                >
+                  {receiptBusy ? 'Oluşturuluyor…' : 'Fiş oluştur'}
+                </button>
+              </div>
+            )}
           </div>
 
           <p className="text-xs text-muted">

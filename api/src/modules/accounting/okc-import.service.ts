@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { OkcSale } from '@entities/okc-sale.entity';
+import { Invoice } from '@entities/invoice.entity';
 import { CashAccount, CashAccountKind } from '@entities/cash-account.entity';
 import { CashEntry, CashEntryType } from '@entities/cash-entry.entity';
 import { ImportOkcDto } from '@modules/accounting/dto/accounting.dto';
 import { CashService } from '@modules/accounting/cash.service';
+import { InvoicesService } from '@modules/accounting/invoices.service';
 import { money } from '@modules/accounting/money';
 import {
   paginateResult,
@@ -13,14 +15,28 @@ import {
 } from '@common/utils/pagination';
 import { AccountingQueryDto } from '@modules/accounting/dto/accounting.dto';
 
+export type OkcSaleListItem = OkcSale & {
+  invoice: {
+    id: string;
+    invoiceNumber: string;
+    edocumentType: string;
+    status: string;
+  } | null;
+};
+
 @Injectable()
 export class OkcImportService {
+  private readonly logger = new Logger(OkcImportService.name);
+
   constructor(
     @InjectEntityManager() private readonly em: EntityManager,
     private readonly cash: CashService,
+    private readonly invoices: InvoicesService,
   ) {}
 
-  async list(query: AccountingQueryDto): Promise<PaginatedResult<OkcSale>> {
+  async list(
+    query: AccountingQueryDto,
+  ): Promise<PaginatedResult<OkcSaleListItem>> {
     const page = query.page && query.page > 0 ? query.page : 1;
     const limit = query.limit && query.limit > 0 ? Math.min(query.limit, 200) : 50;
     const qb = this.em.createQueryBuilder(OkcSale, 's');
@@ -35,7 +51,31 @@ export class OkcImportService {
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
-    return paginateResult(items, total, page, limit);
+
+    const invoices =
+      items.length > 0
+        ? await this.em.find(Invoice, {
+            where: { okcSaleId: In(items.map((s) => s.id)) },
+          })
+        : [];
+    const byOkc = new Map(
+      invoices
+        .filter((i) => i.okcSaleId)
+        .map((i) => [
+          i.okcSaleId as string,
+          {
+            id: i.id,
+            invoiceNumber: i.invoiceNumber,
+            edocumentType: i.edocumentType,
+            status: i.status,
+          },
+        ]),
+    );
+
+    const enriched: OkcSaleListItem[] = items.map((s) =>
+      Object.assign(s, { invoice: byOkc.get(s.id) ?? null }),
+    );
+    return paginateResult(enriched, total, page, limit);
   }
 
   async importRows(dto: ImportOkcDto): Promise<{ imported: number; skipped: number }> {
@@ -96,6 +136,15 @@ export class OkcImportService {
             source: 'okc',
             sourceId: sale.id,
           }),
+        );
+      }
+      try {
+        await this.invoices.fromOkcSale(sale.id);
+      } catch (err) {
+        this.logger.warn(
+          `ÖKC ${sale.externalKey} için otomatik fiş oluşturulamadı: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
         );
       }
       imported += 1;
