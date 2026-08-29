@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import { api, apiUrl, getToken, isOnline } from '../lib/api';
 import { enqueue } from '../lib/sync';
 
+type InvoiceLine = {
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  vatRate: string;
+};
+
 type Invoice = {
   id: string;
   invoiceNumber: string;
@@ -11,8 +18,10 @@ type Invoice = {
   total: string;
   issueDate: string;
   party?: { title?: string } | null;
+  partyId?: string | null;
   edocumentType?: string;
   orderId?: string | null;
+  lines?: InvoiceLine[];
 };
 
 type Party = { id: string; title: string; type: string };
@@ -20,6 +29,7 @@ type Party = { id: string; title: string; type: string };
 export function ReceiptsPage() {
   const [items, setItems] = useState<Invoice[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [direction, setDirection] = useState<'sales' | 'purchase'>('sales');
   const [partyId, setPartyId] = useState('');
   const [description, setDescription] = useState('');
@@ -32,13 +42,19 @@ export function ReceiptsPage() {
   async function load() {
     if (!isOnline()) {
       const cached = ((await window.ops.cacheGet('invoices')) as Invoice[]) || [];
-      setItems(cached.filter((i) => !i.edocumentType || i.edocumentType === 'none'));
+      setItems(
+        cached.filter(
+          (i) =>
+            (!i.edocumentType || i.edocumentType === 'none') &&
+            i.status !== 'cancelled',
+        ),
+      );
       return;
     }
     const data = await api<{ items: Invoice[] }>(
       '/accounting/invoices?limit=100&receiptOnly=true',
     );
-    setItems(data.items);
+    setItems(data.items.filter((i) => i.status !== 'cancelled'));
     const p = await api<{ items: Party[] }>('/accounting/parties?limit=100');
     setParties(p.items);
   }
@@ -47,31 +63,66 @@ export function ReceiptsPage() {
     void load().catch(() => setError('Liste alınamadı'));
   }, []);
 
+  function resetForm() {
+    setEditingId(null);
+    setDirection('sales');
+    setPartyId('');
+    setDescription('');
+    setQty('1');
+    setPrice('');
+    setVatRate('20');
+  }
+
+  function startEdit(inv: Invoice) {
+    const line = inv.lines?.[0];
+    setEditingId(inv.id);
+    setDirection(inv.direction === 'purchase' ? 'purchase' : 'sales');
+    setPartyId(inv.partyId || '');
+    setDescription(line?.description || '');
+    setQty(line?.quantity || '1');
+    setPrice(line?.unitPrice || '');
+    setVatRate(line?.vatRate || '20');
+    setError(null);
+    setMessage(null);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const payload = {
-      direction,
-      edocumentType: 'none' as const,
-      partyId: partyId || undefined,
-      issueDate: new Date().toISOString().slice(0, 10),
-      lines: [
-        {
-          description,
-          quantity: Number(qty),
-          unitPrice: Number(price),
-          vatRate: Number(vatRate),
-        },
-      ],
-    };
+    const lines = [
+      {
+        description,
+        quantity: Number(qty),
+        unitPrice: Number(price),
+        vatRate: Number(vatRate),
+      },
+    ];
     try {
-      if (isOnline()) {
-        await api('/accounting/invoices', { method: 'POST', body: payload });
+      if (editingId) {
+        if (!isOnline()) {
+          setError('Düzenleme için internet gerekli');
+          return;
+        }
+        await api(`/accounting/invoices/${editingId}`, {
+          method: 'PATCH',
+          body: { partyId: partyId || undefined, lines },
+        });
+        setMessage('Fiş güncellendi');
       } else {
-        await enqueue('invoices', 'upsert', payload);
+        const payload = {
+          direction,
+          edocumentType: 'none' as const,
+          partyId: partyId || undefined,
+          issueDate: new Date().toISOString().slice(0, 10),
+          lines,
+        };
+        if (isOnline()) {
+          await api('/accounting/invoices', { method: 'POST', body: payload });
+        } else {
+          await enqueue('invoices', 'upsert', payload);
+        }
+        setMessage('Satış fişi kaydedildi');
       }
-      setDescription('');
-      setPrice('');
-      setMessage('Satış fişi kaydedildi');
+      resetForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kayıt hatası');
@@ -82,9 +133,22 @@ export function ReceiptsPage() {
     try {
       await api(`/accounting/invoices/${id}/to-invoice`, { method: 'POST', body: {} });
       setMessage('Faturaya çevrildi — Faturalar ekranında görünür');
+      if (editingId === id) resetForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Dönüşüm hatası');
+    }
+  }
+
+  async function cancelReceipt(id: string) {
+    if (!window.confirm('Bu fişi iptal etmek istiyor musunuz?')) return;
+    try {
+      await api(`/accounting/invoices/${id}/cancel`, { method: 'POST' });
+      setMessage('Fiş iptal edildi');
+      if (editingId === id) resetForm();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'İptal hatası');
     }
   }
 
@@ -127,10 +191,20 @@ export function ReceiptsPage() {
                 <td>{inv.status}</td>
                 <td>{inv.total}</td>
                 <td className="space-x-2 whitespace-nowrap text-xs">
-                  {inv.status === 'draft' && inv.direction === 'sales' ? (
-                    <button className="text-accent" onClick={() => void toInvoice(inv.id)}>
-                      Faturaya çevir
-                    </button>
+                  {inv.status === 'draft' ? (
+                    <>
+                      <button className="text-accent" onClick={() => startEdit(inv)}>
+                        Düzenle
+                      </button>
+                      {inv.direction === 'sales' ? (
+                        <button className="text-accent" onClick={() => void toInvoice(inv.id)}>
+                          Faturaya
+                        </button>
+                      ) : null}
+                      <button className="text-danger" onClick={() => void cancelReceipt(inv.id)}>
+                        İptal
+                      </button>
+                    </>
                   ) : null}
                   {inv.orderId ? (
                     <Link className="text-muted" to={`/siparisler/${inv.orderId}`}>
@@ -147,15 +221,26 @@ export function ReceiptsPage() {
         </table>
       </div>
       <form onSubmit={onSubmit} className="col-span-2 border border-border-muted bg-surface p-4">
-        <p className="mono text-[10px] uppercase text-muted">Yeni fiş</p>
-        <select
-          className="mt-3 w-full border border-border-muted bg-background px-3 py-2"
-          value={direction}
-          onChange={(e) => setDirection(e.target.value as 'sales' | 'purchase')}
-        >
-          <option value="sales">Satış</option>
-          <option value="purchase">Alış</option>
-        </select>
+        <p className="mono text-[10px] uppercase text-muted">
+          {editingId ? 'Fiş düzenle' : 'Yeni fiş'}
+        </p>
+        {!editingId ? (
+          <select
+            className="mt-3 w-full border border-border-muted bg-background px-3 py-2"
+            value={direction}
+            onChange={(e) => setDirection(e.target.value as 'sales' | 'purchase')}
+          >
+            <option value="sales">Satış</option>
+            <option value="purchase">Alış</option>
+          </select>
+        ) : (
+          <p className="mt-3 text-xs text-muted">
+            No:{' '}
+            <span className="mono">
+              {items.find((i) => i.id === editingId)?.invoiceNumber}
+            </span>
+          </p>
+        )}
         <select
           className="mt-2 w-full border border-border-muted bg-background px-3 py-2"
           value={partyId}
@@ -196,7 +281,20 @@ export function ReceiptsPage() {
             placeholder="KDV"
           />
         </div>
-        <button className="mt-4 w-full bg-accent py-2 text-white">Fiş kaydet</button>
+        <div className="mt-4 flex gap-2">
+          <button className="flex-1 bg-accent py-2 text-white">
+            {editingId ? 'Güncelle' : 'Fiş kaydet'}
+          </button>
+          {editingId ? (
+            <button
+              type="button"
+              className="border border-border-muted px-3 py-2 text-muted"
+              onClick={resetForm}
+            >
+              Vazgeç
+            </button>
+          ) : null}
+        </div>
       </form>
     </div>
   );

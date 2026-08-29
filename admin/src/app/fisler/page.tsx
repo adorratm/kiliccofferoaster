@@ -6,6 +6,13 @@ import { API_URL, api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { asPaged } from '@/lib/utils';
 
+type InvoiceLine = {
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  vatRate: string;
+};
+
 type Invoice = {
   id: string;
   invoiceNumber: string;
@@ -16,7 +23,9 @@ type Invoice = {
   edocumentType?: string;
   okcSaleId?: string | null;
   orderId?: string | null;
+  partyId?: string | null;
   party?: { title?: string } | null;
+  lines?: InvoiceLine[];
 };
 
 type Party = { id: string; title: string; type: string };
@@ -30,6 +39,7 @@ function istanbulToday() {
 export default function ReceiptsAdminPage() {
   const [items, setItems] = useState<Invoice[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [direction, setDirection] = useState<'sales' | 'purchase'>('sales');
   const [partyId, setPartyId] = useState('');
   const [description, setDescription] = useState('');
@@ -49,7 +59,9 @@ export default function ReceiptsAdminPage() {
         api<unknown>('/accounting/invoices?limit=100&receiptOnly=true'),
         api<unknown>('/accounting/parties?limit=100'),
       ]);
-      setItems(asPaged<Invoice>(inv).items);
+      setItems(
+        asPaged<Invoice>(inv).items.filter((i) => i.status !== 'cancelled'),
+      );
       setParties(asPaged<Party>(p).items);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Liste alınamadı');
@@ -62,32 +74,65 @@ export default function ReceiptsAdminPage() {
     void load();
   }, [load]);
 
+  function resetForm() {
+    setEditingId(null);
+    setDirection('sales');
+    setPartyId('');
+    setDescription('');
+    setQty('1');
+    setPrice('');
+    setVatRate('20');
+  }
+
+  function startEdit(inv: Invoice) {
+    const line = inv.lines?.[0];
+    setEditingId(inv.id);
+    setDirection(inv.direction === 'purchase' ? 'purchase' : 'sales');
+    setPartyId(inv.partyId || '');
+    setDescription(line?.description || '');
+    setQty(line?.quantity || '1');
+    setPrice(line?.unitPrice || '');
+    setVatRate(line?.vatRate || '20');
+    setError(null);
+    setMessage(null);
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setMessage(null);
-    try {
-      await api('/accounting/invoices', {
-        method: 'POST',
-        body: {
-          direction,
-          edocumentType: 'none',
-          partyId: partyId || undefined,
-          issueDate: istanbulToday(),
-          lines: [
-            {
-              description,
-              quantity: Number(qty),
-              unitPrice: Number(price),
-              vatRate: Number(vatRate),
-            },
-          ],
+    const body = {
+      partyId: partyId || undefined,
+      lines: [
+        {
+          description,
+          quantity: Number(qty),
+          unitPrice: Number(price),
+          vatRate: Number(vatRate),
         },
-      });
-      setDescription('');
-      setPrice('');
-      setMessage('Satış fişi oluşturuldu');
+      ],
+    };
+    try {
+      if (editingId) {
+        await api(`/accounting/invoices/${editingId}`, {
+          method: 'PATCH',
+          body,
+        });
+        setMessage('Fiş güncellendi');
+      } else {
+        await api('/accounting/invoices', {
+          method: 'POST',
+          body: {
+            direction,
+            edocumentType: 'none',
+            issueDate: istanbulToday(),
+            ...body,
+          },
+        });
+        setMessage('Satış fişi oluşturuldu');
+      }
+      resetForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kayıt başarısız');
@@ -103,9 +148,22 @@ export default function ReceiptsAdminPage() {
         body: {},
       });
       setMessage('Faturaya çevrildi — Faturalar listesinde görünür');
+      if (editingId === id) resetForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Dönüşüm hatası');
+    }
+  }
+
+  async function cancelReceipt(id: string) {
+    if (!window.confirm('Bu fişi iptal etmek istiyor musunuz?')) return;
+    try {
+      await api(`/accounting/invoices/${id}/cancel`, { method: 'POST' });
+      setMessage('Fiş iptal edildi');
+      if (editingId === id) resetForm();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'İptal hatası');
     }
   }
 
@@ -131,7 +189,8 @@ export default function ReceiptsAdminPage() {
       <div>
         <h2 className="text-lg font-semibold">Fişler</h2>
         <p className="text-sm text-muted">
-          İç satış fişleri. Faturaya çevirmek için satırdaki aksiyonu kullanın.
+          Taslak fişleri düzenleyebilir veya iptal edebilirsiniz; faturaya
+          çevirebilirsiniz.
         </p>
       </div>
 
@@ -177,15 +236,32 @@ export default function ReceiptsAdminPage() {
                       <td className="px-3 py-2">{inv.status}</td>
                       <td className="px-3 py-2 text-accent">{inv.total} ₺</td>
                       <td className="space-x-2 whitespace-nowrap px-3 py-2 text-xs">
-                        {inv.status === 'draft' &&
-                        inv.direction === 'sales' ? (
-                          <button
-                            type="button"
-                            className="text-accent hover:underline"
-                            onClick={() => void toInvoice(inv.id)}
-                          >
-                            Faturaya çevir
-                          </button>
+                        {inv.status === 'draft' ? (
+                          <>
+                            <button
+                              type="button"
+                              className="text-accent hover:underline"
+                              onClick={() => startEdit(inv)}
+                            >
+                              Düzenle
+                            </button>
+                            {inv.direction === 'sales' ? (
+                              <button
+                                type="button"
+                                className="text-accent hover:underline"
+                                onClick={() => void toInvoice(inv.id)}
+                              >
+                                Faturaya
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="text-danger hover:underline"
+                              onClick={() => void cancelReceipt(inv.id)}
+                            >
+                              İptal
+                            </button>
+                          </>
                         ) : null}
                         {inv.orderId ? (
                           <Link
@@ -222,17 +298,28 @@ export default function ReceiptsAdminPage() {
           onSubmit={onSubmit}
           className="space-y-3 border border-border-muted p-4 lg:col-span-2"
         >
-          <p className="mono text-[10px] uppercase text-muted">Yeni fiş</p>
-          <select
-            value={direction}
-            onChange={(e) =>
-              setDirection(e.target.value as 'sales' | 'purchase')
-            }
-            className="w-full border border-border-muted bg-background px-3 py-2 text-sm"
-          >
-            <option value="sales">Satış</option>
-            <option value="purchase">Alış</option>
-          </select>
+          <p className="mono text-[10px] uppercase text-muted">
+            {editingId ? 'Fiş düzenle' : 'Yeni fiş'}
+          </p>
+          {!editingId ? (
+            <select
+              value={direction}
+              onChange={(e) =>
+                setDirection(e.target.value as 'sales' | 'purchase')
+              }
+              className="w-full border border-border-muted bg-background px-3 py-2 text-sm"
+            >
+              <option value="sales">Satış</option>
+              <option value="purchase">Alış</option>
+            </select>
+          ) : (
+            <p className="text-xs text-muted">
+              No:{' '}
+              <span className="mono text-foreground">
+                {items.find((i) => i.id === editingId)?.invoiceNumber}
+              </span>
+            </p>
+          )}
           <select
             value={partyId}
             onChange={(e) => setPartyId(e.target.value)}
@@ -273,13 +360,28 @@ export default function ReceiptsAdminPage() {
               className="border border-border-muted bg-background px-3 py-2 text-sm"
             />
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="btn-motion bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
-          >
-            {saving ? 'Kaydediliyor…' : 'Fiş oluştur'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-motion flex-1 bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
+            >
+              {saving
+                ? 'Kaydediliyor…'
+                : editingId
+                  ? 'Güncelle'
+                  : 'Fiş oluştur'}
+            </button>
+            {editingId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="border border-border-muted px-3 py-2 text-sm text-muted"
+              >
+                Vazgeç
+              </button>
+            ) : null}
+          </div>
         </form>
       </div>
     </div>

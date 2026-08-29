@@ -29,51 +29,82 @@ const empty = {
 export default function PartiesAdminPage() {
   const [items, setItems] = useState<Party[]>([]);
   const [form, setForm] = useState(empty);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [q, setQ] = useState('');
 
-  const load = useCallback(async (search = q) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const qs = new URLSearchParams({ limit: '100' });
-      if (search.trim()) qs.set('q', search.trim());
-      const data = await api<unknown>(`/accounting/parties?${qs}`);
-      setItems(asPaged<Party>(data).items);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Liste alınamadı');
-    } finally {
-      setLoading(false);
-    }
-  }, [q]);
+  const load = useCallback(
+    async (search = q) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const qs = new URLSearchParams({ limit: '100' });
+        if (search.trim()) qs.set('q', search.trim());
+        const data = await api<unknown>(`/accounting/parties?${qs}`);
+        setItems(asPaged<Party>(data).items);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Liste alınamadı');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [q],
+  );
 
   useEffect(() => {
     void load('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function resetForm() {
+    setEditingId(null);
+    setForm(empty);
+  }
+
+  function startEdit(p: Party) {
+    setEditingId(p.id);
+    setForm({
+      type: p.type,
+      title: p.title,
+      taxNumber: p.taxNumber || '',
+      taxOffice: p.taxOffice || '',
+      email: p.email || '',
+      phone: p.phone || '',
+      city: p.city || '',
+    });
+    setError(null);
+    setMessage(null);
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     setMessage(null);
+    const body = {
+      type: form.type,
+      title: form.title,
+      taxNumber: form.taxNumber || undefined,
+      taxOffice: form.taxOffice || undefined,
+      email: form.email || undefined,
+      phone: form.phone || undefined,
+      city: form.city || undefined,
+    };
     try {
-      await api('/accounting/parties', {
-        method: 'POST',
-        body: {
-          type: form.type,
-          title: form.title,
-          taxNumber: form.taxNumber || undefined,
-          taxOffice: form.taxOffice || undefined,
-          email: form.email || undefined,
-          phone: form.phone || undefined,
-          city: form.city || undefined,
-        },
-      });
-      setForm(empty);
-      setMessage('Cari kaydedildi');
+      if (editingId) {
+        await api(`/accounting/parties/${editingId}`, {
+          method: 'PATCH',
+          body,
+        });
+        setMessage('Cari güncellendi');
+      } else {
+        await api('/accounting/parties', { method: 'POST', body });
+        setMessage('Cari kaydedildi');
+      }
+      resetForm();
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kayıt başarısız');
@@ -82,12 +113,24 @@ export default function PartiesAdminPage() {
     }
   }
 
+  async function removeParty(id: string) {
+    if (!window.confirm('Bu cariyi silmek istiyor musunuz?')) return;
+    try {
+      await api(`/accounting/parties/${id}`, { method: 'DELETE' });
+      setMessage('Cari silindi');
+      if (editingId === id) resetForm();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Silinemedi');
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold">Cari hesaplar</h2>
         <p className="text-sm text-muted">
-          Müşteri ve tedarikçi kartları (muhasebe).
+          Müşteri ve tedarikçi kartları — oluştur, düzenle, sil.
         </p>
       </div>
 
@@ -133,6 +176,7 @@ export default function PartiesAdminPage() {
                     <th className="px-3 py-2">Tip</th>
                     <th className="px-3 py-2">VKN</th>
                     <th className="px-3 py-2">Bakiye</th>
+                    <th className="px-3 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -146,11 +190,27 @@ export default function PartiesAdminPage() {
                       <td className="px-3 py-2 text-accent">
                         {p.balance || '0.00'} ₺
                       </td>
+                      <td className="space-x-2 whitespace-nowrap px-3 py-2 text-xs">
+                        <button
+                          type="button"
+                          className="text-accent hover:underline"
+                          onClick={() => startEdit(p)}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          type="button"
+                          className="text-danger hover:underline"
+                          onClick={() => void removeParty(p.id)}
+                        >
+                          Sil
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {!items.length ? (
                     <tr>
-                      <td colSpan={4} className="px-3 py-6 text-muted">
+                      <td colSpan={5} className="px-3 py-6 text-muted">
                         Kayıt yok
                       </td>
                     </tr>
@@ -165,7 +225,9 @@ export default function PartiesAdminPage() {
           onSubmit={onSubmit}
           className="space-y-3 border border-border-muted p-4 lg:col-span-2"
         >
-          <p className="mono text-[10px] uppercase text-muted">Yeni cari</p>
+          <p className="mono text-[10px] uppercase text-muted">
+            {editingId ? 'Cari düzenle' : 'Yeni cari'}
+          </p>
           <select
             value={form.type}
             onChange={(e) =>
@@ -203,13 +265,28 @@ export default function PartiesAdminPage() {
               />
             </label>
           ))}
-          <button
-            type="submit"
-            disabled={saving}
-            className="btn-motion bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
-          >
-            {saving ? 'Kaydediliyor…' : 'Kaydet'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="btn-motion flex-1 bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
+            >
+              {saving
+                ? 'Kaydediliyor…'
+                : editingId
+                  ? 'Güncelle'
+                  : 'Kaydet'}
+            </button>
+            {editingId ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="border border-border-muted px-3 py-2 text-sm text-muted"
+              >
+                Vazgeç
+              </button>
+            ) : null}
+          </div>
         </form>
       </div>
     </div>
