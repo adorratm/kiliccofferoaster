@@ -64,6 +64,7 @@ export class OrdersService {
     userId?: string | null,
     sessionId?: string | null,
     paymentProvider?: 'paytr' | 'revenuecat',
+    options?: { notifyReceived?: boolean },
   ): Promise<Order> {
     if (!userId && !sessionId) {
       throw new BadRequestException('Kullanıcı veya X-Session-Id gerekli');
@@ -204,16 +205,9 @@ export class OrdersService {
     });
 
     try {
-      await this.notifications.enqueueOrderStatus(
-        order.id,
-        'order_received',
-        ['email', 'whatsapp'],
-        {
-          status: OrderStatus.PENDING_PAYMENT,
-          statusLabel: statusLabel(OrderStatus.PENDING_PAYMENT),
-        },
-      );
-      await this.notifications.enqueueOrderOpsAlert(order.id, 'received');
+      if (options?.notifyReceived !== false) {
+        await this.notifyOrderReceived(order.id);
+      }
     } catch (err) {
       this.logger.warn(
         `Order received notifications failed for ${order.id}: ${
@@ -223,6 +217,36 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  async notifyOrderReceived(orderId: string) {
+    await this.notifications.enqueueOrderStatus(
+      orderId,
+      'order_received',
+      ['email', 'whatsapp'],
+      {
+        status: OrderStatus.PENDING_PAYMENT,
+        statusLabel: statusLabel(OrderStatus.PENDING_PAYMENT),
+      },
+    );
+    await this.notifications.enqueueOrderOpsAlert(orderId, 'received');
+  }
+
+  /** Ödeme başlatılamadığında pending siparişi iptal eder (RevenueCat init hatası). */
+  async abandonPendingPaymentOrder(orderId: string) {
+    const order = await this.em.findOne(Order, {
+      where: { id: orderId },
+      relations: { payment: true },
+    });
+    if (!order || order.status !== OrderStatus.PENDING_PAYMENT) {
+      return;
+    }
+    order.status = OrderStatus.CANCELLED;
+    if (order.payment) {
+      order.payment.status = PaymentStatus.FAILED;
+      await this.em.save(order.payment);
+    }
+    await this.em.save(order);
   }
 
   async listForUser(userId: string): Promise<Order[]> {

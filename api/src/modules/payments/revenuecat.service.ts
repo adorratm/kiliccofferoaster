@@ -243,15 +243,27 @@ export class RevenuecatService {
   private resolveCheckoutProductId(total: number): string | null {
     const map = this.parseProductMap();
     if (!map.length) return null;
+
     const sorted = [...map].sort((a, b) => a.minAmount - b.minAmount);
+
+    // Test / dev: tek ürün → sipariş tutarından bağımsız (örn. Test Store $0.99)
+    if (sorted.length === 1) {
+      return sorted[0].productId;
+    }
+
+    // En küçük yeterli kademe (total ≤ tier minAmount)
     const match = sorted.find((entry) => entry.minAmount >= total);
     if (match) return match.productId;
+
+    // Total en yüksek kademeyi aşıyorsa yine en yüksek kademeyi kullan (prod tier listesi genişletilmeli)
     const max = sorted[sorted.length - 1];
     if (total > max.minAmount) {
-      throw new BadRequestException(
-        'Sipariş tutarı mobil mağaza ödeme limitini aşıyor',
+      this.logger.warn(
+        `Sipariş tutarı (${total}) en yüksek IAP kademesini (${max.minAmount}) aşıyor; ${max.productId} kullanılıyor`,
       );
+      return max.productId;
     }
+
     return sorted[0]?.productId ?? null;
   }
 

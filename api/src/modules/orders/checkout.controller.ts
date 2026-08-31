@@ -49,24 +49,31 @@ export class CheckoutController {
       user?.id,
       sessionId,
       isNativeMobile ? 'revenuecat' : undefined,
+      isNativeMobile ? { notifyReceived: false } : undefined,
     );
     const userIp = forwardedFor || req?.ip || req?.socket?.remoteAddress;
 
     if (isNativeMobile) {
-      const payment = await this.paymentsService.initializeRevenuecatCheckout({
-        orderId: order.id,
-      });
-      return {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        provider: payment.provider,
-        mock: payment.mock,
-        revenueCatAppUserId: payment.revenueCatAppUserId,
-        total: payment.total,
-        currency: payment.currency,
-        purchaseItems: payment.purchaseItems,
-        checkoutProductId: payment.checkoutProductId,
-      };
+      try {
+        const payment = await this.paymentsService.initializeRevenuecatCheckout({
+          orderId: order.id,
+        });
+        await this.ordersService.notifyOrderReceived(order.id);
+        return {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          provider: payment.provider,
+          mock: payment.mock,
+          revenueCatAppUserId: payment.revenueCatAppUserId,
+          total: payment.total,
+          currency: payment.currency,
+          purchaseItems: payment.purchaseItems,
+          checkoutProductId: payment.checkoutProductId,
+        };
+      } catch (err) {
+        await this.ordersService.abandonPendingPaymentOrder(order.id);
+        throw err;
+      }
     }
 
     const payment = (await this.paymentsService.initializeCheckout(
