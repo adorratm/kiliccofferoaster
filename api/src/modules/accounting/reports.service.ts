@@ -32,6 +32,7 @@ export class ReportsService {
 
     const web = await this.em
       .createQueryBuilder(Order, 'o')
+      .leftJoinAndSelect('o.payment', 'p')
       .where('o.status IN (:...st)', {
         st: [
           OrderStatus.PAID,
@@ -43,6 +44,11 @@ export class ReportsService {
       .andWhere('o.created_at >= :from', { from: `${from}T00:00:00.000Z` })
       .andWhere('o.created_at < :to', { to: `${to}T23:59:59.999Z` })
       .getMany();
+
+    const webRevenuecat = web.filter((o) => o.payment?.provider === 'revenuecat');
+    const webPaytr = web.filter(
+      (o) => !o.payment?.provider || o.payment.provider !== 'revenuecat',
+    );
 
     /** Manuel kasa girişi (ÖKC/PayTR eşlemesi çift sayılmasın). */
     const cashRegister = await this.em
@@ -59,12 +65,22 @@ export class ReportsService {
     const okcCash = okc.reduce((s, i) => s + parseMoney(i.cashAmount), 0);
     const okcCard = okc.reduce((s, i) => s + parseMoney(i.cardAmount), 0);
     const webTotal = web.reduce((s, i) => s + parseMoney(i.total), 0);
+    const webPaytrTotal = webPaytr.reduce((s, i) => s + parseMoney(i.total), 0);
+    const webRevenuecatTotal = webRevenuecat.reduce(
+      (s, i) => s + parseMoney(i.total),
+      0,
+    );
     const cashTotal = cashRegister.reduce((s, i) => s + parseMoney(i.amount), 0);
 
     return {
       from,
       to,
       web: { count: web.length, total: money(webTotal) },
+      webPaytr: { count: webPaytr.length, total: money(webPaytrTotal) },
+      webRevenuecat: {
+        count: webRevenuecat.length,
+        total: money(webRevenuecatTotal),
+      },
       invoices: { count: invoices.length, total: money(invoiceTotal), vat: money(invoiceVat) },
       okc: {
         count: okc.length,

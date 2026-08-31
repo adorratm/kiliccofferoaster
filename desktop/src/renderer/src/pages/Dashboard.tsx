@@ -5,12 +5,15 @@ import {
   CHART,
   mixPieOption,
   revenueSeriesOption,
+  revenuecatSeriesOption,
   statusPieOption,
   topProductsOption,
 } from '../lib/charts';
 
 type Turnover = {
   web: { count: number; total: string };
+  webPaytr?: { count: number; total: string };
+  webRevenuecat?: { count: number; total: string };
   invoices: { count: number; total: string };
   okc: { count: number; total: string; cash: string; card: string };
   cashRegister?: { count: number; total: string };
@@ -21,6 +24,7 @@ type DashboardStats = {
   ordersToday: number;
   revenueToday: number;
   cashRevenueToday?: number;
+  revenuecatRevenueToday?: number;
   totalRevenueToday?: number;
   pendingOrders: number;
   lowStockCount: number;
@@ -29,6 +33,7 @@ type DashboardStats = {
     orders: number;
     revenue: number;
     cashRevenue?: number;
+    revenuecatRevenue?: number;
   }[];
   byStatus: { status: string; label: string; count: number }[];
   topProducts: { name: string; quantity: number; revenue: number }[];
@@ -78,6 +83,12 @@ export function DashboardPage() {
             <EChart option={revenueSeriesOption(stats.series)} height={280} />
           </div>
         ) : null}
+        {stats?.series?.length ? (
+          <div className="col-span-2 border border-border-muted bg-surface p-4">
+            <p className="mono text-[10px] uppercase text-muted">RevenueCat · mobil</p>
+            <EChart option={revenuecatSeriesOption(stats.series)} height={280} />
+          </div>
+        ) : null}
         {stats?.byStatus?.length ? (
           <div className="col-span-2 border border-border-muted bg-surface p-4">
             <p className="mono text-[10px] uppercase text-muted">Sipariş durumları</p>
@@ -90,7 +101,14 @@ export function DashboardPage() {
             <EChart
               option={mixPieOption(
                 [
-                  { name: 'Web', value: Number(data.web.total) || 0 },
+                  {
+                    name: 'PayTR (web)',
+                    value: Number(data.webPaytr?.total ?? data.web.total) || 0,
+                  },
+                  {
+                    name: 'RevenueCat',
+                    value: Number(data.webRevenuecat?.total) || 0,
+                  },
                   { name: 'Fatura', value: Number(data.invoices.total) || 0 },
                   { name: 'ÖKC', value: Number(data.okc.total) || 0 },
                   {
@@ -98,7 +116,7 @@ export function DashboardPage() {
                     value: Number(data.cashRegister?.total) || 0,
                   },
                 ],
-                [CHART.accent, CHART.accentSoft, CHART.success, CHART.warning],
+                [CHART.accentSoft, CHART.revenuecat, CHART.accent, CHART.success, CHART.warning],
               )}
               height={260}
             />

@@ -46,3 +46,19 @@ export class RetryPaymentDto {
   @IsString()
   email?: string;
 }
+
+export class RevenuecatConfirmDto {
+  @ApiProperty()
+  @IsUUID()
+  orderId!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
+}

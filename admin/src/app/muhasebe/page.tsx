@@ -9,6 +9,8 @@ type Turnover = {
   from: string;
   to: string;
   web: { count: number; total: string };
+  webPaytr?: { count: number; total: string };
+  webRevenuecat?: { count: number; total: string };
   invoices: { count: number; total: string; vat: string };
   okc: { count: number; total: string; vat: string; cash: string; card: string };
   cashRegister?: { count: number; total: string };
@@ -57,11 +59,16 @@ export default function AccountingReportsPage() {
           <p className="mono text-[10px] uppercase text-muted">
             {turnover.from} → {turnover.to}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <Card
-              label="Web"
-              value={turnover.web.total}
-              meta={`${turnover.web.count} sipariş`}
+              label="PayTR (web)"
+              value={turnover.webPaytr?.total ?? turnover.web.total}
+              meta={`${turnover.webPaytr?.count ?? turnover.web.count} sipariş`}
+            />
+            <Card
+              label="RevenueCat"
+              value={turnover.webRevenuecat?.total || '0.00'}
+              meta={`${turnover.webRevenuecat?.count || 0} mobil`}
             />
             <Card
               label="Fatura"
@@ -85,7 +92,16 @@ export default function AccountingReportsPage() {
             <EChart
               option={mixPieOption(
                 [
-                  { name: 'Web', value: Number(turnover.web.total) || 0 },
+                  {
+                    name: 'PayTR (web)',
+                    value:
+                      Number(turnover.webPaytr?.total ?? turnover.web.total) ||
+                      0,
+                  },
+                  {
+                    name: 'RevenueCat',
+                    value: Number(turnover.webRevenuecat?.total) || 0,
+                  },
                   {
                     name: 'Fatura',
                     value: Number(turnover.invoices.total) || 0,
@@ -97,8 +113,9 @@ export default function AccountingReportsPage() {
                   },
                 ],
                 [
-                  CHART.accent,
                   CHART.accentSoft,
+                  CHART.revenuecat,
+                  CHART.accent,
                   CHART.success,
                   CHART.warning,
                 ],

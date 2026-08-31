@@ -5,11 +5,13 @@ import {
 } from '@react-navigation/native';
 import type { LinkingOptions } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AccountingSyncRuntime } from './src/components/AccountingSyncRuntime';
 import { BootGate } from './src/components/BootGate';
 import { LEGAL_LINKS } from './src/lib/cms';
+import { configureRevenueCat } from './src/lib/revenuecat';
 import { navigationRef } from './src/lib/navigation';
 import { ShopCartProvider } from './src/lib/shop-cart';
 import { StaffSessionProvider } from './src/lib/staff-session';
@@ -107,6 +109,10 @@ const linking: LinkingOptions<RootTabParamList> = {
 };
 
 export default function App() {
+  useEffect(() => {
+    void configureRevenueCat();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

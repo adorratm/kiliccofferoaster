@@ -1319,29 +1319,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bull-board/express@npm:9.5.0":
-  version: 9.5.0
-  resolution: "@bull-board/express@npm:9.5.0"
+"@bull-board/express@npm:9.6.0":
+  version: 9.6.0
+  resolution: "@bull-board/express@npm:9.6.0"
   dependencies:
-    "@bull-board/api": "npm:9.5.0"
-    "@bull-board/ui": "npm:9.5.0"
+    "@bull-board/api": "npm:9.6.0"
+    "@bull-board/ui": "npm:9.6.0"
     ejs: "npm:^6.0.1"
     express: "npm:^5.2.1"
-  checksum: 10c0/416825eddc1222fc8c4f088e151c5d9a697969ac511f550332028a9d551cb288069b7f93598005d643dbe4579bc3d31c6bf29307f46f4253efeb73698d39ccb0
+  checksum: 10c0/5ed0eaa27ab103e2bc58e3b525ef95e28811389648124bd91d8443260e5de3b76a468358e8fb1058fc9102dc45172984b851cae08ff474f254bf277e570ac2a1
   languageName: node
   linkType: hard
 
-"@bull-board/nestjs@npm:9.5.0":
-  version: 9.5.0
-  resolution: "@bull-board/nestjs@npm:9.5.0"
+"@bull-board/nestjs@npm:9.6.0":
+  version: 9.6.0
+  resolution: "@bull-board/nestjs@npm:9.6.0"
   peerDependencies:
-    "@bull-board/api": ^9.5.0
+    "@bull-board/api": ^9.6.0
     "@nestjs/bull-shared": ^10.0.0 || ^11.0.0
     "@nestjs/common": ^9.0.0 || ^10.0.0 || ^11.0.0
     "@nestjs/core": ^9.0.0 || ^10.0.0 || ^11.0.0
     reflect-metadata: ^0.1.13 || ^0.2.0
     rxjs: ^7.8.1
-  checksum: 10c0/60a35962f053761e3423bf6f10240734dd8178f14b3d7295bd1ae8cd30b0eb311ca85be1eb91ae6912830f64d1d3085a01b5624dc6fbe727abd3afb00c82c3d4
+  checksum: 10c0/f8acce0073314daba2478e56d3cb16d16de44265e4aad752e54225b65e310e4e5c0200bcac99a809778eb5d863971525cb0d2af8021d0d1bff9e2f4c2dbb7756
   languageName: node
   linkType: hard
 
@@ -3467,10 +3467,10 @@ __metadata:
   resolution: "@kilic/api@workspace:api"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.1121.0"
-    "@bull-board/api": "npm:9.5.0"
-    "@bull-board/express": "npm:9.5.0"
-    "@bull-board/nestjs": "npm:9.5.0"
-    "@bull-board/ui": "npm:9.5.0"
+    "@bull-board/api": "npm:9.6.0"
+    "@bull-board/express": "npm:9.6.0"
+    "@bull-board/nestjs": "npm:9.6.0"
+    "@bull-board/ui": "npm:9.6.0"
     "@eslint/eslintrc": "npm:^3.3.6"
     "@eslint/js": "npm:^10.0.1"
     "@nestjs/bull-shared": "npm:^12.0.0"
@@ -3626,6 +3626,7 @@ __metadata:
     react-dom: "npm:19.2.3"
     react-native: "npm:0.86.3"
     react-native-gesture-handler: "npm:~2.32.0"
+    react-native-purchases: "npm:^10.8.1"
     react-native-safe-area-context: "npm:~5.7.0"
     react-native-screens: "npm:~4.26.2"
     react-native-svg: "npm:15.15.5"
@@ -4645,6 +4646,29 @@ __metadata:
   dependencies:
     nanoid: "npm:^3.3.11"
   checksum: 10c0/eca376de83ed618d637c40ca6946f94de2c8bafe4edeaf873708f6a2a45759320692a9e86e1a5e53c2919594cc20b170775c2de22b947114cf125f66f5051b6c
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-js-hybrid-mappings@npm:18.33.1":
+  version: 18.33.1
+  resolution: "@revenuecat/purchases-js-hybrid-mappings@npm:18.33.1"
+  dependencies:
+    "@revenuecat/purchases-js": "npm:1.54.0"
+  checksum: 10c0/5b355d0873824d41d1ac6c0f77a511ef8264aad0596f572ffc6fe9a3fb15fb03b58e2779ffc33a56774f0c88492196d73ba91acb0ad78f9b833a5eda647b58e6
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-js@npm:1.54.0":
+  version: 1.54.0
+  resolution: "@revenuecat/purchases-js@npm:1.54.0"
+  checksum: 10c0/d67519146a24819292b59ac0220d0546dc1b4b64553fc4c10251ee4fa2709e64d4e07b3ea017fae9e1bed9e31565905deaab2c55e1642755ab71629da9342b87
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-typescript-internal@npm:18.33.1":
+  version: 18.33.1
+  resolution: "@revenuecat/purchases-typescript-internal@npm:18.33.1"
+  checksum: 10c0/8eff8c5bb70403538c2715c93e5a9cd86de14697f082d69e07bbe54bbd00cf1a2595d8e30c4e7986ddd8fc8506ffc45a90f20c27bb7ae608fb290e303abb4eba
   languageName: node
   linkType: hard
 
@@ -15301,6 +15325,23 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/f3d903a8ad1f053732f7cbfbd16891a6bc696f4d03428a334948587a203fdcfa29592f1fc6c4c03c175932febe9df1fce3eb40ddd54d2fa3de63cc939ccd0e85
+  languageName: node
+  linkType: hard
+
+"react-native-purchases@npm:^10.8.1":
+  version: 10.8.1
+  resolution: "react-native-purchases@npm:10.8.1"
+  dependencies:
+    "@revenuecat/purchases-js-hybrid-mappings": "npm:18.33.1"
+    "@revenuecat/purchases-typescript-internal": "npm:18.33.1"
+  peerDependencies:
+    react: ">= 16.6.3"
+    react-native: ">= 0.73.0"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 10c0/0badc64995ae625a7cccf6f9c3979b164da43a90ffec86be58a6abee5b4105bc7b0803b1599a80a7b848fda43b6f5113a7af4807312058b96f1ea78eb07b2ab2
   languageName: node
   linkType: hard
 

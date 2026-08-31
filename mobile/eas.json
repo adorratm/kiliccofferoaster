@@ -20,7 +20,9 @@
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.kiliccoffeeroaster.com.tr",
-        "EXPO_PUBLIC_SHOP_URL": "https://kiliccoffeeroaster.com.tr"
+        "EXPO_PUBLIC_SHOP_URL": "https://kiliccoffeeroaster.com.tr",
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "test_bbTLddMwjQYCccXGQhEHkjoHBBn",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY": "test_bbTLddMwjQYCccXGQhEHkjoHBBn"
       }
     },
     "production": {
@@ -30,7 +32,9 @@
       "android": { "buildType": "app-bundle" },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.kiliccoffeeroaster.com.tr",
-        "EXPO_PUBLIC_SHOP_URL": "https://kiliccoffeeroaster.com.tr"
+        "EXPO_PUBLIC_SHOP_URL": "https://kiliccoffeeroaster.com.tr",
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY": ""
       }
     }
   },

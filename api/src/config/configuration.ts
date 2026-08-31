@@ -80,6 +80,19 @@ export default () => ({
     baseUrl:
       process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com',
   },
+  revenuecat: {
+    /** RevenueCat REST API secret key (Project settings → API keys) */
+    secretApiKey: process.env.REVENUECAT_SECRET_API_KEY || '',
+    /** Webhook Authorization bearer (RevenueCat dashboard) */
+    webhookAuthKey: process.env.REVENUECAT_WEBHOOK_AUTH_KEY || '',
+    /** Kargo ücreti için App Store / Play consumable product id */
+    shippingProductId: process.env.REVENUECAT_SHIPPING_PRODUCT_ID || '',
+    /**
+     * Sipariş tutarı → tek ürün fallback (virgülle): 250:kilic_checkout_250,500:kilic_checkout_500
+     * Varyant SKU satın alımı mümkün değilse kullanılır.
+     */
+    productMap: process.env.REVENUECAT_PRODUCT_MAP || '',
+  },
   aws: {
     region: process.env.AWS_REGION || 'eu-central-1',
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',

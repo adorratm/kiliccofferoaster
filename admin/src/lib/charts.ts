@@ -10,6 +10,15 @@ export const CHART = {
   text: '#e5e2e1',
   border: '#57423d',
   surface: '#1c1b1b',
+  revenuecat: '#5b8def',
+};
+
+export type DashboardSeriesPoint = {
+  date: string;
+  orders: number;
+  revenue: number;
+  cashRevenue?: number;
+  revenuecatRevenue?: number;
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -46,14 +55,7 @@ export function baseOption(): EChartsOption {
   };
 }
 
-export function revenueSeriesOption(
-  series: {
-    date: string;
-    orders: number;
-    revenue: number;
-    cashRevenue?: number;
-  }[],
-): EChartsOption {
+export function revenueSeriesOption(series: DashboardSeriesPoint[]): EChartsOption {
   const labels = series.map((s) => {
     const [, m, d] = s.date.split('-');
     return `${d}.${m}`;
@@ -67,7 +69,7 @@ export function revenueSeriesOption(
       textStyle: { color: CHART.text },
     },
     legend: {
-      data: ['Toplam ciro', 'Kasa', 'Sipariş'],
+      data: ['Toplam ciro', 'PayTR (web)', 'RevenueCat', 'Kasa', 'Sipariş'],
       textStyle: { color: CHART.muted },
     },
     xAxis: { type: 'category', data: labels, ...axis },
@@ -99,6 +101,24 @@ export function revenueSeriesOption(
         ),
       },
       {
+        name: 'PayTR (web)',
+        type: 'bar',
+        stack: 'online',
+        itemStyle: { color: CHART.accentSoft },
+        data: series.map((s) =>
+          Math.round(
+            Math.max(0, s.revenue - (s.revenuecatRevenue || 0)),
+          ),
+        ),
+      },
+      {
+        name: 'RevenueCat',
+        type: 'bar',
+        stack: 'online',
+        itemStyle: { color: CHART.revenuecat },
+        data: series.map((s) => Math.round(s.revenuecatRevenue || 0)),
+      },
+      {
         name: 'Kasa',
         type: 'bar',
         itemStyle: { color: CHART.success },
@@ -108,8 +128,41 @@ export function revenueSeriesOption(
         name: 'Sipariş',
         type: 'bar',
         yAxisIndex: 1,
-        itemStyle: { color: CHART.accentSoft },
+        itemStyle: { color: CHART.muted },
         data: series.map((s) => s.orders),
+      },
+    ],
+  };
+}
+
+export function revenuecatSeriesOption(series: DashboardSeriesPoint[]): EChartsOption {
+  const labels = series.map((s) => {
+    const [, m, d] = s.date.split('-');
+    return `${d}.${m}`;
+  });
+  const hasData = series.some((s) => (s.revenuecatRevenue || 0) > 0);
+  return {
+    ...baseOption(),
+    legend: {
+      data: ['RevenueCat ciro'],
+      textStyle: { color: CHART.muted },
+    },
+    xAxis: { type: 'category', data: labels, ...axis },
+    yAxis: { type: 'value', name: '₺', ...axis },
+    series: [
+      {
+        name: 'RevenueCat ciro',
+        type: 'bar',
+        itemStyle: { color: CHART.revenuecat },
+        data: series.map((s) => Math.round(s.revenuecatRevenue || 0)),
+        markLine: hasData
+          ? undefined
+          : {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: CHART.border, type: 'dashed' },
+              data: [{ yAxis: 0 }],
+            },
       },
     ],
   };

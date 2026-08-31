@@ -9,6 +9,7 @@ import { Reveal, Stagger } from '@/components/Reveal';
 import { asArray, asPaged, formatMoney } from '@/lib/utils';
 import {
   revenueSeriesOption,
+  revenuecatSeriesOption,
   statusPieOption,
   topProductsOption,
 } from '@/lib/charts';
@@ -218,6 +219,14 @@ export default function DashboardPage() {
                 Son 14 gün · ciro ve sipariş
               </h3>
               <EChart option={revenueSeriesOption(series)} height={300} />
+            </Reveal>
+          ) : null}
+          {series?.length ? (
+            <Reveal delay={90} variant="up" className="border border-border-muted bg-surface p-4 lg:col-span-2">
+              <h3 className="mono text-[10px] uppercase tracking-widest text-muted">
+                RevenueCat · mobil mağaza
+              </h3>
+              <EChart option={revenuecatSeriesOption(series)} height={300} />
             </Reveal>
           ) : null}
           {byStatus?.length ? (

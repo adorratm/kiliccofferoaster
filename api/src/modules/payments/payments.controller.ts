@@ -18,6 +18,7 @@ import {
   InitializePaymentDto,
   PaymentCallbackDto,
   RetryPaymentDto,
+  RevenuecatConfirmDto,
 } from '@modules/payments/dto/payments.dto';
 import { Public } from '@common/decorators/public.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
@@ -122,6 +123,24 @@ export class PaymentsController {
   ) {
     await this.paytrService.handleNotification(body || {});
     return res.status(200).send('OK');
+  }
+
+  @Public()
+  @Post('revenuecat/confirm')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mobil mağaza satın almasını doğrula (RevenueCat)' })
+  confirmRevenuecat(@Body() dto: RevenuecatConfirmDto) {
+    return this.paymentsService.confirmRevenuecatPurchase(dto);
+  }
+
+  @Public()
+  @Post('revenuecat/webhook')
+  @ApiOperation({ summary: 'RevenueCat webhook — sipariş fulfillment' })
+  async revenuecatWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers('authorization') authHeader?: string,
+  ) {
+    return this.paymentsService.handleRevenuecatWebhook(body, authHeader);
   }
 
   @Public()

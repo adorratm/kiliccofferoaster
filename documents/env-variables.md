@@ -50,8 +50,13 @@ Detay: [kuyruklar.md](kuyruklar.md).
 | `PAYTR_TEST_MODE` | `1` sandbox |
 | `PAYTR_DEBUG_ON` | Debug |
 | `IYZICO_API_KEY` / `SECRET_KEY` / `BASE_URL` | Yedek sağlayıcı |
+| `REVENUECAT_SECRET_API_KEY` | Mobil satın alma REST doğrulama |
+| `REVENUECAT_WEBHOOK_AUTH_KEY` | Webhook Authorization bearer |
+| `REVENUECAT_SHIPPING_PRODUCT_ID` | Kargo IAP ürün id |
+| `REVENUECAT_PRODUCT_MAP` | Tutar→ürün fallback (`250:id,500:id`) |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `ANDROID_KEY` | Mobil SDK (EAS build env) |
 
-Bildirim URL: `{API_URL}/payments/paytr/callback`. Detay: [payments-iyzico.md](payments-iyzico.md).
+Bildirim URL: `{API_URL}/payments/paytr/callback`. RevenueCat webhook: `{API_URL}/payments/revenuecat/webhook`. Detay: [payments-iyzico.md](payments-iyzico.md).
 
 ## E-posta / WhatsApp
 

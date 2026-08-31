@@ -209,6 +209,24 @@ export async function shopCheckout(payload: CheckoutPayload) {
   });
 }
 
+export async function shopConfirmRevenueCat(payload: {
+  orderId: string;
+  productId?: string;
+  transactionId?: string;
+}) {
+  return api<{
+    success: boolean;
+    orderId: string;
+    orderNumber: string | null;
+    orderStatus?: string;
+  }>('/payments/revenuecat/confirm', {
+    method: 'POST',
+    auth: 'shop',
+    session: true,
+    body: payload,
+  });
+}
+
 export async function shopOrders(): Promise<Order[]> {
   const data = await api<Order[] | { items: Order[] }>('/orders/me', {
     auth: 'shop',

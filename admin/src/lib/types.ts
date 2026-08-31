@@ -197,6 +197,7 @@ export type DashboardStats = {
   lowStockCount?: number;
   revenueToday?: number;
   cashRevenueToday?: number;
+  revenuecatRevenueToday?: number;
   totalRevenueToday?: number;
   pendingOrders?: number;
   marketplaceSync?: {
@@ -210,6 +211,7 @@ export type DashboardStats = {
     orders: number;
     revenue: number;
     cashRevenue?: number;
+    revenuecatRevenue?: number;
   }[];
   byStatus?: { status: string; label: string; count: number }[];
   topProducts?: { name: string; quantity: number; revenue: number }[];

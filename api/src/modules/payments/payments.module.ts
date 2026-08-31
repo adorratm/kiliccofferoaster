@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { IyzicoService } from '@modules/payments/iyzico.service';
 import { PaytrService } from '@modules/payments/paytr.service';
+import { RevenuecatService } from '@modules/payments/revenuecat.service';
 import { PaymentsService } from '@modules/payments/payments.service';
 import { PaymentFulfillmentService } from '@modules/payments/payment-fulfillment.service';
 import { PaymentsController } from '@modules/payments/payments.controller';
@@ -23,8 +24,9 @@ import { AccountingModule } from '@modules/accounting/accounting.module';
     PaymentFulfillmentService,
     IyzicoService,
     PaytrService,
+    RevenuecatService,
     PaymentsService,
   ],
-  exports: [PaymentsService, IyzicoService, PaytrService],
+  exports: [PaymentsService, IyzicoService, PaytrService, RevenuecatService],
 })
 export class PaymentsModule {}

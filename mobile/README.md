@@ -10,6 +10,10 @@ yarn dev:mobile
 
 Mağaza adresi: `EXPO_PUBLIC_SHOP_URL` (yoksa `https://kiliccoffeeroaster.com.tr`).
 
+**Ödeme:** iOS / Android native uygulamada **RevenueCat** (App Store / Google Play in-app purchase). Web vitrin ve desktop **PayTR** kullanmaya devam eder. Mobil checkout `X-Client-Platform: ios|android` header’ı ile API’ye gider; PayTR WebView devre dışı kalır.
+
+RevenueCat env: `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`. API: `REVENUECAT_SECRET_API_KEY`, webhook `POST /payments/revenuecat/webhook`. Varyant SKU = App Store / Play product id; kargo için `REVENUECAT_SHIPPING_PRODUCT_ID`; alternatif tutar eşlemesi `REVENUECAT_PRODUCT_MAP`.
+
 ## Mağaza paketleri (EAS)
 
 ```bash

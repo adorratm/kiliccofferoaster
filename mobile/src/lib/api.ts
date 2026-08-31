@@ -113,6 +113,9 @@ export async function api<T>(
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(sessionId ? { 'X-Session-Id': sessionId } : {}),
+      ...(Platform.OS === 'ios' || Platform.OS === 'android'
+        ? { 'X-Client-Platform': Platform.OS }
+        : {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });

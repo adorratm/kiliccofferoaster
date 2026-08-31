@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   Switch,
@@ -18,6 +19,7 @@ import {
   cartSubtotal,
   shopAddresses,
   shopCheckout,
+  shopConfirmRevenueCat,
   shopCreateAddress,
   shopMe,
   shopShippingProviders,
@@ -26,6 +28,7 @@ import {
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
+import { purchaseOrderItems } from '../../lib/revenuecat';
 import { STORE_PICKUP_CODE } from '../../lib/shipping';
 import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
 import { btn, btnText, colors, input, muted } from '../../ui';
@@ -147,6 +150,7 @@ export function CheckoutScreen({ navigation }: Props) {
   }
 
   const isPickup = deliveryMethod === 'pickup';
+  const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
   const subtotal = cartSubtotal(cart);
   const selected = providers.find((p) => p.code === form.shippingProvider);
   const shippingFee = isPickup ? 0 : Number(selected?.fee || 0);
@@ -243,6 +247,42 @@ export function CheckoutScreen({ navigation }: Props) {
         notes: form.notes || undefined,
       });
       await refresh();
+
+      if (result.provider === 'revenuecat') {
+        if (result.mock) {
+          await shopConfirmRevenueCat({ orderId: result.orderId });
+          navigation.replace('OrderResult', {
+            ok: true,
+            orderNumber: result.orderNumber,
+          });
+          return;
+        }
+        const items =
+          result.purchaseItems?.length
+            ? result.purchaseItems
+            : result.checkoutProductId
+              ? [{ productId: result.checkoutProductId, quantity: 1 }]
+              : [];
+        if (!items.length) {
+          setError('Mağaza ödeme ürünleri yapılandırılmamış');
+          return;
+        }
+        const purchase = await purchaseOrderItems({
+          appUserId: result.revenueCatAppUserId || result.orderId,
+          items,
+        });
+        await shopConfirmRevenueCat({
+          orderId: result.orderId,
+          productId: purchase.productId,
+          transactionId: purchase.transactionId,
+        });
+        navigation.replace('OrderResult', {
+          ok: true,
+          orderNumber: result.orderNumber,
+        });
+        return;
+      }
+
       if (result.mock || (!result.token && !result.iframeUrl && !result.paymentPageUrl)) {
         navigation.replace('OrderResult', {
           ok: true,
@@ -471,6 +511,8 @@ export function CheckoutScreen({ navigation }: Props) {
         </>
       ) : null}
 
+      {!isNativeMobile ? (
+        <>
       <SectionLabel index={isPickup ? '03' : '05'} label="Kupon" />
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
         <TextInput
@@ -490,8 +532,10 @@ export function CheckoutScreen({ navigation }: Props) {
           {coupon.code} · −{formatMoney(coupon.discountAmount)}
         </Text>
       ) : null}
+        </>
+      ) : null}
 
-      <SectionLabel index={isPickup ? '04' : '06'} label="Onaylar" />
+      <SectionLabel index={isPickup ? (isNativeMobile ? '03' : '04') : (isNativeMobile ? '04' : '06')} label="Onaylar" />
       <Legal
         label="Mesafeli satış sözleşmesi"
         value={form.mesafeliSatis}
@@ -536,7 +580,9 @@ export function CheckoutScreen({ navigation }: Props) {
         disabled={submitting}
         style={[btn, { opacity: submitting ? 0.6 : 1 }]}
       >
-        <Text style={btnText}>{submitting ? 'Gönderiliyor…' : 'Ödemeyi başlat'}</Text>
+        <Text style={btnText}>
+          {submitting ? 'Gönderiliyor…' : 'App Store / Google Play ile öde'}
+        </Text>
       </Pressable>
     </ScrollView>
   );

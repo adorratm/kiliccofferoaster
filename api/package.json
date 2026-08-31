@@ -23,14 +23,15 @@
     "migration:generate": "yarn typeorm migration:generate",
     "migration:run": "yarn typeorm migration:run",
     "migration:revert": "yarn typeorm migration:revert",
-    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts"
+    "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
+    "iap:tiers": "node scripts/generate-revenuecat-iap-tiers.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1121.0",
-    "@bull-board/api": "9.5.0",
-    "@bull-board/express": "9.5.0",
-    "@bull-board/nestjs": "9.5.0",
-    "@bull-board/ui": "9.5.0",
+    "@bull-board/api": "9.6.0",
+    "@bull-board/express": "9.6.0",
+    "@bull-board/nestjs": "9.6.0",
+    "@bull-board/ui": "9.6.0",
     "@nestjs/bull-shared": "^12.0.0",
     "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.0.1",

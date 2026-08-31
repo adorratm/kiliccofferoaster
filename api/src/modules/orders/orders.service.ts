@@ -63,6 +63,7 @@ export class OrdersService {
     dto: CreateOrderDto,
     userId?: string | null,
     sessionId?: string | null,
+    paymentProvider?: 'paytr' | 'revenuecat',
   ): Promise<Order> {
     if (!userId && !sessionId) {
       throw new BadRequestException('Kullanıcı veya X-Session-Id gerekli');
@@ -94,6 +95,12 @@ export class OrdersService {
 
     let discountAmount = 0;
     let couponCode: string | null = null;
+    if (paymentProvider === 'revenuecat' && dto.couponCode?.trim()) {
+      throw new BadRequestException(
+        'Mobil uygulamada kupon kullanımı henüz desteklenmiyor',
+      );
+    }
+
     if (dto.couponCode?.trim()) {
       const preview = await this.coupons.validate(
         {
@@ -181,7 +188,7 @@ export class OrdersService {
 
       const payment = tx.create(Payment, {
         orderId: created.id,
-        provider: 'paytr',
+        provider: paymentProvider || 'paytr',
         status: PaymentStatus.PENDING,
         amount: total.toFixed(2),
         currency: 'TRY',
