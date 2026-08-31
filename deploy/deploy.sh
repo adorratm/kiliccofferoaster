@@ -118,14 +118,42 @@ ensure_swap() {
 snapshot_rollback() {
   local cname="${1}"
   local image_live="${2}"
-  local img
-  img="$(docker inspect -f '{{.Image}}' "${cname}" 2>/dev/null || true)"
-  if [[ -z "${img}" ]]; then
+  local image_rollback="${image_live%:live}:rollback"
+  local img ref
+
+  if ! docker inspect "${cname}" >/dev/null 2>&1; then
     echo "  (snapshot atlandı: ${cname} yok — ilk deploy?)"
     return 0
   fi
-  docker tag "${img}" "${image_live%:live}:rollback"
-  echo "  Rollback snapshot: ${image_live%:live}:rollback ← ${img:0:19}"
+
+  tag_rollback() {
+    local source="${1}"
+    local label="${2}"
+    if docker image inspect "${source}" >/dev/null 2>&1; then
+      docker tag "${source}" "${image_rollback}"
+      echo "  Rollback snapshot: ${image_rollback} ← ${label}"
+      return 0
+    fi
+    return 1
+  }
+
+  img="$(docker inspect -f '{{.Image}}' "${cname}")"
+  if tag_rollback "${img}" "${img:0:19}"; then
+    return 0
+  fi
+
+  # prune sonrası .Image SHA silinmiş olabilir; container hâlâ ayaktadır
+  ref="$(docker inspect -f '{{.Config.Image}}' "${cname}")"
+  if tag_rollback "${ref}" "${ref}"; then
+    return 0
+  fi
+
+  if tag_rollback "${image_live}" "${image_live}"; then
+    return 0
+  fi
+
+  echo "  UYARI: ${cname} için rollback snapshot alınamadı (image silinmiş?). Deploy devam ediyor."
+  return 0
 }
 
 rollback_service() {
