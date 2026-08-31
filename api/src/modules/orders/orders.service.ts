@@ -43,6 +43,13 @@ import {
   paginateResult,
   PaginatedResult,
 } from '@common/utils/pagination';
+import { calculateOrderTax } from '@modules/orders/order-tax';
+import { parseMoney } from '@modules/accounting/money';
+import { AccountingSettings } from '@entities/accounting-settings.entity';
+import {
+  calculatePaytrSettlement,
+  PaytrSettlement,
+} from '@modules/payments/paytr-settlement';
 
 const RETURN_WINDOW_DAYS = 14;
 
@@ -124,7 +131,9 @@ export class OrdersService {
       afterDiscount,
     );
     const { taxAmount, total } = this.calculateTotals(
-      afterDiscount,
+      cart!.items,
+      subtotal,
+      discountAmount,
       shippingFee,
     );
 
@@ -296,13 +305,24 @@ export class OrdersService {
     return paginateResult(items, total, page, limit);
   }
 
-  async findById(id: string): Promise<Order> {
+  async findById(
+    id: string,
+    options?: { staffExtras?: boolean },
+  ): Promise<Order> {
     const order = await this.em.findOne(Order, {
       where: { id },
-      relations: { items: true, payment: true, shipments: true },
+      relations: {
+        items: { product: true },
+        payment: true,
+        shipments: true,
+      },
     });
     if (!order) {
       throw new NotFoundException('Sipariş bulunamadı');
+    }
+    this.applyComputedTax(order);
+    if (options?.staffExtras) {
+      await this.attachPaymentSettlement(order);
     }
     return order;
   }
@@ -313,11 +333,12 @@ export class OrdersService {
         orderNumber: dto.orderNumber,
         customerEmail: dto.email,
       },
-      relations: { items: true, shipments: true },
+      relations: { items: { product: true }, shipments: true },
     });
     if (!order) {
       throw new NotFoundException('Sipariş bulunamadı');
     }
+    this.applyComputedTax(order);
 
     const ship = order.shippingAddress || {};
     return {
@@ -759,17 +780,58 @@ export class OrdersService {
     };
   }
 
-  private calculateTotals(subtotal: number, shippingFee: number) {
-    const rate = this.config.get<number>('tax.ratePercent') ?? 20;
+  private calculateTotals(
+    items: CartItem[],
+    subtotal: number,
+    discountAmount: number,
+    shippingFee: number,
+  ) {
+    const fallback = this.config.get<number>('tax.ratePercent') ?? 20;
     const included = this.config.get<boolean>('tax.included') !== false;
-    const net = subtotal + shippingFee;
+    return calculateOrderTax({
+      items: items.map((item) => ({
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        vatRate: item.product?.vatRate,
+      })),
+      subtotal,
+      discountAmount,
+      shippingFee,
+      fallbackRatePercent: fallback,
+      taxIncluded: included,
+    });
+  }
 
-    if (included) {
-      const taxAmount = rate > 0 ? (net * rate) / (100 + rate) : 0;
-      return { taxAmount, total: net };
-    }
+  /** Mevcut siparişlerde gösterim — DB’deki yanlış %20 KDV’yi düzeltir */
+  private applyComputedTax(order: Order): void {
+    if (!order.items?.length) return;
+    const fallback = this.config.get<number>('tax.ratePercent') ?? 20;
+    const included = this.config.get<boolean>('tax.included') !== false;
+    const { taxAmount } = calculateOrderTax({
+      items: order.items.map((item) => ({
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        vatRate: item.product?.vatRate,
+      })),
+      subtotal: parseMoney(order.subtotal),
+      discountAmount: parseMoney(order.discountAmount),
+      shippingFee: parseMoney(order.shippingFee),
+      fallbackRatePercent: fallback,
+      taxIncluded: included,
+    });
+    order.taxAmount = taxAmount.toFixed(2);
+  }
 
-    const taxAmount = (net * rate) / 100;
-    return { taxAmount, total: net + taxAmount };
+  /** PayTR ödemelerinde panel komisyon oranına göre hesaba geçecek tutar. */
+  private async attachPaymentSettlement(order: Order): Promise<void> {
+    if (order.payment?.provider !== 'paytr') return;
+    if (order.payment.status !== PaymentStatus.SUCCESS) return;
+
+    const settings = await this.em.findOne(AccountingSettings, { where: {} });
+    const rate = parseMoney(settings?.paytrCommissionRatePercent ?? '2.19');
+    const gross = parseMoney(order.payment.amount || order.total);
+    const settlement = calculatePaytrSettlement(gross, rate);
+    (order as Order & { paymentSettlement?: PaytrSettlement }).paymentSettlement =
+      settlement;
   }
 }

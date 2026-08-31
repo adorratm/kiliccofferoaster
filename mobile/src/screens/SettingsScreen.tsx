@@ -11,6 +11,7 @@ type Settings = {
   city?: string | null;
   earchivePrefix: string;
   einvoicePrefix: string;
+  paytrCommissionRatePercent?: string | number;
 };
 
 const FIELDS = [
@@ -21,6 +22,7 @@ const FIELDS = [
   ['city', 'Şehir'],
   ['earchivePrefix', 'e-Arşiv ön ek'],
   ['einvoicePrefix', 'e-Fatura ön ek'],
+  ['paytrCommissionRatePercent', 'PayTR komisyon (%)'],
 ] as const;
 
 export function SettingsScreen() {
@@ -112,8 +114,9 @@ export function SettingsScreen() {
         <View key={key}>
           <Text style={[muted, { marginTop: 14 }]}>{label}</Text>
           <TextInput
-            value={form[key] || ''}
+            value={String(form[key] ?? (key === 'paytrCommissionRatePercent' ? 2.19 : ''))}
             onChangeText={(v) => setForm({ ...form, [key]: v })}
+            keyboardType={key === 'paytrCommissionRatePercent' ? 'decimal-pad' : 'default'}
             placeholderTextColor={colors.muted}
             style={input}
           />

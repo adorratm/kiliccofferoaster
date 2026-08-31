@@ -351,6 +351,22 @@ export default function OrderDetailPage() {
                 ) : null}
               </div>
             ) : null}
+            {order.paymentSettlement ? (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">
+                    PayTR komisyon ({order.paymentSettlement.commissionRatePercent}%)
+                  </span>
+                  <span className="text-muted">
+                    −{formatMoney(order.paymentSettlement.commissionAmount, currency)}
+                  </span>
+                </div>
+                <div className="flex justify-between border-t border-border-muted pt-2 font-medium text-accent">
+                  <span>Hesaba geçen</span>
+                  <span>{formatMoney(order.paymentSettlement.netAmount, currency)}</span>
+                </div>
+              </>
+            ) : null}
           </div>
 
           <div className="border border-border-muted bg-surface p-4 space-y-2 text-sm">

@@ -9,6 +9,7 @@ type Settings = {
   city?: string | null;
   earchivePrefix: string;
   einvoicePrefix: string;
+  paytrCommissionRatePercent?: string | number;
 };
 
 type OpsAccessRequest = {
@@ -267,13 +268,18 @@ export function SettingsPage() {
             ['city', 'Şehir'],
             ['earchivePrefix', 'e-Arşiv ön ek'],
             ['einvoicePrefix', 'e-Fatura ön ek'],
+            ['paytrCommissionRatePercent', 'PayTR komisyon (%)'],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className="mt-3 block text-sm">
             <span className="mono text-[10px] uppercase text-muted">{label}</span>
             <input
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
-              value={form[key] || ''}
+              type={key === 'paytrCommissionRatePercent' ? 'number' : 'text'}
+              min={key === 'paytrCommissionRatePercent' ? 0 : undefined}
+              max={key === 'paytrCommissionRatePercent' ? 100 : undefined}
+              step={key === 'paytrCommissionRatePercent' ? 0.01 : undefined}
+              value={form[key] ?? (key === 'paytrCommissionRatePercent' ? 2.19 : '')}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
             />
           </label>

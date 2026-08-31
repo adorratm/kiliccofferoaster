@@ -99,6 +99,14 @@ export type OrderPayment = {
   paymentId?: string | null;
 };
 
+export type PaytrSettlement = {
+  provider: 'paytr';
+  grossAmount: string;
+  commissionRatePercent: string;
+  commissionAmount: string;
+  netAmount: string;
+};
+
 export type Order = {
   id: string;
   orderNumber: string;
@@ -119,6 +127,7 @@ export type Order = {
   notes?: string | null;
   legalAcceptances?: Record<string, unknown> | null;
   payment?: OrderPayment | null;
+  paymentSettlement?: PaytrSettlement | null;
   items?: OrderItem[];
   shipments?: Shipment[];
   userId?: string | null;

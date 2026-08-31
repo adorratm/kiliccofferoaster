@@ -16,7 +16,19 @@ type Order = {
   customerName: string;
   customerEmail: string;
   total: string | number;
+  subtotal?: string | number;
+  shippingFee?: string | number;
+  discountAmount?: string | number;
+  taxAmount?: string | number;
+  currency?: string;
   createdAt?: string;
+  payment?: { provider?: string; status?: string; paymentId?: string | null };
+  paymentSettlement?: {
+    commissionRatePercent: string;
+    commissionAmount: string;
+    netAmount: string;
+  };
+  couponCode?: string | null;
   items?: { productName: string; quantity: number; lineTotal: string | number }[];
 };
 
@@ -184,7 +196,67 @@ export function OrdersPage() {
             <p className="mono text-[10px] uppercase text-muted">{selected.orderNumber}</p>
             <h2 className="mt-1 text-lg font-semibold">{selected.customerName}</h2>
             <p className="text-sm text-muted">{selected.customerEmail}</p>
-            <p className="mt-2 text-xl text-accent">{formatMoney(selected.total)}</p>
+            <div className="mt-3 space-y-2 border border-border-muted p-3 text-sm">
+              <p className="mono text-[10px] uppercase text-muted">Özet</p>
+              {selected.subtotal != null ? (
+                <div className="flex justify-between">
+                  <span className="text-muted">Ara toplam</span>
+                  <span>{formatMoney(selected.subtotal)}</span>
+                </div>
+              ) : null}
+              {selected.shippingFee != null ? (
+                <div className="flex justify-between">
+                  <span className="text-muted">Kargo</span>
+                  <span>{formatMoney(selected.shippingFee)}</span>
+                </div>
+              ) : null}
+              {Number(selected.discountAmount) > 0 ? (
+                <div className="flex justify-between text-accent">
+                  <span>
+                    İndirim
+                    {selected.couponCode ? ` (${selected.couponCode})` : ''}
+                  </span>
+                  <span>−{formatMoney(selected.discountAmount!)}</span>
+                </div>
+              ) : null}
+              {Number(selected.taxAmount) > 0 ? (
+                <div className="flex justify-between">
+                  <span className="text-muted">Vergi</span>
+                  <span>{formatMoney(selected.taxAmount!)}</span>
+                </div>
+              ) : null}
+              <div className="flex justify-between border-t border-border-muted pt-2 font-medium">
+                <span>Toplam</span>
+                <span>{formatMoney(selected.total)}</span>
+              </div>
+              {selected.payment ? (
+                <div className="border-t border-border-muted pt-3 text-xs text-muted">
+                  <p className="mono uppercase text-accent">
+                    Ödeme · {selected.payment.provider || '—'} ·{' '}
+                    {selected.payment.status || '—'}
+                  </p>
+                  {selected.payment.paymentId ? (
+                    <p className="mono mt-1">ID: {selected.payment.paymentId}</p>
+                  ) : null}
+                </div>
+              ) : null}
+              {selected.paymentSettlement ? (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted">
+                      PayTR komisyon ({selected.paymentSettlement.commissionRatePercent}%)
+                    </span>
+                    <span className="text-muted">
+                      −{formatMoney(selected.paymentSettlement.commissionAmount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t border-border-muted pt-2 font-medium text-accent">
+                    <span>Hesaba geçen</span>
+                    <span>{formatMoney(selected.paymentSettlement.netAmount)}</span>
+                  </div>
+                </>
+              ) : null}
+            </div>
             <div className="mt-3 border border-border-muted p-3 text-sm">
               <p className="mono text-[10px] uppercase text-muted">Satış fişi</p>
               {linkedInvoice ? (

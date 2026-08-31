@@ -71,9 +71,17 @@ type OrderDetail = Order & {
   subtotal?: string | number;
   shippingFee?: string | number;
   discountAmount?: string | number;
+  taxAmount?: string | number;
+  couponCode?: string | null;
   shippingAddress?: Record<string, string>;
   shippingProvider?: string | null;
   notes?: string | null;
+  payment?: { provider?: string; status?: string; paymentId?: string | null };
+  paymentSettlement?: {
+    commissionRatePercent: string;
+    commissionAmount: string;
+    netAmount: string;
+  };
   items?: OrderItem[];
 };
 
@@ -86,6 +94,23 @@ const STAFF_ORDER_STATUSES = [
   'cancelled',
   'refunded',
 ] as const;
+
+function SummaryRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={accent ? { color: colors.accentSoft } : muted}>{label}</Text>
+      <Text style={accent ? { color: colors.accentSoft } : { color: colors.text }}>{value}</Text>
+    </View>
+  );
+}
 
 export function ShopOrdersScreen() {
   const [items, setItems] = useState<Order[]>([]);
@@ -295,15 +320,88 @@ export function ShopOrdersScreen() {
             </View>
           ) : null}
 
-          <View style={{ marginTop: 14, gap: 4 }}>
-            <Text style={muted}>Ara toplam · {formatMoney(selected.subtotal)}</Text>
-            <Text style={muted}>Kargo · {formatMoney(selected.shippingFee)}</Text>
-            {Number(selected.discountAmount) ? (
-              <Text style={muted}>İndirim · −{formatMoney(selected.discountAmount)}</Text>
-            ) : null}
-            <Text style={{ color: colors.text, fontWeight: '600', marginTop: 4 }}>
-              Toplam · {formatMoney(selected.total)}
+          <View
+            style={{
+              marginTop: 14,
+              borderWidth: 1,
+              borderColor: colors.borderMuted,
+              padding: 14,
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 1 }}>
+              ÖZET
             </Text>
+            <SummaryRow label="Ara toplam" value={formatMoney(selected.subtotal)} />
+            <SummaryRow label="Kargo" value={formatMoney(selected.shippingFee)} />
+            {Number(selected.discountAmount) ? (
+              <SummaryRow
+                label={`İndirim${selected.couponCode ? ` (${selected.couponCode})` : ''}`}
+                value={`−${formatMoney(selected.discountAmount)}`}
+                accent
+              />
+            ) : null}
+            {Number(selected.taxAmount) > 0 ? (
+              <SummaryRow label="Vergi" value={formatMoney(selected.taxAmount)} />
+            ) : null}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                borderTopWidth: 1,
+                borderTopColor: colors.borderMuted,
+                paddingTop: 8,
+                marginTop: 4,
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: '700' }}>Toplam</Text>
+              <Text style={{ color: colors.text, fontWeight: '700' }}>
+                {formatMoney(selected.total)}
+              </Text>
+            </View>
+            {selected.payment ? (
+              <View
+                style={{
+                  borderTopWidth: 1,
+                  borderTopColor: colors.borderMuted,
+                  paddingTop: 8,
+                  marginTop: 4,
+                }}
+              >
+                <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 0.5 }}>
+                  ÖDEME · {(selected.payment.provider || '—').toUpperCase()} ·{' '}
+                  {(selected.payment.status || '—').toUpperCase()}
+                </Text>
+                {selected.payment.paymentId ? (
+                  <Text style={[muted, { marginTop: 4, fontSize: 11 }]}>
+                    ID: {selected.payment.paymentId}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+            {selected.paymentSettlement ? (
+              <>
+                <SummaryRow
+                  label={`PayTR komisyon (${selected.paymentSettlement.commissionRatePercent}%)`}
+                  value={`−${formatMoney(selected.paymentSettlement.commissionAmount)}`}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    borderTopWidth: 1,
+                    borderTopColor: colors.borderMuted,
+                    paddingTop: 8,
+                    marginTop: 4,
+                  }}
+                >
+                  <Text style={{ color: colors.accentSoft, fontWeight: '700' }}>Hesaba geçen</Text>
+                  <Text style={{ color: colors.accentSoft, fontWeight: '700' }}>
+                    {formatMoney(selected.paymentSettlement.netAmount)}
+                  </Text>
+                </View>
+              </>
+            ) : null}
           </View>
 
           <View style={{ marginTop: 14 }}>

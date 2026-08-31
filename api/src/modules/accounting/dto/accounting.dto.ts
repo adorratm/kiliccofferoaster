@@ -585,6 +585,17 @@ export class UpdateAccountingSettingsDto {
   })
   @IsOptional()
   autoEmailInvoiceOnGib?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'PayTR sanal POS komisyon oranı (%) — varsayılan 2.19',
+    example: 2.19,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  paytrCommissionRatePercent?: number;
 }
 
 export class ReportsQueryDto {

@@ -248,7 +248,7 @@ export class InvoicesService {
     if (existing) return this.findOne(existing.id);
     const order = await this.em.findOne(Order, {
       where: { id: orderId },
-      relations: { items: true },
+      relations: { items: { product: true } },
     });
     if (!order) throw new NotFoundException('Sipariş bulunamadı');
     const lines: InvoiceLineInputDto[] = (order.items || []).map(
@@ -261,7 +261,10 @@ export class InvoicesService {
         quantity: item.quantity,
         unit: 'adet',
         unitPrice: parseMoney(item.unitPrice),
-        vatRate: 20,
+        vatRate:
+          item.product?.vatRate != null
+            ? parseMoney(item.product.vatRate)
+            : undefined,
       }),
     );
     return this.create({

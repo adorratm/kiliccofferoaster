@@ -12,6 +12,7 @@ type Settings = {
   earchivePrefix: string;
   einvoicePrefix: string;
   autoEmailInvoiceOnGib?: boolean;
+  paytrCommissionRatePercent?: string | number;
 };
 
 const FIELDS: {
@@ -64,6 +65,7 @@ export default function AccountingSettingsPage() {
           earchivePrefix: form.earchivePrefix,
           einvoicePrefix: form.einvoicePrefix,
           autoEmailInvoiceOnGib: Boolean(form.autoEmailInvoiceOnGib),
+          paytrCommissionRatePercent: Number(form.paytrCommissionRatePercent ?? 2.19),
         },
       });
       setForm(saved);
@@ -129,6 +131,29 @@ export default function AccountingSettingsPage() {
               markalı e-posta gider (HTML ek). Kapalıyken yalnızca sipariş sayfasından
               manuel gönderim yapılır.
             </span>
+          </span>
+        </label>
+        <label className="block text-sm">
+          <span className="mono text-[10px] uppercase text-muted">
+            PayTR komisyon oranı (%)
+          </span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={0.01}
+            required
+            value={form.paytrCommissionRatePercent ?? 2.19}
+            onChange={(e) =>
+              setForm((f) =>
+                f ? { ...f, paytrCommissionRatePercent: e.target.value } : f,
+              )
+            }
+            className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+          />
+          <span className="mt-1 block text-xs text-muted">
+            Sipariş detayında hesaba geçecek tutar bu orana göre hesaplanır (ör. %2,19
+            → 589,90 ₺ ödemede ~576,98 ₺).
           </span>
         </label>
         <button

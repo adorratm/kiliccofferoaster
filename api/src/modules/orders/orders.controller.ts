@@ -176,8 +176,9 @@ export class OrdersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sipariş detay' })
   async findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    const order = await this.ordersService.findById(id);
-    if (!isOpsRole(user.role) && order.userId !== user.id) {
+    const ops = isOpsRole(user.role);
+    const order = await this.ordersService.findById(id, { staffExtras: ops });
+    if (!ops && order.userId !== user.id) {
       throw new ForbiddenException('Bu siparişe erişim yok');
     }
     return order;

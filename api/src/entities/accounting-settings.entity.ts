@@ -31,4 +31,14 @@ export class AccountingSettings extends BaseEntity {
     default: false,
   })
   autoEmailInvoiceOnGib!: boolean;
+
+  /** PayTR sanal POS komisyon oranı (%); hesaba geçen tutar hesabında kullanılır. */
+  @Column({
+    name: 'paytr_commission_rate_percent',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 2.19,
+  })
+  paytrCommissionRatePercent!: string;
 }
