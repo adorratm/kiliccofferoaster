@@ -188,7 +188,9 @@ export class InvoiceEmailService {
     recipientEmail?: string;
     invoiceId?: string;
   }): Promise<NotificationLog> {
-    const prepared = await prepareInvoiceAttachment(input.file);
+    const prepared = await prepareInvoiceAttachment(input.file, {
+      allowHtmlFallback: false,
+    });
     const invoiceNumber =
       input.invoiceNumber?.trim() || prepared.suggestedInvoiceNumber;
     if (!invoiceNumber) {
@@ -211,7 +213,9 @@ export class InvoiceEmailService {
     file: { buffer: Buffer; mimetype?: string; originalname?: string },
     recipientEmail?: string,
   ): Promise<NotificationLog> {
-    const prepared = await prepareInvoiceAttachment(file);
+    const prepared = await prepareInvoiceAttachment(file, {
+      allowHtmlFallback: false,
+    });
     const invoice = await this.em.findOne(Invoice, {
       where: { id: invoiceId },
       relations: { order: { items: true }, party: true, lines: true },

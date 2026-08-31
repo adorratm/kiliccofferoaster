@@ -19,6 +19,15 @@ RUN yarn build
 FROM node:26-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Puppeteer PDF (e-Arşiv e-posta eki)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    chromium \
+    fonts-liberation \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 COPY --from=build /app/package.json /app/yarn.lock /app/.yarnrc.yml ./
 COPY --from=build /app/api/package.json ./api/package.json
 COPY --from=build /app/api/dist ./api/dist

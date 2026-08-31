@@ -1,6 +1,6 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import AdmZip from 'adm-zip';
-import puppeteer from 'puppeteer';
+import puppeteer, { type Browser, type PDFOptions } from 'puppeteer';
 
 export type InvoiceEmailAttachment = {
   filename: string;
@@ -23,12 +23,82 @@ export type PreparedInvoiceAttachment = {
 
 type DocumentKind = 'html' | 'xml';
 
+type PdfOptions = {
+  /** Yalnızca GİB otomatik gönderimde HTML yedek ek */
+  allowHtmlFallback?: boolean;
+};
+
+let browserPromise: Promise<Browser> | null = null;
+
+function puppeteerLaunchOptions(): Parameters<typeof puppeteer.launch>[0] {
+  const executablePath =
+    process.env.PUPPETEER_EXECUTABLE_PATH?.trim() ||
+    process.env.CHROME_PATH?.trim() ||
+    undefined;
+  return {
+    headless: true,
+    executablePath,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--font-render-hinting=none',
+    ],
+  };
+}
+
+async function getBrowser(): Promise<Browser> {
+  if (!browserPromise) {
+    browserPromise = puppeteer.launch(puppeteerLaunchOptions()).catch((err) => {
+      browserPromise = null;
+      throw err;
+    });
+  }
+  const browser = await browserPromise;
+  if (!browser.connected) {
+    browserPromise = null;
+    return getBrowser();
+  }
+  return browser;
+}
+
 function basename(entryName: string): string {
   return entryName.split('/').pop()?.split('\\').pop() || 'fatura';
 }
 
 function isIgnoredZipEntry(name: string): boolean {
   return /^\._|__MACOSX|\.DS_Store/i.test(name);
+}
+
+function sniffDocumentKind(
+  buffer: Buffer,
+  name: string,
+  mime: string,
+): 'zip' | 'html' | 'xml' | 'pdf' | null {
+  if (buffer.length >= 4 && buffer[0] === 0x50 && buffer[1] === 0x4b) {
+    return 'zip';
+  }
+  if (buffer.slice(0, 5).toString('ascii') === '%PDF-') return 'pdf';
+  const head = buffer.slice(0, 512).toString('utf8').trimStart();
+  if (head.startsWith('<?xml') || /<(?:[\w-]+:)?Invoice[\s>]/i.test(head)) {
+    return 'xml';
+  }
+  if (/<!doctype\s+html/i.test(head) || /<html[\s>]/i.test(head)) {
+    return 'html';
+  }
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  if (ext === 'zip' || ZIP_MIME.has(mime)) return 'zip';
+  if (ext === 'pdf' || mime === 'application/pdf') return 'pdf';
+  if (ext === 'html' || ext === 'htm' || mime === 'text/html') return 'html';
+  if (
+    ext === 'xml' ||
+    mime === 'text/xml' ||
+    mime === 'application/xml'
+  ) {
+    return 'xml';
+  }
+  return null;
 }
 
 /** ZIP: önce HTML, yoksa XML. */
@@ -70,18 +140,6 @@ export function extractDocumentFromZip(buffer: Buffer): {
   throw new BadRequestException('ZIP içinde HTML veya XML dosyası bulunamadı');
 }
 
-/** @deprecated extractDocumentFromZip kullanın */
-export function extractHtmlFromZip(buffer: Buffer): {
-  html: string;
-  filename: string;
-} {
-  const doc = extractDocumentFromZip(buffer);
-  if (doc.kind !== 'html') {
-    throw new BadRequestException('ZIP içinde HTML dosyası bulunamadı');
-  }
-  return { html: doc.content, filename: doc.filename };
-}
-
 function xmlTagAll(xml: string, tag: string): string[] {
   const re = new RegExp(
     `<(?:[\\w-]+:)?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:[\\w-]+:)?${tag}>`,
@@ -106,6 +164,13 @@ function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/** GİB HTML — harici script ve uzun beklemeleri kaldır. */
+export function sanitizeInvoiceHtml(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
 }
 
 /** GİB UBL-TR XML → yazdırılabilir HTML */
@@ -197,28 +262,51 @@ export function guessInvoiceNumber(
 }
 
 function documentToHtml(content: string, kind: DocumentKind): string {
-  return kind === 'xml' ? xmlInvoiceToHtml(content) : content;
+  const raw = kind === 'xml' ? xmlInvoiceToHtml(content) : content;
+  return sanitizeInvoiceHtml(raw);
 }
 
 export async function htmlToPdfBuffer(html: string): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
+  const browser = await getBrowser();
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
-    await page.setContent(html, {
-      waitUntil: 'load',
-      timeout: 45_000,
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const type = req.resourceType();
+      const url = req.url();
+      if (
+        type === 'document' ||
+        type === 'stylesheet' ||
+        type === 'font' ||
+        url.startsWith('data:') ||
+        url.startsWith('blob:')
+      ) {
+        void req.continue();
+      } else {
+        void req.abort();
+      }
     });
-    const pdf = await page.pdf({
+
+    const safeHtml = sanitizeInvoiceHtml(html);
+    await page.setContent(safeHtml, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    await page.emulateMediaType('print');
+
+    const pdfOptions: PDFOptions = {
       format: 'A4',
       printBackground: true,
       margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-    });
-    return Buffer.from(pdf);
+    };
+    const pdf = await page.pdf(pdfOptions);
+    const buf = Buffer.from(pdf);
+    if (buf.length < 500) {
+      throw new Error('PDF çıktısı çok küçük — dönüşüm başarısız olabilir');
+    }
+    return buf;
   } finally {
-    await browser.close();
+    await page.close().catch(() => undefined);
   }
 }
 
@@ -226,80 +314,97 @@ async function documentToPdfAttachment(
   content: string,
   baseName: string,
   kind: DocumentKind,
+  pdfOptions: PdfOptions = {},
 ): Promise<InvoiceEmailAttachment> {
   const html = documentToHtml(content, kind);
   const safe = baseName.replace(/[^\w.-]+/g, '_') || 'fatura';
   try {
     const pdf = await htmlToPdfBuffer(html);
+    logger.log(`Fatura PDF oluşturuldu: ${safe}.pdf (${pdf.length} bayt)`);
     return {
       filename: `${safe}.pdf`,
       content: pdf,
       contentType: 'application/pdf',
     };
   } catch (err) {
-    logger.warn(
-      `${kind.toUpperCase()}→PDF dönüşümü başarısız, HTML ek olarak gönderilecek: ${
-        err instanceof Error ? err.message : String(err)
-      }`,
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error(`${kind.toUpperCase()}→PDF başarısız (${safe}): ${message}`);
+    if (pdfOptions.allowHtmlFallback) {
+      logger.warn('HTML yedek eki kullanılıyor (otomatik GİB gönderimi)');
+      return {
+        filename: `${safe}.html`,
+        content: Buffer.from(html, 'utf-8'),
+        contentType: 'text/html',
+      };
+    }
+    throw new BadRequestException(
+      `PDF oluşturulamadı: ${message}. Sunucuda Chromium kurulu olduğundan emin olun (Docker imajı güncel mi?).`,
     );
-    return {
-      filename: `${safe}.html`,
-      content: Buffer.from(html, 'utf-8'),
-      contentType: 'text/html',
-    };
   }
 }
 
-export async function prepareInvoiceAttachment(file: {
-  buffer: Buffer;
-  mimetype?: string;
-  originalname?: string;
-}): Promise<PreparedInvoiceAttachment> {
+export async function prepareInvoiceAttachment(
+  file: {
+    buffer: Buffer;
+    mimetype?: string;
+    originalname?: string;
+  },
+  pdfOptions: PdfOptions = {},
+): Promise<PreparedInvoiceAttachment> {
   if (!file?.buffer?.length) {
     throw new BadRequestException('Dosya gerekli');
   }
 
   const mime = (file.mimetype || '').toLowerCase();
   const name = (file.originalname || 'fatura').trim();
-  const ext = name.split('.').pop()?.toLowerCase() || '';
-  const isZip = ext === 'zip' || ZIP_MIME.has(mime);
+  const kind = sniffDocumentKind(file.buffer, name, mime);
 
-  if (isZip) {
+  if (kind === 'zip') {
     const doc = extractDocumentFromZip(file.buffer);
-    const base =
-      doc.filename.replace(/\.(html?|xml)$/i, '') || 'fatura';
+    const base = doc.filename.replace(/\.(html?|xml)$/i, '') || 'fatura';
     return {
-      attachment: await documentToPdfAttachment(doc.content, base, doc.kind),
+      attachment: await documentToPdfAttachment(
+        doc.content,
+        base,
+        doc.kind,
+        pdfOptions,
+      ),
       suggestedInvoiceNumber:
         guessInvoiceNumber(doc.content, doc.filename, doc.kind) ?? undefined,
     };
   }
 
-  if (ext === 'html' || ext === 'htm' || mime === 'text/html') {
+  if (kind === 'html') {
     const content = file.buffer.toString('utf-8');
     const base = name.replace(/\.html?$/i, '') || 'fatura';
     return {
-      attachment: await documentToPdfAttachment(content, base, 'html'),
+      attachment: await documentToPdfAttachment(
+        content,
+        base,
+        'html',
+        pdfOptions,
+      ),
       suggestedInvoiceNumber:
         guessInvoiceNumber(content, name, 'html') ?? undefined,
     };
   }
 
-  if (
-    ext === 'xml' ||
-    mime === 'text/xml' ||
-    mime === 'application/xml'
-  ) {
+  if (kind === 'xml') {
     const content = file.buffer.toString('utf-8');
     const base = name.replace(/\.xml$/i, '') || 'fatura';
     return {
-      attachment: await documentToPdfAttachment(content, base, 'xml'),
+      attachment: await documentToPdfAttachment(
+        content,
+        base,
+        'xml',
+        pdfOptions,
+      ),
       suggestedInvoiceNumber:
         guessInvoiceNumber(content, name, 'xml') ?? undefined,
     };
   }
 
-  if (ext === 'pdf' || mime === 'application/pdf') {
+  if (kind === 'pdf') {
     return {
       attachment: {
         filename: name.includes('.') ? name : `${name}.pdf`,
