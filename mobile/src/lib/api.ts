@@ -126,6 +126,31 @@ export async function api<T>(
   return (await res.json()) as T;
 }
 
+export async function apiFormData<T>(
+  path: string,
+  form: FormData,
+  options: Pick<ApiOptions, 'auth'> = {},
+): Promise<T> {
+  const auth = options.auth ?? 'ops';
+  let token: string | null = null;
+  if (auth === 'ops') token = await getToken();
+  if (auth === 'shop') token = await getShopToken();
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: form,
+  });
+  if (!res.ok) {
+    throw new Error(messageFromBody(await res.text()) || res.statusText);
+  }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
 export async function uploadMedia(
   file: { uri: string; name?: string; type?: string },
   options?: { alt?: string; folder?: string },

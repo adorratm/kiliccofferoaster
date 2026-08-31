@@ -10,6 +10,7 @@ export type ShopStackParamList = {
   BlogList: undefined;
   BlogPost: { slug: string };
   Contact: undefined;
+  ShopWeb: { path: string; title: string };
 };
 
 export type CartStackParamList = {

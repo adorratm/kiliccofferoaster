@@ -3489,6 +3489,7 @@ __metadata:
     "@nestjs/typeorm": "npm:^12.0.1"
     "@nestjs/websockets": "npm:^12.0.1"
     "@rspack/core": "npm:^2.2.1"
+    "@types/adm-zip": "npm:^0.5.8"
     "@types/bcrypt": "npm:^6.0.0"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/express": "npm:^5.0.6"
@@ -3504,6 +3505,7 @@ __metadata:
     "@types/pg": "npm:^8.23.1"
     "@types/supertest": "npm:^7.2.1"
     "@types/uuid": "npm:^11.0.0"
+    adm-zip: "npm:^0.6.0"
     axios: "npm:^1.20.0"
     bcrypt: "npm:^6.0.0"
     bcryptjs: "npm:^3.0.3"
@@ -3520,12 +3522,13 @@ __metadata:
     jest: "npm:^30.5.0"
     mime-types: "npm:^3.0.2"
     multer: "npm:^2.3.0"
-    nodemailer: "npm:^9.0.6"
+    nodemailer: "npm:^9.1.0"
     passport: "npm:^0.7.0"
     passport-google-oauth20: "npm:^2.0.0"
     passport-jwt: "npm:^4.0.1"
     pg: "npm:^8.23.0"
     prettier: "npm:^3.9.6"
+    puppeteer: "npm:^25.9.0"
     reflect-metadata: "npm:^0.2.2"
     rxjs: "npm:^7.8.2"
     socket.io: "npm:^4.8.3"
@@ -3612,6 +3615,7 @@ __metadata:
     expo-constants: "npm:~57.0.16"
     expo-dev-client: "npm:~57.0.16"
     expo-device: "npm:~57.0.1"
+    expo-document-picker: "npm:^57.0.1"
     expo-font: "npm:~57.0.2"
     expo-image-picker: "npm:~57.0.14"
     expo-linking: "npm:~57.0.8"
@@ -4407,6 +4411,26 @@ __metadata:
   dependencies:
     safe-buffer: "npm:^5.0.1"
   checksum: 10c0/abd71b6ffce5d2a58a8f196f57a97aa056e78558a61638eeb997c57219188bef522734e0adf410ad3744fb9200b272761b878a7dd565c4037ce677d003988025
+  languageName: node
+  linkType: hard
+
+"@puppeteer/browsers@npm:3.2.1":
+  version: 3.2.1
+  resolution: "@puppeteer/browsers@npm:3.2.1"
+  dependencies:
+    modern-tar: "npm:^0.8.0"
+    yargs: "npm:^18.0.0"
+  peerDependencies:
+    proxy-agent: ">=8.0.1"
+    yauzl: ^2.10.0 || ^3.4.0
+  peerDependenciesMeta:
+    proxy-agent:
+      optional: true
+    yauzl:
+      optional: true
+  bin:
+    browsers: lib/main-cli.js
+  checksum: 10c0/e70a89661236a3d8e9103b422bd52f7799c640b452fa4bbebac2ba1389330d7936281cdd135041dbaad2209cc42a21bcbf5f758a49759d4c05565f677c6d0ece
   languageName: node
   linkType: hard
 
@@ -5356,6 +5380,15 @@ __metadata:
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10c0/fd2bd2a79c6cd8c79ed1cf7a0fa375c64589264c88a27acaf9756d556b453ea222b62a4f68dd2fbb8b3a78b6bab3b1f4fb2431b6afc6aeda8344b53a521a1cd3
+  languageName: node
+  linkType: hard
+
+"@types/adm-zip@npm:^0.5.8":
+  version: 0.5.8
+  resolution: "@types/adm-zip@npm:0.5.8"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/64d0f3a3e8c1546a7a6685726b3342100a4329e530e643b06107919668688b21db717aa35bf0df11454dce6f63968b6f412482de8a4dd2466664b19289f660f7
   languageName: node
   linkType: hard
 
@@ -6560,6 +6593,13 @@ __metadata:
   bin:
     acorn: bin/acorn
   checksum: 10c0/be771be2135cc07910cf76f444ad514d7dcfd6d4a8026e597e93155275abc8ef61eee12211d52146e9d962874269b634f397464942087be013c89d0c54c5f8e5
+  languageName: node
+  linkType: hard
+
+"adm-zip@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "adm-zip@npm:0.6.0"
+  checksum: 10c0/440f37590c62255226f1db4cb1a5a618879347f5106ad5b9a24c67c20f9a54bd5b4efcd2b35af858e39c7885d05f4bd35f4c2f42378c98d13f779be380bc9ae4
   languageName: node
   linkType: hard
 
@@ -7837,6 +7877,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chromium-bidi@npm:17.0.2":
+  version: 17.0.2
+  resolution: "chromium-bidi@npm:17.0.2"
+  dependencies:
+    mitt: "npm:^3.0.1"
+    zod: "npm:^3.24.1"
+  peerDependencies:
+    devtools-protocol: "*"
+  checksum: 10c0/cc1fcbdf2309f2f0083096c78a299342918c6dc8e80158487aada8e2ee73160ed7301bb54c5520274e4514f2a14f05e45d730a536e0a95f2e204dd8bf42eebee
+  languageName: node
+  linkType: hard
+
 "chromium-edge-launcher@npm:^0.3.0":
   version: 0.3.0
   resolution: "chromium-edge-launcher@npm:0.3.0"
@@ -8586,6 +8638,13 @@ __metadata:
   version: 2.1.0
   resolution: "detect-node@npm:2.1.0"
   checksum: 10c0/f039f601790f2e9d4654e499913259a798b1f5246ae24f86ab5e8bd4aaf3bce50484234c494f11fb00aecb0c6e2733aa7b1cf3f530865640b65fbbd65b2c4e09
+  languageName: node
+  linkType: hard
+
+"devtools-protocol@npm:0.0.1666840":
+  version: 0.0.1666840
+  resolution: "devtools-protocol@npm:0.0.1666840"
+  checksum: 10c0/ccc9a31ba2616cb5a90c7eed525ffb489075155afefeec050389ddb84b5b3910aae92b91a5ec41197ed30d851902bc21760d0c2d40702e2b7033303b531bac5e
   languageName: node
   linkType: hard
 
@@ -9915,6 +9974,15 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10c0/36c4adc9799b3118f4e8149c96018688f2f45d14ab160e5142a804ad32f882b055072ff4aebfb4f40b8dbcbe69656d5b4d3fc6aec797316585c6e19397576bda
+  languageName: node
+  linkType: hard
+
+"expo-document-picker@npm:^57.0.1":
+  version: 57.0.1
+  resolution: "expo-document-picker@npm:57.0.1"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/8b3894d011af38826ee5a240321b7d42612e881b9cc522aece8c794dc54f94a1cc6cb40e46b8ce1eb870c28094c2d95d3363e46baf472c5e825c9f0b48a13c2a
   languageName: node
   linkType: hard
 
@@ -13061,6 +13129,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lilconfig@npm:^3.1.3":
+  version: 3.1.3
+  resolution: "lilconfig@npm:3.1.3"
+  checksum: 10c0/f5604e7240c5c275743561442fbc5abf2a84ad94da0f5adc71d25e31fa8483048de3dcedcb7a44112a942fed305fd75841cdf6c9681c7f640c63f1049e9a5dcc
+  languageName: node
+  linkType: hard
+
 "lines-and-columns@npm:^1.1.6":
   version: 1.2.4
   resolution: "lines-and-columns@npm:1.2.4"
@@ -13766,12 +13841,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mitt@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "mitt@npm:3.0.1"
+  checksum: 10c0/3ab4fdecf3be8c5255536faa07064d05caa3dd332bd318ff02e04621f7b3069ca1de9106cfe8e7ced675abfc2bec2ce4c4ef321c4a1bb1fb29df8ae090741913
+  languageName: node
+  linkType: hard
+
 "mkdirp@npm:^1.0.4":
   version: 1.0.4
   resolution: "mkdirp@npm:1.0.4"
   bin:
     mkdirp: bin/cmd.js
   checksum: 10c0/46ea0f3ffa8bc6a5bc0c7081ffc3907777f0ed6516888d40a518c5111f8366d97d2678911ad1a6882bf592fa9de6c784fea32e1687bb94e1f4944170af48a5cf
+  languageName: node
+  linkType: hard
+
+"modern-tar@npm:^0.8.0":
+  version: 0.8.4
+  resolution: "modern-tar@npm:0.8.4"
+  checksum: 10c0/0e8dc160bb99ad70742d4dbc248c79de7b239ee57e0c3771634db2ed27a0f2b91df6097f17888d9227439280d8b636417ad8ff329dbdeb1f597b814088ea51d8
   languageName: node
   linkType: hard
 
@@ -14163,10 +14252,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^9.0.6":
-  version: 9.0.6
-  resolution: "nodemailer@npm:9.0.6"
-  checksum: 10c0/f26371b863b8125aeb2d94ac4f8c65c19add44188fd877d82f37e625c50bb4453b4fdb5e0211fe707a4bf1986441c9870bb64a55f1ae6f58e56e0a0cd2361b29
+"nodemailer@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "nodemailer@npm:9.1.0"
+  checksum: 10c0/4e5e84e7477fdca96c0f618c4647307c6fa382b31b3cd430a61eb4d62b792ec2f5461f62c53b0ebb5ae34393074f4d1a8d8fd0a95389f18e209a9dd12980d312
   languageName: node
   linkType: hard
 
@@ -15163,6 +15252,36 @@ __metadata:
   version: 2.3.1
   resolution: "punycode@npm:2.3.1"
   checksum: 10c0/14f76a8206bc3464f794fb2e3d3cc665ae416c01893ad7a02b23766eb07159144ee612ad67af5e84fa4479ccfe67678c4feb126b0485651b302babf66f04f9e9
+  languageName: node
+  linkType: hard
+
+"puppeteer-core@npm:25.9.0":
+  version: 25.9.0
+  resolution: "puppeteer-core@npm:25.9.0"
+  dependencies:
+    "@puppeteer/browsers": "npm:3.2.1"
+    chromium-bidi: "npm:17.0.2"
+    devtools-protocol: "npm:0.0.1666840"
+    typed-query-selector: "npm:^2.12.2"
+    webdriver-bidi-protocol: "npm:0.4.2"
+    ws: "npm:^8.21.3"
+  checksum: 10c0/c96e077f00d0eeb7853e816986c3860e6a16a4c3858e41421bd1020597c3874ccfac7e1208a1bcf4e930a121f30a40216da0263ef6bcaccb3c0e3eba9b725758
+  languageName: node
+  linkType: hard
+
+"puppeteer@npm:^25.9.0":
+  version: 25.9.0
+  resolution: "puppeteer@npm:25.9.0"
+  dependencies:
+    "@puppeteer/browsers": "npm:3.2.1"
+    chromium-bidi: "npm:17.0.2"
+    devtools-protocol: "npm:0.0.1666840"
+    lilconfig: "npm:^3.1.3"
+    puppeteer-core: "npm:25.9.0"
+    typed-query-selector: "npm:^2.12.2"
+  bin:
+    puppeteer: lib/puppeteer/node/cli.js
+  checksum: 10c0/09f0ce4e2c7c3ecb89b6194ffdf3001394accbd7e1435e3d296a10948016d92bd08c6746615798bdfffcf03360ff605d9bedace2897fe4aa72c1a2eef482ef16
   languageName: node
   linkType: hard
 
@@ -17586,6 +17705,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typed-query-selector@npm:^2.12.2":
+  version: 2.12.2
+  resolution: "typed-query-selector@npm:2.12.2"
+  checksum: 10c0/2710369ada5bde578606b043eefb8a6d7f9178630ae4950a4dfd4f70cceb8196d5bbc735a905cd3e06953127e4dd1825c3e0be06d64e5a6e5609965cffee701d
+  languageName: node
+  linkType: hard
+
 "typedarray@npm:^0.0.6":
   version: 0.0.6
   resolution: "typedarray@npm:0.0.6"
@@ -18197,6 +18323,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"webdriver-bidi-protocol@npm:0.4.2":
+  version: 0.4.2
+  resolution: "webdriver-bidi-protocol@npm:0.4.2"
+  checksum: 10c0/dd2068949615a4c809949cc590ea7212c82400b21a4150c9ced5bae9b707b21a1dea6edbe52a76519e67835b13e6e036946bbb6c005038b1dccc411c88a9c78e
+  languageName: node
+  linkType: hard
+
 "webidl-conversions@npm:^3.0.0":
   version: 3.0.1
   resolution: "webidl-conversions@npm:3.0.1"
@@ -18419,7 +18552,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.12.1":
+"ws@npm:^8.12.1, ws@npm:^8.21.3":
   version: 8.21.3
   resolution: "ws@npm:8.21.3"
   peerDependencies:
@@ -18614,17 +18747,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"zod@npm:^3.24.1, zod@npm:^3.25.76":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
+  languageName: node
+  linkType: hard
+
 "zod@npm:^3.25.0 || ^4.0.0":
   version: 4.4.3
   resolution: "zod@npm:4.4.3"
   checksum: 10c0/7ea31b558e88f9faf44f31dd185e2e1cbf51fed3081787fb96cc2534749b50c0acfc6da7f0922a7353ed092dd358c7d50c28ea96c94d04af64191bd33152eca3
-  languageName: node
-  linkType: hard
-
-"zod@npm:^3.25.76":
-  version: 3.25.76
-  resolution: "zod@npm:3.25.76"
-  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard
 

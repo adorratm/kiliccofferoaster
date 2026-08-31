@@ -2,15 +2,21 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  BadRequestException,
   Get,
   Headers,
   Param,
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiHeader,
   ApiOperation,
   ApiTags,
@@ -28,11 +34,15 @@ import { Public } from '@common/decorators/public.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { isOpsRole, OPS_ROLES, User } from '@entities/user.entity';
+import { InvoiceEmailService } from '@modules/notifications/invoice-email.service';
 
 @ApiTags('orders')
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly invoiceEmail: InvoiceEmailService,
+  ) {}
 
   @Public()
   @Post()
@@ -128,6 +138,38 @@ export class OrdersController {
       user.id,
       isOpsRole(user.role),
     );
+  }
+
+  @Roles(...OPS_ROLES)
+  @Post(':id/send-invoice-email')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin: e-Arşiv/e-Fatura PDF/HTML ekini müşteriye gönder' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 },
+    }),
+  )
+  sendInvoiceEmail(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('invoiceNumber') invoiceNumber?: string,
+    @Body('edocumentType') edocumentType?: 'earchive' | 'einvoice',
+    @Body('recipientEmail') recipientEmail?: string,
+    @Body('invoiceId') invoiceId?: string,
+  ) {
+    if (!file) throw new BadRequestException('Dosya gerekli');
+    const docType =
+      edocumentType === 'einvoice' ? 'einvoice' : 'earchive';
+    return this.invoiceEmail.prepareAndSendForOrder({
+      orderId: id,
+      invoiceNumber: invoiceNumber?.trim() || undefined,
+      edocumentType: docType,
+      file,
+      recipientEmail: recipientEmail?.trim() || undefined,
+      invoiceId: invoiceId?.trim() || undefined,
+    });
   }
 
   @Get(':id')

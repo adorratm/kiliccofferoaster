@@ -20,6 +20,7 @@ import { LocalSeoWhatsappBlogProducts1791000000000 } from './1791000000000-Local
 import { TurkishCoffeeBlogPosts1792000000000 } from './1792000000000-TurkishCoffeeBlogPosts';
 import { MarketplaceTrendyolGoMarket1793000000000 } from './1793000000000-MarketplaceTrendyolGoMarket';
 import { InvoiceOkcSaleAndReceipt1794000000000 } from './1794000000000-InvoiceOkcSaleAndReceipt';
+import { AccountingAutoEmailInvoice1795000000000 } from './1795000000000-AccountingAutoEmailInvoice';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -48,4 +49,5 @@ export const ALL_MIGRATIONS = [
   TurkishCoffeeBlogPosts1792000000000,
   MarketplaceTrendyolGoMarket1793000000000,
   InvoiceOkcSaleAndReceipt1794000000000,
+  AccountingAutoEmailInvoice1795000000000,
 ];

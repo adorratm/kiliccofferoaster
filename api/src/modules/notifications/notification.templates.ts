@@ -744,6 +744,34 @@ export function buildAbandonedCartEmail(input: {
   };
 }
 
+export function buildInvoiceSentEmail(input: {
+  name: string;
+  orderNumber: string;
+  invoiceNumber: string;
+  edocumentType: 'earchive' | 'einvoice';
+  ordersUrl: string;
+}): { subject: string; html: string; text: string } {
+  const docLabel =
+    input.edocumentType === 'einvoice' ? 'e-Fatura' : 'e-Arşiv faturanız';
+  return {
+    subject: `${docLabel} — ${input.invoiceNumber}`,
+    html: renderBrandedEmail({
+      title: docLabel,
+      greeting: `Merhaba ${input.name},`,
+      paragraphs: [
+        `<strong style="color:${C.cream};">${escapeHtml(input.orderNumber)}</strong> numaralı siparişinize ait <strong style="color:${C.accentSoft};">${escapeHtml(input.invoiceNumber)}</strong> belgesi ekte yer almaktadır.`,
+        'Sorularınız için bu e-postaya yanıt verebilir veya bizimle iletişime geçebilirsiniz.',
+      ],
+      metaRows: [
+        { label: 'Sipariş', value: input.orderNumber },
+        { label: 'Belge', value: input.invoiceNumber },
+      ],
+      cta: { label: 'Siparişlerim', href: input.ordersUrl },
+    }),
+    text: `Merhaba ${input.name},\n\n${input.orderNumber} siparişinize ait ${input.invoiceNumber} faturanız ekte.\n\n${input.ordersUrl}`,
+  };
+}
+
 export function buildLowStockEmail(input: {
   label: string;
   stock: number;

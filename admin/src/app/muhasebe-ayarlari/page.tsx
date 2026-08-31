@@ -11,9 +11,14 @@ type Settings = {
   city?: string | null;
   earchivePrefix: string;
   einvoicePrefix: string;
+  autoEmailInvoiceOnGib?: boolean;
 };
 
-const FIELDS: { key: keyof Settings; label: string; required?: boolean }[] = [
+const FIELDS: {
+  key: Exclude<keyof Settings, 'autoEmailInvoiceOnGib'>;
+  label: string;
+  required?: boolean;
+}[] = [
   { key: 'companyTitle', label: 'Unvan', required: true },
   { key: 'vkn', label: 'VKN' },
   { key: 'taxOffice', label: 'Vergi dairesi' },
@@ -58,6 +63,7 @@ export default function AccountingSettingsPage() {
           city: form.city || null,
           earchivePrefix: form.earchivePrefix,
           einvoicePrefix: form.einvoicePrefix,
+          autoEmailInvoiceOnGib: Boolean(form.autoEmailInvoiceOnGib),
         },
       });
       setForm(saved);
@@ -105,6 +111,26 @@ export default function AccountingSettingsPage() {
             />
           </label>
         ))}
+        <label className="flex items-start gap-3 border border-border-muted px-3 py-3 text-sm">
+          <input
+            type="checkbox"
+            checked={Boolean(form.autoEmailInvoiceOnGib)}
+            onChange={(e) =>
+              setForm((f) =>
+                f ? { ...f, autoEmailInvoiceOnGib: e.target.checked } : f,
+              )
+            }
+            className="mt-1"
+          />
+          <span>
+            <span className="font-medium">GİB sonrası otomatik müşteri e-postası</span>
+            <span className="mt-1 block text-xs text-muted">
+              Sistemden GİB’e başarıyla gönderilen e-Arşiv/e-Fatura için müşteriye
+              markalı e-posta gider (HTML ek). Kapalıyken yalnızca sipariş sayfasından
+              manuel gönderim yapılır.
+            </span>
+          </span>
+        </label>
         <button
           type="submit"
           disabled={saving}

@@ -578,6 +578,13 @@ export class UpdateAccountingSettingsDto {
   @IsString()
   @MaxLength(8)
   einvoicePrefix?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'GİB gönderimi başarılı olunca müşteriye e-Arşiv/e-Fatura e-postası (varsayılan: kapalı)',
+  })
+  @IsOptional()
+  autoEmailInvoiceOnGib?: boolean;
 }
 
 export class ReportsQueryDto {

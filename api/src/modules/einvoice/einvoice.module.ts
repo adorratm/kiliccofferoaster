@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { EinvoiceGateway } from '@modules/einvoice/einvoice.gateway';
 import { EinvoiceService } from '@modules/einvoice/einvoice.service';
 import { MockEinvoiceAdapter } from '@modules/einvoice/mock.adapter';
@@ -10,7 +11,10 @@ import { EinvoiceController } from '@modules/einvoice/einvoice.controller';
 import { QUEUE_EINVOICE } from '@modules/queues/queue.constants';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: QUEUE_EINVOICE })],
+  imports: [
+    BullModule.registerQueue({ name: QUEUE_EINVOICE }),
+    NotificationsModule,
+  ],
   controllers: [EinvoiceController],
   providers: [
     MockEinvoiceAdapter,

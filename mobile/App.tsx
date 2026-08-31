@@ -90,6 +90,44 @@ const linking: LinkingOptions<RootTabParamList> = {
       };
     }
 
+    if (parts.length === 1 && parts[0] === 'oner') {
+      return {
+        routes: [
+          {
+            name: 'ShopTab',
+            state: {
+              index: 0,
+              routes: [
+                {
+                  name: 'ShopWeb',
+                  params: { path: '/oner', title: 'Kahve seçici' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
+
+    if (parts.length === 1 && parts[0] === 'toptan') {
+      return {
+        routes: [
+          {
+            name: 'ShopTab',
+            state: {
+              index: 0,
+              routes: [
+                {
+                  name: 'ShopWeb',
+                  params: { path: '/toptan', title: 'Toptan' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    }
+
     if (parts.length === 1 && legalSlugs.has(parts[0])) {
       return {
         routes: [

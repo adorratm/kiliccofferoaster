@@ -29,7 +29,7 @@ const PROTOCOLS = [
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Contact'>;
 
-export function ContactScreen(_props: Props) {
+export function ContactScreen({ navigation }: Props) {
   const [contact, setContact] = useState<SiteContact>(DEFAULT_CONTACT);
   const [reviewUrl, setReviewUrl] = useState('');
   const [loading, setLoading] = useState(true);
@@ -131,7 +131,9 @@ export function ContactScreen(_props: Props) {
       </View>
 
       <Pressable
-        onPress={() => void Linking.openURL(`${SHOP_URL}/toptan`)}
+        onPress={() =>
+          navigation.navigate('ShopWeb', { path: '/toptan', title: 'Toptan' })
+        }
         style={[btn, { marginTop: 16, backgroundColor: colors.surface }]}
       >
         <Text style={[btnText, { color: colors.accentSoft }]}>Toptan / B2B talep</Text>

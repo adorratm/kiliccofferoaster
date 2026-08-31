@@ -5,6 +5,7 @@ import { EntityManager } from 'typeorm';
 import { Job } from 'bullmq';
 import { Invoice, InvoiceStatus } from '@entities/invoice.entity';
 import { EinvoiceService } from '@modules/einvoice/einvoice.service';
+import { InvoiceEmailService } from '@modules/notifications/invoice-email.service';
 import { QUEUE_EINVOICE } from '@modules/queues/queue.constants';
 
 @Processor(QUEUE_EINVOICE)
@@ -14,6 +15,7 @@ export class EinvoiceProcessor extends WorkerHost {
   constructor(
     @InjectEntityManager() private readonly em: EntityManager,
     private readonly einvoice: EinvoiceService,
+    private readonly invoiceEmail: InvoiceEmailService,
   ) {
     super();
   }
@@ -35,6 +37,9 @@ export class EinvoiceProcessor extends WorkerHost {
         invoice.providerPayload = result.raw || invoice.providerPayload;
         if (result.accepted) invoice.sentAt = new Date();
         await this.em.save(invoice);
+        if (result.accepted) {
+          await this.invoiceEmail.tryAutoSendAfterGib(invoice.id);
+        }
       } catch (err) {
         this.logger.warn(
           `Queued invoice ${invoice.invoiceNumber}: ${

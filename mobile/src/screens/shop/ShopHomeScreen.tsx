@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -16,7 +15,6 @@ import { PageHeader } from '../../components/shop/PageHeader';
 import { ScreenLoader } from '../../components/shop/ScreenLoader';
 import { SearchBar } from '../../components/shop/SearchBar';
 import { SectionLabel } from '../../components/shop/SectionLabel';
-import { SHOP_URL } from '../../lib/api';
 import { shopCategories, shopProducts } from '../../lib/shop-api';
 import type { Category, Product } from '../../lib/shop-types';
 import { colors } from '../../ui';
@@ -142,13 +140,17 @@ export function ShopHomeScreen({ navigation }: Props) {
           icon="compass"
           label="Kahve seçici"
           hint="Sana uygun kavrum"
-          onPress={() => void Linking.openURL(`${SHOP_URL}/oner`)}
+          onPress={() =>
+            navigation.navigate('ShopWeb', { path: '/oner', title: 'Kahve seçici' })
+          }
         />
         <ExploreTile
           icon="briefcase"
           label="Toptan"
           hint="Cafe & işletme"
-          onPress={() => void Linking.openURL(`${SHOP_URL}/toptan`)}
+          onPress={() =>
+            navigation.navigate('ShopWeb', { path: '/toptan', title: 'Toptan' })
+          }
         />
         <ExploreTile
           icon="info"

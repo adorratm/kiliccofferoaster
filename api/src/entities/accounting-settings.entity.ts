@@ -23,4 +23,12 @@ export class AccountingSettings extends BaseEntity {
 
   @Column({ name: 'einvoice_prefix', type: 'varchar', length: 8, default: 'INV' })
   einvoicePrefix!: string;
+
+  /** GİB’e başarılı gönderimden sonra müşteriye e-posta (PDF/HTML ek yoksa sistem HTML’i). */
+  @Column({
+    name: 'auto_email_invoice_on_gib',
+    type: 'boolean',
+    default: false,
+  })
+  autoEmailInvoiceOnGib!: boolean;
 }

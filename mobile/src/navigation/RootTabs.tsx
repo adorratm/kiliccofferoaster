@@ -20,6 +20,7 @@ import { CartScreen } from '../screens/shop/CartScreen';
 import { CatalogScreen } from '../screens/shop/CatalogScreen';
 import { CheckoutScreen } from '../screens/shop/CheckoutScreen';
 import { ContactScreen } from '../screens/shop/ContactScreen';
+import { ShopWebScreen } from '../screens/shop/ShopWebScreen';
 import { FaqScreen } from '../screens/shop/FaqScreen';
 import { FavoritesScreen } from '../screens/shop/FavoritesScreen';
 import { ForgotPasswordScreen } from '../screens/shop/ForgotPasswordScreen';
@@ -134,6 +135,11 @@ function ShopStackNavigator() {
       <ShopStack.Screen name="BlogList" component={BlogListScreen} options={{ title: 'Blog' }} />
       <ShopStack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Yazı' }} />
       <ShopStack.Screen name="Contact" component={ContactScreen} options={{ title: 'İletişim' }} />
+      <ShopStack.Screen
+        name="ShopWeb"
+        component={ShopWebScreen}
+        options={({ route }) => ({ title: route.params.title })}
+      />
     </ShopStack.Navigator>
   );
 }

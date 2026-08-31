@@ -19,7 +19,7 @@ export function PartiesScreen() {
   const [items, setItems] = useState<Party[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [type, setType] = useState<'customer' | 'supplier'>('customer');
-  const [title, setTitle] = useState('');
+  const [partyTitle, setPartyTitle] = useState('');
   const [taxNumber, setTaxNumber] = useState('');
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
@@ -41,14 +41,14 @@ export function PartiesScreen() {
   function resetForm() {
     setEditingId(null);
     setType('customer');
-    setTitle('');
+    setPartyTitle('');
     setTaxNumber('');
   }
 
   function startEdit(p: Party) {
     setEditingId(p.id);
     setType(p.type === 'supplier' ? 'supplier' : 'customer');
-    setTitle(p.title);
+    setPartyTitle(p.title);
     setTaxNumber(p.taxNumber || '');
     setError('');
     setMsg('');
@@ -59,7 +59,7 @@ export function PartiesScreen() {
     setMsg('');
     const payload = {
       type,
-      title,
+      title: partyTitle,
       taxNumber: taxNumber || undefined,
     };
     try {
@@ -147,8 +147,8 @@ export function PartiesScreen() {
       <TextInput
         placeholder="Unvan"
         placeholderTextColor="#a58b84"
-        value={title}
-        onChangeText={setTitle}
+        value={partyTitle}
+        onChangeText={setPartyTitle}
         style={[input, { marginTop: 8 }]}
       />
       <TextInput

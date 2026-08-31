@@ -86,21 +86,27 @@ export function adminGoogleLoginUrl(): string {
   return `${API_URL}/auth/google/admin`;
 }
 
-export async function uploadMedia(
-  file: File,
-  options?: { alt?: string; folder?: string },
-): Promise<{ id: string; url: string; filename: string }> {
+export async function apiFormData<T = unknown>(
+  path: string,
+  form: FormData,
+  method = 'POST',
+): Promise<T> {
   const token = getToken();
-  const form = new FormData();
-  form.append('file', file);
-  if (options?.alt) form.append('alt', options.alt);
-  if (options?.folder) form.append('folder', options.folder);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}/cms/admin/media/upload`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers,
     body: form,
   });
+
+  if (res.status === 401) {
+    clearToken();
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
+  }
 
   const text = await res.text();
   let data: unknown = null;
@@ -113,14 +119,28 @@ export async function uploadMedia(
   }
 
   if (!res.ok) {
-    throw new ApiError(
-      typeof data === 'object' && data && 'message' in data
-        ? String((data as { message: unknown }).message)
-        : `Yükleme başarısız (${res.status})`,
-      res.status,
-      data,
-    );
+    const message =
+      typeof data === 'object' &&
+      data !== null &&
+      'message' in data &&
+      (data as { message: unknown }).message
+        ? Array.isArray((data as { message: unknown }).message)
+          ? ((data as { message: string[] }).message).join(', ')
+          : String((data as { message: unknown }).message)
+        : `İstek başarısız (${res.status})`;
+    throw new ApiError(message, res.status, data);
   }
 
-  return data as { id: string; url: string; filename: string };
+  return data as T;
+}
+
+export async function uploadMedia(
+  file: File,
+  options?: { alt?: string; folder?: string },
+): Promise<{ id: string; url: string; filename: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  if (options?.alt) form.append('alt', options.alt);
+  if (options?.folder) form.append('folder', options.folder);
+  return apiFormData('/cms/admin/media/upload', form);
 }

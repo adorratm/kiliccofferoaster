@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { api, asArray } from '../lib/api';
+import * as DocumentPicker from 'expo-document-picker';
+import { api, apiFormData, asArray } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { orderStatusLabel } from '../lib/order-status';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
@@ -96,6 +97,17 @@ export function ShopOrdersScreen() {
     status: string;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [invoiceNumberInput, setInvoiceNumberInput] = useState('');
+  const [invoiceDocType, setInvoiceDocType] = useState<'earchive' | 'einvoice'>(
+    'earchive',
+  );
+  const [invoiceFile, setInvoiceFile] = useState<{
+    uri: string;
+    name: string;
+    mimeType?: string;
+  } | null>(null);
+  const [invoiceEmailBusy, setInvoiceEmailBusy] = useState(false);
+  const [invoiceMsg, setInvoiceMsg] = useState('');
 
   async function load() {
     setItems(asArray<Order>(await api('/orders/admin/all?limit=40')));
@@ -114,6 +126,16 @@ export function ShopOrdersScreen() {
         }>;
       }>(`/accounting/invoices?orderId=${id}&limit=1`);
       setLinkedInvoice(inv.items?.[0] ?? null);
+      const row = inv.items?.[0];
+      if (row?.invoiceNumber) {
+        setInvoiceNumberInput(row.invoiceNumber);
+        if (row.edocumentType === 'einvoice') setInvoiceDocType('einvoice');
+      } else {
+        setInvoiceNumberInput('');
+        setInvoiceDocType('earchive');
+      }
+      setInvoiceFile(null);
+      setInvoiceMsg('');
     } catch {
       setLinkedInvoice(null);
     }
@@ -143,6 +165,56 @@ export function ShopOrdersScreen() {
       setLinkedInvoice(inv);
     } catch {
       /* ignore */
+    }
+  }
+
+  async function pickInvoiceFile() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        'application/zip',
+        'application/pdf',
+        'text/html',
+        'text/xml',
+        'application/xml',
+        '*/*',
+      ],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setInvoiceFile({
+      uri: asset.uri,
+      name: asset.name || 'fatura.zip',
+      mimeType: asset.mimeType || undefined,
+    });
+  }
+
+  async function sendInvoiceEmail() {
+    if (!selected || !invoiceFile) {
+      setInvoiceMsg('GİB ZIP, HTML, XML veya PDF seçin');
+      return;
+    }
+    setInvoiceEmailBusy(true);
+    setInvoiceMsg('');
+    try {
+      const form = new FormData();
+      form.append('file', {
+        uri: invoiceFile.uri,
+        name: invoiceFile.name,
+        type: invoiceFile.mimeType || 'application/octet-stream',
+      } as unknown as Blob);
+      if (invoiceNumberInput.trim()) {
+        form.append('invoiceNumber', invoiceNumberInput.trim());
+      }
+      form.append('edocumentType', invoiceDocType);
+      if (linkedInvoice?.id) form.append('invoiceId', linkedInvoice.id);
+      await apiFormData(`/orders/${selected.id}/send-invoice-email`, form);
+      setInvoiceMsg(`Gönderildi: ${selected.customerEmail}`);
+      setInvoiceFile(null);
+    } catch (e) {
+      setInvoiceMsg(e instanceof Error ? e.message : 'Gönderilemedi');
+    } finally {
+      setInvoiceEmailBusy(false);
     }
   }
 
@@ -253,6 +325,59 @@ export function ShopOrdersScreen() {
                 <Text style={{ color: colors.accentSoft }}>Fiş oluştur</Text>
               </Pressable>
             )}
+          </View>
+
+          <View style={{ marginTop: 14 }}>
+            <Text style={{ color: colors.accentSoft, fontSize: 11, letterSpacing: 1 }}>
+              E-ARŞIV MÜŞTERİYE GÖNDER
+            </Text>
+            <Text style={[muted, { marginTop: 6, lineHeight: 18 }]}>
+              GİB ZIP yükleyin (içinden HTML/XML çıkarılır) veya ayırdığınız HTML/XML
+              dosyasını seçin — sunucu PDF’e çevirip e-postalar.
+              {selected.customerEmail ? `\nAlıcı: ${selected.customerEmail}` : ''}
+            </Text>
+            <TextInput
+              value={invoiceNumberInput}
+              onChangeText={setInvoiceNumberInput}
+              placeholder="Fatura no (ZIP’ten otomatik de olabilir)"
+              placeholderTextColor={colors.muted}
+              style={[input, { marginTop: 8 }]}
+            />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {(['earchive', 'einvoice'] as const).map((t) => (
+                <Pressable
+                  key={t}
+                  onPress={() => setInvoiceDocType(t)}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: invoiceDocType === t ? colors.accent : colors.borderMuted,
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <Text style={{ color: invoiceDocType === t ? colors.accentSoft : colors.muted }}>
+                    {t === 'earchive' ? 'e-Arşiv' : 'e-Fatura'}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Pressable onPress={() => void pickInvoiceFile()} style={{ marginTop: 8 }}>
+              <Text style={{ color: colors.accentSoft }}>
+                {invoiceFile ? invoiceFile.name : 'Dosya seç (ZIP / HTML / XML / PDF)'}
+              </Text>
+            </Pressable>
+            <Pressable
+              disabled={invoiceEmailBusy || !invoiceFile}
+              onPress={() => void sendInvoiceEmail()}
+              style={[btn, { marginTop: 10, opacity: invoiceEmailBusy || !invoiceFile ? 0.5 : 1 }]}
+            >
+              <Text style={btnText}>
+                {invoiceEmailBusy ? 'Gönderiliyor…' : 'Faturayı e-posta ile gönder'}
+              </Text>
+            </Pressable>
+            {invoiceMsg ? (
+              <Text style={[muted, { marginTop: 8 }]}>{invoiceMsg}</Text>
+            ) : null}
           </View>
 
           <Text style={{ color: colors.accentSoft, marginTop: 16, fontSize: 11, letterSpacing: 1 }}>

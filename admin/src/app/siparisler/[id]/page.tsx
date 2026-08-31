@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, apiFormData } from '@/lib/api';
 import {
   ORDER_STATUS_LABELS,
   formatAddress,
@@ -55,6 +55,12 @@ export default function OrderDetailPage() {
     status: string;
   } | null>(null);
   const [receiptBusy, setReceiptBusy] = useState(false);
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [invoiceNumberInput, setInvoiceNumberInput] = useState('');
+  const [invoiceDocType, setInvoiceDocType] = useState<'earchive' | 'einvoice'>(
+    'earchive',
+  );
+  const [invoiceEmailBusy, setInvoiceEmailBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -72,6 +78,13 @@ export default function OrderDetailPage() {
       setStatus(orderData.status);
       setNotifications(asArray(notifData));
       setLinkedInvoice(invData.items?.[0] ?? null);
+      const inv = invData.items?.[0];
+      if (inv?.invoiceNumber) {
+        setInvoiceNumberInput(inv.invoiceNumber);
+        if (inv.edocumentType === 'einvoice') {
+          setInvoiceDocType('einvoice');
+        }
+      }
       const list = asArray<ShippingProviderConfig>(providerData).filter(
         (p) => p.isEnabled,
       );
@@ -156,6 +169,34 @@ export default function OrderDetailPage() {
       setError(err instanceof Error ? err.message : 'Fiş oluşturulamadı');
     } finally {
       setReceiptBusy(false);
+    }
+  }
+
+  async function sendInvoiceEmail(e: FormEvent) {
+    e.preventDefault();
+    if (!invoiceFile) {
+      setError('GİB ZIP, HTML, XML veya PDF seçin');
+      return;
+    }
+    setInvoiceEmailBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.append('file', invoiceFile);
+      if (invoiceNumberInput.trim()) {
+        form.append('invoiceNumber', invoiceNumberInput.trim());
+      }
+      form.append('edocumentType', invoiceDocType);
+      if (linkedInvoice?.id) form.append('invoiceId', linkedInvoice.id);
+      await apiFormData(`/orders/${id}/send-invoice-email`, form);
+      setMessage(`Fatura e-postası gönderildi: ${order?.customerEmail}`);
+      setInvoiceFile(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'E-posta gönderilemedi');
+    } finally {
+      setInvoiceEmailBusy(false);
     }
   }
 
@@ -349,6 +390,64 @@ export default function OrderDetailPage() {
               </div>
             )}
           </div>
+
+          <form
+            onSubmit={sendInvoiceEmail}
+            className="border border-border-muted bg-surface p-4 space-y-3 text-sm"
+          >
+            <p className="mono text-[10px] uppercase text-muted">
+              e-Arşiv / e-Fatura müşteriye gönder
+            </p>
+            <p className="text-xs text-muted">
+              GİB’den indirdiğiniz <strong className="text-foreground">ZIP</strong>, ayırdığınız{' '}
+              <strong className="text-foreground">HTML/XML</strong> veya PDF yükleyin. Hepsi
+              PDF’e çevrilip gönderilir. Alıcı:{' '}
+              <span className="text-foreground">{order.customerEmail}</span>
+            </p>
+            <label className="block">
+              <span className="mono text-[10px] uppercase text-muted">
+                Fatura no (isteğe bağlı)
+              </span>
+              <input
+                value={invoiceNumberInput}
+                onChange={(e) => setInvoiceNumberInput(e.target.value)}
+                placeholder="ZIP içinden otomatik de bulunabilir"
+                className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              />
+            </label>
+            <label className="block">
+              <span className="mono text-[10px] uppercase text-muted">Belge tipi</span>
+              <select
+                value={invoiceDocType}
+                onChange={(e) =>
+                  setInvoiceDocType(e.target.value as 'earchive' | 'einvoice')
+                }
+                className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+              >
+                <option value="earchive">e-Arşiv</option>
+                <option value="einvoice">e-Fatura</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mono text-[10px] uppercase text-muted">
+                GİB ZIP / HTML / XML / PDF
+              </span>
+              <input
+                required
+                type="file"
+                accept=".zip,.pdf,.html,.htm,.xml,application/zip,application/pdf,text/html,text/xml,application/xml"
+                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+                className="mt-1 w-full border border-border-muted bg-background px-3 py-2 text-xs"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={invoiceEmailBusy || !invoiceFile}
+              className="btn-motion bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover disabled:opacity-50"
+            >
+              {invoiceEmailBusy ? 'Gönderiliyor…' : 'Faturayı e-posta ile gönder'}
+            </button>
+          </form>
 
           <p className="text-xs text-muted">
             İptal/iade talepleri için{' '}

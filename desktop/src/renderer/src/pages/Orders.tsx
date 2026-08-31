@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, apiFormData } from '../lib/api';
 import {
   asPaged,
   formatMoney,
@@ -35,6 +35,13 @@ export function OrdersPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [invoiceNumberInput, setInvoiceNumberInput] = useState('');
+  const [invoiceDocType, setInvoiceDocType] = useState<'earchive' | 'einvoice'>(
+    'earchive',
+  );
+  const [invoiceEmailBusy, setInvoiceEmailBusy] = useState(false);
+  const invoiceFileRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     const params = new URLSearchParams({ limit: '50', page: '1' });
@@ -52,6 +59,11 @@ export function OrdersPage() {
         `/accounting/invoices?orderId=${id}&limit=1`,
       );
       setLinkedInvoice(inv.items?.[0] ?? null);
+      const row = inv.items?.[0];
+      if (row?.invoiceNumber) {
+        setInvoiceNumberInput(row.invoiceNumber);
+        if (row.edocumentType === 'einvoice') setInvoiceDocType('einvoice');
+      }
     } catch {
       setLinkedInvoice(null);
     }
@@ -85,6 +97,34 @@ export function OrdersPage() {
     }
   }
 
+  async function sendInvoiceEmail() {
+    if (!selected) return;
+    const file = invoiceFileRef.current?.files?.[0];
+    if (!file) {
+      setError('GİB ZIP, HTML, XML veya PDF seçin');
+      return;
+    }
+    setInvoiceEmailBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      if (invoiceNumberInput.trim()) {
+        form.append('invoiceNumber', invoiceNumberInput.trim());
+      }
+      form.append('edocumentType', invoiceDocType);
+      if (linkedInvoice?.id) form.append('invoiceId', linkedInvoice.id);
+      await apiFormData(`/orders/${selected.id}/send-invoice-email`, form);
+      setMessage(`Fatura e-postası gönderildi: ${selected.customerEmail}`);
+      if (invoiceFileRef.current) invoiceFileRef.current.value = '';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'E-posta gönderilemedi');
+    } finally {
+      setInvoiceEmailBusy(false);
+    }
+  }
+
   return (
     <div className="grid grid-cols-5 gap-6">
       <div className="col-span-3">
@@ -110,6 +150,7 @@ export function OrdersPage() {
           </button>
         </div>
         {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
+        {message ? <p className="mt-2 text-sm text-accent">{message}</p> : null}
         <table className="mt-4 w-full text-sm">
           <thead>
             <tr className="border-b border-border-muted text-left text-muted">
@@ -169,6 +210,46 @@ export function OrdersPage() {
                   Fiş oluştur
                 </button>
               )}
+            </div>
+            <div className="mt-3 border border-border-muted p-3 text-sm space-y-2">
+              <p className="mono text-[10px] uppercase text-muted">
+                e-Arşiv müşteriye gönder
+              </p>
+              <p className="text-xs text-muted">
+                GİB ZIP yükleyin — içinden HTML/XML çıkarılıp PDF’e çevrilir. ZIP’ten
+              ayırdığınız .html veya .xml dosyasını da yükleyebilirsiniz. Alıcı:{' '}
+                {selected.customerEmail}
+              </p>
+              <input
+                className={inputClass}
+                placeholder="Fatura no (ZIP’ten otomatik de olabilir)"
+                value={invoiceNumberInput}
+                onChange={(e) => setInvoiceNumberInput(e.target.value)}
+              />
+              <select
+                className={inputClass}
+                value={invoiceDocType}
+                onChange={(e) =>
+                  setInvoiceDocType(e.target.value as 'earchive' | 'einvoice')
+                }
+              >
+                <option value="earchive">e-Arşiv</option>
+                <option value="einvoice">e-Fatura</option>
+              </select>
+              <input
+                ref={invoiceFileRef}
+                type="file"
+                accept=".zip,.pdf,.html,.htm,.xml,application/zip,application/pdf,text/html,text/xml,application/xml"
+                className="block w-full text-xs"
+              />
+              <button
+                type="button"
+                disabled={invoiceEmailBusy}
+                className="bg-accent px-3 py-2 text-sm text-white disabled:opacity-50"
+                onClick={() => void sendInvoiceEmail()}
+              >
+                {invoiceEmailBusy ? 'Gönderiliyor…' : 'Faturayı e-posta ile gönder'}
+              </button>
             </div>
             <select
               className={inputClass}

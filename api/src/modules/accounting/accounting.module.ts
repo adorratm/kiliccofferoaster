@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EinvoiceModule } from '@modules/einvoice/einvoice.module';
+import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { AccountingController } from '@modules/accounting/accounting.controller';
 import { PartiesService } from '@modules/accounting/parties.service';
 import { InvoicesService } from '@modules/accounting/invoices.service';
@@ -11,7 +12,7 @@ import { SyncService } from '@modules/accounting/sync.service';
 import { AccountingSettingsService } from '@modules/accounting/settings.service';
 
 @Module({
-  imports: [EinvoiceModule],
+  imports: [EinvoiceModule, NotificationsModule],
   controllers: [AccountingController],
   providers: [
     PartiesService,

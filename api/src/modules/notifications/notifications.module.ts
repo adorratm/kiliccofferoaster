@@ -13,6 +13,7 @@ import {
 } from '@modules/notifications/providers/whatsapp.provider';
 import { InboxService } from '@modules/notifications/inbox.service';
 import { NotifyGateway } from '@modules/notifications/notify.gateway';
+import { InvoiceEmailService } from '@modules/notifications/invoice-email.service';
 import { ExpoPushService } from '@modules/notifications/expo-push.service';
 
 @Module({
@@ -36,7 +37,8 @@ import { ExpoPushService } from '@modules/notifications/expo-push.service';
     ConsoleWhatsAppProvider,
     MetaWhatsAppProvider,
     WhatsAppProviderRouter,
+    InvoiceEmailService,
   ],
-  exports: [NotificationsService, InboxService, BullModule],
+  exports: [NotificationsService, InboxService, BullModule, InvoiceEmailService],
 })
 export class NotificationsModule {}

@@ -33,6 +33,7 @@ import { EinvoiceGateway } from '@modules/einvoice/einvoice.gateway';
 import { StockLedgerService } from '@modules/accounting/stock-ledger.service';
 import { StockMovementType } from '@entities/stock-movement.entity';
 import { OkcSale } from '@entities/okc-sale.entity';
+import { InvoiceEmailService } from '@modules/notifications/invoice-email.service';
 
 @Injectable()
 export class InvoicesService {
@@ -40,6 +41,7 @@ export class InvoicesService {
     @InjectEntityManager() private readonly em: EntityManager,
     private readonly einvoice: EinvoiceGateway,
     private readonly stock: StockLedgerService,
+    private readonly invoiceEmail: InvoiceEmailService,
   ) {}
 
   async list(query: InvoiceQueryDto): Promise<PaginatedResult<Invoice>> {
@@ -217,7 +219,11 @@ export class InvoicesService {
       invoice.status = InvoiceStatus.SENT;
     }
     await this.em.save(invoice);
-    return this.findOne(id);
+    const saved = await this.findOne(id);
+    if (result.accepted) {
+      await this.invoiceEmail.tryAutoSendAfterGib(saved.id);
+    }
+    return saved;
   }
 
   async cancel(id: string): Promise<Invoice> {

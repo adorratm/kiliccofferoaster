@@ -58,18 +58,17 @@ function imageRemotePatterns() {
     );
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (apiUrl) {
-    try {
-      const { hostname, protocol } = new URL(apiUrl);
-      patterns.push({
-        protocol: protocol.replace(":", "") as "https" | "http",
-        hostname,
-        pathname: "/**",
-      });
-    } catch {
-      // ignore
-    }
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  try {
+    const { hostname, protocol } = new URL(apiUrl);
+    patterns.push({
+      protocol: protocol.replace(":", "") as "https" | "http",
+      hostname,
+      pathname: "/**",
+    });
+  } catch {
+    // ignore invalid API URL
   }
 
   return patterns;

@@ -8,11 +8,18 @@ import {
   BRAND_LOGO_FILENAME,
 } from '@modules/notifications/brand-logo';
 
+export type EmailAttachmentInput = {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+};
+
 export type SendEmailInput = {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: EmailAttachmentInput[];
 };
 
 @Injectable()
@@ -69,14 +76,24 @@ export class EmailProvider {
       return { id: `console-${Date.now()}` };
     }
 
+    const fileAttachments = (input.attachments || []).map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
+    }));
+    const attachments = wantsLogo
+      ? [this.logoAttachment, ...fileAttachments]
+      : fileAttachments.length
+        ? fileAttachments
+        : undefined;
+
     const info = await this.transporter.sendMail({
       from: this.from,
       to: input.to,
       subject: input.subject,
       html: input.html,
       text: input.text,
-      // Gmail uzak URL / data-URI’yi sık kırar; CID inline attachment güvenilir
-      attachments: wantsLogo ? [this.logoAttachment] : undefined,
+      attachments,
     });
 
     this.logger.log(`E-posta gönderildi: ${info.messageId} → ${input.to}`);
