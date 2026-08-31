@@ -134,6 +134,21 @@ export class PaymentsController {
   }
 
   @Public()
+  @Get('revenuecat/status')
+  @ApiOperation({ summary: 'Mobil RevenueCat istemci ipuçları' })
+  revenuecatStatus() {
+    return this.paymentsService.revenuecatClientStatus();
+  }
+
+  @Public()
+  @Post('revenuecat/abandon')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mobil ödeme tamamlanamadı — pending siparişi iptal' })
+  abandonRevenuecat(@Body() dto: RevenuecatConfirmDto) {
+    return this.paymentsService.abandonRevenuecatOrder(dto.orderId);
+  }
+
+  @Public()
   @Post('revenuecat/webhook')
   @ApiOperation({ summary: 'RevenueCat webhook — sipariş fulfillment' })
   async revenuecatWebhook(

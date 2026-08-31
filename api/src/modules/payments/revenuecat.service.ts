@@ -47,6 +47,36 @@ export class RevenuecatService {
     return Boolean(this.config.get<string>('revenuecat.secretApiKey'));
   }
 
+  clientStatus() {
+    return {
+      /** Secret key yoksa mobil checkout mock ile tamamlanır (RC SDK gerekmez). */
+      serverMock: !this.isConfigured(),
+      hasProductMap: Boolean(
+        this.config.get<string>('revenuecat.productMap')?.trim(),
+      ),
+    };
+  }
+
+  async abandonOrder(orderId: string) {
+    const order = await this.em.findOne(Order, {
+      where: { id: orderId },
+      relations: { payment: true },
+    });
+    if (!order || order.status !== OrderStatus.PENDING_PAYMENT) {
+      return { ok: true, skipped: true };
+    }
+    if (order.payment?.provider !== 'revenuecat') {
+      return { ok: true, skipped: true };
+    }
+    order.status = OrderStatus.CANCELLED;
+    if (order.payment) {
+      order.payment.status = PaymentStatus.FAILED;
+      await this.em.save(order.payment);
+    }
+    await this.em.save(order);
+    return { ok: true };
+  }
+
   async initializeCheckout(dto: InitializePaymentDto) {
     const order = await this.em.findOne(Order, {
       where: { id: dto.orderId },

@@ -58,7 +58,6 @@ export class CheckoutController {
         const payment = await this.paymentsService.initializeRevenuecatCheckout({
           orderId: order.id,
         });
-        await this.ordersService.notifyOrderReceived(order.id);
         return {
           orderId: order.id,
           orderNumber: order.orderNumber,

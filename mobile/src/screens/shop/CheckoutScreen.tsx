@@ -19,7 +19,9 @@ import {
   cartSubtotal,
   shopAddresses,
   shopCheckout,
+  shopAbandonRevenueCat,
   shopConfirmRevenueCat,
+  shopRevenueCatStatus,
   shopCreateAddress,
   shopMe,
   shopShippingProviders,
@@ -28,7 +30,7 @@ import {
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
-import { purchaseOrderItems } from '../../lib/revenuecat';
+import { purchaseOrderItems, revenueCatBlockedReason } from '../../lib/revenuecat';
 import { STORE_PICKUP_CODE } from '../../lib/shipping';
 import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
 import { btn, btnText, colors, input, muted } from '../../ui';
@@ -195,7 +197,19 @@ export function CheckoutScreen({ navigation }: Props) {
       return;
     }
     setSubmitting(true);
+    let pendingOrderId: string | null = null;
     try {
+      if (isNativeMobile) {
+        const blocked = revenueCatBlockedReason();
+        if (blocked) {
+          const rcStatus = await shopRevenueCatStatus();
+          if (!rcStatus.serverMock) {
+            setError(blocked);
+            return;
+          }
+        }
+      }
+
       if (
         !isPickup &&
         loggedIn &&
@@ -249,12 +263,20 @@ export function CheckoutScreen({ navigation }: Props) {
       await refresh();
 
       if (result.provider === 'revenuecat') {
+        pendingOrderId = result.orderId;
         if (result.mock) {
           await shopConfirmRevenueCat({ orderId: result.orderId });
           navigation.replace('OrderResult', {
             ok: true,
             orderNumber: result.orderNumber,
           });
+          return;
+        }
+        const blocked = revenueCatBlockedReason();
+        if (blocked) {
+          await shopAbandonRevenueCat(result.orderId);
+          pendingOrderId = null;
+          setError(blocked);
           return;
         }
         const items =
@@ -264,6 +286,8 @@ export function CheckoutScreen({ navigation }: Props) {
               ? [{ productId: result.checkoutProductId, quantity: 1 }]
               : [];
         if (!items.length) {
+          await shopAbandonRevenueCat(result.orderId);
+          pendingOrderId = null;
           setError('Mağaza ödeme ürünleri yapılandırılmamış');
           return;
         }
@@ -276,6 +300,7 @@ export function CheckoutScreen({ navigation }: Props) {
           productId: purchase.productId,
           transactionId: purchase.transactionId,
         });
+        pendingOrderId = null;
         navigation.replace('OrderResult', {
           ok: true,
           orderNumber: result.orderNumber,
@@ -303,6 +328,13 @@ export function CheckoutScreen({ navigation }: Props) {
       }
       setError('Ödeme oturumu alınamadı');
     } catch (e) {
+      if (pendingOrderId) {
+        try {
+          await shopAbandonRevenueCat(pendingOrderId);
+        } catch {
+          /* iptal edilemedi */
+        }
+      }
       setError(e instanceof Error ? e.message : 'Ödeme başlatılamadı');
     } finally {
       setSubmitting(false);

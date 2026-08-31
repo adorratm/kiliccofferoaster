@@ -30,10 +30,16 @@ export function revenueCatBlockedReason(): string | null {
   if (Platform.OS === 'web') return 'Web platformunda mağaza ödemesi yok';
   const apiKey = platformApiKey();
   if (!apiKey) {
-    return 'RevenueCat API key tanımlı değil (eas.json veya EAS secret)';
+    return (
+      'Mobil ödeme yapılandırılmamış. Preview/production APK için eas.json içine goog_ (Android) key ekleyip yeniden build alın; ' +
+      'veya Test Store ile denemek için: eas build --profile development + yarn dev:mobile'
+    );
   }
   if (isTestStoreApiKey(apiKey) && !__DEV__) {
-    return 'Test Store key release build ile kullanılamaz. Preview/production için RevenueCat panelinden goog_ (Android) veya appl_ (iOS) key ekleyin.';
+    return (
+      'Test Store key bu APK ile kullanılamaz. Preview için eas.json → preview → EXPO_PUBLIC_REVENUECAT_ANDROID_KEY: goog_... ' +
+      'veya development profili + Metro ile test edin.'
+    );
   }
   return null;
 }

@@ -57,4 +57,12 @@ export class PaymentsService {
   handleRevenuecatWebhook(body: Record<string, unknown>, authHeader?: string) {
     return this.revenuecat.handleWebhook(body, authHeader);
   }
+
+  revenuecatClientStatus() {
+    return this.revenuecat.clientStatus();
+  }
+
+  abandonRevenuecatOrder(orderId: string) {
+    return this.revenuecat.abandonOrder(orderId);
+  }
 }
