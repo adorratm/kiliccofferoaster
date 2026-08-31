@@ -5,16 +5,48 @@ const ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
 
 let configured = false;
 
-export function isRevenueCatAvailable() {
+function platformApiKey() {
+  return Platform.OS === 'ios' ? IOS_KEY : ANDROID_KEY;
+}
+
+/** RevenueCat Test Store key — yalnızca debug/dev client build'lerinde kullanılabilir. */
+export function isTestStoreApiKey(key: string) {
+  return key.startsWith('test_');
+}
+
+/**
+ * Release/preview APK'da test_ key SDK'yı kasıtlı olarak kapatır.
+ * Preview ve production için goog_ / appl_ key gerekir.
+ */
+export function canConfigureRevenueCat() {
   if (Platform.OS === 'web') return false;
-  return Platform.OS === 'ios' ? Boolean(IOS_KEY) : Boolean(ANDROID_KEY);
+  const apiKey = platformApiKey();
+  if (!apiKey) return false;
+  if (isTestStoreApiKey(apiKey) && !__DEV__) return false;
+  return true;
+}
+
+export function revenueCatBlockedReason(): string | null {
+  if (Platform.OS === 'web') return 'Web platformunda mağaza ödemesi yok';
+  const apiKey = platformApiKey();
+  if (!apiKey) {
+    return 'RevenueCat API key tanımlı değil (eas.json veya EAS secret)';
+  }
+  if (isTestStoreApiKey(apiKey) && !__DEV__) {
+    return 'Test Store key release build ile kullanılamaz. Preview/production için RevenueCat panelinden goog_ (Android) veya appl_ (iOS) key ekleyin.';
+  }
+  return null;
+}
+
+export function isRevenueCatAvailable() {
+  return canConfigureRevenueCat();
 }
 
 export async function configureRevenueCat() {
   if (Platform.OS === 'web' || configured) return;
-  const apiKey = Platform.OS === 'ios' ? IOS_KEY : ANDROID_KEY;
-  if (!apiKey) return;
+  if (!canConfigureRevenueCat()) return;
 
+  const apiKey = platformApiKey();
   const Purchases = (await import('react-native-purchases')).default;
   const { LOG_LEVEL } = await import('react-native-purchases');
   if (__DEV__) {
@@ -28,6 +60,17 @@ export async function purchaseOrderItems(params: {
   appUserId: string;
   items: { productId: string; quantity: number }[];
 }) {
+  const blocked = revenueCatBlockedReason();
+  if (blocked) {
+    throw new Error(blocked);
+  }
+  if (!configured) {
+    await configureRevenueCat();
+  }
+  if (!configured) {
+    throw new Error('RevenueCat başlatılamadı');
+  }
+
   const Purchases = (await import('react-native-purchases')).default;
   await Purchases.logIn(params.appUserId);
 
