@@ -7,10 +7,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import { WebView } from 'react-native-webview';
+import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import type { CartStackParamList } from '../../navigation/types';
-import { SHOP_URL } from '../../lib/api';
 import { colors, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Paytr'>;
@@ -24,15 +23,9 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
-function shopOdemePrefix(): string {
-  return `${SHOP_URL.replace(/\/$/, '')}/odeme/`;
-}
-
 export function PaytrScreen({ navigation, route }: Props) {
   const { token, orderNumber, orderId, iframeUrl } = route.params;
   const [loadError, setLoadError] = useState('');
-  const [useFallbackWebView, setUseFallbackWebView] = useState(false);
-  const [browserMessage, setBrowserMessage] = useState('Ödeme sayfası açılıyor…');
   const finishedRef = useRef(false);
 
   const uri = useMemo(() => {
@@ -55,7 +48,9 @@ export function PaytrScreen({ navigation, route }: Props) {
     });
   }
 
-  function handlePaymentUrl(url: string): boolean {
+  /** Yalnızca onShouldStartLoadWithRequest — çift handler race crash'ini önler. */
+  function handleShouldStart(req: ShouldStartLoadRequest): boolean {
+    const url = req.url || '';
     if (!url || url === 'about:blank') return true;
 
     if (url.includes('/odeme/basarili')) {
@@ -67,7 +62,7 @@ export function PaytrScreen({ navigation, route }: Props) {
       return false;
     }
 
-    // Android intent / banka uygulama şemaları — WebView içinde yükleme
+    // Banka / 3DS uygulama şemaları (intent:// Android)
     if (!/^https?:\/\//i.test(url)) {
       if (Platform.OS === 'android' && url.startsWith('intent://')) {
         void Linking.openURL(url).catch(() => {});
@@ -87,63 +82,6 @@ export function PaytrScreen({ navigation, route }: Props) {
 
     return true;
   }
-
-  // iOS (ve mümkünse genel): SFSafariViewController / Chrome Custom Tabs.
-  // react-native-webview 13.16.1'de PayTR gibi yoğun yönlendirmelerde
-  // RNCWebViewDecisionManager race → native crash (13.16.2'de düzeldi;
-  // tarayıcı yine de 3DS / banka dönüşleri için daha güvenli).
-  useEffect(() => {
-    if (!uri || useFallbackWebView || finishedRef.current) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setBrowserMessage('Güvenli ödeme sayfası açılıyor…');
-        const result = await WebBrowser.openAuthSessionAsync(
-          uri,
-          shopOdemePrefix(),
-          {
-            preferEphemeralSession: false,
-            // merchant_ok/fail URL'leri https://kiliccoffeeroaster.com.tr/odeme/...
-            // Associated Domains tanımlı → HTTPS callback yakalanabilsin
-            preferUniversalLinks: true,
-          },
-        );
-
-        if (cancelled || finishedRef.current) return;
-
-        if (result.type === 'success' && result.url) {
-          if (result.url.includes('/odeme/basarili')) {
-            finish(true);
-            return;
-          }
-          if (result.url.includes('/odeme/basarisiz')) {
-            finish(false, 'Ödeme tamamlanamadı');
-            return;
-          }
-        }
-
-        if (result.type === 'cancel' || result.type === 'dismiss') {
-          finish(
-            false,
-            'Ödeme penceresi kapandı. Ödemeyi tamamladıysanız Siparişlerim’den kontrol edin.',
-          );
-          return;
-        }
-
-        // Auth session redirect yakalanamadıysa WebView yedeğine düş
-        setUseFallbackWebView(true);
-      } catch {
-        if (!cancelled) setUseFallbackWebView(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      void WebBrowser.dismissBrowser().catch(() => {});
-    };
-  }, [uri, useFallbackWebView]);
 
   useEffect(() => {
     if (uri) return;
@@ -187,25 +125,6 @@ export function PaytrScreen({ navigation, route }: Props) {
     );
   }
 
-  if (!useFallbackWebView) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 24,
-        }}
-      >
-        <ActivityIndicator color={colors.accent} />
-        <Text style={[muted, { marginTop: 16, textAlign: 'center' }]}>
-          {browserMessage}
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <WebView
       source={{ uri }}
@@ -215,13 +134,7 @@ export function PaytrScreen({ navigation, route }: Props) {
       sharedCookiesEnabled
       allowsInlineMediaPlayback
       setSupportMultipleWindows={false}
-      onShouldStartLoadWithRequest={(req) => {
-        try {
-          return handlePaymentUrl(req.url);
-        } catch {
-          return false;
-        }
-      }}
+      onShouldStartLoadWithRequest={handleShouldStart}
       onContentProcessDidTerminate={() => {
         setLoadError('Ödeme sayfası yenilenmesi gerekiyor. Lütfen tekrar deneyin.');
       }}
