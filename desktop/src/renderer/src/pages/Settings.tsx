@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import { Switch } from '../components/Switch';
 import { api, getToken, getUser } from '../lib/api';
 
 type Settings = {
@@ -9,6 +10,7 @@ type Settings = {
   city?: string | null;
   earchivePrefix: string;
   einvoicePrefix: string;
+  autoEmailInvoiceOnGib?: boolean;
   paytrCommissionRatePercent?: string | number;
 };
 
@@ -24,6 +26,8 @@ type OpsAccessRequest = {
 export function SettingsPage() {
   const [form, setForm] = useState<Settings | null>(null);
   const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [pwMsg, setPwMsg] = useState('');
   const [pwError, setPwError] = useState('');
   const [hasPassword, setHasPassword] = useState(false);
@@ -61,6 +65,7 @@ export function SettingsPage() {
         companyTitle: '',
         earchivePrefix: '',
         einvoicePrefix: '',
+        autoEmailInvoiceOnGib: false,
       });
     });
     void window.ops?.getAppVersion?.().then(setAppVersion).catch(() => {});
@@ -142,12 +147,31 @@ export function SettingsPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form) return;
-    const saved = await api<Settings>('/accounting/settings', {
-      method: 'PATCH',
-      body: form,
-    });
-    setForm(saved);
-    setMsg('Kaydedildi');
+    setSaving(true);
+    setMsg('');
+    setError('');
+    try {
+      const saved = await api<Settings>('/accounting/settings', {
+        method: 'PATCH',
+        body: {
+          companyTitle: form.companyTitle,
+          vkn: form.vkn || null,
+          taxOffice: form.taxOffice || null,
+          address: form.address || null,
+          city: form.city || null,
+          earchivePrefix: form.earchivePrefix,
+          einvoicePrefix: form.einvoicePrefix,
+          autoEmailInvoiceOnGib: Boolean(form.autoEmailInvoiceOnGib),
+          paytrCommissionRatePercent: Number(form.paytrCommissionRatePercent ?? 2.19),
+        },
+      });
+      setForm(saved);
+      setMsg('Kaydedildi');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kayıt başarısız');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function onPassword(e: FormEvent) {
@@ -284,8 +308,25 @@ export function SettingsPage() {
             />
           </label>
         ))}
-        <button className="mt-4 bg-accent px-4 py-2 text-white">Kaydet</button>
+        <div className="mt-4 border border-border-muted px-3 py-3">
+          <Switch
+            checked={Boolean(form.autoEmailInvoiceOnGib)}
+            onChange={(checked) =>
+              setForm({ ...form, autoEmailInvoiceOnGib: checked })
+            }
+            label="GİB sonrası otomatik müşteri e-postası"
+            description="GİB’e başarıyla gönderilen e-Arşiv/e-Fatura için müşteriye markalı e-posta gider. Kapalıyken yalnızca sipariş sayfasından manuel gönderim yapılır."
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={saving}
+          className="mt-4 bg-accent px-4 py-2 text-white disabled:opacity-50"
+        >
+          {saving ? 'Kaydediliyor…' : 'Kaydet'}
+        </button>
         {msg ? <p className="mt-2 text-sm text-success">{msg}</p> : null}
+        {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
       </form>
 
       <form onSubmit={onPassword} className="mt-10 border-t border-border-muted pt-8">
