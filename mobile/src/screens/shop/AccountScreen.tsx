@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,7 @@ import { MenuRow } from '../../components/shop/MenuRow';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { SectionLabel } from '../../components/shop/SectionLabel';
 import { restoreShopSession, setShopToken } from '../../lib/api';
-import { shopMe } from '../../lib/shop-api';
+import { shopDeleteAccount, shopMe } from '../../lib/shop-api';
 import { useStaffSession } from '../../lib/staff-session';
 import type { ShopUser } from '../../lib/shop-types';
 import { LEGAL_LINKS } from '../../lib/cms';
@@ -28,12 +28,65 @@ export function AccountScreen({ navigation }: Props) {
   const [user, setUser] = useState<ShopUser | null>(null);
   const [ready, setReady] = useState(false);
   const [updateHint, setUpdateHint] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const onCheckUpdate = useCallback(async () => {
     setUpdateHint('Kontrol ediliyor…');
     const msg = await manualUpdateCheck();
     setUpdateHint(msg);
   }, []);
+
+  const logout = useCallback(async () => {
+    await setShopToken(null);
+    await refreshStaff();
+    setUser(null);
+  }, [refreshStaff]);
+
+  const confirmDeleteAccount = useCallback(() => {
+    Alert.alert(
+      'Hesabı sil?',
+      'Hesabınız kapatılır; giriş bilgileriniz silinir. Geçmiş sipariş kayıtları yasal zorunluluklar nedeniyle saklanabilir. Bu işlem geri alınamaz.',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Hesabı sil',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Emin misiniz?',
+              'Hesabınız kalıcı olarak kapatılacak ve oturumunuz sonlandırılacak.',
+              [
+                { text: 'Vazgeç', style: 'cancel' },
+                {
+                  text: 'Evet, sil',
+                  style: 'destructive',
+                  onPress: () => {
+                    void (async () => {
+                      setDeleting(true);
+                      try {
+                        await shopDeleteAccount();
+                        await logout();
+                        Alert.alert('Hesap kapatıldı', 'Hesabınız silindi. İyi günler dileriz.');
+                      } catch (e) {
+                        Alert.alert(
+                          'Silinemedi',
+                          e instanceof Error
+                            ? e.message
+                            : 'Hesap silinemedi. Daha sonra tekrar deneyin.',
+                        );
+                      } finally {
+                        setDeleting(false);
+                      }
+                    })();
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  }, [logout]);
 
   useFocusEffect(
     useCallback(() => {
@@ -166,15 +219,20 @@ export function AccountScreen({ navigation }: Props) {
         }
       />
       <Pressable
-        onPress={async () => {
-          await setShopToken(null);
-          await refreshStaff();
-          setUser(null);
-        }}
+        onPress={() => void logout()}
         style={{ marginTop: 28, paddingVertical: 12 }}
       >
         <Text style={{ color: colors.muted, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }}>
           Çıkış yap
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={confirmDeleteAccount}
+        disabled={deleting}
+        style={{ marginTop: 4, paddingVertical: 12, opacity: deleting ? 0.5 : 1 }}
+      >
+        <Text style={{ color: colors.danger, textAlign: 'center', letterSpacing: 1.2, textTransform: 'uppercase', fontSize: 11 }}>
+          {deleting ? 'Hesap siliniyor…' : 'Hesabı sil'}
         </Text>
       </Pressable>
     </ScrollView>
