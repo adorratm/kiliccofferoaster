@@ -56,7 +56,11 @@
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "Sipariş durumu ve kampanya bildirimleri için kullanılır.",
         "NSPhotoLibraryUsageDescription": "Personel ürün kataloğuna görsel yüklemek için galeri erişimi gerekir. Müşteri alışverişinde kullanılmaz.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIApplicationSceneManifest": {
+          "UIApplicationSupportsMultipleScenes": false,
+          "UISceneConfigurations": {}
+        }
       }
     },
     "android": {
