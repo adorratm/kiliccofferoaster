@@ -5,13 +5,24 @@ const OPS_TOKEN_KEY = 'ops_token';
 const SHOP_TOKEN_KEY = 'shop_token';
 const SHOP_SESSION_KEY = 'shop_session';
 
-const defaultHost =
+/** Geliştirme (Metro) varsayılanları — emülatör / lokal API. */
+const devDefaultHost =
   Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || defaultHost;
+/**
+ * Release / OTA: EXPO_PUBLIC_* yoksa canlı API'ye düş.
+ * `eas update` EAS Environment'tan env almazsa (veya boşsa) localhost'a
+ * gömülmesin diye production URL sabitlenir.
+ */
+const releaseDefaultHost = 'https://api.kiliccoffeeroaster.com.tr';
+const releaseDefaultShop = 'https://kiliccoffeeroaster.com.tr';
+
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (__DEV__ ? devDefaultHost : releaseDefaultHost);
 
 export const SHOP_URL =
-  process.env.EXPO_PUBLIC_SHOP_URL || 'https://kiliccoffeeroaster.com.tr';
+  process.env.EXPO_PUBLIC_SHOP_URL || releaseDefaultShop;
 
 const OPS_ROLES = ['admin', 'staff', 'accountant'] as const;
 
