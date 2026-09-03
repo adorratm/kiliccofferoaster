@@ -162,14 +162,12 @@ function CartStackNavigator({
   route,
 }: BottomTabScreenProps<RootTabParamList, 'CartTab'>) {
   const { count } = useShopCart();
-  const focused = getFocusedRouteNameFromRoute(route) ?? 'Cart';
 
   useLayoutEffect(() => {
     navigation.setOptions({
       tabBarBadge: count > 0 ? count : undefined,
-      tabBarStyle: focused === 'Paytr' ? { display: 'none' } : tabBarStyle,
     });
-  }, [count, focused, navigation]);
+  }, [count, navigation]);
 
   return (
     <CartStack.Navigator screenOptions={stackScreenOptions}>
@@ -186,7 +184,7 @@ function CartStackNavigator({
       <CartStack.Screen
         name="Paytr"
         component={PaytrScreen}
-        options={{ title: 'Güvenli ödeme', headerBackVisible: false }}
+        options={{ title: 'Güvenli ödeme', headerBackVisible: true }}
       />
       <CartStack.Screen
         name="OrderResult"

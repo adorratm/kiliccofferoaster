@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type { CartStackParamList } from '../../navigation/types';
 import { colors, muted } from '../../ui';
@@ -30,8 +30,10 @@ export function PaytrScreen({ navigation, route }: Props) {
     return raw;
   }, [iframeUrl, token]);
 
-  function handleUrl(url: string) {
-    if (!url) return true;
+  function handleUrl(url: string): boolean {
+    if (!url || url === 'about:blank') return true;
+
+    // Ödeme sonucu yönlendirmeleri
     if (url.includes('/odeme/basarili')) {
       navigation.replace('OrderResult', { ok: true, orderNumber });
       return false;
@@ -44,6 +46,27 @@ export function PaytrScreen({ navigation, route }: Props) {
       });
       return false;
     }
+
+    // Harici uygulama scheme'leri / deep link'ler (intent://, banka uygulamaları, bkm, vs.)
+    if (!/^https?:\/\//i.test(url)) {
+      if (url.startsWith('intent://')) {
+        void Linking.openURL(url).catch(() => {});
+      } else {
+        void (async () => {
+          try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+              await Linking.openURL(url);
+            }
+          } catch {
+            /* ignore */
+          }
+        })();
+      }
+      // WebView içinde yüklemeye çalışma; çökme olmasın
+      return false;
+    }
+
     return true;
   }
 
@@ -100,10 +123,20 @@ export function PaytrScreen({ navigation, route }: Props) {
     <WebView
       source={{ uri }}
       originWhitelist={['*']}
+      javaScriptEnabled={true}
+      domStorageEnabled={true}
+      thirdPartyCookiesEnabled={true}
+      sharedCookiesEnabled={true}
+      mixedContentMode="always"
+      allowsInlineMediaPlayback={true}
+      setSupportMultipleWindows={false}
+      userAgent={
+        Platform.OS === 'android'
+          ? 'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36'
+          : undefined
+      }
       onShouldStartLoadWithRequest={(req) => {
         try {
-          if (/paytr\.com/i.test(req.url)) return true;
-          if (/iyzipay\.com|iyzico\.com/i.test(req.url)) return true;
           return handleUrl(req.url);
         } catch {
           return false;
