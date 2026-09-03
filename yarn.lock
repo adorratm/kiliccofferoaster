@@ -3610,6 +3610,7 @@ __metadata:
     expo-linking: "npm:~57.0.9"
     expo-notifications: "npm:~57.0.16"
     expo-secure-store: "npm:~57.0.3"
+    expo-splash-screen: "npm:~57.0.8"
     expo-sqlite: "npm:~57.0.2"
     expo-status-bar: "npm:~57.0.1"
     expo-updates: "npm:^57.0.21"
@@ -10015,6 +10016,19 @@ __metadata:
   version: 57.0.3
   resolution: "expo-server@npm:57.0.3"
   checksum: 10c0/541d9b319ba513df718868c87a8d57e30161c3879b7d5b43f308923290ce5ee349a1b3469901c2f382984b6595f4cf6beaee9d870f5eb874c45ddc0a42a13e56
+  languageName: node
+  linkType: hard
+
+"expo-splash-screen@npm:~57.0.8":
+  version: 57.0.8
+  resolution: "expo-splash-screen@npm:57.0.8"
+  dependencies:
+    "@expo/config-plugins": "npm:~57.0.9"
+    "@expo/image-utils": "npm:^0.11.5"
+    xml2js: "npm:0.6.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/70d7e785a10b9229158fd7cf9d2d6a0dfd74e2fb87d1025191cfcb62838981823e7222f0652fe1e1ff5e151e9bf2ecb1a2f33b53f1924bf028ee745e3fe0876d
   languageName: node
   linkType: hard
 
