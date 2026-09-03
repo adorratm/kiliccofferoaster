@@ -33,6 +33,10 @@ bash deploy/deploy.sh         # build + up + nginx sync
 Cloudflare **Proxied** (turuncu bulut) ile Let's Encrypt HTTP-01 bazen başarısız olur.
 Sertifika alırken geçici **DNS only** (gri bulut) yapın; sonra tekrar Proxied + SSL Full (strict).
 
+### Googlebot ve sitemap
+
+`/sitemap.xml` 500 olursa Google keşfi kırılır. Cloudflare Bot Fight / WAF, `/urunler` gibi sayfalarda challenge gösteriyorsa Search Console crawler’larını (Googlebot) allowlist’e alın. Sitemap’i GSC’de yeniden gönderin.
+
 ## Veritabanı taşıma
 
 Yerelde yedek zaten alındıysa:

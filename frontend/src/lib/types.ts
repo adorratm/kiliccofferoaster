@@ -44,9 +44,23 @@ export type Product = {
   ratingAvg?: string;
   ratingCount?: number;
   categoryId: string | null;
+  category?: {
+    id: string;
+    slug: string;
+    name: string;
+  } | null;
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  barcode?: string | null;
+  roastedAt?: string | null;
+  brewGuide?: {
+    method?: string;
+    grind?: string;
+    ratio?: string;
+    notes?: string;
+  } | null;
+  storageNotes?: string | null;
   variants?: ProductVariant[];
   createdAt?: string;
   updatedAt?: string;
@@ -283,6 +297,7 @@ export type BlogPost = {
   authorName: string | null;
   tags: string[];
   relatedProductSlugs?: string[];
+  relatedCategorySlugs?: string[];
   seoTitle: string | null;
   seoDescription: string | null;
   isPublished: boolean;
@@ -295,6 +310,7 @@ export type BlogPost = {
 export type BlogQuery = {
   q?: string;
   tag?: string;
+  categorySlug?: string;
   sort?: "publishedAt" | "createdAt" | "updatedAt" | "title";
   order?: "asc" | "desc";
   page?: number;

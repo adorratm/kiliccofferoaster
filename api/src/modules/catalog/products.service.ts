@@ -233,6 +233,9 @@ export class ProductsService {
       expiresAt: productFields.expiresAt ?? null,
       allergens: productFields.allergens ?? [],
       ingredients: productFields.ingredients ?? null,
+      roastedAt: productFields.roastedAt || null,
+      brewGuide: productFields.brewGuide ?? null,
+      storageNotes: productFields.storageNotes ?? null,
       vatRate:
         productFields.vatRate != null
           ? String(productFields.vatRate)
@@ -279,6 +282,14 @@ export class ProductsService {
         rest.allowGround !== undefined
           ? rest.allowGround
           : product.allowGround,
+      roastedAt:
+        rest.roastedAt !== undefined ? rest.roastedAt || null : product.roastedAt,
+      brewGuide:
+        rest.brewGuide !== undefined ? rest.brewGuide : product.brewGuide,
+      storageNotes:
+        rest.storageNotes !== undefined
+          ? rest.storageNotes || null
+          : product.storageNotes,
     });
     if (rest.vatRate !== undefined) {
       product.vatRate = String(rest.vatRate);

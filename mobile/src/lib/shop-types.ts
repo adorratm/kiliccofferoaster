@@ -6,6 +6,7 @@ export type ProductVariant = {
   price: string;
   stock: number;
   isActive: boolean;
+  barcode?: string | null;
 };
 
 export type Product = {
@@ -14,8 +15,13 @@ export type Product = {
   name: string;
   description: string;
   shortDescription: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
   originCountry: string | null;
   originRegion: string | null;
+  altitude?: string | null;
+  process?: string | null;
+  varietal?: string | null;
   roastLevel: string | null;
   flavorNotes: string[];
   imageUrl: string | null;
@@ -31,9 +37,23 @@ export type Product = {
   ratingAvg?: string;
   ratingCount?: number;
   categoryId: string | null;
+  category?: {
+    id: string;
+    slug: string;
+    name: string;
+  } | null;
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  barcode?: string | null;
+  roastedAt?: string | null;
+  brewGuide?: {
+    method?: string;
+    grind?: string;
+    ratio?: string;
+    notes?: string;
+  } | null;
+  storageNotes?: string | null;
   variants?: ProductVariant[];
 };
 
@@ -42,6 +62,8 @@ export type Category = {
   slug: string;
   name: string;
   description: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 };
 
 export type Paginated<T> = {
@@ -201,6 +223,8 @@ export type BlogPost = {
   coverImageUrl: string | null;
   authorName: string | null;
   tags: string[];
+  relatedProductSlugs?: string[];
+  relatedCategorySlugs?: string[];
   publishedAt: string | null;
 };
 

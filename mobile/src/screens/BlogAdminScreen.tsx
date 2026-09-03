@@ -9,6 +9,8 @@ type Post = {
   title: string;
   isPublished: boolean;
   excerpt?: string | null;
+  relatedProductSlugs?: string[];
+  relatedCategorySlugs?: string[];
 };
 
 export function BlogAdminScreen() {
@@ -16,6 +18,8 @@ export function BlogAdminScreen() {
   const [titleText, setTitleText] = useState('');
   const [slug, setSlug] = useState('');
   const [content, setContent] = useState('');
+  const [relatedProducts, setRelatedProducts] = useState('');
+  const [relatedCategories, setRelatedCategories] = useState('');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
@@ -48,6 +52,14 @@ export function BlogAdminScreen() {
           .replace(/\s+/g, '-'),
       content: content.trim() || titleText.trim(),
       excerpt: content.trim().slice(0, 160) || null,
+      relatedProductSlugs: relatedProducts
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+      relatedCategorySlugs: relatedCategories
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
       isPublished: false,
       authorName: 'Kılıç Coffee Roaster',
     };
@@ -56,6 +68,8 @@ export function BlogAdminScreen() {
       setTitleText('');
       setSlug('');
       setContent('');
+      setRelatedProducts('');
+      setRelatedCategories('');
       setMsg('Taslak oluşturuldu');
       await load();
     } catch (e) {
@@ -115,6 +129,22 @@ export function BlogAdminScreen() {
         placeholderTextColor={colors.muted}
         multiline
         style={[input, { minHeight: 100 }]}
+      />
+      <TextInput
+        value={relatedProducts}
+        onChangeText={setRelatedProducts}
+        placeholder="İlgili ürün slug’ları (virgülle)"
+        placeholderTextColor={colors.muted}
+        autoCapitalize="none"
+        style={input}
+      />
+      <TextInput
+        value={relatedCategories}
+        onChangeText={setRelatedCategories}
+        placeholder="İlgili kategori slug’ları (virgülle)"
+        placeholderTextColor={colors.muted}
+        autoCapitalize="none"
+        style={input}
       />
       <Pressable onPress={() => void create()} style={btn}>
         <Text style={btnText}>Taslak oluştur</Text>

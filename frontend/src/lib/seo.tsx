@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { categoryCatalogPath } from "@/lib/catalog-paths";
+import { productGtin, productKindLabel } from "@/lib/catalog-seo";
 import type { SiteSettings } from "@/lib/cms";
 import type { BlogPost, Product, ProductReview } from "@/lib/types";
 
@@ -411,6 +412,20 @@ export function organizationJsonLd(settings: SiteSettings) {
     ...(mapsUrl ? { hasMap: mapsUrl } : {}),
     ...(openingHoursSpecification ? { openingHoursSpecification } : {}),
     ...(sameAs.length ? { sameAs } : {}),
+    ...geoCoordinates(contact.latitude, contact.longitude),
+  };
+}
+
+function geoCoordinates(latRaw?: string, lngRaw?: string) {
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return {};
+  return {
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: lat,
+      longitude: lng,
+    },
   };
 }
 
@@ -551,6 +566,51 @@ export function productJsonLd(
         };
 
   const approvedReviews = reviews.filter((r) => r.isApproved && r.body);
+  const gtin = productGtin(product);
+  const kindLabel = productKindLabel(product.kind);
+  const additionalProperty = [
+    product.originCountry
+      ? {
+          "@type": "PropertyValue",
+          name: "Menşei",
+          value: [product.originRegion, product.originCountry]
+            .filter(Boolean)
+            .join(", "),
+        }
+      : null,
+    product.roastLevel
+      ? {
+          "@type": "PropertyValue",
+          name: "Kavrum",
+          value: product.roastLevel,
+        }
+      : null,
+    product.roastedAt
+      ? {
+          "@type": "PropertyValue",
+          name: "Kavrum tarihi",
+          value: product.roastedAt,
+        }
+      : null,
+    kindLabel
+      ? {
+          "@type": "PropertyValue",
+          name: "Kahve türü",
+          value: kindLabel,
+        }
+      : null,
+    ...(activeVariants
+      .map((v) => v.weightLabel?.trim())
+      .filter((weight, i, arr): weight is string =>
+        Boolean(weight && arr.indexOf(weight) === i),
+      )
+      .map((weight) => ({
+        "@type": "PropertyValue",
+        name: "Gramaj",
+        value: weight,
+      }))),
+  ].filter(Boolean);
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -558,6 +618,17 @@ export function productJsonLd(
     description,
     image: images.length ? images : settings.seo.ogImage || undefined,
     sku: product.batchId || product.slug,
+    ...(gtin
+      ? gtin.length === 13
+        ? { gtin, gtin13: gtin }
+        : { gtin }
+      : {}),
+    ...(product.category?.name
+      ? { category: product.category.name }
+      : kindLabel
+        ? { category: kindLabel }
+        : {}),
+    ...(additionalProperty.length ? { additionalProperty } : {}),
     brand: {
       "@type": "Brand",
       name: settings.brand.name,

@@ -32,57 +32,107 @@ const STATIC_ROUTES: {
   { path: "/aydinlatma-metni", changeFrequency: "yearly", priority: 0.3 },
 ];
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, blogSlugs, categories] = await Promise.all([
-    fetchAllCatalogProducts(),
-    getBlogSlugs().catch(() => []),
-    getCategories().catch(() => []),
-  ]);
-  const now = new Date();
+function safeDate(value: unknown): Date | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
+function absoluteHttpUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const url = value.trim();
+  if (!/^https?:\/\//i.test(url)) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
+function staticEntries(now: Date): MetadataRoute.Sitemap {
+  return STATIC_ROUTES.map((route) => ({
     url: `${SITE_URL}${route.path}`,
     lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
+}
 
-  const categoryEntries: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${SITE_URL}${categoryCatalogPath(cat.slug)}`,
-    lastModified: cat.updatedAt ? new Date(cat.updatedAt) : now,
-    changeFrequency: "weekly",
-    priority: 0.75,
-  }));
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+  const staticOnly = staticEntries(now);
 
-  const productEntries: MetadataRoute.Sitemap = products.map((product) => {
-    const images = [
-      productImage(product.imageUrl, product.slug),
-      ...(product.gallery || []),
-    ].filter((url, i, arr) => url && arr.indexOf(url) === i);
-    return {
-      url: `${SITE_URL}/urunler/${product.slug}`,
-      lastModified: product.updatedAt ? new Date(product.updatedAt) : now,
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-      images,
-    };
-  });
+  try {
+    const [products, blogSlugs, categories] = await Promise.all([
+      fetchAllCatalogProducts().catch(() => []),
+      getBlogSlugs().catch(() => []),
+      getCategories().catch(() => []),
+    ]);
 
-  const blogEntries: MetadataRoute.Sitemap = blogSlugs.map((post) => ({
-    url: `${SITE_URL}/blog/${post.slug}`,
-    lastModified: post.updatedAt
-      ? new Date(post.updatedAt)
-      : post.publishedAt
-        ? new Date(post.publishedAt)
-        : now,
-    changeFrequency: "monthly",
-    priority: 0.75,
-  }));
+    const categoryEntries: MetadataRoute.Sitemap = (categories || []).flatMap(
+      (cat) => {
+        if (!cat?.slug) return [];
+        return [
+          {
+            url: `${SITE_URL}${categoryCatalogPath(cat.slug)}`,
+            lastModified: safeDate(cat.updatedAt) ?? now,
+            changeFrequency: "weekly" as const,
+            priority: 0.75,
+          },
+        ];
+      },
+    );
 
-  return [
-    ...staticEntries,
-    ...categoryEntries,
-    ...productEntries,
-    ...blogEntries,
-  ];
+    const productEntries: MetadataRoute.Sitemap = (products || []).flatMap(
+      (product) => {
+        if (!product?.slug) return [];
+        const images = [
+          productImage(product.imageUrl, product.slug),
+          ...(product.gallery || []),
+        ]
+          .map(absoluteHttpUrl)
+          .filter((url): url is string => Boolean(url))
+          .filter((url, i, arr) => arr.indexOf(url) === i);
+
+        return [
+          {
+            url: `${SITE_URL}/urunler/${product.slug}`,
+            lastModified: safeDate(product.updatedAt) ?? now,
+            changeFrequency: "weekly" as const,
+            priority: 0.8,
+            ...(images.length ? { images } : {}),
+          },
+        ];
+      },
+    );
+
+    const blogEntries: MetadataRoute.Sitemap = (blogSlugs || []).flatMap(
+      (post) => {
+        if (!post?.slug) return [];
+        return [
+          {
+            url: `${SITE_URL}/blog/${post.slug}`,
+            lastModified:
+              safeDate(post.updatedAt) ?? safeDate(post.publishedAt) ?? now,
+            changeFrequency: "monthly" as const,
+            priority: 0.75,
+          },
+        ];
+      },
+    );
+
+    return [
+      ...staticOnly,
+      ...categoryEntries,
+      ...productEntries,
+      ...blogEntries,
+    ];
+  } catch (err) {
+    console.error("[sitemap] falling back to static routes", err);
+    return staticOnly;
+  }
 }

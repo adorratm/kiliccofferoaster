@@ -69,6 +69,12 @@ type FormState = {
   allowGround: boolean;
   unit: string;
   vatRate: string;
+  roastedAt: string;
+  brewMethod: string;
+  brewGrind: string;
+  brewRatio: string;
+  brewNotes: string;
+  storageNotes: string;
   variants: VariantForm[];
 };
 
@@ -137,6 +143,12 @@ const emptyForm = (): FormState => ({
   allowGround: true,
   unit: 'adet',
   vatRate: '20',
+  roastedAt: '',
+  brewMethod: '',
+  brewGrind: '',
+  brewRatio: '',
+  brewNotes: '',
+  storageNotes: '',
   variants: [emptyVariant()],
 });
 
@@ -317,6 +329,12 @@ function ProductsPageInner() {
       allowGround: p.allowGround !== false,
       unit: p.unit || 'adet',
       vatRate: String(p.vatRate ?? '20'),
+      roastedAt: p.roastedAt ? String(p.roastedAt).slice(0, 10) : '',
+      brewMethod: p.brewGuide?.method || '',
+      brewGrind: p.brewGuide?.grind || '',
+      brewRatio: p.brewGuide?.ratio || '',
+      brewNotes: p.brewGuide?.notes || '',
+      storageNotes: p.storageNotes || '',
       variants,
     });
     setEditing(true);
@@ -372,6 +390,17 @@ function ProductsPageInner() {
       allowGround: form.allowGround,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
+      roastedAt: form.roastedAt || null,
+      brewGuide:
+        form.brewMethod || form.brewGrind || form.brewRatio || form.brewNotes
+          ? {
+              method: form.brewMethod || undefined,
+              grind: form.brewGrind || undefined,
+              ratio: form.brewRatio || undefined,
+              notes: form.brewNotes || undefined,
+            }
+          : null,
+      storageNotes: form.storageNotes || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       variants,
@@ -512,13 +541,16 @@ function ProductsPageInner() {
             </span>
             <textarea
               required
-              rows={4}
+              rows={10}
               value={form.description}
               onChange={(e) =>
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />
+            <span className="mt-1 block text-xs text-muted">
+              HTML H2/p kullanılabilir (ör. “Türk kahvesi nasıl hazırlanır?”).
+            </span>
           </label>
           <label className="block text-sm md:col-span-2">
             <span className="mono text-[10px] uppercase text-muted">
@@ -754,6 +786,82 @@ function ProductsPageInner() {
               value={form.flavorNotes}
               onChange={(e) =>
                 setForm((f) => ({ ...f, flavorNotes: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              Kavrum tarihi
+            </span>
+            <input
+              type="date"
+              value={form.roastedAt}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, roastedAt: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              Demleme yöntemi
+            </span>
+            <input
+              value={form.brewMethod}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brewMethod: e.target.value }))
+              }
+              placeholder="Cezve, V60, espresso…"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              Öğütme önerisi
+            </span>
+            <input
+              value={form.brewGrind}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brewGrind: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              Kahve / su oranı
+            </span>
+            <input
+              value={form.brewRatio}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brewRatio: e.target.value }))
+              }
+              placeholder="1:2, 7g / 70ml…"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm md:col-span-2">
+            <span className="mono text-[10px] uppercase text-muted">
+              Demleme notu
+            </span>
+            <input
+              value={form.brewNotes}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, brewNotes: e.target.value }))
+              }
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm md:col-span-2">
+            <span className="mono text-[10px] uppercase text-muted">
+              Saklama
+            </span>
+            <textarea
+              rows={3}
+              value={form.storageNotes}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, storageNotes: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             />

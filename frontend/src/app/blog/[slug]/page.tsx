@@ -1,12 +1,15 @@
 import { AppImage as Image } from "@/components/AppImage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Reveal } from "@/components/Reveal";
 import {
   getBlogPostBySlug,
   getBlogPosts,
+  getCategories,
   getProductBySlug,
 } from "@/lib/api";
+import { categoryCatalogPath } from "@/lib/catalog-paths";
 import { getSiteSettings } from "@/lib/cms";
 import { displayUpper, formatMoney, productImage } from "@/lib/format";
 import {
@@ -133,17 +136,25 @@ export default async function BlogPostPage({ params }: Props) {
 
   const cover = productImage(post.coverImageUrl, post.slug);
   const relatedProducts = await loadRelatedProducts(post.relatedProductSlugs);
+  const categorySlugs = relatedSlugList(post.relatedCategorySlugs);
+  const categories = categorySlugs.length
+    ? await getCategories().catch(() => [])
+    : [];
+  const relatedCategories = categories.filter((c) =>
+    categorySlugs.includes(c.slug),
+  );
+
+  const crumbs = [
+    { name: "Ana sayfa", path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ];
 
   return (
     <article>
       <JsonLd data={blogPostJsonLd(post, settings)} />
-      <JsonLd
-        data={breadcrumbJsonLd([
-          { name: "Ana sayfa", path: "/" },
-          { name: "Blog", path: "/blog" },
-          { name: post.title, path: `/blog/${post.slug}` },
-        ])}
-      />
+      <JsonLd data={breadcrumbJsonLd(crumbs)} />
+      <PageBreadcrumb items={crumbs} />
 
       <section className="relative min-h-[52vh] overflow-hidden border-b border-outline-variant/20 md:min-h-[62vh]">
         <Image
@@ -187,6 +198,26 @@ export default async function BlogPostPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </Reveal>
+
+        {relatedCategories.length ? (
+          <section className="mt-12 border-t border-outline-variant/20 pt-8">
+            <p className="font-meta text-[10px] uppercase tracking-widest text-primary">
+              Kategoriler
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-3">
+              {relatedCategories.map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    href={categoryCatalogPath(cat.slug)}
+                    className="border border-primary px-4 py-2 font-meta text-[11px] uppercase tracking-widest text-primary hover:bg-primary hover:text-background"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {relatedProducts.length ? (
           <section className="mt-16 border-t border-outline-variant/20 pt-10">

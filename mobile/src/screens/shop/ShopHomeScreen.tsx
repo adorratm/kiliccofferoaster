@@ -16,6 +16,7 @@ import { ScreenLoader } from '../../components/shop/ScreenLoader';
 import { SearchBar } from '../../components/shop/SearchBar';
 import { SectionLabel } from '../../components/shop/SectionLabel';
 import { shopCategories, shopProducts } from '../../lib/shop-api';
+import { HOME_COFFEE_CATEGORIES } from '../../lib/catalog-seo';
 import type { Category, Product } from '../../lib/shop-types';
 import { colors } from '../../ui';
 import { ProductCard } from './ProductCard';
@@ -66,7 +67,7 @@ export function ShopHomeScreen({ navigation }: Props) {
       <PageHeader
         kicker="01 // Kavrum"
         heading="Mağaza"
-        subtitle="Ayrancılar / Torbalı’dan taze kavrulmuş specialty coffee. Batch bazlı, izlenebilir çekirdek."
+        subtitle="İzmir Ayrancılar’da taze kavrulmuş specialty kahve. Espresso, filtre ve Türk kahvesi."
       />
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
 
@@ -89,6 +90,28 @@ export function ShopHomeScreen({ navigation }: Props) {
               />
             ))}
           </ScrollView>
+          <View style={{ marginTop: 8 }}>
+            {HOME_COFFEE_CATEGORIES.map((hub) => {
+              const match = categories.find((c) => c.slug === hub.slug);
+              return (
+                <Pressable
+                  key={hub.slug}
+                  onPress={() => navigation.navigate('Catalog', { categorySlug: hub.slug })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: colors.borderMuted,
+                    padding: 14,
+                    marginTop: 8,
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>
+                    {match?.name || hub.fallbackName}
+                  </Text>
+                  <Text style={{ color: colors.muted, marginTop: 4, fontSize: 12 }}>{hub.blurb}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </>
       ) : null}
 

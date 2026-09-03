@@ -15,7 +15,11 @@ function categorySlugFromPath(pathname: string) {
   return match ? decodeURIComponent(match[1]) : "";
 }
 
-export default function ProductsCatalog() {
+export default function ProductsCatalog({
+  hideHeading = false,
+}: {
+  hideHeading?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -166,19 +170,21 @@ export default function ProductsCatalog() {
 
   return (
     <div className="page-shell py-16 md:py-24">
-      <Reveal className="mb-10">
-        <div className="mb-2 font-meta text-xs uppercase tracking-widest text-primary">
-          Catalog / Specimens
-        </div>
-        <h1 className="font-display text-4xl leading-none md:text-6xl">
-          {activeCategoryName || "Ürünler"}
-        </h1>
-        <p className="mt-4 max-w-xl font-meta text-xs uppercase tracking-widest text-secondary">
-          {activeCategoryName
-            ? `${activeCategoryName} kategorisindeki kavrumlar`
-            : "Arama, filtre ve sıralama ile katalog"}
-        </p>
-      </Reveal>
+      {hideHeading ? null : (
+        <Reveal className="mb-10">
+          <div className="mb-2 font-meta text-xs uppercase tracking-widest text-primary">
+            Catalog / Specimens
+          </div>
+          <h1 className="font-display text-4xl leading-none md:text-6xl">
+            {activeCategoryName || "Ürünler"}
+          </h1>
+          <p className="mt-4 max-w-xl font-meta text-xs uppercase tracking-widest text-secondary">
+            {activeCategoryName
+              ? `${activeCategoryName} kategorisindeki kavrumlar`
+              : "Arama, filtre ve sıralama ile katalog"}
+          </p>
+        </Reveal>
+      )}
 
       <Reveal
         className="mb-10 industrial-border bg-surface-container-low p-4 md:p-6"

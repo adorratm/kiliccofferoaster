@@ -9,6 +9,7 @@ import {
   itemListJsonLd,
   JsonLd,
 } from "@/lib/seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import ProductsCatalog from "./ProductsCatalog";
 
 type Props = {
@@ -78,6 +79,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           })}
         />
       ) : null}
+      <PageBreadcrumb items={crumbs} />
       <Suspense
         fallback={
           <div className="page-shell py-24 font-meta text-sm uppercase text-secondary">

@@ -12,6 +12,8 @@ export type SiteContact = {
   phone: string;
   hours: string;
   locationLabel: string;
+  latitude?: string;
+  longitude?: string;
 };
 
 export type SiteSettings = {
@@ -29,6 +31,8 @@ export const DEFAULT_CONTACT: SiteContact = {
   phone: '+90 541 214 79 63',
   hours: 'Pzt — Paz / 09:00 — 22:00',
   locationLabel: 'Torbalı / İzmir',
+  latitude: '38.3015',
+  longitude: '27.3583',
 };
 
 export const LEGAL_LINKS: { slug: string; label: string }[] = [

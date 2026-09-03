@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   Image,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -10,10 +11,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import type { ShopStackParamList } from '../../navigation/types';
 import { ScreenLoader } from '../../components/shop/ScreenLoader';
-import { shopBlogPost } from '../../lib/shop-api';
-import type { BlogPost } from '../../lib/shop-types';
+import { SectionLabel } from '../../components/shop/SectionLabel';
+import { shopBlogPost, shopCategories, shopProduct } from '../../lib/shop-api';
+import type { BlogPost, Category, Product } from '../../lib/shop-types';
 import { HtmlContent } from '../../components/HtmlContent';
 import { colors, muted, title } from '../../ui';
+import { ProductCard } from './ProductCard';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'BlogPost'>;
 
@@ -33,6 +36,8 @@ function formatDate(value?: string | null) {
 export function BlogPostScreen({ navigation, route }: Props) {
   const { slug } = route.params;
   const [post, setPost] = useState<BlogPost | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedCategories, setRelatedCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +47,16 @@ export function BlogPostScreen({ navigation, route }: Props) {
       const data = await shopBlogPost(slug);
       setPost(data);
       navigation.setOptions({ title: data.title });
+      const productSlugs = (data.relatedProductSlugs || []).slice(0, 4);
+      const catSlugs = data.relatedCategorySlugs || [];
+      const [products, cats] = await Promise.all([
+        Promise.all(
+          productSlugs.map((s) => shopProduct(s).catch(() => null)),
+        ),
+        catSlugs.length ? shopCategories().catch(() => []) : Promise.resolve([]),
+      ]);
+      setRelatedProducts(products.filter((p): p is Product => Boolean(p)));
+      setRelatedCategories(cats.filter((c) => catSlugs.includes(c.slug)));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Yazı yüklenemedi');
     } finally {
@@ -90,6 +105,40 @@ export function BlogPostScreen({ navigation, route }: Props) {
         ) : null}
         <View style={{ height: 1, backgroundColor: colors.borderMuted, marginVertical: 20 }} />
         <HtmlContent html={post.content} />
+        {relatedCategories.length ? (
+          <View style={{ marginTop: 24 }}>
+            <SectionLabel label="Kategoriler" />
+            {relatedCategories.map((cat) => (
+              <Pressable
+                key={cat.id}
+                onPress={() => navigation.navigate('Catalog', { categorySlug: cat.slug })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.borderMuted,
+                  padding: 12,
+                  marginTop: 8,
+                }}
+              >
+                <Text style={{ color: colors.accentSoft }}>{cat.name} →</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+        {relatedProducts.length ? (
+          <View style={{ marginTop: 24 }}>
+            <SectionLabel label="İlgili kavrumlar" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+              {relatedProducts.map((item) => (
+                <View key={item.id} style={{ width: '50%' }}>
+                  <ProductCard
+                    product={item}
+                    onPress={() => navigation.navigate('Product', { slug: item.slug })}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

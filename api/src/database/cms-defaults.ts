@@ -19,11 +19,13 @@ export const DEFAULT_SITE_SETTINGS: Record<
     phone: '+90 541 214 79 63',
     hours: 'Pzt — Paz / 09:00 — 22:00',
     locationLabel: 'Torbalı / İzmir',
+    latitude: '38.3015',
+    longitude: '27.3583',
   },
   seo: {
-    title: 'Kılıç Coffee Roaster | Ayrancılar, Torbalı İzmir',
+    title: 'Kılıç Coffee Roaster | Taze Kavrulmuş Specialty Kahve | İzmir',
     description:
-      'İzmir Torbalı Ayrancılar’da taze kavrulmuş specialty kahve çekirdekleri. Espresso, filtre ve Türk kahvesi için kavrumları online veya atölyeden alın.',
+      'İzmir Ayrancılar’da taze kavrulan specialty kahveler. Espresso, filtre ve Türk kahvesi çekirdeklerini keşfedin. Kılıç Coffee Roaster’dan online sipariş verin.',
     keywords: [
       'kahve',
       'kavurma',

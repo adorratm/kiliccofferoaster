@@ -34,6 +34,15 @@ export class BlogPost extends BaseEntity {
   })
   relatedProductSlugs!: string[];
 
+  /** Vitrinde “İlgili kategoriler” — kategori slug listesi */
+  @Column({
+    name: 'related_category_slugs',
+    type: 'text',
+    array: true,
+    default: '{}',
+  })
+  relatedCategorySlugs!: string[];
+
   @Column({ name: 'seo_title', type: 'varchar', length: 220, nullable: true })
   seoTitle!: string | null;
 

@@ -130,6 +130,8 @@ export default function SiteSettingsPage() {
     phone: '',
     hours: '',
     locationLabel: '',
+    latitude: '',
+    longitude: '',
   });
   const [seo, setSeo] = useState({
     title: '',
@@ -315,6 +317,8 @@ export default function SiteSettingsPage() {
             ['phone', 'Telefon (görünen / tel: link)'],
             ['hours', 'Çalışma saatleri'],
             ['locationLabel', 'Konum etiketi'],
+            ['latitude', 'Enlem (geo)'],
+            ['longitude', 'Boylam (geo)'],
           ] as const
         ).map(([key, label]) => (
           <label key={key} className="block text-sm">

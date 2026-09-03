@@ -14,19 +14,28 @@ import { ScreenLoader } from '../../components/shop/ScreenLoader';
 import { SectionLabel } from '../../components/shop/SectionLabel';
 import { ProductReviews } from '../../components/shop/ProductReviews';
 import { useShopCart } from '../../lib/shop-cart';
-import { shopAddCartItem, shopProduct, shopToggleWishlist } from '../../lib/shop-api';
+import { shopAddCartItem, shopProduct, shopProducts, shopToggleWishlist } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
+import {
+  asBrewGuide,
+  formatRoastDate,
+  looksLikeHtml,
+  productKindLabel,
+} from '../../lib/catalog-seo';
+import { HtmlContent } from '../../components/HtmlContent';
 import { formatMoney, stockQty } from '../../lib/format';
 import { availableGrindOptions, type GrindValue } from '../../lib/grind';
 import { sortByWeightLabel } from '../../lib/weight-sort';
 import { productOrigin, roastLabel } from '../../lib/order-status';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
 import type { Product, ProductVariant } from '../../lib/shop-types';
+import { ProductCard } from './ProductCard';
 
 type Props = NativeStackScreenProps<ShopStackParamList, 'Product'>;
 
 export function ProductScreen({ navigation, route }: Props) {
   const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [variantId, setVariantId] = useState<string | null>(null);
@@ -36,7 +45,7 @@ export function ProductScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     void shopProduct(route.params.slug)
-      .then((p) => {
+      .then(async (p) => {
         setProduct(p);
         const active = sortByWeightLabel(
           (p.variants || []).filter((v) => v.isActive !== false),
@@ -49,6 +58,19 @@ export function ProductScreen({ navigation, route }: Props) {
           p.allowGround,
         );
         if (choices[0]) setGrind(choices[0].value);
+        if (p.category?.slug) {
+          const page = await shopProducts({
+            categorySlug: p.category.slug,
+            limit: 8,
+            sort: 'name',
+            order: 'asc',
+          }).catch(() => null);
+          setRelated(
+            (page?.items || []).filter((item) => item.slug !== p.slug).slice(0, 4),
+          );
+        } else {
+          setRelated([]);
+        }
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Ürün yok'));
   }, [route.params.slug]);
@@ -75,6 +97,24 @@ export function ProductScreen({ navigation, route }: Props) {
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
   const roast = roastLabel(product?.roastLevel);
+  const kindLabel = productKindLabel(product?.kind);
+  const roastDate = formatRoastDate(product?.roastedAt);
+  const brew = asBrewGuide(product?.brewGuide);
+  const weights = (product?.variants || [])
+    .filter((v) => v.isActive !== false)
+    .map((v) => v.weightLabel)
+    .filter(Boolean)
+    .join(' · ');
+  const specs = [
+    ['Kahve türü', kindLabel],
+    ['Menşei', origin],
+    ['Rakım', product?.altitude],
+    ['İşlem', product?.process],
+    ['Çeşit', product?.varietal],
+    ['Kavrum', roast],
+    ['Kavrum tarihi', roastDate],
+    ['Gramaj', weights || null],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
   const showGrindPicker = grindChoices.length > 0;
   const resolvedGrind =
     grindChoices.length > 0
@@ -158,7 +198,7 @@ export function ProductScreen({ navigation, route }: Props) {
 
       <View style={{ padding: 16 }}>
         <Text style={{ color: colors.accentSoft, fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase' }}>
-          Specialty coffee
+          {kindLabel || 'Taze kavrulmuş kahve'}
         </Text>
         <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700', marginTop: 8, lineHeight: 32 }}>
           {product.name}
@@ -176,7 +216,7 @@ export function ProductScreen({ navigation, route }: Props) {
           ) : null}
         </View>
 
-        {(origin || roast) ? (
+        {specs.length ? (
           <View
             style={{
               marginTop: 18,
@@ -184,20 +224,17 @@ export function ProductScreen({ navigation, route }: Props) {
               borderColor: colors.borderMuted,
               padding: 14,
               flexDirection: 'row',
+              flexWrap: 'wrap',
             }}
           >
-            {origin ? (
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.muted, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>Köken</Text>
-                <Text style={{ color: colors.text, marginTop: 6 }}>{origin}</Text>
+            {specs.map(([label, value]) => (
+              <View key={label} style={{ width: '50%', paddingVertical: 8, paddingRight: 8 }}>
+                <Text style={{ color: colors.muted, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>
+                  {label}
+                </Text>
+                <Text style={{ color: colors.text, marginTop: 6 }}>{value}</Text>
               </View>
-            ) : null}
-            {roast ? (
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.muted, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' }}>Kavrum</Text>
-                <Text style={{ color: colors.text, marginTop: 6 }}>{roast}</Text>
-              </View>
-            ) : null}
+            ))}
           </View>
         ) : null}
 
@@ -205,6 +242,50 @@ export function ProductScreen({ navigation, route }: Props) {
           <Text style={{ color: colors.muted, marginTop: 16, lineHeight: 22, fontSize: 14 }}>
             {product.shortDescription}
           </Text>
+        ) : null}
+
+        {product.description ? (
+          <View style={{ marginTop: 16 }}>
+            {looksLikeHtml(product.description) ? (
+              <HtmlContent html={product.description} />
+            ) : (
+              <Text style={{ color: colors.muted, lineHeight: 22, fontSize: 14 }}>
+                {product.description}
+              </Text>
+            )}
+          </View>
+        ) : null}
+
+        {brew ? (
+          <View style={{ marginTop: 18, borderWidth: 1, borderColor: colors.borderMuted, padding: 14 }}>
+            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Demleme önerisi</Text>
+            {brew.method ? <Text style={muted}>Yöntem: {brew.method}</Text> : null}
+            {brew.grind ? <Text style={muted}>Öğütme: {brew.grind}</Text> : null}
+            {brew.ratio ? <Text style={muted}>Oran: {brew.ratio}</Text> : null}
+            {brew.notes ? (
+              <Text style={{ color: colors.muted, marginTop: 8, lineHeight: 20 }}>{brew.notes}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {product.storageNotes ? (
+          <View style={{ marginTop: 12, borderWidth: 1, borderColor: colors.borderMuted, padding: 14 }}>
+            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Saklama</Text>
+            <Text style={{ color: colors.muted, lineHeight: 20 }}>{product.storageNotes}</Text>
+          </View>
+        ) : null}
+
+        {product.category ? (
+          <Pressable
+            onPress={() =>
+              navigation.navigate('Catalog', { categorySlug: product.category!.slug })
+            }
+            style={{ marginTop: 16 }}
+          >
+            <Text style={{ color: colors.accentSoft, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+              {product.category.name} kategorisi →
+            </Text>
+          </Pressable>
         ) : null}
 
         {product.flavorNotes?.length ? (
@@ -294,6 +375,21 @@ export function ProductScreen({ navigation, route }: Props) {
             } as never)
           }
         />
+        {related.length ? (
+          <View style={{ marginTop: 24 }}>
+            <SectionLabel label={product.category ? `${product.category.name} içinde` : 'İlgili kavrumlar'} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}>
+              {related.map((item) => (
+                <View key={item.id} style={{ width: '50%' }}>
+                  <ProductCard
+                    product={item}
+                    onPress={() => navigation.push('Product', { slug: item.slug })}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

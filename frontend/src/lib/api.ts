@@ -602,6 +602,7 @@ export async function getBlogPosts(
     const qs = toQuery({
       q: params?.q,
       tag: params?.tag,
+      categorySlug: params?.categorySlug,
       sort: params?.sort,
       order: params?.order,
       page: params?.page ?? 1,

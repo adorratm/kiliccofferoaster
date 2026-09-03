@@ -325,6 +325,24 @@ export class CreateProductDto {
   @IsString()
   ingredients?: string;
 
+  @ApiPropertyOptional({ example: '2026-09-01' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  roastedAt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Demleme önerisi (method, grind, ratio, notes)',
+  })
+  @IsOptional()
+  @IsObject()
+  brewGuide?: Record<string, string>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  storageNotes?: string;
+
   @ApiPropertyOptional({ type: [ProductVariantDto] })
   @IsOptional()
   @IsArray()

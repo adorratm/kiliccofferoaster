@@ -7,15 +7,17 @@ import {
   fetchAllCatalogProducts,
   formatCatalogMoney,
 } from "@/lib/catalog-feed";
+import {
+  googleProductCategory,
+  merchantProductType,
+  productGtin,
+} from "@/lib/catalog-seo";
 import { getSiteSettings } from "@/lib/cms";
 import { productImage } from "@/lib/format";
 import { SITE_URL } from "@/lib/seo";
 import type { Product, ProductVariant } from "@/lib/types";
 
 export const revalidate = 3600;
-
-const GOOGLE_PRODUCT_CATEGORY =
-  "Food, Beverages & Tobacco > Beverages > Coffee & Tea > Coffee";
 
 function feedTitle(product: Product, variant?: ProductVariant) {
   const base = (product.seoTitle || product.name).trim();
@@ -41,6 +43,9 @@ function itemXml(opts: {
   brand: string;
   itemGroupId?: string;
   size?: string;
+  gtin?: string | null;
+  googleCategory: string;
+  productType: string;
 }) {
   const money = formatCatalogMoney(opts.price, opts.currency);
   const sale =
@@ -53,6 +58,10 @@ function itemXml(opts: {
   const size = opts.size
     ? `\n      <g:size>${escapeXml(opts.size)}</g:size>`
     : "";
+  const gtin = opts.gtin?.trim();
+  const identifier = gtin
+    ? `\n      <g:gtin>${escapeXml(gtin)}</g:gtin>\n      <g:identifier_exists>yes</g:identifier_exists>`
+    : `\n      <g:identifier_exists>no</g:identifier_exists>`;
 
   return `    <item>
       <g:id>${escapeXml(opts.id)}</g:id>
@@ -64,10 +73,9 @@ ${opts.additional}
       <g:availability>${catalogAvailability(opts.inStock, "google")}</g:availability>
       <g:price>${escapeXml(money)}</g:price>${sale}
       <g:brand>${opts.brand}</g:brand>
-      <g:condition>new</g:condition>
-      <g:identifier_exists>no</g:identifier_exists>
-      <g:google_product_category>${escapeXml(GOOGLE_PRODUCT_CATEGORY)}</g:google_product_category>
-      <g:product_type>${escapeXml("Kahve > Specialty Coffee")}</g:product_type>${group}${size}
+      <g:condition>new</g:condition>${identifier}
+      <g:google_product_category>${escapeXml(opts.googleCategory)}</g:google_product_category>
+      <g:product_type>${escapeXml(opts.productType)}</g:product_type>${group}${size}
     </item>`;
 }
 
@@ -94,6 +102,9 @@ export async function GET() {
         .join("\n");
       const currency = product.currency || "TRY";
       const variants = catalogActiveVariants(product);
+      const googleCategory = googleProductCategory(product.kind);
+      const productType = merchantProductType(product);
+      const productGtinValue = productGtin(product);
 
       if (variants.length) {
         return variants.map((v) => {
@@ -115,6 +126,9 @@ export async function GET() {
             brand,
             itemGroupId: product.slug,
             size: v.weightLabel || undefined,
+            gtin: v.barcode?.trim() || productGtinValue,
+            googleCategory,
+            productType,
           });
         });
       }
@@ -136,6 +150,9 @@ export async function GET() {
           salePrice,
           currency,
           brand,
+          gtin: productGtinValue,
+          googleCategory,
+          productType,
         }),
       ];
     })

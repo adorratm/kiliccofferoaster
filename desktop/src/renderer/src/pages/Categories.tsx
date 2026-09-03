@@ -117,8 +117,8 @@ export function CategoriesPage() {
           onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
         />
         <textarea
-          placeholder="Açıklama"
-          className={`${inputClass} min-h-20`}
+          placeholder="Açıklama (kategori sayfasında görünür, 200–400 kelime)"
+          className={`${inputClass} min-h-32`}
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
         />

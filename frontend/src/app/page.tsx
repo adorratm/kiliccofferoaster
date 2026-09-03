@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/Reveal";
-import { getProductsPaged } from "@/lib/api";
+import { getCategories, getProductsPaged } from "@/lib/api";
+import { categoryCatalogPath } from "@/lib/catalog-paths";
 import {
   cmsImageUrl,
   getContentSections,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/cms";
 import { buildHomeMetadata, faqJsonLd, JsonLd } from "@/lib/seo";
 import { stockImage } from "@/lib/stock-images";
+import type { Category } from "@/lib/types";
 
 type HeroContent = {
   imageUrl: string;
@@ -79,6 +81,72 @@ const FALLBACK_HERO: HeroContent = {
   ],
 };
 
+const HOME_CATEGORY_HUB: { slug: string; fallbackName: string; blurb: string }[] = [
+  {
+    slug: "turk-kahvesi",
+    fallbackName: "Türk kahvesi",
+    blurb: "Cezve için taze kavrulmuş çekirdek",
+  },
+  {
+    slug: "filtre-kahve",
+    fallbackName: "Filtre kahve",
+    blurb: "V60, Chemex ve French Press çekirdekleri",
+  },
+  {
+    slug: "espresso",
+    fallbackName: "Espresso",
+    blurb: "Espresso ve moka için kavrumlar",
+  },
+];
+
+function HomeCategoryHub({ categories }: { categories: Category[] }) {
+  const cards = HOME_CATEGORY_HUB.map((hub) => {
+    const match = categories.find((c) => c.slug === hub.slug);
+    return {
+      slug: hub.slug,
+      name: match?.name || hub.fallbackName,
+      blurb: hub.blurb,
+      href: categoryCatalogPath(hub.slug),
+    };
+  });
+
+  return (
+    <section className="cv-auto border-t border-outline-variant/20 bg-surface-container-lowest py-section">
+      <div className="page-shell">
+        <Reveal className="mb-12 max-w-2xl">
+          <p className="mb-3 font-meta text-xs uppercase tracking-widest text-primary">
+            Kahve çekirdekleri
+          </p>
+          <h2 className="font-display text-4xl md:text-5xl">
+            Espresso, filtre ve Türk kahvesi
+          </h2>
+          <p className="mt-4 font-sans text-lg leading-7 text-secondary">
+            İzmir’den taze kavrulmuş specialty çekirdekleri demleme yöntemine göre seçin.
+          </p>
+        </Reveal>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {cards.map((card, i) => (
+            <Reveal key={card.slug} delay={i * 70}>
+              <Link
+                href={card.href}
+                className="block border border-outline-variant/25 bg-surface p-8 transition-colors hover:border-primary"
+              >
+                <h3 className="font-display text-3xl leading-none">{card.name}</h3>
+                <p className="mt-4 font-meta text-xs uppercase tracking-widest text-secondary">
+                  {card.blurb}
+                </p>
+                <span className="mt-8 inline-block font-meta text-[11px] uppercase tracking-widest text-primary">
+                  Kavrumları gör →
+                </span>
+              </Link>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 const FALLBACK_FAQ: FaqContent = {
   title: "Sıkça Sorulan Sorular",
   items: [
@@ -111,7 +179,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [sections, settings, featuredPage, catalogPage] = await Promise.all([
+  const [sections, settings, featuredPage, catalogPage, categories] = await Promise.all([
     getContentSections("home"),
     getSiteSettings(),
     getProductsPaged(
@@ -122,13 +190,14 @@ export default async function HomePage() {
       { limit: 12, sort: "name", order: "asc" },
       { cache: "no-store", next: { revalidate: 0 } },
     ),
+    getCategories().catch(() => []),
   ]);
 
   const hero = sectionContent(sections, "hero", FALLBACK_HERO);
   const ethos = sectionContent(sections, "ethos", {
-    titleLines: ["The", "Roasting", "Ethos"],
+    titleLines: ["Taze kavrulmuş", "specialty kahve"],
     description:
-      "Metodolojimiz veriye dayanır. Her batch için termal eğri boyunca tutarlılığı garanti etmek üzere onlarca değişken izleriz.",
+      "İzmir Torbalı Ayrancılar’da batch bazlı kavuruyoruz. Her çekirdek için termal eğri, hava ve gelişim süresini izleriz; fincanda tekrarlanabilir bir profil hedefleriz.",
     stats: [
       { label: "Drum Speed", value: "54 RPM" },
       { label: "Airflow", value: "82%" },
@@ -147,17 +216,17 @@ export default async function HomePage() {
   } satisfies EthosContent);
 
   const productsSection = sectionContent(sections, "products", {
-    title: "Curated Specimens",
-    subtitle: "Seçilmiş hasat // veriye göre filtrele",
+    title: "Espresso, filtre ve Türk kahvesi",
+    subtitle: "Taze kavrulmuş specialty çekirdekler",
     ctaLabel: "Tümünü Gör",
     ctaHref: "/urunler",
   } satisfies ProductsContent);
 
   const workshop = sectionContent(sections, "workshop", {
-    subtitle: "Physical Node",
-    titleLines: ["Visit The", "Workshop"],
+    subtitle: "Ayrancılar · Torbalı · İzmir",
+    titleLines: ["Atölyeyi", "ziyaret edin"],
     description:
-      "Hassasiyeti deneyimleyin. Torbalı merkezimizde endüstriyel kavrum hattı bir arada.",
+      "Torbalı Ayrancılar’daki kahve kavurma atölyemizde tadım ve taze kavrum bir arada. Randevuyla ziyaret edebilir, çekirdek kahveyi yerinden alabilirsiniz.",
     imageUrl: stockImage("workshop"),
     ctaLabel: "İletişime Geç",
     ctaHref: "/iletisim",
@@ -344,6 +413,8 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      <HomeCategoryHub categories={categories} />
 
       <section className="cv-auto overflow-hidden border-y border-outline-variant/30 bg-background">
         <div className="grid grid-cols-1 lg:grid-cols-2">

@@ -58,6 +58,14 @@ export type Product = {
   allowGround?: boolean;
   unit?: string;
   vatRate?: string | number;
+  roastedAt?: string | null;
+  brewGuide?: {
+    method?: string;
+    grind?: string;
+    ratio?: string;
+    notes?: string;
+  } | null;
+  storageNotes?: string | null;
   variants?: ProductVariant[];
   createdAt?: string;
   updatedAt?: string;
@@ -174,6 +182,7 @@ export type BlogPost = {
   authorName?: string | null;
   tags?: string[];
   relatedProductSlugs?: string[];
+  relatedCategorySlugs?: string[];
   seoTitle?: string | null;
   seoDescription?: string | null;
   isPublished: boolean;

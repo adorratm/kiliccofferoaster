@@ -194,8 +194,11 @@ function CategoriesPageInner() {
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
-              rows={3}
+              rows={8}
             />
+            <span className="mt-1 block text-xs text-muted">
+              Kategori sayfasında H1 altında görünür (200–400 kelime önerilir).
+            </span>
           </label>
           <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">

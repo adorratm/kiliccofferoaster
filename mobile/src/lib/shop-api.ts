@@ -339,11 +339,18 @@ export async function shopCmsSections(page: string): Promise<CmsSection[]> {
   return Array.isArray(data) ? data : data.items ?? [];
 }
 
-export async function shopBlog(params?: { page?: number; limit?: number }) {
+export async function shopBlog(params?: {
+  page?: number;
+  limit?: number;
+  categorySlug?: string;
+  tag?: string;
+}) {
   const qs = toQuery({
     page: params?.page ?? 1,
     limit: params?.limit ?? 12,
     sort: 'publishedAt',
+    categorySlug: params?.categorySlug,
+    tag: params?.tag,
   });
   const data = await api<BlogPost[] | Paginated<BlogPost>>(`/blog${qs}`, {
     auth: 'none',

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
 import { api, uploadMedia } from '../lib/api';
+import { asBrewGuide } from '../lib/catalog-seo';
 import { asArray, asPaged, formatMoney, inputClass, slugify } from '../lib/format';
 import { sortByWeightLabel } from '../lib/weight-sort';
 
@@ -39,6 +40,16 @@ type Product = {
   expiresAt?: string | null;
   allergens?: string[];
   ingredients?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  roastedAt?: string | null;
+  brewGuide?: {
+    method?: string;
+    grind?: string;
+    ratio?: string;
+    notes?: string;
+  } | null;
+  storageNotes?: string | null;
   variants?: ProductVariant[];
 };
 
@@ -69,6 +80,14 @@ type FormState = {
   expiresAt: string;
   allergens: string;
   ingredients: string;
+  seoTitle: string;
+  seoDescription: string;
+  roastedAt: string;
+  brewMethod: string;
+  brewGrind: string;
+  brewRatio: string;
+  brewNotes: string;
+  storageNotes: string;
   isActive: boolean;
   isFeatured: boolean;
   imageUrl: string;
@@ -120,6 +139,14 @@ function emptyForm(): FormState {
     expiresAt: '',
     allergens: '',
     ingredients: '',
+    seoTitle: '',
+    seoDescription: '',
+    roastedAt: '',
+    brewMethod: '',
+    brewGrind: '',
+    brewRatio: '',
+    brewNotes: '',
+    storageNotes: '',
     isActive: true,
     isFeatured: false,
     imageUrl: '',
@@ -141,6 +168,7 @@ function formFromProduct(p: Product): FormState {
           expiresAt: v.expiresAt ? String(v.expiresAt).slice(0, 10) : '',
         }))
       : [emptyVariant()];
+  const brew = asBrewGuide(p.brewGuide);
   return {
     name: p.name,
     slug: p.slug,
@@ -157,6 +185,14 @@ function formFromProduct(p: Product): FormState {
     expiresAt: p.expiresAt ? String(p.expiresAt).slice(0, 10) : '',
     allergens: (p.allergens || []).join(', '),
     ingredients: p.ingredients || '',
+    seoTitle: p.seoTitle || '',
+    seoDescription: p.seoDescription || '',
+    roastedAt: p.roastedAt ? String(p.roastedAt).slice(0, 10) : '',
+    brewMethod: brew?.method || '',
+    brewGrind: brew?.grind || '',
+    brewRatio: brew?.ratio || '',
+    brewNotes: brew?.notes || '',
+    storageNotes: p.storageNotes || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
     imageUrl: p.imageUrl || '',
@@ -277,6 +313,19 @@ export function ProductsPage() {
         .map((s) => s.trim())
         .filter(Boolean),
       ingredients: form.ingredients.trim() || null,
+      seoTitle: form.seoTitle.trim() || null,
+      seoDescription: form.seoDescription.trim() || null,
+      roastedAt: form.roastedAt.trim() || null,
+      brewGuide:
+        form.brewMethod || form.brewGrind || form.brewRatio || form.brewNotes
+          ? {
+              method: form.brewMethod || undefined,
+              grind: form.brewGrind || undefined,
+              ratio: form.brewRatio || undefined,
+              notes: form.brewNotes || undefined,
+            }
+          : null,
+      storageNotes: form.storageNotes.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       imageUrl: form.imageUrl.trim() || null,
@@ -405,10 +454,61 @@ export function ProductsPage() {
         />
         <textarea
           required
-          placeholder="Açıklama"
-          className={`${inputClass} min-h-24`}
+          placeholder="Açıklama (HTML H2/p kullanılabilir)"
+          className={`${inputClass} min-h-32`}
           value={form.description}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        />
+        <input
+          placeholder="SEO başlık"
+          className={inputClass}
+          value={form.seoTitle}
+          onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))}
+        />
+        <textarea
+          placeholder="SEO açıklama"
+          className={`${inputClass} min-h-20`}
+          value={form.seoDescription}
+          onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="date"
+            placeholder="Kavrum tarihi"
+            className={inputClass}
+            value={form.roastedAt}
+            onChange={(e) => setForm((f) => ({ ...f, roastedAt: e.target.value }))}
+          />
+          <input
+            placeholder="Demleme yöntemi"
+            className={inputClass}
+            value={form.brewMethod}
+            onChange={(e) => setForm((f) => ({ ...f, brewMethod: e.target.value }))}
+          />
+          <input
+            placeholder="Öğütme önerisi"
+            className={inputClass}
+            value={form.brewGrind}
+            onChange={(e) => setForm((f) => ({ ...f, brewGrind: e.target.value }))}
+          />
+          <input
+            placeholder="Kahve / su oranı"
+            className={inputClass}
+            value={form.brewRatio}
+            onChange={(e) => setForm((f) => ({ ...f, brewRatio: e.target.value }))}
+          />
+        </div>
+        <input
+          placeholder="Demleme notu"
+          className={inputClass}
+          value={form.brewNotes}
+          onChange={(e) => setForm((f) => ({ ...f, brewNotes: e.target.value }))}
+        />
+        <textarea
+          placeholder="Saklama"
+          className={`${inputClass} min-h-20`}
+          value={form.storageNotes}
+          onChange={(e) => setForm((f) => ({ ...f, storageNotes: e.target.value }))}
         />
         <div className="space-y-2">
           <p className="mono text-[10px] uppercase text-muted">Kapak görseli</p>

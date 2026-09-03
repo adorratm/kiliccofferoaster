@@ -49,6 +49,16 @@ type Product = {
   expiresAt?: string | null;
   allergens?: string[];
   ingredients?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  roastedAt?: string | null;
+  brewGuide?: {
+    method?: string;
+    grind?: string;
+    ratio?: string;
+    notes?: string;
+  } | null;
+  storageNotes?: string | null;
   variants?: ProductVariant[];
 };
 
@@ -81,6 +91,14 @@ type FormState = {
   expiresAt: string;
   allergens: string;
   ingredients: string;
+  seoTitle: string;
+  seoDescription: string;
+  roastedAt: string;
+  brewMethod: string;
+  brewGrind: string;
+  brewRatio: string;
+  brewNotes: string;
+  storageNotes: string;
   isActive: boolean;
   isFeatured: boolean;
   imageUrl: string;
@@ -147,6 +165,14 @@ function emptyForm(): FormState {
     expiresAt: '',
     allergens: '',
     ingredients: '',
+    seoTitle: '',
+    seoDescription: '',
+    roastedAt: '',
+    brewMethod: '',
+    brewGrind: '',
+    brewRatio: '',
+    brewNotes: '',
+    storageNotes: '',
     isActive: true,
     isFeatured: false,
     imageUrl: '',
@@ -184,6 +210,14 @@ function formFromProduct(p: Product): FormState {
     expiresAt: p.expiresAt ? String(p.expiresAt).slice(0, 10) : '',
     allergens: (p.allergens || []).join(', '),
     ingredients: p.ingredients || '',
+    seoTitle: p.seoTitle || '',
+    seoDescription: p.seoDescription || '',
+    roastedAt: p.roastedAt ? String(p.roastedAt).slice(0, 10) : '',
+    brewMethod: p.brewGuide?.method || '',
+    brewGrind: p.brewGuide?.grind || '',
+    brewRatio: p.brewGuide?.ratio || '',
+    brewNotes: p.brewGuide?.notes || '',
+    storageNotes: p.storageNotes || '',
     isActive: p.isActive,
     isFeatured: Boolean(p.isFeatured),
     imageUrl: p.imageUrl || '',
@@ -409,6 +443,19 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
         .map((s) => s.trim())
         .filter(Boolean),
       ingredients: form.ingredients.trim() || null,
+      seoTitle: form.seoTitle.trim() || null,
+      seoDescription: form.seoDescription.trim() || null,
+      roastedAt: form.roastedAt.trim() || null,
+      brewGuide:
+        form.brewMethod || form.brewGrind || form.brewRatio || form.brewNotes
+          ? {
+              method: form.brewMethod || undefined,
+              grind: form.brewGrind || undefined,
+              ratio: form.brewRatio || undefined,
+              notes: form.brewNotes || undefined,
+            }
+          : null,
+      storageNotes: form.storageNotes.trim() || null,
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       imageUrl: form.imageUrl.trim() || null,
@@ -506,6 +553,65 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
           onChangeText={(description) => setForm((f) => ({ ...f, description }))}
           multiline
           style={[input, { minHeight: 88, textAlignVertical: 'top' }]}
+        />
+        <TextInput
+          placeholder="SEO başlık"
+          placeholderTextColor={colors.muted}
+          value={form.seoTitle}
+          onChangeText={(seoTitle) => setForm((f) => ({ ...f, seoTitle }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="SEO açıklama"
+          placeholderTextColor={colors.muted}
+          value={form.seoDescription}
+          onChangeText={(seoDescription) => setForm((f) => ({ ...f, seoDescription }))}
+          multiline
+          style={[input, { minHeight: 64, textAlignVertical: 'top' }]}
+        />
+        <TextInput
+          placeholder="Kavrum tarihi (YYYY-MM-DD)"
+          placeholderTextColor={colors.muted}
+          value={form.roastedAt}
+          onChangeText={(roastedAt) => setForm((f) => ({ ...f, roastedAt }))}
+          autoCapitalize="none"
+          style={input}
+        />
+        <TextInput
+          placeholder="Demleme yöntemi"
+          placeholderTextColor={colors.muted}
+          value={form.brewMethod}
+          onChangeText={(brewMethod) => setForm((f) => ({ ...f, brewMethod }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="Öğütme önerisi"
+          placeholderTextColor={colors.muted}
+          value={form.brewGrind}
+          onChangeText={(brewGrind) => setForm((f) => ({ ...f, brewGrind }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="Kahve / su oranı"
+          placeholderTextColor={colors.muted}
+          value={form.brewRatio}
+          onChangeText={(brewRatio) => setForm((f) => ({ ...f, brewRatio }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="Demleme notu"
+          placeholderTextColor={colors.muted}
+          value={form.brewNotes}
+          onChangeText={(brewNotes) => setForm((f) => ({ ...f, brewNotes }))}
+          style={input}
+        />
+        <TextInput
+          placeholder="Saklama"
+          placeholderTextColor={colors.muted}
+          value={form.storageNotes}
+          onChangeText={(storageNotes) => setForm((f) => ({ ...f, storageNotes }))}
+          multiline
+          style={[input, { minHeight: 64, textAlignVertical: 'top' }]}
         />
         <Text style={[muted, { marginBottom: 8 }]}>Kapak görseli</Text>
         {form.imageUrl ? (

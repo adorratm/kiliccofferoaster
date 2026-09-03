@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { api, asArray } from '../lib/api';
+import { DEFAULT_CONTACT } from '../lib/cms';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
 type SettingRow = { key: string; value: Record<string, unknown>; group?: string };
@@ -13,6 +14,9 @@ export function SiteSettingsScreen() {
   const [presets, setPresets] = useState<unknown[]>([]);
   const [instagram, setInstagram] = useState('');
   const [socialRest, setSocialRest] = useState<Record<string, unknown>>({});
+  const [contactRest, setContactRest] = useState<Record<string, unknown>>({});
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
@@ -24,6 +28,7 @@ export function SiteSettingsScreen() {
         const map = Object.fromEntries(list.map((r) => [r.key, r.value]));
         const wa = (map.whatsapp || {}) as Record<string, unknown>;
         const social = (map.social || {}) as Record<string, unknown>;
+        const contact = (map.contact || {}) as Record<string, unknown>;
         setPhone(String(wa.phone || ''));
         setGreeting(String(wa.greeting || ''));
         setEnabled(wa.enabled !== false);
@@ -31,6 +36,10 @@ export function SiteSettingsScreen() {
         setInstagram(String(social.instagram || ''));
         const { instagram: _i, ...rest } = social;
         setSocialRest(rest);
+        setLatitude(String(contact.latitude || ''));
+        setLongitude(String(contact.longitude || ''));
+        const { latitude: _lat, longitude: _lng, ...contactFields } = contact;
+        setContactRest(contactFields);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Ayarlar yüklenemedi');
       }
@@ -74,6 +83,16 @@ export function SiteSettingsScreen() {
           group: byKey.social?.group || 'social',
           value: { ...socialRest, instagram: instagram.trim() },
         },
+        {
+          key: 'contact',
+          group: byKey.contact?.group || 'contact',
+          value: {
+            ...DEFAULT_CONTACT,
+            ...contactRest,
+            latitude: latitude.trim(),
+            longitude: longitude.trim(),
+          },
+        },
       ];
       await api('/cms/admin/settings', {
         method: 'PATCH',
@@ -89,7 +108,7 @@ export function SiteSettingsScreen() {
     <ScrollView style={screen}>
       <Text style={title}>Site ayarları</Text>
       <Text style={[muted, { marginTop: 6 }]}>
-        WhatsApp ve Instagram. Navigasyon / menü web admin’de.
+        WhatsApp, Instagram ve konum (enlem/boylam). Navigasyon / menü web admin’de.
       </Text>
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
@@ -130,6 +149,24 @@ export function SiteSettingsScreen() {
         placeholder="https://instagram.com/..."
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
+        style={input}
+      />
+
+      <Text style={[muted, { marginTop: 16 }]}>KONUM (GEO)</Text>
+      <TextInput
+        value={latitude}
+        onChangeText={setLatitude}
+        placeholder="Enlem"
+        placeholderTextColor={colors.muted}
+        keyboardType="decimal-pad"
+        style={input}
+      />
+      <TextInput
+        value={longitude}
+        onChangeText={setLongitude}
+        placeholder="Boylam"
+        placeholderTextColor={colors.muted}
+        keyboardType="decimal-pad"
         style={input}
       />
       <Pressable onPress={() => void save()} style={btn}>

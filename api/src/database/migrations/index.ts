@@ -22,6 +22,7 @@ import { MarketplaceTrendyolGoMarket1793000000000 } from './1793000000000-Market
 import { InvoiceOkcSaleAndReceipt1794000000000 } from './1794000000000-InvoiceOkcSaleAndReceipt';
 import { AccountingAutoEmailInvoice1795000000000 } from './1795000000000-AccountingAutoEmailInvoice';
 import { AccountingPaytrCommission1796000000000 } from './1796000000000-AccountingPaytrCommission';
+import { SeoCatalogLocalContent1797000000000 } from './1797000000000-SeoCatalogLocalContent';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -52,4 +53,5 @@ export const ALL_MIGRATIONS = [
   InvoiceOkcSaleAndReceipt1794000000000,
   AccountingAutoEmailInvoice1795000000000,
   AccountingPaytrCommission1796000000000,
+  SeoCatalogLocalContent1797000000000,
 ];

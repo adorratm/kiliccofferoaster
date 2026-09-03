@@ -64,9 +64,19 @@ export class StorageService {
   }
 
   buildKey(folder: string, filename: string): string {
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '-').toLowerCase();
+    const extMatch = filename.match(/(\.[a-zA-Z0-9]{1,8})$/);
+    const ext = extMatch ? extMatch[1].toLowerCase() : '';
+    const base = filename
+      .slice(0, filename.length - ext.length)
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase()
+      .slice(0, 80);
     const date = new Date().toISOString().slice(0, 10);
-    return `${folder}/${date}/${randomUUID()}-${safeName}`;
+    const shortId = randomUUID().slice(0, 8);
+    const safeBase = base || 'gorsel';
+    return `${folder}/${date}/${safeBase}-${shortId}${ext}`;
   }
 
   async upload(

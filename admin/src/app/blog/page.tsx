@@ -20,6 +20,7 @@ type FormState = {
   authorName: string;
   tags: string;
   relatedProductSlugs: string;
+  relatedCategorySlugs: string;
   seoTitle: string;
   seoDescription: string;
   isPublished: boolean;
@@ -34,6 +35,7 @@ const emptyForm = (): FormState => ({
   authorName: 'Kılıç Coffee Roaster',
   tags: '',
   relatedProductSlugs: '',
+  relatedCategorySlugs: '',
   seoTitle: '',
   seoDescription: '',
   isPublished: false,
@@ -96,6 +98,7 @@ function BlogAdminPageInner() {
       authorName: post.authorName || '',
       tags: (post.tags || []).join(', '),
       relatedProductSlugs: (post.relatedProductSlugs || []).join(', '),
+      relatedCategorySlugs: (post.relatedCategorySlugs || []).join(', '),
       seoTitle: post.seoTitle || '',
       seoDescription: post.seoDescription || '',
       isPublished: post.isPublished,
@@ -120,6 +123,10 @@ function BlogAdminPageInner() {
         .map((t) => t.trim())
         .filter(Boolean),
       relatedProductSlugs: form.relatedProductSlugs
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+      relatedCategorySlugs: form.relatedCategorySlugs
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
@@ -306,6 +313,25 @@ function BlogAdminPageInner() {
             />
             <span className="mt-1 block text-xs text-muted">
               Yazı sonunda “İlgili kavrumlar” olarak gösterilir.
+            </span>
+          </label>
+          <label className="block text-sm">
+            <span className="mono text-[10px] uppercase text-muted">
+              İlgili kategori slug’ları (virgülle)
+            </span>
+            <input
+              value={form.relatedCategorySlugs}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  relatedCategorySlugs: e.target.value,
+                }))
+              }
+              placeholder="turk-kahvesi, filtre-kahve"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
+            />
+            <span className="mt-1 block text-xs text-muted">
+              Yazıdan kategori sayfalarına köprü.
             </span>
           </label>
           <label className="block text-sm">

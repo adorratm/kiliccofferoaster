@@ -8,7 +8,15 @@ import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 import { Switch } from '../components/Switch';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
-type Category = { id: string; name: string; slug: string; isActive: boolean };
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  description?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
 type Order = { id: string; orderNumber: string; status: string; customerName: string; total: string | number };
 type ReturnReq = {
   id: string;
@@ -27,6 +35,9 @@ type Sub = { id: string; email: string };
 export function CategoriesScreen() {
   const [items, setItems] = useState<Category[]>([]);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
 
   async function load() {
     setItems(asArray<Category>(await api('/categories/admin/all')));
@@ -35,8 +46,21 @@ export function CategoriesScreen() {
 
   async function create() {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    await api('/categories', { method: 'POST', body: { name, slug, isActive: true } });
+    await api('/categories', {
+      method: 'POST',
+      body: {
+        name,
+        slug,
+        description: description.trim() || undefined,
+        seoTitle: seoTitle.trim() || undefined,
+        seoDescription: seoDescription.trim() || undefined,
+        isActive: true,
+      },
+    });
     setName('');
+    setDescription('');
+    setSeoTitle('');
+    setSeoDescription('');
     await load();
   }
 
@@ -44,11 +68,35 @@ export function CategoriesScreen() {
     <ScrollView style={screen}>
       <Text style={title}>Kategoriler</Text>
       <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={name} onChangeText={setName} style={input} />
+      <TextInput
+        placeholder="Açıklama (kategori sayfası)"
+        placeholderTextColor={colors.muted}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        style={[input, { minHeight: 88, textAlignVertical: 'top' }]}
+      />
+      <TextInput
+        placeholder="SEO başlık"
+        placeholderTextColor={colors.muted}
+        value={seoTitle}
+        onChangeText={setSeoTitle}
+        style={input}
+      />
+      <TextInput
+        placeholder="SEO açıklama"
+        placeholderTextColor={colors.muted}
+        value={seoDescription}
+        onChangeText={setSeoDescription}
+        multiline
+        style={[input, { minHeight: 64, textAlignVertical: 'top' }]}
+      />
       <Pressable onPress={() => void create()} style={btn}><Text style={btnText}>Oluştur</Text></Pressable>
       {items.map((c) => (
         <View key={c.id} style={card}>
           <Text style={{ color: colors.text }}>{c.name}</Text>
           <Text style={muted}>{c.slug}</Text>
+          {c.seoTitle ? <Text style={muted}>{c.seoTitle}</Text> : null}
         </View>
       ))}
     </ScrollView>

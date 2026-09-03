@@ -83,6 +83,12 @@ export function ContactScreen({ navigation }: Props) {
         'Merhaba, Kılıç Coffee Roaster hakkında yazıyorum.',
       )}`
     : null;
+  const lat = contact.latitude?.trim();
+  const lng = contact.longitude?.trim();
+  const mapsUrl =
+    lat && lng
+      ? `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`
+      : null;
 
   return (
     <ScrollView
@@ -101,7 +107,13 @@ export function ContactScreen({ navigation }: Props) {
         }}
       >
         {contact.address ? (
-          <InfoRow icon="map-pin" text={contact.address} />
+          mapsUrl ? (
+            <Pressable onPress={() => void Linking.openURL(mapsUrl)}>
+              <InfoRow icon="map-pin" text={contact.address} accent />
+            </Pressable>
+          ) : (
+            <InfoRow icon="map-pin" text={contact.address} />
+          )
         ) : null}
         {contact.hours ? <InfoRow icon="clock" text={contact.hours} /> : null}
         {contact.phone ? (

@@ -102,6 +102,17 @@ export class Product extends BaseEntity {
   @Column({ name: 'ingredients', type: 'text', nullable: true })
   ingredients!: string | null;
 
+  /** Son kavrum tarihi (YYYY-MM-DD) */
+  @Column({ name: 'roasted_at', type: 'date', nullable: true })
+  roastedAt!: string | null;
+
+  /** Demleme önerisi: method, grind, ratio, notes */
+  @Column({ name: 'brew_guide', type: 'jsonb', nullable: true })
+  brewGuide!: Record<string, string> | null;
+
+  @Column({ name: 'storage_notes', type: 'text', nullable: true })
+  storageNotes!: string | null;
+
   @Column({ name: 'base_price', type: 'decimal', precision: 12, scale: 2 })
   basePrice!: string;
 

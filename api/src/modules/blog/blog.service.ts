@@ -52,6 +52,12 @@ export class BlogService {
       qb.andWhere(`:tag = ANY(p.tags)`, { tag: query.tag.trim() });
     }
 
+    if (query.categorySlug?.trim()) {
+      qb.andWhere(`:categorySlug = ANY(p.related_category_slugs)`, {
+        categorySlug: query.categorySlug.trim(),
+      });
+    }
+
     qb.orderBy(sortCol, order, 'NULLS LAST').addOrderBy('p.created_at', 'DESC');
 
     const total = await qb.getCount();
@@ -98,6 +104,7 @@ export class BlogService {
       authorName: dto.authorName ?? null,
       tags: dto.tags ?? [],
       relatedProductSlugs: normalizeSlugs(dto.relatedProductSlugs),
+      relatedCategorySlugs: normalizeSlugs(dto.relatedCategorySlugs),
       seoTitle: dto.seoTitle ?? null,
       seoDescription: dto.seoDescription ?? null,
       isPublished: dto.isPublished ?? false,
@@ -142,6 +149,10 @@ export class BlogService {
         dto.relatedProductSlugs === undefined
           ? post.relatedProductSlugs
           : normalizeSlugs(dto.relatedProductSlugs),
+      relatedCategorySlugs:
+        dto.relatedCategorySlugs === undefined
+          ? post.relatedCategorySlugs
+          : normalizeSlugs(dto.relatedCategorySlugs),
     });
 
     if (dto.isPublished === true && !wasPublished) {

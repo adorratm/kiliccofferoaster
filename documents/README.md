@@ -63,6 +63,7 @@ Başlangıç: [aşamalar](asamalar.md) (ne yaptık) → [akışlar](akislar.md) 
 |-------|------|
 | [deployment-hetzner.md](deployment-hetzner.md) | Docker + Nginx + domain |
 | [aso.md](aso.md) | App Store / Play listing, App Links, Merchant feed |
+| [seo.md](seo.md) | Organik SEO, GSC, GBP, keyword haritası |
 | [smoke-checklist.md](smoke-checklist.md) | Canlı öncesi smoke kontrol listesi |
 
 Paket README’leri: [desktop](../desktop/README.md), [mobile](../mobile/README.md), [deploy](../deploy/README.md).

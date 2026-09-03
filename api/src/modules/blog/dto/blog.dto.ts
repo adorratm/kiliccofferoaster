@@ -59,6 +59,15 @@ export class CreateBlogPostDto {
   @IsString({ each: true })
   relatedProductSlugs?: string[];
 
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'İlgili kategori slug listesi',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  relatedCategorySlugs?: string[];
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -94,6 +103,11 @@ export class BlogQueryDto {
   @IsOptional()
   @IsString()
   tag?: string;
+
+  @ApiPropertyOptional({ description: 'related_category_slugs içinde ara' })
+  @IsOptional()
+  @IsString()
+  categorySlug?: string;
 
   @ApiPropertyOptional({ enum: ['publishedAt', 'createdAt', 'updatedAt', 'title'] })
   @IsOptional()
