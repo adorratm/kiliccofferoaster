@@ -31,7 +31,7 @@
     "s3:cors": "node scripts/apply-s3-cors.cjs"
   },
   "resolutions": {
-    "qs": "^6.15.3",
+    "qs": "^6.16.0",
     "@bull-board/api": "9.5.0",
     "@bull-board/ui": "9.5.0",
     "uuid": "^14.0.1",
