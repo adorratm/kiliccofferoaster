@@ -25,6 +25,7 @@ import {
   shopValidateCoupon,
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
+import { paytrUrlFromCheckout } from '../../lib/paytr-browser';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
 import { STORE_PICKUP_CODE } from '../../lib/shipping';
 import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
@@ -255,7 +256,8 @@ export function CheckoutScreen({ navigation }: Props) {
         },
         notes: form.notes || undefined,
       });
-      await refresh();
+      // Sepeti yenilemeyi ödeme yönlendirmesinden sonraya bırak — hata çökertmesin
+      void refresh().catch(() => {});
 
       if (result.mock || (!result.token && !result.iframeUrl && !result.paymentPageUrl)) {
         navigation.replace('OrderResult', {
@@ -264,23 +266,20 @@ export function CheckoutScreen({ navigation }: Props) {
         });
         return;
       }
-      const payUrl = result.iframeUrl || result.paymentPageUrl || undefined;
-      const token = result.token;
-      if (token || payUrl) {
-        try {
-          navigation.navigate('Paytr', {
-            token: token || '',
-            iframeUrl: payUrl,
-            orderNumber: result.orderNumber,
-            orderId: result.orderId,
-          });
-        } catch (navErr) {
-          setError(
-            navErr instanceof Error
-              ? navErr.message
-              : 'Ödeme ekranı açılamadı',
-          );
-        }
+
+      // Sonuç ekranına geç → orada uygulama içi ödeme sheet (SFSafariViewController).
+      // WebView yok. PaytrScreen kullanılmıyor.
+      const payUrl = paytrUrlFromCheckout(result);
+      if (payUrl) {
+        navigation.replace('OrderResult', {
+          ok: false,
+          pendingPayment: true,
+          orderNumber: result.orderNumber,
+          orderId: result.orderId,
+          paymentUrl: payUrl,
+          message:
+            'Ödeme uygulama içinde açılacak. Kart bilgilerinizi girip pencereyi kapatın.',
+        });
         return;
       }
       setError('Ödeme oturumu alınamadı');

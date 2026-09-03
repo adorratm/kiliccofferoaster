@@ -1,5 +1,6 @@
 const {
   withDangerousMod,
+  withInfoPlist,
   withXcodeProject,
   IOSConfig,
 } = require('@expo/config-plugins');
@@ -64,21 +65,36 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 `;
 
 /**
- * iOS 27 / Xcode 27: UIScene lifecycle zorunlu.
- * Expo SDK 57.0.19 template henüz SceneDelegate üretmiyor; EAS prebuild sonrası ekler.
+ * iOS 27+: UIScene lifecycle zorunlu. Manifest + SceneDelegate + AppDelegate patch.
+ * EAS prebuild bu plugin ile üretir — kütüphane değişimi bunu çözmez.
  */
 function withIosSceneLifecycle(config) {
+  config = withInfoPlist(config, (cfg) => {
+    cfg.modResults.UIApplicationSceneManifest = {
+      UIApplicationSupportsMultipleScenes: false,
+      UISceneConfigurations: {
+        UIWindowSceneSessionRoleApplication: [
+          {
+            UISceneConfigurationName: 'Default Configuration',
+            UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).SceneDelegate',
+          },
+        ],
+      },
+    };
+    return cfg;
+  });
+
   config = withDangerousMod(config, [
     'ios',
     async (cfg) => {
       const projectRoot = cfg.modRequest.platformProjectRoot;
-      const projectName = IOSConfig.XcodeUtils.getProjectName(cfg.modRequest.projectRoot);
+      const projectName = IOSConfig.XcodeUtils.getProjectName(
+        cfg.modRequest.projectRoot,
+      );
       const appDir = path.join(projectRoot, projectName);
 
-      // SceneDelegate.swift
       fs.writeFileSync(path.join(appDir, 'SceneDelegate.swift'), SCENE_DELEGATE);
 
-      // AppDelegate: window oluşturmayı scene'e bırak, launchOptions sakla
       const appDelegatePath = path.join(appDir, 'AppDelegate.swift');
       if (fs.existsSync(appDelegatePath)) {
         let src = fs.readFileSync(appDelegatePath, 'utf8');
@@ -97,13 +113,7 @@ function withIosSceneLifecycle(config) {
           );
         }
 
-        // Eski window + startReactNative bloğunu kaldır (scene yapacak)
-        src = src.replace(
-          /#if os\(iOS\) \|\| os\(tvOS\)[\s\S]*?#endif\n/,
-          '',
-        );
-
-        // ExpoReactNativeFactoryProvider (henüz yoksa) ekleme — SDK 57.0.19'da yok
+        src = src.replace(/#if os\(iOS\) \|\| os\(tvOS\)[\s\S]*?#endif\n/, '');
         src = src.replace(
           /class AppDelegate: ExpoAppDelegate,\s*ExpoReactNativeFactoryProvider/,
           'class AppDelegate: ExpoAppDelegate',
@@ -118,11 +128,17 @@ function withIosSceneLifecycle(config) {
 
   config = withXcodeProject(config, (cfg) => {
     const project = cfg.modResults;
-    const projectName = cfg.modRequest.projectName || IOSConfig.XcodeUtils.getProjectName(cfg.modRequest.projectRoot);
+    const projectName =
+      cfg.modRequest.projectName ||
+      IOSConfig.XcodeUtils.getProjectName(cfg.modRequest.projectRoot);
     const filePath = `${projectName}/SceneDelegate.swift`;
 
     if (!project.hasFile(filePath)) {
-      project.addSourceFile(filePath, null, project.findPBXGroupKey({ name: projectName }));
+      project.addSourceFile(
+        filePath,
+        null,
+        project.findPBXGroupKey({ name: projectName }),
+      );
     }
 
     return cfg;

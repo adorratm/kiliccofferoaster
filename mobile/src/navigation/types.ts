@@ -25,7 +25,15 @@ export type CartStackParamList = {
     orderId: string;
     iframeUrl?: string;
   };
-  OrderResult: { ok: boolean; orderNumber?: string; message?: string };
+  OrderResult: {
+    ok: boolean;
+    orderNumber?: string;
+    message?: string;
+    /** PayTR uygulama içi tarayıcıda; henüz sonuç bekleniyor */
+    pendingPayment?: boolean;
+    paymentUrl?: string;
+    orderId?: string;
+  };
   Legal: { slug: string };
 };
 

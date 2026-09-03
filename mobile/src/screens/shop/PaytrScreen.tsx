@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   ActivityIndicator,
+  AppState,
   Linking,
-  Platform,
+  Pressable,
   Text,
   View,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import type { CartStackParamList } from '../../navigation/types';
+import { shopOrder } from '../../lib/shop-api';
 import { colors, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Paytr'>;
+
+const PAID_STATUSES = new Set(['paid', 'processing', 'shipped', 'delivered']);
 
 function isSafeHttpUrl(value: string): boolean {
   try {
@@ -23,10 +25,20 @@ function isSafeHttpUrl(value: string): boolean {
   }
 }
 
+/**
+ * PayTR: WebView ve SFSafariViewController (openBrowserAsync) YOK.
+ * İkisi de production / iOS 27 Scene lifecycle altında native crash üretebiliyor.
+ * Sistem Safari'ye Linking.openURL ile çıkış en güvenli yol.
+ */
 export function PaytrScreen({ navigation, route }: Props) {
   const { token, orderNumber, orderId, iframeUrl } = route.params;
-  const [loadError, setLoadError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [statusMsg, setStatusMsg] = useState(
+    'Ödeme için Safari açılacak. Kart bilgilerinizi orada girin.',
+  );
+  const [ready, setReady] = useState(false);
   const finishedRef = useRef(false);
+  const leftForSafariRef = useRef(false);
 
   const uri = useMemo(() => {
     const raw =
@@ -38,115 +50,166 @@ export function PaytrScreen({ navigation, route }: Props) {
     return raw;
   }, [iframeUrl, token]);
 
-  function finish(ok: boolean, message?: string) {
-    if (finishedRef.current) return;
-    finishedRef.current = true;
-    navigation.replace('OrderResult', {
-      ok,
-      orderNumber,
-      ...(message ? { message } : {}),
-    });
-  }
+  const finish = useCallback(
+    (ok: boolean, message?: string) => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
+      navigation.replace('OrderResult', {
+        ok,
+        orderNumber,
+        ...(message ? { message } : {}),
+      });
+    },
+    [navigation, orderNumber],
+  );
 
-  /** Yalnızca onShouldStartLoadWithRequest — çift handler race crash'ini önler. */
-  function handleShouldStart(req: ShouldStartLoadRequest): boolean {
-    const url = req.url || '';
-    if (!url || url === 'about:blank') return true;
-
-    if (url.includes('/odeme/basarili')) {
-      finish(true);
+  const checkOrderPaid = useCallback(async (): Promise<boolean> => {
+    if (!orderId) return false;
+    try {
+      const order = await shopOrder(orderId);
+      return PAID_STATUSES.has(String(order.status || ''));
+    } catch {
       return false;
     }
-    if (url.includes('/odeme/basarisiz')) {
-      finish(false, 'Ödeme tamamlanamadı');
-      return false;
-    }
+  }, [orderId]);
 
-    // Banka / 3DS uygulama şemaları (intent:// Android)
-    if (!/^https?:\/\//i.test(url)) {
-      if (Platform.OS === 'android' && url.startsWith('intent://')) {
-        void Linking.openURL(url).catch(() => {});
-      } else {
-        void (async () => {
-          try {
-            if (await Linking.canOpenURL(url)) {
-              await Linking.openURL(url);
-            }
-          } catch {
-            /* ignore */
-          }
-        })();
+  const openInSafari = useCallback(async () => {
+    if (!uri || finishedRef.current) return;
+    setBusy(true);
+    setStatusMsg('Safari açılıyor…');
+    try {
+      leftForSafariRef.current = true;
+      const supported = await Linking.canOpenURL(uri);
+      if (!supported) {
+        leftForSafariRef.current = false;
+        setStatusMsg('Bu cihazda ödeme bağlantısı açılamadı.');
+        setBusy(false);
+        return;
       }
-      return false;
+      await Linking.openURL(uri);
+      setStatusMsg(
+        'Safari’de ödemeyi tamamlayın, sonra buraya dönüp “Ödemeyi kontrol et”e basın.',
+      );
+    } catch {
+      leftForSafariRef.current = false;
+      setStatusMsg('Safari açılamadı. Tekrar deneyin.');
+    } finally {
+      setBusy(false);
+      setReady(true);
     }
-
-    return true;
-  }
+  }, [uri]);
 
   useEffect(() => {
-    if (uri) return;
-    finish(
-      false,
-      orderId
-        ? 'Ödeme sayfası açılamadı. Siparişiniz beklemede kalmış olabilir; destek ile iletişime geçin.'
-        : 'Ödeme sayfası açılamadı',
-    );
-  }, [uri, orderId]);
+    if (!uri) {
+      finish(
+        false,
+        orderId
+          ? 'Ödeme sayfası açılamadı. Siparişiniz beklemede kalmış olabilir.'
+          : 'Ödeme sayfası açılamadı',
+      );
+      return;
+    }
+    // Otomatik açma yok — kullanıcı butona bassın (presentation crash / race olmasın)
+    setReady(true);
+  }, [uri, orderId, finish]);
 
-  if (!uri) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center' }}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          justifyContent: 'center',
-          padding: 24,
-        }}
-      >
-        <Text style={{ color: colors.danger, fontWeight: '600', fontSize: 16 }}>
-          Ödeme sayfası yüklenemedi
-        </Text>
-        <Text style={[muted, { marginTop: 8, lineHeight: 20 }]}>{loadError}</Text>
-        <Text
-          onPress={() => finish(false, loadError)}
-          style={{ color: colors.accentSoft, marginTop: 20, fontWeight: '600' }}
-        >
-          Geri dön
-        </Text>
-      </View>
-    );
-  }
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || finishedRef.current || !orderId) return;
+      if (!leftForSafariRef.current) return;
+      void (async () => {
+        setBusy(true);
+        setStatusMsg('Ödeme kontrol ediliyor…');
+        const paid = await checkOrderPaid();
+        setBusy(false);
+        if (paid) finish(true);
+        else {
+          setStatusMsg(
+            'Ödeme henüz görünmüyor. Tamamladıysanız biraz bekleyip tekrar kontrol edin.',
+          );
+        }
+      })();
+    });
+    return () => sub.remove();
+  }, [orderId, checkOrderPaid, finish]);
 
   return (
-    <WebView
-      source={{ uri }}
-      originWhitelist={['https://*', 'http://*', 'about:blank']}
-      javaScriptEnabled
-      domStorageEnabled
-      sharedCookiesEnabled
-      allowsInlineMediaPlayback
-      setSupportMultipleWindows={false}
-      onShouldStartLoadWithRequest={handleShouldStart}
-      onContentProcessDidTerminate={() => {
-        setLoadError('Ödeme sayfası yenilenmesi gerekiyor. Lütfen tekrar deneyin.');
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: colors.bg,
+        justifyContent: 'center',
+        padding: 24,
       }}
-      onError={(e) => {
-        setLoadError(e.nativeEvent?.description || 'Bilinmeyen WebView hatası');
-      }}
-      onHttpError={(e) => {
-        if (e.nativeEvent.statusCode >= 500) {
-          setLoadError(`Ödeme sayfası hata verdi (${e.nativeEvent.statusCode})`);
-        }
-      }}
-      style={{ flex: 1, backgroundColor: colors.bg }}
-    />
+    >
+      {busy ? <ActivityIndicator color={colors.accent} /> : null}
+      <Text
+        style={[
+          muted,
+          { marginTop: busy ? 16 : 0, textAlign: 'center', lineHeight: 22 },
+        ]}
+      >
+        {statusMsg}
+      </Text>
+      <Text style={[muted, { marginTop: 8, textAlign: 'center', fontSize: 13 }]}>
+        Sipariş: {orderNumber}
+      </Text>
+
+      {ready && !busy ? (
+        <View style={{ marginTop: 28, gap: 12 }}>
+          <Pressable
+            onPress={() => {
+              void openInSafari();
+            }}
+            style={{
+              backgroundColor: colors.accent,
+              paddingVertical: 14,
+              borderRadius: 10,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>
+              Safari’de ödemeyi aç
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              setBusy(true);
+              setStatusMsg('Ödeme kontrol ediliyor…');
+              const paid = await checkOrderPaid();
+              setBusy(false);
+              if (paid) finish(true);
+              else {
+                setStatusMsg(
+                  'Ödeme henüz görünmüyor. Safari’de tamamladıktan sonra tekrar deneyin.',
+                );
+              }
+            }}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.accentSoft,
+              paddingVertical: 14,
+              borderRadius: 10,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: colors.accentSoft, fontWeight: '600' }}>
+              Ödemeyi kontrol et
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              finish(
+                false,
+                'Ödeme tamamlanmadı. Siparişlerim’den daha sonra ödeyebilirsiniz.',
+              )
+            }
+            style={{ paddingVertical: 12, alignItems: 'center' }}
+          >
+            <Text style={{ color: colors.muted }}>Vazgeç</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
   );
 }
