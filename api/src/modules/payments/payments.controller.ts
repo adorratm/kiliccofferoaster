@@ -128,14 +128,14 @@ export class PaymentsController {
   @Public()
   @Post('revenuecat/confirm')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mobil mağaza satın almasını doğrula (RevenueCat)' })
+  @ApiOperation({ summary: 'Legacy: RevenueCat satın alma doğrula (mobil checkout artık PayTR)' })
   confirmRevenuecat(@Body() dto: RevenuecatConfirmDto) {
     return this.paymentsService.confirmRevenuecatPurchase(dto);
   }
 
   @Public()
   @Get('revenuecat/status')
-  @ApiOperation({ summary: 'Mobil RevenueCat istemci ipuçları' })
+  @ApiOperation({ summary: 'Legacy: RevenueCat istemci durumu' })
   revenuecatStatus() {
     return this.paymentsService.revenuecatClientStatus();
   }
@@ -143,14 +143,14 @@ export class PaymentsController {
   @Public()
   @Post('revenuecat/abandon')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mobil ödeme tamamlanamadı — pending siparişi iptal' })
+  @ApiOperation({ summary: 'Legacy: RevenueCat pending sipariş iptali' })
   abandonRevenuecat(@Body() dto: RevenuecatConfirmDto) {
     return this.paymentsService.abandonRevenuecatOrder(dto.orderId);
   }
 
   @Public()
   @Post('revenuecat/webhook')
-  @ApiOperation({ summary: 'RevenueCat webhook — sipariş fulfillment' })
+  @ApiOperation({ summary: 'Legacy: RevenueCat webhook' })
   async revenuecatWebhook(
     @Body() body: Record<string, unknown>,
     @Headers('authorization') authHeader?: string,

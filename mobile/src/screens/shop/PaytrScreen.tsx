@@ -7,6 +7,12 @@ import { colors } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Paytr'>;
 
+const SHOP_HOST =
+  (process.env.EXPO_PUBLIC_SHOP_URL || 'https://kiliccoffeeroaster.com.tr').replace(
+    /\/$/,
+    '',
+  );
+
 export function PaytrScreen({ navigation, route }: Props) {
   const { token, orderNumber, orderId, iframeUrl } = route.params;
   const uri =
@@ -50,12 +56,15 @@ export function PaytrScreen({ navigation, route }: Props) {
     <WebView
       source={{ uri }}
       originWhitelist={[
+        'https://*',
+        'http://*',
+        SHOP_HOST,
         'https://www.paytr.com',
         'https://paytr.com',
-        'https://*.paytr.com',
       ]}
       onShouldStartLoadWithRequest={(req) => {
         if (/paytr\.com/i.test(req.url)) return true;
+        if (/iyzipay\.com|iyzico\.com/i.test(req.url)) return true;
         return handleUrl(req.url);
       }}
       onNavigationStateChange={(nav) => {

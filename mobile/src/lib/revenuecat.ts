@@ -1,5 +1,10 @@
 import { Platform } from 'react-native';
 
+/**
+ * Legacy RevenueCat helpers — fiziksel ürün checkout artık PayTR/iyzico kullanır.
+ * Dosya yalnızca eski IAP denemeleri / gelecek dijital ürün için tutulur; App.tsx çağırmıyor.
+ */
+
 const IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
 const ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
 

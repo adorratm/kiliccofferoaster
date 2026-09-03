@@ -25,11 +25,11 @@ flowchart TD
 1. `PAYMENT_PROVIDER=paytr` veya `iyzico` açıkça set ise o kullanılır.
 2. Boşsa: PayTR merchant bilgileri doluysa PayTR, değilse iyzico.
 
-Vitrin: PayTR → `/odeme/paytr` (iframe). iyzico → checkout URL veya form HTML. **Mobil native (iOS/Android): RevenueCat** — App Store / Google Play in-app purchase; `X-Client-Platform` header’ı ile checkout PayTR yerine RevenueCat döner.
+Vitrin ve **mobil native (iOS/Android)** aynı kanalı kullanır: PayTR → güvenli ödeme URL / WebView; iyzico → checkout URL veya form HTML. Fiziksel ürün satışı olduğu için App Store / Play IAP kullanılmaz (Apple 3.1.3(e) / Google fiziksel mal politikası).
 
-## RevenueCat (mobil)
+## Eski: RevenueCat (kullanılmıyor)
 
-Web vitrin ve desktop **PayTR** kalır. Expo native mağaza uygulaması checkout’ta `X-Client-Platform: ios|android` gönderir; API siparişi `revenuecat` provider ile oluşturur, satın alma App Store / Play üzerinden yapılır.
+Mobil checkout artık PayTR/iyzico’ya gider. RevenueCat endpoint’leri ve env değişkenleri geçmiş siparişler / raporlama için kodda kalabilir; **yeni mağaza siparişleri IAP ile oluşturulmaz.** Dijital abonelik eklenirse bu bölüm yeniden değerlendirilir.
 
 ```
 REVENUECAT_SECRET_API_KEY=
@@ -40,42 +40,23 @@ EXPO_PUBLIC_REVENUECAT_IOS_KEY=
 EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=
 ```
 
-Webhook URL: `{API_URL}/payments/revenuecat/webhook`
+Webhook URL (legacy): `{API_URL}/payments/revenuecat/webhook`
 
-Akış:
+Eski akış (referans):
 
-1. `POST /checkout` (mobil header) → sipariş + `purchaseItems` (varyant SKU = store product id).
-2. Mobil `react-native-purchases` ile satın alma; `Purchases.logIn(orderId)`.
-3. `POST /payments/revenuecat/confirm` — istemci doğrulama (secret key yoksa mock).
-4. Webhook — yedek fulfillment (`INITIAL_PURCHASE`, `NON_RENEWING_PURCHASE`).
+1. `POST /checkout` + mobil header → `revenuecat` + `purchaseItems`
+2. `react-native-purchases` satın alma
+3. `POST /payments/revenuecat/confirm` / webhook
 
-Mobilde kupon henüz desteklenmez. Kargo ücreti varsa `REVENUECAT_SHIPPING_PRODUCT_ID` gerekir (yalnızca varyant-SKU modunda; **tutar kademesi modunda kargo sipariş totaline dahil**, ayrı ürün gerekmez).
+Tutar kademesi üreticisi (legacy): `yarn workspace @kilic/api iap:tiers`
 
-### Toplu ürün — Google/Meta feed gibi değil
-
-RevenueCat **mağaza ürünlerini oluşturmaz**; App Store Connect ve Google Play Console’daki IAP kayıtlarını yönetir. Google Merchant / Meta feed XML’i reklam kataloğu içindir, IAP ile ilgisi yoktur.
-
-**Önerilen yol (çok ürünlü katalog):** Her varyant için ayrı IAP yerine **tutar kademeleri** (`REVENUECAT_PRODUCT_MAP`). Örn. 50₺ aralıklarla `kilic_checkout_250`, `kilic_checkout_300` … — sipariş totaline (kargo dahil) uygun kademe seçilir.
-
-Listeyi üretmek için:
-
-```bash
-yarn workspace @kilic/api iap:tiers
-# veya: node api/scripts/generate-revenuecat-iap-tiers.mjs --max 3000 --step 50
-```
-
-Çıktıdaki product id’leri **hem** Play Console **hem** App Store Connect’te consumable olarak oluşturun, sonra RevenueCat → Products’a import edin.
-
-**Kargo (89,90₺):** Tutar kademesi kullanıyorsanız kargo zaten `order.total` içinde; ayrı `shipping_product_id` **gerekmez**. Varyant-SKU modunda tek ürün: Play/App Store’da `kilic_shipping_8990` · **89,90 TRY** · consumable → `REVENUECAT_SHIPPING_PRODUCT_ID=kilic_shipping_8990`.
-
-### RevenueCat panelinde yapılacaklar
+### RevenueCat panelinde yapılacaklar (yalnızca IAP yeniden açılırsa)
 
 1. Proje oluştur → iOS + Android uygulama ekle (`tr.kiliccoffeeroaster.ops`)
 2. **Project settings → API keys:** Secret API Key → `REVENUECAT_SECRET_API_KEY`
 3. **Apps:** Public SDK keys → `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `ANDROID_KEY`
-4. **Products:** Store’da oluşturduğunuz IAP id’lerini import / sync
-5. **Entitlements (opsiyonel):** Tek entitlement `shop` → tüm checkout ürünlerini bağlayın
-6. **Integrations → Webhooks:** URL `https://api.kiliccoffeeroaster.com.tr/payments/revenuecat/webhook`, Authorization → `REVENUECAT_WEBHOOK_AUTH_KEY`
+4. **Products:** Store IAP id’lerini import / sync
+5. **Integrations → Webhooks:** URL `https://api.kiliccoffeeroaster.com.tr/payments/revenuecat/webhook`
 
 ## PayTR
 
@@ -125,7 +106,7 @@ Admin `/iadeler`: onay/red, kısmi tutar. PayTR keys varsa sağlayıcı iadesi. 
 - `POST /payments/retry` — yeniden dene
 - `GET|POST /payments/callback` — iyzico dönüşü (public)
 - `POST /payments/paytr/callback` — PayTR bildirim (public)
-- `POST /payments/revenuecat/confirm` — mobil satın alma doğrulama (public)
-- `POST /payments/revenuecat/webhook` — RevenueCat webhook (public)
+- `POST /payments/revenuecat/confirm` — legacy IAP (public)
+- `POST /payments/revenuecat/webhook` — legacy IAP webhook (public)
 
 Detaylı alanlar Swagger `/docs` altında. Muhasebe kasa: `POST /accounting/cash/sync-paytr`.

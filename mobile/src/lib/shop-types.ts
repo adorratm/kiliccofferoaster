@@ -201,11 +201,7 @@ export type PaymentInitResponse = {
   iframeUrl?: string | null;
   token?: string;
   mock?: boolean;
-  revenueCatAppUserId?: string;
-  total?: string;
-  currency?: string;
-  purchaseItems?: { productId: string; quantity: number }[];
-  checkoutProductId?: string | null;
+  checkoutFormContent?: string;
 };
 
 export type WishlistItem = {

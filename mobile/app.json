@@ -3,7 +3,7 @@
     "name": "Kılıç Coffee Roaster",
     "slug": "kilic-ops",
     "version": "1.0.0",
-    "description": "Torbalı / İzmir specialty kahve: kavrum siparişi, takip ve hesap yönetimi.",
+    "description": "Torbalı / İzmir specialty kahve: fiziksel kavrum siparişi, kargo veya mağazadan teslim, sipariş takibi ve hesap. Ödeme harici ödeme sağlayıcısı ile yapılır; dijital abonelik yoktur.",
     "orientation": "portrait",
     "scheme": "kilicops",
     "userInterfaceStyle": "dark",
@@ -39,7 +39,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ürün görsellerini yüklemek için galeri erişimi gerekir.",
+          "photosPermission": "Personel ürün kataloğuna görsel yüklemek için galeri erişimi gerekir. Müşteri alışverişinde kullanılmaz.",
           "cameraPermission": false
         }
       ]
@@ -54,7 +54,8 @@
       ],
       "icon": "./assets/icon.png",
       "infoPlist": {
-        "NSUserNotificationsUsageDescription": "Sipariş ve kampanya bildirimleri için kullanılır.",
+        "NSUserNotificationsUsageDescription": "Sipariş durumu ve kampanya bildirimleri için kullanılır.",
+        "NSPhotoLibraryUsageDescription": "Personel ürün kataloğuna görsel yüklemek için galeri erişimi gerekir. Müşteri alışverişinde kullanılmaz.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

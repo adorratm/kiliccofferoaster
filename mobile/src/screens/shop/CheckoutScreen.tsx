@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  Platform,
   Pressable,
   ScrollView,
   Switch,
@@ -19,9 +18,6 @@ import {
   cartSubtotal,
   shopAddresses,
   shopCheckout,
-  shopAbandonRevenueCat,
-  shopConfirmRevenueCat,
-  shopRevenueCatStatus,
   shopCreateAddress,
   shopMe,
   shopShippingProviders,
@@ -30,7 +26,6 @@ import {
 } from '../../lib/shop-api';
 import { getShopToken } from '../../lib/api';
 import { calculateOrderTotals, formatMoney } from '../../lib/format';
-import { purchaseOrderItems, revenueCatBlockedReason } from '../../lib/revenuecat';
 import { STORE_PICKUP_CODE } from '../../lib/shipping';
 import type { Address, CouponPreview, ShippingProvider } from '../../lib/shop-types';
 import { btn, btnText, colors, input, muted } from '../../ui';
@@ -152,7 +147,6 @@ export function CheckoutScreen({ navigation }: Props) {
   }
 
   const isPickup = deliveryMethod === 'pickup';
-  const isNativeMobile = Platform.OS === 'ios' || Platform.OS === 'android';
   const subtotal = cartSubtotal(cart);
   const selected = providers.find((p) => p.code === form.shippingProvider);
   const shippingFee = isPickup ? 0 : Number(selected?.fee || 0);
@@ -197,19 +191,7 @@ export function CheckoutScreen({ navigation }: Props) {
       return;
     }
     setSubmitting(true);
-    let pendingOrderId: string | null = null;
     try {
-      if (isNativeMobile) {
-        const blocked = revenueCatBlockedReason();
-        if (blocked) {
-          const rcStatus = await shopRevenueCatStatus();
-          if (!rcStatus.serverMock) {
-            setError(blocked);
-            return;
-          }
-        }
-      }
-
       if (
         !isPickup &&
         loggedIn &&
@@ -262,52 +244,6 @@ export function CheckoutScreen({ navigation }: Props) {
       });
       await refresh();
 
-      if (result.provider === 'revenuecat') {
-        pendingOrderId = result.orderId;
-        if (result.mock) {
-          await shopConfirmRevenueCat({ orderId: result.orderId });
-          navigation.replace('OrderResult', {
-            ok: true,
-            orderNumber: result.orderNumber,
-          });
-          return;
-        }
-        const blocked = revenueCatBlockedReason();
-        if (blocked) {
-          await shopAbandonRevenueCat(result.orderId);
-          pendingOrderId = null;
-          setError(blocked);
-          return;
-        }
-        const items =
-          result.purchaseItems?.length
-            ? result.purchaseItems
-            : result.checkoutProductId
-              ? [{ productId: result.checkoutProductId, quantity: 1 }]
-              : [];
-        if (!items.length) {
-          await shopAbandonRevenueCat(result.orderId);
-          pendingOrderId = null;
-          setError('Mağaza ödeme ürünleri yapılandırılmamış');
-          return;
-        }
-        const purchase = await purchaseOrderItems({
-          appUserId: result.revenueCatAppUserId || result.orderId,
-          items,
-        });
-        await shopConfirmRevenueCat({
-          orderId: result.orderId,
-          productId: purchase.productId,
-          transactionId: purchase.transactionId,
-        });
-        pendingOrderId = null;
-        navigation.replace('OrderResult', {
-          ok: true,
-          orderNumber: result.orderNumber,
-        });
-        return;
-      }
-
       if (result.mock || (!result.token && !result.iframeUrl && !result.paymentPageUrl)) {
         navigation.replace('OrderResult', {
           ok: true,
@@ -315,7 +251,7 @@ export function CheckoutScreen({ navigation }: Props) {
         });
         return;
       }
-      const payUrl = result.iframeUrl || undefined;
+      const payUrl = result.iframeUrl || result.paymentPageUrl || undefined;
       const token = result.token;
       if (token || payUrl) {
         navigation.navigate('Paytr', {
@@ -328,13 +264,6 @@ export function CheckoutScreen({ navigation }: Props) {
       }
       setError('Ödeme oturumu alınamadı');
     } catch (e) {
-      if (pendingOrderId) {
-        try {
-          await shopAbandonRevenueCat(pendingOrderId);
-        } catch {
-          /* iptal edilemedi */
-        }
-      }
       setError(e instanceof Error ? e.message : 'Ödeme başlatılamadı');
     } finally {
       setSubmitting(false);
@@ -543,8 +472,6 @@ export function CheckoutScreen({ navigation }: Props) {
         </>
       ) : null}
 
-      {!isNativeMobile ? (
-        <>
       <SectionLabel index={isPickup ? '03' : '05'} label="Kupon" />
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
         <TextInput
@@ -564,10 +491,8 @@ export function CheckoutScreen({ navigation }: Props) {
           {coupon.code} · −{formatMoney(coupon.discountAmount)}
         </Text>
       ) : null}
-        </>
-      ) : null}
 
-      <SectionLabel index={isPickup ? (isNativeMobile ? '03' : '04') : (isNativeMobile ? '04' : '06')} label="Onaylar" />
+      <SectionLabel index={isPickup ? '04' : '06'} label="Onaylar" />
       <Legal
         label="Mesafeli satış sözleşmesi"
         value={form.mesafeliSatis}
@@ -613,7 +538,7 @@ export function CheckoutScreen({ navigation }: Props) {
         style={[btn, { opacity: submitting ? 0.6 : 1 }]}
       >
         <Text style={btnText}>
-          {submitting ? 'Gönderiliyor…' : 'App Store / Google Play ile öde'}
+          {submitting ? 'Gönderiliyor…' : 'Güvenli ödeme'}
         </Text>
       </Pressable>
     </ScrollView>

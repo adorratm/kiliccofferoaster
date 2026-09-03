@@ -209,40 +209,6 @@ export async function shopCheckout(payload: CheckoutPayload) {
   });
 }
 
-export async function shopConfirmRevenueCat(payload: {
-  orderId: string;
-  productId?: string;
-  transactionId?: string;
-}) {
-  return api<{
-    success: boolean;
-    orderId: string;
-    orderNumber: string | null;
-    orderStatus?: string;
-  }>('/payments/revenuecat/confirm', {
-    method: 'POST',
-    auth: 'shop',
-    session: true,
-    body: payload,
-  });
-}
-
-export async function shopRevenueCatStatus() {
-  return api<{ serverMock: boolean; hasProductMap: boolean }>(
-    '/payments/revenuecat/status',
-    { auth: 'none' },
-  );
-}
-
-export async function shopAbandonRevenueCat(orderId: string) {
-  return api<{ ok: boolean }>('/payments/revenuecat/abandon', {
-    method: 'POST',
-    auth: 'shop',
-    session: true,
-    body: { orderId },
-  });
-}
-
 export async function shopOrders(): Promise<Order[]> {
   const data = await api<Order[] | { items: Order[] }>('/orders/me', {
     auth: 'shop',

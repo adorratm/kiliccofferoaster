@@ -50,13 +50,13 @@ Detay: [kuyruklar.md](kuyruklar.md).
 | `PAYTR_TEST_MODE` | `1` sandbox |
 | `PAYTR_DEBUG_ON` | Debug |
 | `IYZICO_API_KEY` / `SECRET_KEY` / `BASE_URL` | Yedek sağlayıcı |
-| `REVENUECAT_SECRET_API_KEY` | Mobil satın alma REST doğrulama |
-| `REVENUECAT_WEBHOOK_AUTH_KEY` | Webhook Authorization bearer |
-| `REVENUECAT_SHIPPING_PRODUCT_ID` | Kargo IAP ürün id |
-| `REVENUECAT_PRODUCT_MAP` | Tutar→ürün fallback (`250:id,500:id`) |
-| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `ANDROID_KEY` | Mobil SDK (EAS build env) |
+| `REVENUECAT_SECRET_API_KEY` | Legacy IAP doğrulama (mobil checkout artık PayTR) |
+| `REVENUECAT_WEBHOOK_AUTH_KEY` | Legacy webhook Authorization |
+| `REVENUECAT_SHIPPING_PRODUCT_ID` | Legacy kargo IAP id |
+| `REVENUECAT_PRODUCT_MAP` | Legacy tutar→ürün map |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `ANDROID_KEY` | Legacy — EAS’te kullanılmıyor |
 
-Bildirim URL: `{API_URL}/payments/paytr/callback`. RevenueCat webhook: `{API_URL}/payments/revenuecat/webhook`. Detay: [payments-iyzico.md](payments-iyzico.md).
+Bildirim URL: `{API_URL}/payments/paytr/callback`. Detay: [payments-iyzico.md](payments-iyzico.md). Mağaza inceleme notları: [mobile/STORE_REVIEW_NOTES.md](../mobile/STORE_REVIEW_NOTES.md).
 
 ## E-posta / WhatsApp
 

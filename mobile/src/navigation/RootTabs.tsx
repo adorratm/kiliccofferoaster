@@ -339,6 +339,7 @@ function tabIcon(name: ComponentProps<typeof Feather>['name']) {
 
 export function RootTabs() {
   const { showStaff } = useStaffSession();
+  // Personel sekmesi yalnızca ops rolü / geçerli ops oturumunda görünür (mağaza incelemesi için müşteri hesabı kullanın).
   return (
     <Tab.Navigator
       initialRouteName="ShopTab"
