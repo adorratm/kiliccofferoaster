@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { api, apiFormData, asArray } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { orderStatusLabel } from '../lib/order-status';
@@ -242,24 +241,38 @@ export function ShopOrdersScreen() {
   }
 
   async function pickInvoiceFile() {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: [
-        'application/zip',
-        'application/pdf',
-        'text/html',
-        'text/xml',
-        'application/xml',
-        '*/*',
-      ],
-      copyToCacheDirectory: true,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const asset = result.assets[0];
-    setInvoiceFile({
-      uri: asset.uri,
-      name: asset.name || 'fatura.zip',
-      mimeType: asset.mimeType || undefined,
-    });
+    let docPicker: typeof import('expo-document-picker');
+    try {
+      docPicker = require('expo-document-picker');
+    } catch {
+      Alert.alert(
+        'Desteklenmiyor',
+        'Belge seçici modülü mevcut native derlemede bulunamadı. Lütfen uygulamayı yeniden derleyin (npx expo run:ios).',
+      );
+      return;
+    }
+    try {
+      const result = await docPicker.getDocumentAsync({
+        type: [
+          'application/zip',
+          'application/pdf',
+          'text/html',
+          'text/xml',
+          'application/xml',
+          '*/*',
+        ],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      setInvoiceFile({
+        uri: asset.uri,
+        name: asset.name || 'fatura.zip',
+        mimeType: asset.mimeType || undefined,
+      });
+    } catch (e) {
+      Alert.alert('Hata', e instanceof Error ? e.message : 'Belge seçilemedi');
+    }
   }
 
   async function sendInvoiceEmail() {
