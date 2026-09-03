@@ -173,6 +173,19 @@ export function CheckoutScreen({ navigation }: Props) {
       setError('Sepet boş');
       return;
     }
+    if (!form.customerName.trim()) {
+      setError('Ad soyad girin');
+      return;
+    }
+    if (!form.customerEmail.trim()) {
+      setError('E-posta girin');
+      return;
+    }
+    const phoneDigits = form.customerPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      setError('Geçerli bir telefon numarası girin');
+      return;
+    }
     if (!form.mesafeliSatis || !form.onBilgilendirme || !form.kvkk) {
       setError('Yasal onayları işaretleyin');
       return;
@@ -254,12 +267,20 @@ export function CheckoutScreen({ navigation }: Props) {
       const payUrl = result.iframeUrl || result.paymentPageUrl || undefined;
       const token = result.token;
       if (token || payUrl) {
-        navigation.navigate('Paytr', {
-          token: token || '',
-          iframeUrl: payUrl,
-          orderNumber: result.orderNumber,
-          orderId: result.orderId,
-        });
+        try {
+          navigation.navigate('Paytr', {
+            token: token || '',
+            iframeUrl: payUrl,
+            orderNumber: result.orderNumber,
+            orderId: result.orderId,
+          });
+        } catch (navErr) {
+          setError(
+            navErr instanceof Error
+              ? navErr.message
+              : 'Ödeme ekranı açılamadı',
+          );
+        }
         return;
       }
       setError('Ödeme oturumu alınamadı');

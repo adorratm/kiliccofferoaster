@@ -20,6 +20,8 @@ import { CartScreen } from '../screens/shop/CartScreen';
 import { CatalogScreen } from '../screens/shop/CatalogScreen';
 import { CheckoutScreen } from '../screens/shop/CheckoutScreen';
 import { ContactScreen } from '../screens/shop/ContactScreen';
+import { CoffeeFinderScreen } from '../screens/shop/CoffeeFinderScreen';
+import { WholesaleScreen } from '../screens/shop/WholesaleScreen';
 import { ShopWebScreen } from '../screens/shop/ShopWebScreen';
 import { FaqScreen } from '../screens/shop/FaqScreen';
 import { FavoritesScreen } from '../screens/shop/FavoritesScreen';
@@ -135,6 +137,17 @@ function ShopStackNavigator() {
       <ShopStack.Screen name="BlogList" component={BlogListScreen} options={{ title: 'Blog' }} />
       <ShopStack.Screen name="BlogPost" component={BlogPostScreen} options={{ title: 'Yazı' }} />
       <ShopStack.Screen name="Contact" component={ContactScreen} options={{ title: 'İletişim' }} />
+      <ShopStack.Screen
+        name="CoffeeFinder"
+        component={CoffeeFinderScreen}
+        options={{ title: 'Kahve seçici' }}
+      />
+      <ShopStack.Screen
+        name="Wholesale"
+        component={WholesaleScreen}
+        options={{ title: 'Toptan' }}
+      />
+      <ShopStack.Screen name="Legal" component={LegalScreen} options={{ title: 'Belge' }} />
       <ShopStack.Screen
         name="ShopWeb"
         component={ShopWebScreen}

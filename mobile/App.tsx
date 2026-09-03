@@ -95,12 +95,7 @@ const linking: LinkingOptions<RootTabParamList> = {
             name: 'ShopTab',
             state: {
               index: 0,
-              routes: [
-                {
-                  name: 'ShopWeb',
-                  params: { path: '/oner', title: 'Kahve seçici' },
-                },
-              ],
+              routes: [{ name: 'CoffeeFinder' }],
             },
           },
         ],
@@ -114,12 +109,7 @@ const linking: LinkingOptions<RootTabParamList> = {
             name: 'ShopTab',
             state: {
               index: 0,
-              routes: [
-                {
-                  name: 'ShopWeb',
-                  params: { path: '/toptan', title: 'Toptan' },
-                },
-              ],
+              routes: [{ name: 'Wholesale' }],
             },
           },
         ],

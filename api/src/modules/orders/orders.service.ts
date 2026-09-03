@@ -241,7 +241,7 @@ export class OrdersService {
     await this.notifications.enqueueOrderOpsAlert(orderId, 'received');
   }
 
-  /** Ödeme başlatılamadığında pending siparişi iptal eder (RevenueCat init hatası). */
+  /** Ödeme başlatılamadığında pending siparişi iptal eder. */
   async abandonPendingPaymentOrder(orderId: string) {
     const order = await this.em.findOne(Order, {
       where: { id: orderId },

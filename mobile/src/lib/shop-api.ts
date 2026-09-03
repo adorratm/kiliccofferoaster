@@ -287,7 +287,13 @@ export async function shopSearch(q: string) {
     groups: {
       type: string;
       label: string;
-      items: { id: string; title: string; subtitle?: string; href: string }[];
+      items: {
+        id: string;
+        title: string;
+        subtitle?: string;
+        href: string;
+        type?: string;
+      }[];
     }[];
   }>(`/search${toQuery({ q, limit: 12 })}`, { auth: 'none' });
 }
@@ -388,6 +394,13 @@ export async function shopChangePassword(payload: {
     method: 'POST',
     auth: 'shop',
     body: payload,
+  });
+}
+
+export async function shopDeleteAccount() {
+  return api<{ ok: true }>('/auth/me', {
+    method: 'DELETE',
+    auth: 'shop',
   });
 }
 

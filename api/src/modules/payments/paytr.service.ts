@@ -106,6 +106,13 @@ export class PaytrService {
       this.config.get<string>('apiUrl') || 'http://localhost:4000'
     ).replace(/\/$/, '');
 
+    const phoneDigits = String(order.customerPhone || '').replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      throw new BadRequestException(
+        'Ödeme için geçerli bir telefon numarası gerekli',
+      );
+    }
+
     const qs = new URLSearchParams({
       orderId: order.id,
       orderNumber: order.orderNumber,

@@ -3,10 +3,12 @@ import {
   IsEnum,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
   IsNumber,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -23,50 +25,83 @@ import {
 } from '@entities/return-request.entity';
 import { STORE_PICKUP_CODE } from '@common/constants/shipping';
 
+function trimString({ value }: { value: unknown }) {
+  return typeof value === 'string' ? value.trim() : value;
+}
+
+/** En az 10 rakam (TR cep / sabit hat); boş veya sadece boşluk reddedilir. */
+const PHONE_DIGITS = /^(?=.*\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d.*\d)/;
+
 export class AddressPayloadDto {
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'Ad soyad zorunludur' })
   fullName!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'Telefon zorunludur' })
+  @MinLength(10, { message: 'Geçerli bir telefon numarası girin' })
+  @MaxLength(40)
+  @Matches(PHONE_DIGITS, {
+    message: 'Geçerli bir telefon numarası girin',
+  })
   phone!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'İl zorunludur' })
   city!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'İlçe zorunludur' })
   district!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(trimString)
   @IsString()
   neighborhood?: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'Adres zorunludur' })
   addressLine!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
   postalCode!: string;
 }
 
 export class CreateOrderDto {
   @ApiProperty()
-  @IsEmail()
+  @Transform(trimString)
+  @IsEmail({}, { message: 'Geçerli bir e-posta girin' })
   customerEmail!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'Ad soyad zorunludur' })
   @MaxLength(160)
   customerName!: string;
 
   @ApiProperty()
+  @Transform(trimString)
   @IsString()
+  @IsNotEmpty({ message: 'Telefon zorunludur' })
+  @MinLength(10, { message: 'Geçerli bir telefon numarası girin' })
   @MaxLength(40)
+  @Matches(PHONE_DIGITS, {
+    message: 'Geçerli bir telefon numarası girin',
+  })
   customerPhone!: string;
 
   @ApiPropertyOptional({

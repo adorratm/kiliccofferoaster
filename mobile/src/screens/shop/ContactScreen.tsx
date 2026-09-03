@@ -48,9 +48,7 @@ export function ContactScreen({ navigation }: Props) {
         try {
           const settings = await shopCmsSettings();
           setContact({ ...DEFAULT_CONTACT, ...settings.contact });
-          const social = (settings as { social?: { googleReviewUrl?: string } })
-            .social;
-          setReviewUrl(social?.googleReviewUrl?.trim() || '');
+          setReviewUrl(settings.social?.googleReviewUrl?.trim() || '');
         } catch {
           /* varsayılan */
         } finally {
@@ -143,9 +141,7 @@ export function ContactScreen({ navigation }: Props) {
       </View>
 
       <Pressable
-        onPress={() =>
-          navigation.navigate('ShopWeb', { path: '/toptan', title: 'Toptan' })
-        }
+        onPress={() => navigation.navigate('Wholesale')}
         style={[btn, { marginTop: 16, backgroundColor: colors.surface }]}
       >
         <Text style={[btnText, { color: colors.accentSoft }]}>Toptan / B2B talep</Text>

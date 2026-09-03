@@ -10,6 +10,9 @@ export type ShopStackParamList = {
   BlogList: undefined;
   BlogPost: { slug: string };
   Contact: undefined;
+  CoffeeFinder: undefined;
+  Wholesale: undefined;
+  Legal: { slug: string };
   ShopWeb: { path: string; title: string };
 };
 

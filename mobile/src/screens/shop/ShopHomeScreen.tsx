@@ -163,17 +163,13 @@ export function ShopHomeScreen({ navigation }: Props) {
           icon="compass"
           label="Kahve seçici"
           hint="Sana uygun kavrum"
-          onPress={() =>
-            navigation.navigate('ShopWeb', { path: '/oner', title: 'Kahve seçici' })
-          }
+          onPress={() => navigation.navigate('CoffeeFinder')}
         />
         <ExploreTile
           icon="briefcase"
           label="Toptan"
           hint="Cafe & işletme"
-          onPress={() =>
-            navigation.navigate('ShopWeb', { path: '/toptan', title: 'Toptan' })
-          }
+          onPress={() => navigation.navigate('Wholesale')}
         />
         <ExploreTile
           icon="info"

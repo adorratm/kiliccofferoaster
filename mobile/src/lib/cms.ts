@@ -16,12 +16,19 @@ export type SiteContact = {
   longitude?: string;
 };
 
+export type SiteWhatsApp = {
+  enabled?: boolean;
+  phone?: string;
+};
+
 export type SiteSettings = {
   brand?: { name?: string; slogan?: string; tagline?: string };
   contact?: Partial<SiteContact>;
+  whatsapp?: SiteWhatsApp;
   navigation?: {
     footerLegal?: { href: string; label: string }[];
   };
+  social?: { googleReviewUrl?: string };
 };
 
 export const DEFAULT_CONTACT: SiteContact = {
