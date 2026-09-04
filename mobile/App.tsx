@@ -55,9 +55,18 @@ const linking: LinkingOptions<RootTabParamList> = {
           Contact: 'iletisim',
         },
       },
+      CartTab: {
+        screens: {
+          Cart: 'sepet',
+          Checkout: 'odeme',
+        },
+      },
       AccountTab: {
         screens: {
-          ResetPassword: 'reset-password',
+          Account: 'hesabim',
+          ShopLogin: 'giris',
+          ShopRegister: 'kayit',
+          ResetPassword: 'sifre-sifirla',
           Tracking: 'takip',
           TrackingResult: 'takip/:kod',
           OrderLookup: 'siparis-sorgula',

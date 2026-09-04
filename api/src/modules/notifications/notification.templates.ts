@@ -34,6 +34,51 @@ const BRAND_EMAIL = 'info@kiliccoffeeroaster.com.tr';
 const BRAND_PHONE = '+90 541 214 79 63';
 const DEFAULT_SITE_URL = 'https://kiliccoffeeroaster.com.tr';
 
+function isLoopbackHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '0.0.0.0' ||
+      host === '::1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function statusLabel(status: string): string {
+  return STATUS_LABELS[status] || status;
+}
+
+/**
+ * E-posta / yönlendirme linkleri için vitrin URL.
+ * Production'da localhost asla kullanılmaz (yanlış FRONTEND_URL koruması).
+ */
+export function resolveFrontendUrl(config: ConfigService): string {
+  const raw = (config.get<string>('frontendUrl') || '').trim().replace(/\/$/, '');
+  const nodeEnv =
+    config.get<string>('nodeEnv') || process.env.NODE_ENV || 'development';
+  if (nodeEnv === 'production') {
+    if (raw && !isLoopbackHost(raw)) return raw;
+    return DEFAULT_SITE_URL;
+  }
+  return raw || 'http://localhost:3000';
+}
+
+export function resolveAdminUrl(config: ConfigService): string {
+  const raw = (config.get<string>('adminUrl') || '').trim().replace(/\/$/, '');
+  const nodeEnv =
+    config.get<string>('nodeEnv') || process.env.NODE_ENV || 'development';
+  const defaultAdmin = 'https://admin.kiliccoffeeroaster.com.tr';
+  if (nodeEnv === 'production') {
+    if (raw && !isLoopbackHost(raw)) return raw;
+    return defaultAdmin;
+  }
+  return raw || 'http://localhost:3001';
+}
+
 /** Marka renkleri — logo (#8c6566) ile uyumlu */
 const C = {
   page: '#14110f',
@@ -49,16 +94,6 @@ const C = {
   accentSoft: '#c4a574',
   footer: '#120f0d',
 };
-
-export function statusLabel(status: string): string {
-  return STATUS_LABELS[status] || status;
-}
-
-export function resolveFrontendUrl(config: ConfigService): string {
-  return (
-    config.get<string>('frontendUrl') || 'http://localhost:3000'
-  ).replace(/\/$/, '');
-}
 
 /** Gmail: uzak URL yerine CID (EmailProvider inline attachment) */
 export function brandLogoUrl(_siteUrl?: string): string {

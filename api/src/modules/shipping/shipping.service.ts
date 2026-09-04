@@ -29,7 +29,7 @@ import {
 } from '@modules/shipping/dto/shipping.dto';
 import { NotificationsService } from '@modules/notifications/notifications.service';
 import { TrackingGateway } from '@modules/tracking/tracking.gateway';
-import { statusLabel } from '@modules/notifications/notification.templates';
+import { resolveFrontendUrl, statusLabel } from '@modules/notifications/notification.templates';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -121,9 +121,7 @@ export class ShippingService {
     order.shippingProvider = dto.provider;
     await this.em.save(order);
 
-    const frontendUrl = (
-      this.config.get<string>('frontendUrl') || 'http://localhost:3000'
-    ).replace(/\/$/, '');
+    const frontendUrl = resolveFrontendUrl(this.config);
     const trackPath = shipment.trackingNumber
       ? `${frontendUrl}/takip/${encodeURIComponent(shipment.trackingNumber)}`
       : undefined;

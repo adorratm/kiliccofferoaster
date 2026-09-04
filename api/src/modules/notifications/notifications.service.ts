@@ -26,6 +26,7 @@ import {
   buildPasswordResetEmail,
   buildWhatsAppBody,
   resolveFrontendUrl,
+  resolveAdminUrl,
   statusLabel,
 } from '@modules/notifications/notification.templates';
 import { InboxService } from '@modules/notifications/inbox.service';
@@ -313,10 +314,7 @@ export class NotificationsService {
     }
 
     const frontendUrl = resolveFrontendUrl(this.config);
-    const adminUrl = (
-      this.config.get<string>('adminUrl') ||
-      'https://admin.kiliccoffeeroaster.com.tr'
-    ).replace(/\/$/, '');
+    const adminUrl = resolveAdminUrl(this.config);
     const opsEventRaw = payload.context?.opsEvent;
     const opsEvent: 'received' | 'paid' | undefined =
       opsEventRaw === 'paid' || opsEventRaw === 'received'
@@ -554,8 +552,7 @@ export class NotificationsService {
     const productId = typeof ctx.productId === 'string' ? ctx.productId : null;
     const variantId =
       typeof ctx.variantId === 'string' ? ctx.variantId : null;
-    const adminUrl =
-      this.config.get<string>('adminUrl') || 'http://localhost:3001';
+    const adminUrl = resolveAdminUrl(this.config);
     const label = variantLabel
       ? `${productName} · ${variantLabel}`
       : productName;

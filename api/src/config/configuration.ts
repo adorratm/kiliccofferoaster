@@ -23,12 +23,45 @@ function resolveRedisUrl(): string {
   }
 }
 
+function isLoopbackUrl(url: string): boolean {
+  try {
+    const h = new URL(url).hostname;
+    return (
+      h === 'localhost' ||
+      h === '127.0.0.1' ||
+      h === '0.0.0.0' ||
+      h === '::1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function resolvePublicUrl(
+  raw: string | undefined,
+  fallbackDev: string,
+  fallbackProd: string,
+): string {
+  const value = (raw || '').trim();
+  const isProd = (process.env.NODE_ENV || 'development') === 'production';
+  if (isProd && (!value || isLoopbackUrl(value))) return fallbackProd;
+  return value || fallbackDev;
+}
+
 export default () => ({
   nodeEnv: process.env.NODE_ENV || 'development',
   apiPort: parseInt(process.env.API_PORT || '4000', 10),
   apiUrl: process.env.API_URL || 'http://localhost:4000',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-  adminUrl: process.env.ADMIN_URL || 'http://localhost:3001',
+  frontendUrl: resolvePublicUrl(
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'https://kiliccoffeeroaster.com.tr',
+  ),
+  adminUrl: resolvePublicUrl(
+    process.env.ADMIN_URL,
+    'http://localhost:3001',
+    'https://admin.kiliccoffeeroaster.com.tr',
+  ),
   opsMobileCallbackUrl:
     process.env.OPS_MOBILE_CALLBACK_URL || 'kilicops://auth/callback',
   opsWebUrl: process.env.OPS_WEB_URL || 'http://localhost:8081',
