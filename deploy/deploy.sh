@@ -91,6 +91,81 @@ wait_for_container_healthy() {
   return 1
 }
 
+redis_aof_corrupted() {
+  docker logs kiliccoffee-prod-redis --tail 50 2>&1 \
+    | grep -q 'Bad file format reading the append only file'
+}
+
+# Bozuk AOF (sık: ani kill / disk dolu) → Redis crash-loop.
+# Base RDB korunur; bozuk incr truncate/atılır (BullMQ/cache kaybı kabul).
+repair_redis_aof() {
+  local vol
+  vol="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/data"}}{{.Name}}{{end}}{{end}}' kiliccoffee-prod-redis 2>/dev/null || true)"
+  if [[ -z "${vol}" ]]; then
+    vol="$(docker volume ls -q | grep -E 'kiliccoffee.*redis_data' | head -n1 || true)"
+  fi
+  if [[ -z "${vol}" ]]; then
+    echo "Hata: Redis data volume bulunamadı."
+    return 1
+  fi
+  echo "==> Redis AOF onarımı (volume: ${vol})..."
+  "${COMPOSE[@]}" stop redis >/dev/null 2>&1 || docker stop kiliccoffee-prod-redis >/dev/null 2>&1 || true
+
+  docker run --rm -v "${vol}:/data" redis:7-alpine sh -c '
+    set -eu
+    cd /data
+    bak="./aof-corrupt-backup/$(date +%Y%m%d%H%M%S)"
+    mkdir -p "$bak"
+    cp -a appendonly.aof* "$bak/" 2>/dev/null || true
+    echo "Yedek: $bak"
+
+    for m in appendonly.aof.manifest appendonly.aof*.manifest; do
+      [ -f "$m" ] || continue
+      echo "redis-check-aof --fix $m"
+      printf "y\n" | redis-check-aof --fix "$m" || true
+    done
+    if [ -f appendonly.aof ]; then
+      printf "y\n" | redis-check-aof --fix appendonly.aof || true
+    fi
+
+    # Multi-part: bozuk incr varsa base RDB ile devam et
+    if ls appendonly.aof.*.incr.aof >/dev/null 2>&1; then
+      echo "Incr AOF kenara alınıyor (yalnızca base RDB)."
+      for f in appendonly.aof.*.incr.aof; do
+        mv "$f" "$bak/"
+      done
+      for m in appendonly.aof.manifest appendonly.aof*.manifest; do
+        [ -f "$m" ] || continue
+        if grep -E " type b$" "$m" > "${m}.new"; then
+          mv "${m}.new" "$m"
+        else
+          rm -f "${m}.new"
+        fi
+      done
+    fi
+    ls -la /data
+  '
+
+  "${COMPOSE[@]}" up -d redis
+}
+
+ensure_redis() {
+  "${COMPOSE[@]}" up -d redis
+  # AOF bozuksa uzun bekleme anlamsız; erken yakala
+  if wait_for_container_healthy "kiliccoffee-prod-redis" "Redis" 10; then
+    return 0
+  fi
+  if redis_aof_corrupted; then
+    repair_redis_aof || return 1
+    if wait_for_container_healthy "kiliccoffee-prod-redis" "Redis" 20; then
+      return 0
+    fi
+  fi
+  echo "Hata: Redis hazır olmadan devam edilemez."
+  docker logs kiliccoffee-prod-redis --tail 40 2>&1 || true
+  return 1
+}
+
 ensure_swap() {
   local swap_mb
   swap_mb="$(free -m | awk '/Swap:/{print $2}')"
@@ -224,11 +299,7 @@ echo "==> Postgres..."
 wait_for_postgres "${POSTGRES_USER}"
 
 echo "==> Redis..."
-"${COMPOSE[@]}" up -d redis
-if ! wait_for_container_healthy "kiliccoffee-prod-redis" "Redis" 30; then
-  echo "Hata: Redis hazır olmadan devam edilemez."
-  exit 1
-fi
+ensure_redis
 
 echo "==> Çalışan image snapshot (rollback)..."
 snapshot_rollback kiliccoffee-prod-api kiliccoffee-prod-api:live
