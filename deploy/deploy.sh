@@ -114,12 +114,20 @@ repair_redis_aof() {
   docker run --rm -v "${vol}:/data" redis:7-alpine sh -c '
     set -eu
     cd /data
+    echo "--- /data ---"
+    ls -la
     bak="./aof-corrupt-backup/$(date +%Y%m%d%H%M%S)"
     mkdir -p "$bak"
-    cp -a appendonly.aof* "$bak/" 2>/dev/null || true
+    # Yalnızca üst düzey AOF parçaları (yedek klasörünü kopyalama)
+    for f in appendonly.aof appendonly.aof.* ; do
+      [ -e "$f" ] || continue
+      [ -d "$f" ] && continue
+      cp -a "$f" "$bak/" 2>/dev/null || true
+    done
     echo "Yedek: $bak"
 
-    for m in appendonly.aof.manifest appendonly.aof*.manifest; do
+    # Mevcut manifest(ler)i dene
+    for m in *.manifest; do
       [ -f "$m" ] || continue
       echo "redis-check-aof --fix $m"
       printf "y\n" | redis-check-aof --fix "$m" || true
@@ -128,21 +136,26 @@ repair_redis_aof() {
       printf "y\n" | redis-check-aof --fix appendonly.aof || true
     fi
 
-    # Multi-part: bozuk incr varsa base RDB ile devam et
+    # Güvenilir yol: bozuk incr at, yalnızca base RDB + temiz manifest
     if ls appendonly.aof.*.incr.aof >/dev/null 2>&1; then
       echo "Incr AOF kenara alınıyor (yalnızca base RDB)."
       for f in appendonly.aof.*.incr.aof; do
+        [ -f "$f" ] || continue
         mv "$f" "$bak/"
       done
-      for m in appendonly.aof.manifest appendonly.aof*.manifest; do
-        [ -f "$m" ] || continue
-        if grep -E " type b$" "$m" > "${m}.new"; then
-          mv "${m}.new" "$m"
-        else
-          rm -f "${m}.new"
-        fi
-      done
     fi
+
+    # Manifest yoksa veya incr satırları kaldıysa base-only yaz
+    {
+      for base in appendonly.aof.*.base.rdb; do
+        [ -f "$base" ] || continue
+        seq=$(echo "$base" | sed -n "s/^appendonly\\.aof\\.\\([0-9][0-9]*\\)\\.base\\.rdb$/\\1/p")
+        [ -n "$seq" ] || continue
+        echo "file ${base} seq ${seq} type b"
+      done
+    } > appendonly.aof.manifest
+    echo "Yeni manifest:"
+    cat appendonly.aof.manifest
     ls -la /data
   '
 
