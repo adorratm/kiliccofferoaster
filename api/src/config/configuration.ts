@@ -3,17 +3,24 @@ import { existsSync } from 'fs';
 /** Compose içindeki `redis` hostname'ini host'ta localhost'a çevir. */
 function resolveRedisUrl(): string {
   const url = process.env.REDIS_URL || 'redis://localhost:6379';
-  if (existsSync('/.dockerenv')) return url;
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === 'redis') {
-      parsed.hostname = 'localhost';
+    if (parsed.hostname !== 'redis') return url;
+
+    // Image build: compose DNS yok (/.dockerenv build'te de var).
+    if (process.env.DOCKER_BUILD === '1') {
+      parsed.hostname = '127.0.0.1';
       return parsed.href;
     }
+    // Runtime compose: `redis` servis adı kalsın.
+    if (existsSync('/.dockerenv')) return url;
+
+    // Host makine: redis → localhost
+    parsed.hostname = 'localhost';
+    return parsed.href;
   } catch {
-    /* geçersiz URL — olduğu gibi bırak */
+    return url;
   }
-  return url;
 }
 
 export default () => ({

@@ -99,6 +99,10 @@ function shouldRunMigrations(synchronize: boolean): boolean {
       useFactory: (config: ConfigService) => ({
         connection: {
           url: config.get<string>('redis.url') || 'redis://localhost:6379',
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
+          retryStrategy: (times: number) =>
+            Math.min(times * 250, 5000),
         },
       }),
     }),

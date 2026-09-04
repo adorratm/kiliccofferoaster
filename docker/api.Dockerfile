@@ -6,6 +6,10 @@ FROM base AS build
 ENV NODE_OPTIONS=--max-old-space-size=1536
 ENV YARN_NETWORK_CONCURRENCY=2
 ENV YARN_ENABLE_GLOBAL_CACHE=false
+# Compose servis adları (redis/postgres) build ağında çözülmez.
+ENV DOCKER_BUILD=1
+ENV REDIS_URL=redis://127.0.0.1:6379
+ENV DATABASE_HOST=127.0.0.1
 
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn/patches ./.yarn/patches

@@ -225,6 +225,10 @@ wait_for_postgres "${POSTGRES_USER}"
 
 echo "==> Redis..."
 "${COMPOSE[@]}" up -d redis
+if ! wait_for_container_healthy "kiliccoffee-prod-redis" "Redis" 30; then
+  echo "Hata: Redis hazır olmadan devam edilemez."
+  exit 1
+fi
 
 echo "==> Çalışan image snapshot (rollback)..."
 snapshot_rollback kiliccoffee-prod-api kiliccoffee-prod-api:live
