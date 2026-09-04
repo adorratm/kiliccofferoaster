@@ -1,31 +1,57 @@
-import { Linking, Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { colors } from '../ui';
+import { markPaytrOpening, markPaytrSettled } from './paytr-diag';
 
 export type PayBrowserMode = 'in_app' | 'external' | 'fail';
 
 /**
- * PayTR ödeme sayfası — WebView kullanma (native crash).
- * 1) SFSafariViewController / Chrome Custom Tabs (uygulama üstünde sheet)
- * 2) Olmazsa sistem tarayıcı
+ * PayTR — WebView yok.
+ * Birincil: SFSafariViewController / Chrome Custom Tabs (uygulama üstünde).
+ * SceneDelegate’li native binary gerekir (EAS production + lokal prebuild).
+ * JS catch olursa sistem Safari yedeği.
  */
-export async function openPaytrBrowser(url: string): Promise<PayBrowserMode> {
+export async function openPaytrBrowser(
+  url: string,
+  opts?: { orderNumber?: string; forceExternal?: boolean },
+): Promise<PayBrowserMode> {
+  if (opts?.forceExternal) {
+    await markPaytrOpening('external', opts?.orderNumber);
+    try {
+      await Linking.openURL(url);
+      await markPaytrSettled();
+      return 'external';
+    } catch {
+      await markPaytrSettled();
+      return 'fail';
+    }
+  }
+
+  await markPaytrOpening('in_app', opts?.orderNumber);
   try {
     await WebBrowser.openBrowserAsync(url, {
       presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
       controlsColor: colors.accent,
       dismissButtonStyle: 'close',
       enableBarCollapsing: false,
-      // Android: Custom Tab aynı task'ta kalsın (uygulamadan "çıkmış" gibi görünmesin)
       createTask: Platform.OS === 'android' ? false : undefined,
       showInRecents: false,
     });
+    await markPaytrSettled();
     return 'in_app';
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Bilinmeyen hata';
+    Alert.alert(
+      'Ödeme penceresi açılamadı',
+      `${msg}\n\nSistem Safari ile denenecek.`,
+    );
     try {
+      await markPaytrOpening('external', opts?.orderNumber);
       await Linking.openURL(url);
+      await markPaytrSettled();
       return 'external';
     } catch {
+      await markPaytrSettled();
       return 'fail';
     }
   }

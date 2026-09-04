@@ -36,7 +36,7 @@
     "@types/react-dom": "^19.2.5",
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^6.1.1",
-    "electron": "44.1.1",
+    "electron": "44.2.0",
     "electron-builder": "26.16.0",
     "electron-vite": "6.0.0-beta.1",
     "tailwindcss": "^4.3.3",

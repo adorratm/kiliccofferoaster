@@ -1,25 +1,58 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import AsyncStorage from './storage';
 
 const OPS_TOKEN_KEY = 'ops_token';
 const SHOP_TOKEN_KEY = 'shop_token';
 const SHOP_SESSION_KEY = 'shop_session';
 
-/** Geliştirme (Metro) varsayılanları — emülatör / lokal API. */
-const devDefaultHost =
-  Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
-
-/**
- * Release / OTA: EXPO_PUBLIC_* yoksa canlı API'ye düş.
- * `eas update` EAS Environment'tan env almazsa (veya boşsa) localhost'a
- * gömülmesin diye production URL sabitlenir.
- */
 const releaseDefaultHost = 'https://api.kiliccoffeeroaster.com.tr';
 const releaseDefaultShop = 'https://kiliccoffeeroaster.com.tr';
 
-export const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (__DEV__ ? devDefaultHost : releaseDefaultHost);
+/**
+ * Metro'nun host'u (örn. 192.168.1.143:8081).
+ * Fiziksel telefonda localhost telefonun kendisi olduğu için API'ye LAN IP gerekir.
+ */
+function metroLanHost(): string | null {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as { experienceUrl?: string }).experienceUrl ||
+    '';
+  // "192.168.1.143:8081" | "exp://192.168.1.143:8081"
+  const m = String(hostUri).match(/(\d{1,3}(?:\.\d{1,3}){3})/);
+  return m?.[1] ?? null;
+}
+
+function resolveDevApiUrl(): string {
+  const fromEnv = (process.env.EXPO_PUBLIC_API_URL || '').trim();
+  const lan = metroLanHost();
+
+  // Env localhost / 127.0.0.1 ise fiziksel cihazda LAN'a çevir
+  if (fromEnv) {
+    try {
+      const u = new URL(fromEnv);
+      const isLoopback =
+        u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+      if (isLoopback && lan) {
+        u.hostname = lan;
+        return u.toString().replace(/\/$/, '');
+      }
+    } catch {
+      /* ignore */
+    }
+    return fromEnv.replace(/\/$/, '');
+  }
+
+  if (lan) return `http://${lan}:4000`;
+
+  return Platform.OS === 'android'
+    ? 'http://10.0.2.2:4000'
+    : 'http://localhost:4000';
+}
+
+export const API_URL = __DEV__
+  ? resolveDevApiUrl()
+  : process.env.EXPO_PUBLIC_API_URL || releaseDefaultHost;
 
 export const SHOP_URL =
   process.env.EXPO_PUBLIC_SHOP_URL || releaseDefaultShop;

@@ -3,7 +3,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   ActivityIndicator,
   AppState,
-  InteractionManager,
   Linking,
   Platform,
   Pressable,
@@ -75,7 +74,9 @@ export function OrderResultScreen({ navigation, route }: Props) {
     setHint('Ödeme sayfası açılıyor…');
     inBrowserRef.current = true;
 
-    const mode = await openPaytrBrowser(paymentUrl);
+    const mode = await openPaytrBrowser(paymentUrl, {
+      orderNumber,
+    });
 
     if (mode === 'fail') {
       inBrowserRef.current = false;
@@ -84,8 +85,6 @@ export function OrderResultScreen({ navigation, route }: Props) {
       return;
     }
 
-    // iOS: openBrowserAsync kullanıcı kapatınca döner
-    // Android: genelde hemen 'opened' — AppState ile dönüşü yakalarız
     if (Platform.OS === 'ios' || mode === 'external') {
       await afterBrowser();
       return;
@@ -95,17 +94,31 @@ export function OrderResultScreen({ navigation, route }: Props) {
     setHint(
       'Ödeme tarayıcıda açık. Bitince uygulamaya dönün veya “Ödemeyi kontrol et”e basın.',
     );
-  }, [paymentUrl, afterBrowser]);
+  }, [paymentUrl, orderNumber, afterBrowser]);
 
   useEffect(() => {
     if (!pendingPayment || !paymentUrl || openedRef.current || resolvedOk) {
       return;
     }
     openedRef.current = true;
-    const task = InteractionManager.runAfterInteractions(() => {
-      void openPay();
-    });
-    return () => task.cancel();
+    const idle =
+      typeof globalThis.requestIdleCallback === 'function'
+        ? globalThis.requestIdleCallback(() => {
+            void openPay();
+          })
+        : null;
+    const t =
+      idle == null
+        ? setTimeout(() => {
+            void openPay();
+          }, 350)
+        : null;
+    return () => {
+      if (idle != null && typeof globalThis.cancelIdleCallback === 'function') {
+        globalThis.cancelIdleCallback(idle);
+      }
+      if (t) clearTimeout(t);
+    };
   }, [pendingPayment, paymentUrl, resolvedOk, openPay]);
 
   useEffect(() => {

@@ -36,6 +36,7 @@ import { WishlistModule } from '@modules/wishlist/wishlist.module';
 import { AccountingModule } from '@modules/accounting/accounting.module';
 import { EinvoiceModule } from '@modules/einvoice/einvoice.module';
 import { GalleryModule } from '@modules/gallery/gallery.module';
+import { DiagnosticsModule } from '@modules/diagnostics/diagnostics.module';
 
 function shouldSynchronize(): boolean {
   if (process.env.DATABASE_SYNCHRONIZE === 'true') return true;
@@ -119,6 +120,7 @@ function shouldRunMigrations(synchronize: boolean): boolean {
     CmsModule,
     MediaModule,
     GalleryModule,
+    DiagnosticsModule,
     QueuesModule,
   ],
   providers: [

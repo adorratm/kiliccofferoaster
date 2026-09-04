@@ -42,6 +42,7 @@ import { CashEntry } from '@entities/cash-entry.entity';
 import { StockMovement } from '@entities/stock-movement.entity';
 import { OkcSale } from '@entities/okc-sale.entity';
 import { AccountingSettings } from '@entities/accounting-settings.entity';
+import { MobileClientEvent } from '@entities/mobile-client-event.entity';
 
 export const ALL_ENTITIES = [
   User,
@@ -88,4 +89,5 @@ export const ALL_ENTITIES = [
   StockMovement,
   OkcSale,
   AccountingSettings,
+  MobileClientEvent,
 ];

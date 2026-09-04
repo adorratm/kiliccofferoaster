@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AccountingSyncRuntime } from './src/components/AccountingSyncRuntime';
 import { BootGate } from './src/components/BootGate';
+import { PaytrCrashReporter } from './src/components/PaytrCrashReporter';
 import { LEGAL_LINKS } from './src/lib/cms';
 import { navigationRef } from './src/lib/navigation';
 import { ShopCartProvider } from './src/lib/shop-cart';
@@ -139,6 +140,7 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <BootGate>
+          <PaytrCrashReporter />
           <StaffSessionProvider>
             <ShopCartProvider>
               <AccountingSyncRuntime />
