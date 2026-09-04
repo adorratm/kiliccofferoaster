@@ -116,17 +116,24 @@ repair_redis_aof() {
     cd /data
     echo "--- /data ---"
     ls -la
-    bak="./aof-corrupt-backup/$(date +%Y%m%d%H%M%S)"
+    # Redis 7+ multi-part AOF genelde appendonlydir/ altında
+    AOF_DIR="/data"
+    if [ -d /data/appendonlydir ]; then
+      AOF_DIR="/data/appendonlydir"
+    fi
+    cd "$AOF_DIR"
+    echo "--- AOF dir: $AOF_DIR ---"
+    ls -la
+
+    bak="/data/aof-corrupt-backup/$(date +%Y%m%d%H%M%S)"
     mkdir -p "$bak"
-    # Yalnızca üst düzey AOF parçaları (yedek klasörünü kopyalama)
-    for f in appendonly.aof appendonly.aof.* ; do
+    for f in appendonly.aof appendonly.aof.* *.manifest; do
       [ -e "$f" ] || continue
       [ -d "$f" ] && continue
       cp -a "$f" "$bak/" 2>/dev/null || true
     done
     echo "Yedek: $bak"
 
-    # Mevcut manifest(ler)i dene
     for m in *.manifest; do
       [ -f "$m" ] || continue
       echo "redis-check-aof --fix $m"
@@ -136,7 +143,6 @@ repair_redis_aof() {
       printf "y\n" | redis-check-aof --fix appendonly.aof || true
     fi
 
-    # Güvenilir yol: bozuk incr at, yalnızca base RDB + temiz manifest
     if ls appendonly.aof.*.incr.aof >/dev/null 2>&1; then
       echo "Incr AOF kenara alınıyor (yalnızca base RDB)."
       for f in appendonly.aof.*.incr.aof; do
@@ -145,7 +151,6 @@ repair_redis_aof() {
       done
     fi
 
-    # Manifest yoksa veya incr satırları kaldıysa base-only yaz
     {
       for base in appendonly.aof.*.base.rdb; do
         [ -f "$base" ] || continue
@@ -154,9 +159,15 @@ repair_redis_aof() {
         echo "file ${base} seq ${seq} type b"
       done
     } > appendonly.aof.manifest
-    echo "Yeni manifest:"
+
+    # Kökte yanlışlıkla boş manifest bırakıldıysa sil
+    if [ -f /data/appendonly.aof.manifest ] && [ ! -s /data/appendonly.aof.manifest ]; then
+      rm -f /data/appendonly.aof.manifest
+    fi
+
+    echo "Yeni manifest ($AOF_DIR):"
     cat appendonly.aof.manifest
-    ls -la /data
+    ls -la
   '
 
   "${COMPOSE[@]}" up -d redis
