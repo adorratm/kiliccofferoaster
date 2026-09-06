@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import type { RootStack } from '../../App';
 import { api, asArray } from '../lib/api';
 import { card, colors, input, muted, screen, title } from '../ui';
@@ -39,7 +40,7 @@ export function CustomersScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <ScrollView style={screen} keyboardShouldPersistTaps="handled">
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Müşteriler</Text>
       <TextInput
         placeholder="Ad, e-posta, telefon"
@@ -67,7 +68,7 @@ export function CustomersScreen({ navigation }: Props) {
           </Text>
         </Pressable>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -136,7 +137,7 @@ export function CustomerDetailScreen({ route }: DetailProps) {
   const orders = [...data.orders, ...data.guestOrders];
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>{name}</Text>
       <Text style={muted}>{data.user.email}</Text>
       <Text style={muted}>{data.user.phone || 'Telefon yok'} · {data.user.provider}</Text>
@@ -195,6 +196,6 @@ export function CustomerDetailScreen({ route }: DetailProps) {
           ))}
         </>
       ) : null}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

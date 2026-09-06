@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api, asArray } from '../lib/api';
 import { DEFAULT_CONTACT } from '../lib/cms';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
@@ -105,7 +106,7 @@ export function SiteSettingsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Site ayarları</Text>
       <Text style={[muted, { marginTop: 6 }]}>
         WhatsApp, Instagram ve konum (enlem/boylam). Navigasyon / menü web admin’de.
@@ -172,6 +173,6 @@ export function SiteSettingsScreen() {
       <Pressable onPress={() => void save()} style={btn}>
         <Text style={btnText}>Kaydet</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

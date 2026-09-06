@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api, asArray } from '../lib/api';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
@@ -101,7 +102,7 @@ export function BlogAdminScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Blog</Text>
       {error ? <Text style={{ color: colors.danger, marginTop: 8 }}>{error}</Text> : null}
       {msg ? <Text style={{ color: colors.success, marginTop: 8 }}>{msg}</Text> : null}
@@ -177,6 +178,6 @@ export function BlogAdminScreen() {
           </View>
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 import {
   Linking,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import type { ShopStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { ScreenLoader } from '../../components/shop/ScreenLoader';
@@ -81,11 +81,7 @@ export function WholesaleScreen(_props: Props) {
   const tel = contact.phone.replace(/\s/g, '');
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <PageHeader
         kicker="B2B · Supply"
         heading="Toptan kahve tedariki"
@@ -164,6 +160,6 @@ export function WholesaleScreen(_props: Props) {
       <Pressable onPress={() => void submit()} disabled={busy} style={btn}>
         <Text style={btnText}>{busy ? 'Gönderiliyor…' : 'Toptan talep gönder'}</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

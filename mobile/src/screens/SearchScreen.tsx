@@ -1,6 +1,7 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import type { RootStack } from '../../App';
 import { api } from '../lib/api';
 import { card, colors, input, muted, screen } from '../ui';
@@ -39,7 +40,7 @@ export function SearchScreen({ navigation }: Props) {
   }, [q]);
 
   return (
-    <ScrollView style={screen} keyboardShouldPersistTaps="handled">
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <TextInput
         autoFocus
         value={q}
@@ -84,6 +85,6 @@ export function SearchScreen({ navigation }: Props) {
           </View>
         ))
       )}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

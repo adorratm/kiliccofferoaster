@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { Switch } from '../components/Switch';
 import { api } from '../lib/api';
 import { btn, btnText, colors, input, muted, screen, title } from '../ui';
@@ -122,7 +123,7 @@ export function SettingsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Ayarlar</Text>
       <Text style={[muted, { marginTop: 6 }]}>Firma / e-belge bilgileri</Text>
       {FIELDS.map(([key, label]) => (
@@ -203,6 +204,6 @@ export function SettingsScreen() {
       {pwMsg ? <Text style={{ color: colors.success, marginTop: 8 }}>{pwMsg}</Text> : null}
       {pwError ? <Text style={{ color: colors.danger, marginTop: 8 }}>{pwError}</Text> : null}
       <View style={{ height: 40 }} />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

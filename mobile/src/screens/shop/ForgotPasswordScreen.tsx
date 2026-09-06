@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AccountStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { shopForgotPassword } from '../../lib/shop-api';
@@ -29,7 +30,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, padding: 20, justifyContent: 'center' }}>
+    <KeyboardScreen contentContainerStyle={{ padding: 20, paddingTop: 40 }}>
       <PageHeader
         kicker="Hesap"
         heading="Şifre sıfırla"
@@ -58,6 +59,6 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       <Pressable onPress={() => navigation.navigate('ShopLogin')} style={{ marginTop: 20 }}>
         <Text style={link}>Girişe dön</Text>
       </Pressable>
-    </View>
+    </KeyboardScreen>
   );
 }

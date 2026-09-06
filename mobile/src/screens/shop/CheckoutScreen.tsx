@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -9,6 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CartStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { ScreenLoader } from '../../components/shop/ScreenLoader';
@@ -295,11 +295,7 @@ export function CheckoutScreen({ navigation }: Props) {
   const selectedAddr = addresses.find((a) => a.id === selectedId);
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <PageHeader kicker="Ödeme" heading="Teslimat" subtitle="Adres, kargo ve yasal onaylar." />
 
       <SectionLabel index="01" label="İletişim" />
@@ -561,7 +557,7 @@ export function CheckoutScreen({ navigation }: Props) {
           {submitting ? 'Gönderiliyor…' : 'Güvenli ödeme'}
         </Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 

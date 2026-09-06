@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api } from '../lib/api';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
@@ -74,7 +75,7 @@ export function OkcScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>ÖKC import</Text>
       <Text style={[muted, { marginTop: 6, lineHeight: 18 }]}>
         Beko X30TR CSV / Z özeti. Kasa hareketi + iç satış fişi oluşur; ÖKC için GİB
@@ -111,6 +112,6 @@ export function OkcScreen() {
           ) : null}
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

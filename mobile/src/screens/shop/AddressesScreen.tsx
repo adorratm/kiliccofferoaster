@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { SectionLabel } from '../../components/shop/SectionLabel';
@@ -69,11 +70,7 @@ export function AddressesScreen() {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <PageHeader kicker="Hesap" heading="Adresler" subtitle="Teslimat için kayıtlı adresler." />
       {items.map((a) => (
         <View
@@ -134,6 +131,6 @@ export function AddressesScreen() {
       <Pressable onPress={() => void save()} style={btn}>
         <Text style={btnText}>Kaydet</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

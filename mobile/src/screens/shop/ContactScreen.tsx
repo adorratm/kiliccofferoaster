@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import {
   Linking,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from 'react-native';
@@ -10,6 +9,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import type { ShopStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Chip } from '../../components/shop/Chip';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
@@ -89,11 +89,7 @@ export function ContactScreen({ navigation }: Props) {
       : null;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <PageHeader kicker="Atölye" heading="İletişim" subtitle={contact.locationLabel} />
 
       <View
@@ -182,7 +178,7 @@ export function ContactScreen({ navigation }: Props) {
       <Pressable onPress={() => void submit()} disabled={busy} style={btn}>
         <Text style={btnText}>{busy ? 'Gönderiliyor…' : 'Gönder'}</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 

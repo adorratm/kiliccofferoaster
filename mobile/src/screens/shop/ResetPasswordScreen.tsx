@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AccountStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { shopResetPassword } from '../../lib/shop-api';
@@ -39,7 +40,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, padding: 20, justifyContent: 'center' }}>
+    <KeyboardScreen contentContainerStyle={{ padding: 20, paddingTop: 40 }}>
       <PageHeader kicker="Hesap" heading="Yeni şifre" subtitle="Bağlantıdaki token ile şifrenizi yenileyin." />
       {done ? (
         <>
@@ -75,6 +76,6 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
           </Pressable>
         </>
       )}
-    </View>
+    </KeyboardScreen>
   );
 }

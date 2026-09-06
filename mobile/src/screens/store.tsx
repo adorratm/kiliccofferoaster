@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api, apiFormData, asArray } from '../lib/api';
 import { formatMoney } from '../lib/format';
 import { orderStatusLabel } from '../lib/order-status';
@@ -64,7 +65,7 @@ export function CategoriesScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Kategoriler</Text>
       <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={name} onChangeText={setName} style={input} />
       <TextInput
@@ -98,7 +99,7 @@ export function CategoriesScreen() {
           {c.seoTitle ? <Text style={muted}>{c.seoTitle}</Text> : null}
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -307,7 +308,7 @@ export function ShopOrdersScreen() {
   const address = selected?.shippingAddress;
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Siparişler</Text>
       {items.map((o) => (
         <Pressable key={o.id} onPress={() => void open(o.id)} style={card}>
@@ -574,7 +575,7 @@ export function ShopOrdersScreen() {
           </Pressable>
         </View>
       ) : null}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -597,7 +598,7 @@ export function ReturnsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>İadeler</Text>
       {items.map((r) => (
         <View key={r.id} style={card}>
@@ -621,7 +622,7 @@ export function ReturnsScreen() {
         onCancel={() => setPending(null)}
         onConfirm={() => void review()}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -653,7 +654,7 @@ export function CouponsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Kuponlar</Text>
       <TextInput placeholder="Kod" placeholderTextColor={colors.muted} value={code} onChangeText={setCode} style={input} autoCapitalize="characters" />
       <TextInput placeholder="%" placeholderTextColor={colors.muted} value={value} onChangeText={setValue} style={input} keyboardType="number-pad" />
@@ -682,7 +683,7 @@ export function CouponsScreen() {
         onCancel={() => setPending(null)}
         onConfirm={() => pending && void applyToggle(pending)}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -714,7 +715,7 @@ export function CampaignsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Kampanyalar</Text>
       <TextInput placeholder="Ad" placeholderTextColor={colors.muted} value={name} onChangeText={setName} style={input} />
       <TextInput placeholder="İndirim %" placeholderTextColor={colors.muted} value={pct} onChangeText={setPct} style={input} keyboardType="number-pad" />
@@ -743,7 +744,7 @@ export function CampaignsScreen() {
         onCancel={() => setPending(null)}
         onConfirm={() => pending && void applyToggle(pending)}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -763,7 +764,7 @@ export function ReviewsScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Yorumlar</Text>
       {items.map((r) => (
         <View key={r.id} style={card}>
@@ -782,7 +783,7 @@ export function ReviewsScreen() {
         onCancel={() => setPending(null)}
         onConfirm={() => void moderate()}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -804,7 +805,7 @@ export function ShippingScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Kargo</Text>
       {rows.map((r) => (
         <View key={r.id} style={card}>
@@ -829,7 +830,7 @@ export function ShippingScreen() {
         onCancel={() => setPending(null)}
         onConfirm={() => pending && void applyToggle(pending)}
       />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -846,7 +847,7 @@ export function MessagesScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Mesajlar</Text>
       {items.map((m) => (
         <View key={m.id} style={card}>
@@ -858,7 +859,7 @@ export function MessagesScreen() {
           ) : null}
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -868,13 +869,13 @@ export function NewsletterScreen() {
     void api('/newsletter/subscribers').then((d) => setItems(asArray<Sub>(d)));
   }, []);
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Bülten</Text>
       {items.map((s) => (
         <View key={s.id} style={card}>
           <Text style={{ color: colors.text }}>{s.email}</Text>
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

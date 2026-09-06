@@ -85,6 +85,7 @@
     },
     "android": {
       "package": "tr.kiliccoffeeroaster.ops",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#131313"

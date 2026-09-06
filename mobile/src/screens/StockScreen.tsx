@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api } from '../lib/api';
 import { enqueue } from '../lib/sync';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
@@ -78,7 +79,7 @@ export function StockScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Stok defteri</Text>
       <Text style={[muted, { marginTop: 6 }]}>
         Varyant seçip giriş / çıkış / fire / sayım kaydedin.
@@ -149,6 +150,6 @@ export function StockScreen() {
       <Pressable onPress={() => void save()} style={btn}>
         <Text style={btnText}>Kaydet</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

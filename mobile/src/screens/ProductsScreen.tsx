@@ -2,10 +2,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
@@ -13,10 +10,11 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import type { RootStack } from '../../App';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { Switch } from '../components/Switch';
 import { api, asArray, uploadMedia } from '../lib/api';
 import { sortByWeightLabel } from '../lib/weight-sort';
-import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
+import { btn, btnText, card, colors, input, muted, title } from '../ui';
 
 type ProductVariant = {
   id?: string;
@@ -302,7 +300,7 @@ export function ProductsScreen({ navigation }: ListProps) {
   }, [navigation]);
 
   return (
-    <ScrollView style={screen} keyboardShouldPersistTaps="handled">
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Ürünler</Text>
       <TextInput
         placeholder="Ad, slug, SKU…"
@@ -341,7 +339,7 @@ export function ProductsScreen({ navigation }: ListProps) {
           <Text style={[muted, { marginTop: 4 }]}>{variantSummary(p)}</Text>
         </Pressable>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
 
@@ -519,11 +517,8 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView style={screen} keyboardShouldPersistTaps="handled">
+    <>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
         <Text style={title}>{heading}</Text>
         <TextInput
           placeholder="Ad"
@@ -866,8 +861,7 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
         ) : (
           <View style={{ height: 32 }} />
         )}
-      </ScrollView>
-
+    </KeyboardScreen>
       <ConfirmDialog
         open={deleteOpen}
         title="Ürünü sil?"
@@ -895,6 +889,6 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
           setDeleteVariantIndex(null);
         }}
       />
-    </KeyboardAvoidingView>
+    </>
   );
 }

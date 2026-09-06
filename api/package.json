@@ -27,7 +27,7 @@
     "iap:tiers": "node scripts/generate-revenuecat-iap-tiers.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1126.0",
+    "@aws-sdk/client-s3": "^3.1127.0",
     "@bull-board/api": "9.8.0",
     "@bull-board/express": "9.8.0",
     "@bull-board/nestjs": "9.8.0",
@@ -65,7 +65,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.3",
-    "swagger-ui-dist": "5.32.14",
+    "swagger-ui-dist": "5.32.15",
     "twilio": "^6.1.0",
     "typeorm": "^1.1.1",
     "uuid": "^14.0.2"
@@ -93,7 +93,7 @@
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
     "@types/uuid": "^11.0.0",
-    "eslint": "^10.9.1",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "globals": "^17.12.0",

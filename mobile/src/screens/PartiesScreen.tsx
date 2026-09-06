@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api } from '../lib/api';
 import { enqueue } from '../lib/sync';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
@@ -113,7 +114,7 @@ export function PartiesScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Cari</Text>
       <Text style={[muted, { marginTop: 6 }]}>
         Müşteri / tedarikçi — oluştur, düzenle, sil.
@@ -185,6 +186,6 @@ export function PartiesScreen() {
           </View>
         </View>
       ))}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api } from '../lib/api';
 import { enqueue } from '../lib/sync';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
@@ -89,7 +90,7 @@ export function InvoicesScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Faturalar</Text>
       <Text style={[muted, { marginTop: 6 }]}>
         e-Arşiv / e-Fatura. Taslakken fişe çevrilebilir; GİB gönderimi internet gerektirir.
@@ -139,6 +140,6 @@ export function InvoicesScreen() {
           </View>
         );
       })}
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

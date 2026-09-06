@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { api, asArray } from '../lib/api';
 import { btn, btnText, card, colors, input, muted, screen, title } from '../ui';
 
@@ -116,7 +117,7 @@ export function UsersScreen() {
   }
 
   return (
-    <ScrollView style={screen}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Text style={title}>Kullanıcılar</Text>
       <Text style={[muted, { marginTop: 6, lineHeight: 18 }]}>
         Admin ekleme, personel tanımlama, müşteri rollerini yönetme. Birden fazla
@@ -248,6 +249,6 @@ export function UsersScreen() {
         </View>
       ))}
       <View style={{ height: 40 }} />
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

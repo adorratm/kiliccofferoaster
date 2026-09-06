@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import type { AccountStackParamList } from '../../navigation/types';
+import { KeyboardScreen } from '../../components/KeyboardScreen';
 import { Field } from '../../components/shop/Field';
 import { PageHeader } from '../../components/shop/PageHeader';
 import { SectionLabel } from '../../components/shop/SectionLabel';
@@ -68,11 +69,7 @@ export function ProfileScreen({ navigation }: Props) {
     : '';
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-    >
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <PageHeader kicker="Hesap" heading="Profil" subtitle="İletişim bilgileri ve şifre." />
       {user ? (
         <View
@@ -118,6 +115,6 @@ export function ProfileScreen({ navigation }: Props) {
       <Pressable onPress={() => void submit()} disabled={busy} style={btn}>
         <Text style={btnText}>{busy ? 'Kaydediliyor…' : 'Şifreyi güncelle'}</Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }

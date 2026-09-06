@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardScreen } from '../components/KeyboardScreen';
 import { CASH_EXPENSE_CATEGORIES, CASH_EXPENSE_CATEGORY_LABELS } from '@kilic/accounting-contracts';
 import { api } from '../lib/api';
 import { enqueue } from '../lib/sync';
@@ -91,7 +92,7 @@ export function CashScreen() {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#131313', padding: 16 }}>
+    <KeyboardScreen contentContainerStyle={{ padding: 16 }}>
       <Pressable
         onPress={() => void syncPaytr()}
         style={{
@@ -208,6 +209,6 @@ export function CashScreen() {
           {type === 'in' ? 'Giriş kaydet' : 'Çıkış kaydet'}
         </Text>
       </Pressable>
-    </ScrollView>
+    </KeyboardScreen>
   );
 }
