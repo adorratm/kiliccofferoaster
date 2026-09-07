@@ -39,6 +39,12 @@ export class OrderItem extends BaseEntity {
   @Column({ name: 'grind_label', type: 'varchar', length: 80, nullable: true })
   grindLabel!: string | null;
 
+  @Column({ name: 'roast_option', type: 'varchar', length: 40, nullable: true })
+  roastOption!: string | null;
+
+  @Column({ name: 'roast_label', type: 'varchar', length: 80, nullable: true })
+  roastLabel!: string | null;
+
   @Column({ type: 'int' })
   quantity!: number;
 

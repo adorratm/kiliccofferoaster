@@ -31,6 +31,10 @@ export class CartItem extends BaseEntity {
   @Column({ name: 'grind_option', type: 'varchar', length: 40, nullable: true })
   grindOption!: string | null;
 
+  /** orta | orta_koyu | koyu */
+  @Column({ name: 'roast_option', type: 'varchar', length: 40, nullable: true })
+  roastOption!: string | null;
+
   @Column({ type: 'int', default: 1 })
   quantity!: number;
 

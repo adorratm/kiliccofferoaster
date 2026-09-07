@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ACCEPTED_GRIND_OPTIONS } from '@common/constants/grind-options';
+import { ROAST_OPTIONS } from '@common/constants/roast-options';
 
 function emptyToUndefined({ value }: { value: unknown }) {
   if (value === null || value === '' || value === 'null') return undefined;
@@ -31,6 +32,11 @@ export class AddCartItemDto {
   @IsIn([...ACCEPTED_GRIND_OPTIONS])
   grindOption?: string;
 
+  @ApiPropertyOptional({ enum: ROAST_OPTIONS })
+  @IsOptional()
+  @IsIn([...ROAST_OPTIONS])
+  roastOption?: string;
+
   @ApiProperty({ minimum: 1, default: 1 })
   @IsInt()
   @Min(1)
@@ -47,6 +53,11 @@ export class UpdateCartItemDto {
   @IsOptional()
   @IsIn([...ACCEPTED_GRIND_OPTIONS])
   grindOption?: string;
+
+  @ApiPropertyOptional({ enum: ROAST_OPTIONS })
+  @IsOptional()
+  @IsIn([...ROAST_OPTIONS])
+  roastOption?: string;
 }
 
 export class SetGuestEmailDto {

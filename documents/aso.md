@@ -19,9 +19,16 @@ Public store müşteri uygulamasıdır (`Kılıç Coffee Roaster`). Personel sek
 **Kısa:** Torbalı / İzmir specialty kahve siparişi.  
 **Uzun (taslak):** Taze kavrulmuş çekirdek, gramaj ve öğütme seçimi, güvenli ödeme, sipariş ve kargo takibi. İzmir Torbalı atölyesinden specialty coffee.
 
-**Keywords (App Store, 100 karakter):** kahve,specialty coffee,kavrum,İzmir,Torbalı,çekirdek,filtre kahve,espresso
+**Keywords (App Store, 100 karakter):** kahve,filtre kahve,espresso,türk kahvesi,specialty,İzmir,Torbalı,çekirdek
 
 **Kategori:** Food & Drink / Alışveriş
+
+### Listing vurguları (ASO)
+
+- Kısa açıklamada **Torbalı / İzmir** + specialty sipariş.
+- Uzun metinde üç kahve ailesi: filtre (V60/French Press), espresso (orta-koyu/koyu), Türk kahvesi.
+- Screenshot metinleri: “Filtre · Espresso · Türk”, “Gramaj + öğütme + kavrum”, “Taze kavrum İzmir”.
+- Deep link: kategori sayfaları `/urunler/kategori/filtre-kahve`, `/urunler/kategori/espresso`, `/urunler/kategori/turk-kahvesi`.
 
 ## Universal / App Links
 

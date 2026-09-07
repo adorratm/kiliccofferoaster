@@ -56,6 +56,8 @@ export type Product = {
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  allowRoastMediumDark?: boolean;
+  allowRoastDark?: boolean;
   unit?: string;
   vatRate?: string | number;
   roastedAt?: string | null;

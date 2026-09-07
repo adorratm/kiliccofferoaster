@@ -7,7 +7,7 @@ import { asBrewGuide } from '../lib/catalog-seo';
 import { asArray, asPaged, formatMoney, inputClass, slugify } from '../lib/format';
 import { sortByWeightLabel } from '../lib/weight-sort';
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; slug?: string };
 
 type ProductVariant = {
   id?: string;
@@ -33,6 +33,8 @@ type Product = {
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  allowRoastMediumDark?: boolean;
+  allowRoastDark?: boolean;
   imageUrl?: string | null;
   unit?: string;
   vatRate?: string | number;
@@ -74,6 +76,8 @@ type FormState = {
   kind: string;
   allowWholeBean: boolean;
   allowGround: boolean;
+  allowRoastMediumDark: boolean;
+  allowRoastDark: boolean;
   unit: string;
   vatRate: string;
   barcode: string;
@@ -110,6 +114,19 @@ const KINDS = [
 
 const UNITS = ['g', 'kg', 'adet', 'paket', 'lt'];
 
+const CATEGORY_KIND_BY_SLUG: Record<string, string> = {
+  'turk-kahvesi': 'coffee_turkish',
+  'filtre-kahve': 'coffee_filter',
+  espresso: 'coffee_espresso',
+  lokum: 'lokum',
+  draje: 'draje',
+  kuruyemis: 'nuts',
+  'bitki-cayi': 'herbal_tea',
+  baharat: 'spice',
+  mesrubat: 'beverage',
+  cay: 'tea',
+};
+
 function emptyVariant(): VariantForm {
   return {
     sku: '',
@@ -133,6 +150,8 @@ function emptyForm(): FormState {
     kind: 'other',
     allowWholeBean: true,
     allowGround: true,
+    allowRoastMediumDark: true,
+    allowRoastDark: true,
     unit: 'adet',
     vatRate: '20',
     barcode: '',
@@ -179,6 +198,8 @@ function formFromProduct(p: Product): FormState {
     kind: p.kind || 'other',
     allowWholeBean: p.allowWholeBean !== false,
     allowGround: p.allowGround !== false,
+    allowRoastMediumDark: p.allowRoastMediumDark !== false,
+    allowRoastDark: p.allowRoastDark !== false,
     unit: p.unit || 'adet',
     vatRate: String(p.vatRate ?? '20'),
     barcode: p.barcode || '',
@@ -304,6 +325,8 @@ export function ProductsPage() {
       kind: form.kind || 'other',
       allowWholeBean: form.allowWholeBean,
       allowGround: form.allowGround,
+      allowRoastMediumDark: form.allowRoastMediumDark,
+      allowRoastDark: form.allowRoastDark,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
       barcode: form.barcode.trim() || null,
@@ -638,12 +661,52 @@ export function ProductsPage() {
               label="Öğütülmüş"
               description="Mağazada öğütülmüş seçeneği sunulsun"
             />
+            {form.kind === 'coffee_espresso' ? (
+              <>
+                <p className="pt-2 text-xs uppercase tracking-wide text-muted">
+                  Kavrum seçenekleri
+                </p>
+                <Switch
+                  id="product-roast-md"
+                  checked={form.allowRoastMediumDark}
+                  onChange={(checked) =>
+                    setForm((f) => ({ ...f, allowRoastMediumDark: checked }))
+                  }
+                  label="Orta-Koyu"
+                  description="Mağazada orta-koyu kavrum seçeneği sunulsun"
+                />
+                <Switch
+                  id="product-roast-dark"
+                  checked={form.allowRoastDark}
+                  onChange={(checked) =>
+                    setForm((f) => ({ ...f, allowRoastDark: checked }))
+                  }
+                  label="Koyu"
+                  description="Mağazada koyu kavrum seçeneği sunulsun"
+                />
+              </>
+            ) : (
+              <p className="pt-1 text-xs text-muted">
+                Kavrum: Orta (filtre / Türk kahvesi için sabit)
+              </p>
+            )}
           </div>
         ) : null}
         <select
           className={inputClass}
           value={form.categoryId}
-          onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+          onChange={(e) => {
+            const categoryId = e.target.value;
+            const cat = categories.find((c) => c.id === categoryId);
+            const mapped = cat?.slug
+              ? CATEGORY_KIND_BY_SLUG[cat.slug]
+              : undefined;
+            setForm((f) => ({
+              ...f,
+              categoryId,
+              ...(mapped ? { kind: mapped } : {}),
+            }));
+          }}
         >
           <option value="">Kategori yok</option>
           {categories.map((c) => (

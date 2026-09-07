@@ -16,6 +16,12 @@ import {
   type GrindAvailability,
 } from '@common/constants/grind-options';
 import {
+  isRoastAllowed,
+  resolveRoastOption,
+  roastMatchKey,
+  type RoastAvailability,
+} from '@common/constants/roast-options';
+import {
   AddCartItemDto,
   UpdateCartItemDto,
 } from '@modules/cart/dto/cart.dto';
@@ -31,6 +37,15 @@ function grindAvailability(
   return {
     allowWholeBean: product?.allowWholeBean,
     allowGround: product?.allowGround,
+  };
+}
+
+function roastAvailability(
+  product?: Pick<Product, 'allowRoastMediumDark' | 'allowRoastDark'> | null,
+): RoastAvailability {
+  return {
+    allowRoastMediumDark: product?.allowRoastMediumDark,
+    allowRoastDark: product?.allowRoastDark,
   };
 }
 
@@ -129,12 +144,15 @@ export class CartService {
     for (const item of sessionItems) {
       const productKind = item.product?.kind;
       const availability = grindAvailability(item.product);
+      const roastAvail = roastAvailability(item.product);
       const existing = userCart.items?.find(
         (i) =>
           i.productId === item.productId &&
           (i.variantId ?? null) === (item.variantId ?? null) &&
           grindMatchKey(i.product?.kind, i.grindOption, grindAvailability(i.product)) ===
-            grindMatchKey(productKind, item.grindOption, availability),
+            grindMatchKey(productKind, item.grindOption, availability) &&
+          roastMatchKey(i.product?.kind, i.roastOption, roastAvailability(i.product)) ===
+            roastMatchKey(productKind, item.roastOption, roastAvail),
       );
       if (existing) {
         existing.quantity += item.quantity;
@@ -234,6 +252,22 @@ export class CartService {
       dto.grindOption,
       availability,
     );
+
+    const roastAvail = roastAvailability(product);
+    if (
+      dto.roastOption != null &&
+      dto.roastOption !== '' &&
+      !isRoastAllowed(product.kind, dto.roastOption, roastAvail)
+    ) {
+      throw new BadRequestException(
+        'Bu ürün için seçilen kavrum tercihi geçerli değil',
+      );
+    }
+    const roastOption = resolveRoastOption(
+      product.kind,
+      dto.roastOption,
+      roastAvail,
+    );
     const qtyToAdd = dto.quantity;
 
     const existing = cart.items?.find(
@@ -241,7 +275,9 @@ export class CartService {
         i.productId === product.id &&
         (i.variantId ?? null) === variantId &&
         grindMatchKey(product.kind, i.grindOption, availability) ===
-          grindMatchKey(product.kind, grindOption, availability),
+          grindMatchKey(product.kind, grindOption, availability) &&
+        roastMatchKey(product.kind, i.roastOption, roastAvail) ===
+          roastMatchKey(product.kind, roastOption, roastAvail),
     );
 
     const nextQty = (existing?.quantity ?? 0) + qtyToAdd;
@@ -257,6 +293,7 @@ export class CartService {
       existing.quantity = nextQty;
       existing.unitPrice = unitPrice;
       existing.grindOption = grindOption;
+      existing.roastOption = roastOption;
       await this.em.save(existing);
     } else {
       const item = this.em.create(CartItem, {
@@ -264,6 +301,7 @@ export class CartService {
         productId: product.id,
         variantId,
         grindOption,
+        roastOption,
         quantity: qtyToAdd,
         unitPrice,
       });
@@ -298,25 +336,44 @@ export class CartService {
     }
 
     item.quantity = dto.quantity;
-    if (dto.grindOption !== undefined) {
+    if (dto.grindOption !== undefined || dto.roastOption !== undefined) {
       const product = await this.em.findOne(Product, {
         where: { id: item.productId },
       });
-      const availability = grindAvailability(product);
-      if (
-        dto.grindOption != null &&
-        dto.grindOption !== '' &&
-        !isGrindAllowed(product?.kind, dto.grindOption, availability)
-      ) {
-        throw new BadRequestException(
-          'Bu ürün için seçilen öğütme tercihi geçerli değil',
+      if (dto.grindOption !== undefined) {
+        const availability = grindAvailability(product);
+        if (
+          dto.grindOption != null &&
+          dto.grindOption !== '' &&
+          !isGrindAllowed(product?.kind, dto.grindOption, availability)
+        ) {
+          throw new BadRequestException(
+            'Bu ürün için seçilen öğütme tercihi geçerli değil',
+          );
+        }
+        item.grindOption = resolveGrindOption(
+          product?.kind,
+          dto.grindOption,
+          availability,
         );
       }
-      item.grindOption = resolveGrindOption(
-        product?.kind,
-        dto.grindOption,
-        availability,
-      );
+      if (dto.roastOption !== undefined) {
+        const roastAvail = roastAvailability(product);
+        if (
+          dto.roastOption != null &&
+          dto.roastOption !== '' &&
+          !isRoastAllowed(product?.kind, dto.roastOption, roastAvail)
+        ) {
+          throw new BadRequestException(
+            'Bu ürün için seçilen kavrum tercihi geçerli değil',
+          );
+        }
+        item.roastOption = resolveRoastOption(
+          product?.kind,
+          dto.roastOption,
+          roastAvail,
+        );
+      }
     }
     await this.em.save(item);
     await this.touchCart(cart);

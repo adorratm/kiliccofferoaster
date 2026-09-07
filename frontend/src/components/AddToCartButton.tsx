@@ -10,6 +10,7 @@ type Props = {
   productId: string;
   variantId?: string | null;
   grindOption?: string | null;
+  roastOption?: string | null;
   label?: string;
   className?: string;
   disabled?: boolean;
@@ -21,6 +22,7 @@ export function AddToCartButton({
   productId,
   variantId,
   grindOption,
+  roastOption,
   label = "Satın Almayı Başlat",
   className,
   disabled = false,
@@ -40,6 +42,7 @@ export function AddToCartButton({
         productId,
         variantId,
         grindOption: grindOption ?? null,
+        roastOption: roastOption ?? null,
         quantity: 1,
       });
       trackAddToCart({

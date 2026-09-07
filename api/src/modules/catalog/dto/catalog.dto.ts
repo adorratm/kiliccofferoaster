@@ -289,6 +289,40 @@ export class CreateProductDto {
   @IsBoolean()
   allowGround?: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Espresso: Orta-Koyu kavrum seçeneği',
+    default: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
+  @IsBoolean()
+  allowRoastMediumDark?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Espresso: Koyu kavrum seçeneği',
+    default: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1' || value === 1) {
+      return true;
+    }
+    if (value === false || value === 'false' || value === '0' || value === 0) {
+      return false;
+    }
+    return value;
+  })
+  @IsBoolean()
+  allowRoastDark?: boolean;
+
   @ApiPropertyOptional({ example: 'g' })
   @IsOptional()
   @IsString()

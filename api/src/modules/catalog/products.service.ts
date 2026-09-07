@@ -7,6 +7,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
+import { Category } from '@entities/category.entity';
 import {
   CreateProductDto,
   ProductQueryDto,
@@ -20,7 +21,22 @@ import {
 import { LowStockService } from '@modules/catalog/low-stock.service';
 import { CampaignsService } from '@modules/campaigns/campaigns.service';
 import { COFFEE_KINDS } from '@common/constants/grind-options';
+import { defaultRoastLevelForKind } from '@common/constants/roast-options';
 import { sortByWeightLabel } from '@common/utils/weight-sort';
+
+/** Seed / varsayılan kategori slug → ürün kind eşlemesi */
+const CATEGORY_SLUG_KIND: Record<string, string> = {
+  'turk-kahvesi': 'coffee_turkish',
+  'filtre-kahve': 'coffee_filter',
+  espresso: 'coffee_espresso',
+  lokum: 'lokum',
+  draje: 'draje',
+  kuruyemis: 'nuts',
+  'bitki-cayi': 'herbal_tea',
+  baharat: 'spice',
+  mesrubat: 'beverage',
+  cay: 'tea',
+};
 
 @Injectable()
 export class ProductsService {
@@ -199,6 +215,24 @@ export class ProductsService {
       throw new ConflictException('Bu slug zaten kullanılıyor');
     }
     const { variants, ...productFields } = dto;
+    let kind = productFields.kind ?? 'other';
+    let roastLevel = productFields.roastLevel ?? null;
+    let category: Category | null = null;
+    if (productFields.categoryId) {
+      category = await this.em.findOne(Category, {
+        where: { id: productFields.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException('Kategori bulunamadı');
+      }
+      if (!productFields.kind) {
+        const mapped = CATEGORY_SLUG_KIND[category.slug];
+        if (mapped) kind = mapped;
+      }
+    }
+    if (!roastLevel) {
+      roastLevel = defaultRoastLevelForKind(kind);
+    }
     const product = this.em.create(Product, {
       slug: productFields.slug,
       name: productFields.name,
@@ -212,7 +246,7 @@ export class ProductsService {
       process: productFields.process ?? null,
       varietal: productFields.varietal ?? null,
       batchId: productFields.batchId ?? null,
-      roastLevel: productFields.roastLevel ?? null,
+      roastLevel,
       flavorNotes: productFields.flavorNotes ?? [],
       flavorGeometry: productFields.flavorGeometry ?? null,
       roastLog: productFields.roastLog ?? null,
@@ -224,10 +258,13 @@ export class ProductsService {
       stock: productFields.stock ?? 0,
       isActive: productFields.isActive ?? true,
       isFeatured: productFields.isFeatured ?? false,
-      categoryId: productFields.categoryId ?? null,
-      kind: productFields.kind ?? 'other',
+      category,
+      categoryId: category?.id ?? productFields.categoryId ?? null,
+      kind,
       allowWholeBean: productFields.allowWholeBean ?? true,
       allowGround: productFields.allowGround ?? true,
+      allowRoastMediumDark: productFields.allowRoastMediumDark ?? true,
+      allowRoastDark: productFields.allowRoastDark ?? true,
       unit: productFields.unit ?? 'adet',
       barcode: productFields.barcode ?? null,
       expiresAt: productFields.expiresAt ?? null,
@@ -259,7 +296,47 @@ export class ProductsService {
         throw new ConflictException('Bu slug zaten kullanılıyor');
       }
     }
-    const { variants, ...rest } = dto;
+    const { variants, categoryId, kind, roastLevel, ...rest } = dto;
+
+    // category ilişkisi yüklüyken yalnız categoryId atamak TypeORM'de FK'yi
+    // güncellemez; ilişkiyi açıkça set etmek gerekir.
+    if (categoryId !== undefined) {
+      if (categoryId) {
+        const category = await this.em.findOne(Category, {
+          where: { id: categoryId },
+        });
+        if (!category) {
+          throw new NotFoundException('Kategori bulunamadı');
+        }
+        product.category = category;
+        product.categoryId = category.id;
+        if (kind === undefined) {
+          const mapped = CATEGORY_SLUG_KIND[category.slug];
+          if (mapped) {
+            product.kind = mapped;
+            if (roastLevel === undefined) {
+              const def = defaultRoastLevelForKind(mapped);
+              if (def) product.roastLevel = def;
+            }
+          }
+        }
+      } else {
+        product.category = null;
+        product.categoryId = null;
+      }
+    }
+
+    if (kind !== undefined) {
+      product.kind = kind;
+      if (roastLevel === undefined) {
+        const def = defaultRoastLevelForKind(kind);
+        if (def) product.roastLevel = def;
+      }
+    }
+    if (roastLevel !== undefined) {
+      product.roastLevel = roastLevel || null;
+    }
+
     Object.assign(product, {
       ...rest,
       shortDescription:
@@ -272,8 +349,6 @@ export class ProductsService {
         rest.seoDescription !== undefined
           ? rest.seoDescription || null
           : product.seoDescription,
-      categoryId:
-        rest.categoryId !== undefined ? rest.categoryId : product.categoryId,
       allowWholeBean:
         rest.allowWholeBean !== undefined
           ? rest.allowWholeBean
@@ -282,6 +357,14 @@ export class ProductsService {
         rest.allowGround !== undefined
           ? rest.allowGround
           : product.allowGround,
+      allowRoastMediumDark:
+        rest.allowRoastMediumDark !== undefined
+          ? rest.allowRoastMediumDark
+          : product.allowRoastMediumDark,
+      allowRoastDark:
+        rest.allowRoastDark !== undefined
+          ? rest.allowRoastDark
+          : product.allowRoastDark,
       roastedAt:
         rest.roastedAt !== undefined ? rest.roastedAt || null : product.roastedAt,
       brewGuide:

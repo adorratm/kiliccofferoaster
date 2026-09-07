@@ -24,6 +24,8 @@ import { AccountingAutoEmailInvoice1795000000000 } from './1795000000000-Account
 import { AccountingPaytrCommission1796000000000 } from './1796000000000-AccountingPaytrCommission';
 import { SeoCatalogLocalContent1797000000000 } from './1797000000000-SeoCatalogLocalContent';
 import { MobileClientEvents1798000000000 } from './1798000000000-MobileClientEvents';
+import { ProductRoastOptions1799000000000 } from './1799000000000-ProductRoastOptions';
+import { FilterEspressoSeoBlogPosts1800000000000 } from './1800000000000-FilterEspressoSeoBlogPosts';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -56,4 +58,6 @@ export const ALL_MIGRATIONS = [
   AccountingPaytrCommission1796000000000,
   SeoCatalogLocalContent1797000000000,
   MobileClientEvents1798000000000,
+  ProductRoastOptions1799000000000,
+  FilterEspressoSeoBlogPosts1800000000000,
 ];

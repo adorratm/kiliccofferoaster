@@ -144,6 +144,7 @@ function orderItemsList(order: Order): string {
       const parts = [it.productName];
       if (it.variantLabel) parts.push(it.variantLabel);
       if (it.grindLabel) parts.push(it.grindLabel);
+      if (it.roastLabel) parts.push(it.roastLabel);
       return `${parts.join(' · ')} ×${it.quantity} — ${formatMoney(it.lineTotal, order.currency)}`;
     })
     .join('\n');
@@ -175,7 +176,7 @@ export function buildOrderDetailsHtml(
   const itemRows = items.length
     ? items
         .map((it, idx) => {
-          const name = [it.productName, it.variantLabel, it.grindLabel]
+          const name = [it.productName, it.variantLabel, it.grindLabel, it.roastLabel]
             .filter(Boolean)
             .join(' · ');
           const border =

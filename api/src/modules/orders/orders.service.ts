@@ -35,6 +35,7 @@ import { CouponsService } from '@modules/coupons/coupons.service';
 import { InventoryService } from '@modules/catalog/inventory.service';
 import { PaytrService } from '@modules/payments/paytr.service';
 import { grindLabel, resolveGrindOption } from '@common/constants/grind-options';
+import { resolveRoastOption, roastLabel } from '@common/constants/roast-options';
 import {
   isStorePickup,
 } from '@common/constants/shipping';
@@ -181,6 +182,10 @@ export class OrdersService {
           allowWholeBean: item.product?.allowWholeBean,
           allowGround: item.product?.allowGround,
         });
+        const roast = resolveRoastOption(item.product?.kind, item.roastOption, {
+          allowRoastMediumDark: item.product?.allowRoastMediumDark,
+          allowRoastDark: item.product?.allowRoastDark,
+        });
         return tx.create(OrderItem, {
           orderId: created.id,
           productId: item.productId,
@@ -189,6 +194,8 @@ export class OrdersService {
           variantLabel: item.variant?.weightLabel ?? null,
           grindOption: grind,
           grindLabel: grind ? grindLabel(grind) : null,
+          roastOption: roast,
+          roastLabel: roast ? roastLabel(roast) : null,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           lineTotal: (Number(item.unitPrice) * item.quantity).toFixed(2),
@@ -361,6 +368,7 @@ export class OrdersService {
         productName: item.productName,
         variantLabel: item.variantLabel,
         grindLabel: item.grindLabel,
+        roastLabel: item.roastLabel,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         lineTotal: item.lineTotal,

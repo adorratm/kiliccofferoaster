@@ -139,6 +139,8 @@ export class MarketplaceOrderImportService {
             variantLabel: match?.variant?.weightLabel ?? null,
             grindOption: null,
             grindLabel: null,
+            roastOption: null,
+            roastLabel: null,
             quantity: line.quantity,
             unitPrice: line.unitPrice.toFixed(2),
             lineTotal: line.lineTotal.toFixed(2),

@@ -265,6 +265,7 @@ export async function addCartItem(
     productId: string;
     variantId?: string | null;
     grindOption?: string | null;
+    roastOption?: string | null;
     quantity: number;
   },
   token?: string | null,

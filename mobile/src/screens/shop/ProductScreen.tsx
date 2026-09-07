@@ -25,6 +25,11 @@ import {
 import { HtmlContent } from '../../components/HtmlContent';
 import { formatMoney, stockQty } from '../../lib/format';
 import { availableGrindOptions, type GrindValue } from '../../lib/grind';
+import {
+  availableRoastOptions,
+  showRoastPicker,
+  type RoastValue,
+} from '../../lib/roast';
 import { sortByWeightLabel } from '../../lib/weight-sort';
 import { productOrigin, roastLabel } from '../../lib/order-status';
 import { btn, btnGhost, btnGhostText, btnText, colors, muted, price } from '../../ui';
@@ -40,6 +45,7 @@ export function ProductScreen({ navigation, route }: Props) {
   const [msg, setMsg] = useState('');
   const [variantId, setVariantId] = useState<string | null>(null);
   const [grind, setGrind] = useState<GrindValue>('whole_bean');
+  const [roast, setRoast] = useState<RoastValue>('orta');
   const [busy, setBusy] = useState(false);
   const cart = useShopCart();
 
@@ -58,6 +64,12 @@ export function ProductScreen({ navigation, route }: Props) {
           p.allowGround,
         );
         if (choices[0]) setGrind(choices[0].value);
+        const roastChoices = availableRoastOptions(
+          p.kind,
+          p.allowRoastMediumDark,
+          p.allowRoastDark,
+        );
+        if (roastChoices[0]) setRoast(roastChoices[0].value);
         if (p.category?.slug) {
           const page = await shopProducts({
             categorySlug: p.category.slug,
@@ -91,12 +103,21 @@ export function ProductScreen({ navigation, route }: Props) {
       ),
     [product?.kind, product?.allowWholeBean, product?.allowGround],
   );
+  const roastChoices = useMemo(
+    () =>
+      availableRoastOptions(
+        product?.kind,
+        product?.allowRoastMediumDark,
+        product?.allowRoastDark,
+      ),
+    [product?.kind, product?.allowRoastMediumDark, product?.allowRoastDark],
+  );
   const selected: ProductVariant | undefined =
     variants.find((v) => v.id === variantId) || variants[0];
   const amount = selected?.price ?? product?.salePrice ?? product?.basePrice;
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
-  const roast = roastLabel(product?.roastLevel);
+  const roastLevelLabel = roastLabel(product?.roastLevel);
   const kindLabel = productKindLabel(product?.kind);
   const roastDate = formatRoastDate(product?.roastedAt);
   const brew = asBrewGuide(product?.brewGuide);
@@ -111,16 +132,23 @@ export function ProductScreen({ navigation, route }: Props) {
     ['Rakım', product?.altitude],
     ['İşlem', product?.process],
     ['Çeşit', product?.varietal],
-    ['Kavrum', roast],
+    ['Kavrum', roastLevelLabel],
     ['Kavrum tarihi', roastDate],
     ['Gramaj', weights || null],
   ].filter((row): row is [string, string] => Boolean(row[1]));
   const showGrindPicker = grindChoices.length > 0;
+  const roastPickerVisible = showRoastPicker(product?.kind, roastChoices.length);
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)
         ? grind
         : grindChoices[0].value
+      : null;
+  const resolvedRoast =
+    roastChoices.length > 0
+      ? roastChoices.some((r) => r.value === roast)
+        ? roast
+        : roastChoices[0].value
       : null;
 
   async function add() {
@@ -132,6 +160,7 @@ export function ProductScreen({ navigation, route }: Props) {
         productId: product.id,
         variantId: selected?.id,
         grindOption: resolvedGrind,
+        roastOption: resolvedRoast,
         quantity: 1,
       });
       await cart.refresh();
@@ -337,6 +366,22 @@ export function ProductScreen({ navigation, route }: Props) {
                   label={g.label}
                   selected={grind === g.value}
                   onPress={() => setGrind(g.value)}
+                />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {roastPickerVisible ? (
+          <View style={{ marginTop: 8 }}>
+            <SectionLabel label="Kavrum" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {roastChoices.map((r) => (
+                <Chip
+                  key={r.value}
+                  label={r.label}
+                  selected={roast === r.value}
+                  onPress={() => setRoast(r.value)}
                 />
               ))}
             </View>

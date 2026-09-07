@@ -45,6 +45,8 @@ export type Product = {
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  allowRoastMediumDark?: boolean;
+  allowRoastDark?: boolean;
   barcode?: string | null;
   roastedAt?: string | null;
   brewGuide?: {
@@ -80,6 +82,7 @@ export type CartItem = {
   productId: string;
   variantId: string | null;
   grindOption?: string | null;
+  roastOption?: string | null;
   quantity: number;
   unitPrice: string;
   product?: Product;

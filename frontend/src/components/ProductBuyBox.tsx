@@ -8,6 +8,11 @@ import {
   availableGrindOptions,
   type GrindValue,
 } from "@/lib/grind";
+import {
+  availableRoastOptions,
+  showRoastPicker,
+  type RoastValue,
+} from "@/lib/roast";
 import { sortByWeightLabel } from "@/lib/weight-sort";
 import type { Product, ProductVariant } from "@/lib/types";
 import {
@@ -46,11 +51,23 @@ export function ProductBuyBox({
       ),
     [product.kind, product.allowWholeBean, product.allowGround],
   );
+  const roastChoices = useMemo(
+    () =>
+      availableRoastOptions(
+        product.kind,
+        product.allowRoastMediumDark,
+        product.allowRoastDark,
+      ),
+    [product.kind, product.allowRoastMediumDark, product.allowRoastDark],
+  );
   const [variantId, setVariantId] = useState<string | null>(
     variants[0]?.id ?? null,
   );
   const [grind, setGrind] = useState<GrindValue>(
     () => grindChoices[0]?.value ?? "whole_bean",
+  );
+  const [roast, setRoast] = useState<RoastValue>(
+    () => roastChoices[0]?.value ?? "orta",
   );
 
   useEffect(() => {
@@ -64,6 +81,15 @@ export function ProductBuyBox({
 
   useEffect(() => {
     if (
+      roastChoices.length > 0 &&
+      !roastChoices.some((r) => r.value === roast)
+    ) {
+      setRoast(roastChoices[0].value);
+    }
+  }, [roastChoices, roast]);
+
+  useEffect(() => {
+    if (
       variants.length > 0 &&
       !variants.some((v) => v.id === variantId)
     ) {
@@ -72,11 +98,18 @@ export function ProductBuyBox({
   }, [variants, variantId]);
 
   const showGrindPicker = grindChoices.length > 0;
+  const roastPickerVisible = showRoastPicker(product.kind, roastChoices.length);
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)
         ? grind
         : grindChoices[0].value
+      : null;
+  const resolvedRoast =
+    roastChoices.length > 0
+      ? roastChoices.some((r) => r.value === roast)
+        ? roast
+        : roastChoices[0].value
       : null;
 
   const selected: ProductVariant | undefined =
@@ -153,6 +186,33 @@ export function ProductBuyBox({
         </div>
       ) : null}
 
+      {roastPickerVisible ? (
+        <div>
+          <p className="mb-2 font-meta text-[10px] uppercase tracking-widest text-on-surface-variant">
+            Kavrum
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {roastChoices.map((r) => {
+              const active = roast === r.value;
+              return (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => setRoast(r.value)}
+                  className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-white"
+                      : "border-outline-variant/40 hover:border-primary"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="font-meta text-[10px] uppercase text-on-surface-variant">
@@ -185,6 +245,7 @@ export function ProductBuyBox({
             productId={product.id}
             variantId={selected?.id}
             grindOption={resolvedGrind}
+            roastOption={resolvedRoast}
             disabled={disabled}
             productName={product.name}
             price={Number(displayPrice)}

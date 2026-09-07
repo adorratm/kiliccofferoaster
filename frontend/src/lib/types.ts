@@ -52,6 +52,8 @@ export type Product = {
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
+  allowRoastMediumDark?: boolean;
+  allowRoastDark?: boolean;
   barcode?: string | null;
   roastedAt?: string | null;
   brewGuide?: {
@@ -138,6 +140,7 @@ export type CartItem = {
   productId: string;
   variantId: string | null;
   grindOption?: string | null;
+  roastOption?: string | null;
   quantity: number;
   unitPrice: string;
   product?: Product;
@@ -187,6 +190,8 @@ export type OrderItem = {
   variantLabel: string | null;
   grindOption?: string | null;
   grindLabel?: string | null;
+  roastOption?: string | null;
+  roastLabel?: string | null;
   quantity: number;
   unitPrice: string;
   lineTotal: string;
@@ -387,6 +392,7 @@ export type GuestOrderLookupResult = {
     productName: string;
     variantLabel: string | null;
     grindLabel?: string | null;
+    roastLabel?: string | null;
     quantity: number;
     unitPrice: string;
     lineTotal: string;

@@ -226,7 +226,11 @@ export default function OrderDetailPage() {
                     <div>
                       <div className="text-on-surface">{item.productName}</div>
                       <div className="mt-1 text-secondary">
-                        {[item.variantLabel, item.grindLabel || item.grindOption]
+                        {[
+                          item.variantLabel,
+                          item.grindLabel || item.grindOption,
+                          item.roastLabel || item.roastOption,
+                        ]
                           .filter(Boolean)
                           .join(" · ") || "—"}{" "}
                         × {item.quantity}

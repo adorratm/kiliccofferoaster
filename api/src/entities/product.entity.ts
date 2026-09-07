@@ -83,6 +83,14 @@ export class Product extends BaseEntity {
   @Column({ name: 'allow_ground', type: 'boolean', default: true })
   allowGround!: boolean;
 
+  /** Espresso: Orta-Koyu kavrum seçeneği sunulsun mu */
+  @Column({ name: 'allow_roast_medium_dark', type: 'boolean', default: true })
+  allowRoastMediumDark!: boolean;
+
+  /** Espresso: Koyu kavrum seçeneği sunulsun mu */
+  @Column({ name: 'allow_roast_dark', type: 'boolean', default: true })
+  allowRoastDark!: boolean;
+
   @Column({ name: 'unit', type: 'varchar', length: 20, default: 'adet' })
   unit!: string;
 

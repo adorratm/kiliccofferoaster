@@ -19,6 +19,7 @@ import {
 import { getShopToken } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
 import { grindLabel, supportsGrind } from '../../lib/grind';
+import { roastLabel, supportsRoast } from '../../lib/roast';
 import { btn, btnText, colors, muted } from '../../ui';
 
 type Props = NativeStackScreenProps<CartStackParamList, 'Cart'>;
@@ -127,6 +128,9 @@ export function CartScreen({ navigation }: Props) {
                     item.variant?.weightLabel,
                     supportsGrind(item.product?.kind) && item.grindOption
                       ? grindLabel(item.grindOption)
+                      : null,
+                    supportsRoast(item.product?.kind)
+                      ? roastLabel(item.roastOption)
                       : null,
                   ]
                     .filter(Boolean)

@@ -28,22 +28,34 @@ URL’ler `/urunler` kalır; `/kahveler` migrasyonu yok.
 
 ## Blog ağı (admin’de yayınlı)
 
-İlk 12 konu (bir kısmı migration ile eklendi; ürün slug’larını yazıya bağlayın):
+Türk kahvesi 4’lü küme + filtre / espresso 4’lü küme (migration) + demleme köşe yazıları. Ürün slug’larını yazıya bağlayın:
 
-1. Çekirdek kahve nedir?
-2. Specialty coffee nedir?
-3. Türk kahvesi nasıl demlenir?
-4. V60 nasıl yapılır?
-5. French Press nasıl yapılır?
-6. Espresso nasıl yapılır?
-7. Moka pot nasıl kullanılır?
-8. Kahve kavurma dereceleri
-9. Türk kahvesi nasıl saklanır?
-10. İzmir’de taze kavrulmuş kahve
-11. Torbalı / Ayrancılar kahve
-12. Espresso için hangi çekirdek?
+### Türk kahvesi
+1. Türk kahvesi nasıl demlenir?
+2. Türk kahvesi öğütme inceliği
+3. Türk kahvesi nasıl saklanır?
+4. Türk kahvesi seçerken nelere bakmalı?
 
-Her yazıda ilgili ürün + kategori slug’ları dolu olmalı.
+### Filtre kahve
+5. Filtre kahve nasıl demlenir?
+6. Filtre kahve öğütme inceliği
+7. Filtre kahve nasıl saklanır?
+8. Filtre kahve seçerken nelere bakmalı?
+9. V60 nasıl yapılır? / French Press nasıl yapılır?
+
+### Espresso
+10. Espresso nasıl yapılır?
+11. Espresso öğütme inceliği
+12. Espresso çekirdeği nasıl saklanır?
+13. Espresso çekirdeği seçerken nelere bakmalı? / Espresso için hangi çekirdek?
+14. Moka pot nasıl kullanılır?
+
+### Genel / GEO
+15. Çekirdek kahve nedir? / Specialty coffee nedir?
+16. Kahve kavurma dereceleri
+17. İzmir’de taze kavrulmuş kahve / Torbalı–Ayrancılar kahve
+
+Her yazıda ilgili ürün + kategori slug’ları dolu olmalı (`related_category_slugs` / `related_product_slugs`).
 
 ## Ürün / kategori metinleri
 

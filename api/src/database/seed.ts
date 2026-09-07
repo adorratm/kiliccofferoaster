@@ -269,6 +269,7 @@ async function seed() {
     seoTitle: string;
     seoDescription: string;
     relatedProductSlugs: string[];
+    relatedCategorySlugs: string[];
   }[] = [
     {
       slug: 'birinci-crack-nedir',
@@ -285,6 +286,7 @@ async function seed() {
       seoDescription:
         'Specialty kahvede birinci crack nedir, neden önemlidir ve tat profilini nasıl etkiler?',
       relatedProductSlugs: ['turk-kahvesi'],
+      relatedCategorySlugs: ['turk-kahvesi', 'filtre-kahve', 'espresso'],
     },
     {
       slug: 'filtre-kahve-ogutme-ipuclari',
@@ -301,6 +303,7 @@ async function seed() {
       seoDescription:
         'Filtre demleme için öğütme boyutu, oran ve ekipman bazlı pratik ayar önerileri.',
       relatedProductSlugs: [],
+      relatedCategorySlugs: ['filtre-kahve'],
     },
     {
       slug: 'turk-kahvesi-nasil-demlenir',
@@ -322,6 +325,7 @@ async function seed() {
       seoDescription:
         'Evde köpüklü Türk kahvesi demleme: gramaj, su oranı, ateş kontrolü ve pratik cezve ipuçları.',
       relatedProductSlugs: ['turk-kahvesi'],
+      relatedCategorySlugs: ['turk-kahvesi'],
     },
     {
       slug: 'turk-kahvesi-ogutme-inceligi',
@@ -342,6 +346,7 @@ async function seed() {
       seoDescription:
         'Türk kahvesi neden un kıvamında öğütülür, yanlış öğütüm fincanı nasıl bozar ve ne zaman çekirdek alınır?',
       relatedProductSlugs: ['turk-kahvesi'],
+      relatedCategorySlugs: ['turk-kahvesi'],
     },
     {
       slug: 'turk-kahvesi-saklama-taze-kavrum',
@@ -365,6 +370,7 @@ async function seed() {
       seoDescription:
         'Öğütülmüş ve çekirdek Türk kahvesini nasıl saklamalısınız? Nem, ışık ve taze kavrum için pratik rehber.',
       relatedProductSlugs: ['turk-kahvesi'],
+      relatedCategorySlugs: ['turk-kahvesi'],
     },
     {
       slug: 'turk-kahvesi-secim-rehberi',
@@ -386,6 +392,137 @@ async function seed() {
       seoDescription:
         'Türk kahvesi alırken kavrum, tazelik ve gramaj nasıl seçilir? Torbalı kavurucusundan kısa alışveriş rehberi.',
       relatedProductSlugs: ['turk-kahvesi'],
+      relatedCategorySlugs: ['turk-kahvesi'],
+    },
+    {
+      slug: 'filtre-kahve-nasil-demlenir',
+      title: 'Filtre Kahve Nasıl Demlenir?',
+      excerpt:
+        'V60’tan French Press’e: oran, su sıcaklığı ve süre ile dengeli filtre fincanı.',
+      content: `<p>İyi filtre kahve, doğru oran + doğru öğütüm + taze kavrum üçlüsüne bağlıdır. Torbalı’da kavurduğumuz filtre lotlarını evde aynı tutarlılıkta demlemek için şu çerçeveyi kullanın.</p>
+<h2>Oran ve su</h2>
+<p>Başlangıç: <strong>1:16</strong> (15 g kahve / 240–250 g su). Daha yoğun sevenler 1:15, daha hafif sevenler 1:17 deneyebilir. Su 92–96°C; kaynar su floral lotları yakar.</p>
+<h2>Yönteme göre süre</h2>
+<ul>
+<li><strong>V60 / Chemex:</strong> bloom 30–45 sn, toplam 2:30–3:30.</li>
+<li><strong>French Press:</strong> 4 dk demleme, yavaş bastırma.</li>
+<li><strong>Batch brew:</strong> ekipman reçetesine uyun; öğütümü orta-kaba tutun.</li>
+</ul>
+<p>Kılıç Coffee Roaster filtre kahve kategorisinden gramaj ve öğütüm seçerek sipariş verebilirsiniz.</p>`,
+      coverImageUrl: apiStockImage('product-2'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['filtre kahve', 'demleme'],
+      seoTitle: 'Filtre Kahve Nasıl Demlenir? | Oran ve Süre Rehberi',
+      seoDescription:
+        'Evde filtre kahve demleme: V60, French Press oranı, su sıcaklığı ve taze kavrum ipuçları.',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['filtre-kahve'],
+    },
+    {
+      slug: 'filtre-kahve-ogutme-inceligi',
+      title: 'Filtre Kahve Öğütme İnceliği Neden Önemli?',
+      excerpt:
+        'Çok ince acılaştırır, çok kaba sululaştırır; yönteme göre orta–orta-kaba aralık gerekir.',
+      content: `<p>Filtre demlemede su, kahveyle uzun temas eder ama Türk kahvesi veya espresso kadar ince öğütüm istemez. Hedef: eşit parçacık boyutu ve yönteme uygun incelik.</p>
+<ul>
+<li><strong>V60 / Kalita:</strong> orta–orta-ince.</li>
+<li><strong>Chemex:</strong> biraz daha kaba.</li>
+<li><strong>French Press:</strong> orta-kaba.</li>
+</ul>
+<p>Değirmeniniz yoksa siparişte öğütülmüş seçin; not olarak yönteminizi yazın.</p>`,
+      coverImageUrl: apiStockImage('blog'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['filtre kahve', 'öğütme'],
+      seoTitle: 'Filtre Kahve Öğütme İnceliği | V60 ve French Press',
+      seoDescription:
+        'Filtre kahve için doğru öğütüm: V60, Chemex, French Press ayarları.',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['filtre-kahve'],
+    },
+    {
+      slug: 'filtre-kahve-saklama-taze-kavrum',
+      title: 'Filtre Kahve Nasıl Saklanır?',
+      excerpt:
+        'Light–orta kavrum aroması hassastır; ışık, nem ve hava fincanı bozar.',
+      content: `<p>Filtre profilleri genellikle daha açık kavrulduğu için uçucu aromalar hızla kaybolabilir.</p>
+<ul>
+<li>Serin, kuru, ışıksız yer; buzdolabı önerilmez.</li>
+<li>Açtıktan sonra hava almayan, opak kap.</li>
+<li>Çekirdeği demlemeden hemen önce öğütün.</li>
+</ul>
+<p>Biz siparişe yakın kavurup İzmir’den gönderiyoruz.</p>`,
+      coverImageUrl: apiStockImage('workshop'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['filtre kahve', 'saklama'],
+      seoTitle: 'Filtre Kahve Nasıl Saklanır? | Taze Kavrum İpuçları',
+      seoDescription:
+        'Filtre kahve çekirdeğini nasıl saklamalısınız? Nem, ışık ve taze kavrum rehberi.',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['filtre-kahve'],
+    },
+    {
+      slug: 'filtre-kahve-secim-rehberi',
+      title: 'Filtre Kahve Seçerken Nelere Bakmalı?',
+      excerpt:
+        'Menşei, kavrum, işlem yöntemi ve gramaj — alışverişte fark yaratan dört nokta.',
+      content: `<p>Filtre kahve alırken menşei/işlem, kavrum seviyesi ve tazeliğe bakın. Önce 250 g deneyin; beğenirseniz büyütün.</p>
+<p>Kılıç Coffee Roaster filtre kahve kategorisinden V60 / French Press uyumlu lotları seçebilirsiniz.</p>`,
+      coverImageUrl: apiStockImage('product-3'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['filtre kahve', 'rehber'],
+      seoTitle: 'Filtre Kahve Seçerken Nelere Bakmalı?',
+      seoDescription:
+        'Filtre kahve alırken menşei, kavrum, işlem ve gramaj nasıl seçilir?',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['filtre-kahve'],
+    },
+    {
+      slug: 'espresso-ogutme-inceligi',
+      title: 'Espresso Öğütme İnceliği Neden Önemli?',
+      excerpt:
+        'Shot süresi öğütümle yönetilir; yanlış incelik channeling veya tıkanma üretir.',
+      content: `<p>Espresso öğütümü filtreden ince, Türk kahvesinden kabadır. Çok hızlı shot → inceltin; tıkanma → kabalaştırın.</p>
+<p>Mümkünse çekirdek alın. Kılıç Coffee Roaster espresso kategorisinden orta-koyu / koyu kavrum seçebilirsiniz.</p>`,
+      coverImageUrl: apiStockImage('product-1'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['espresso', 'öğütme'],
+      seoTitle: 'Espresso Öğütme İnceliği | Shot Ayarı Rehberi',
+      seoDescription:
+        'Espresso öğütümü neden kritik? Hızlı/yavaş shot ve çekirdek vs öğütülmüş.',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['espresso'],
+    },
+    {
+      slug: 'espresso-saklama-taze-kavrum',
+      title: 'Espresso Çekirdeği Nasıl Saklanır?',
+      excerpt:
+        'Crema ve tatlılık taze kavrum ister; açılan paket havayla hızla bozulur.',
+      content: `<p>Valve’li veya hava almayan opak kap kullanın; buzdolabı önerilmez. Öğütülmüş espresso çok hızlı bayatlar.</p>
+<p>Haftalık tüketiminize göre 250–500 g idealdir.</p>`,
+      coverImageUrl: apiStockImage('workshop'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['espresso', 'saklama'],
+      seoTitle: 'Espresso Çekirdeği Nasıl Saklanır? | Taze Kavrum',
+      seoDescription:
+        'Espresso çekirdeğini nasıl saklamalısınız? Crema ve taze kavrum rehberi.',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['espresso'],
+    },
+    {
+      slug: 'espresso-secim-rehberi',
+      title: 'Espresso Çekirdeği Seçerken Nelere Bakmalı?',
+      excerpt:
+        'Kavrum (orta-koyu / koyu), tek köken vs blend ve makinenize uyum.',
+      content: `<p>Orta-koyu: tatlılık + gövde. Koyu: daha yoğun. Tek köken karakterli; blend öngörülebilir.</p>
+<p>Kılıç Coffee Roaster espresso kategorisinden sipariş verebilirsiniz.</p>`,
+      coverImageUrl: apiStockImage('product-3'),
+      authorName: 'Kılıç Coffee Roaster',
+      tags: ['espresso', 'rehber'],
+      seoTitle: 'Espresso Çekirdeği Seçerken Nelere Bakmalı?',
+      seoDescription:
+        'Espresso alırken kavrum, tek köken/blend ve tazelik nasıl seçilir?',
+      relatedProductSlugs: [],
+      relatedCategorySlugs: ['espresso'],
     },
   ];
 
@@ -416,6 +553,14 @@ async function seed() {
           exists.relatedProductSlugs.length === 0)
       ) {
         exists.relatedProductSlugs = post.relatedProductSlugs;
+        touched = true;
+      }
+      if (
+        post.relatedCategorySlugs.length > 0 &&
+        (!exists.relatedCategorySlugs ||
+          exists.relatedCategorySlugs.length === 0)
+      ) {
+        exists.relatedCategorySlugs = post.relatedCategorySlugs;
         touched = true;
       }
       if (touched) {

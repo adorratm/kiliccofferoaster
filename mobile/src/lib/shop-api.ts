@@ -88,6 +88,7 @@ export async function shopAddCartItem(payload: {
   productId: string;
   variantId?: string | null;
   grindOption?: string | null;
+  roastOption?: string | null;
   quantity?: number;
 }): Promise<Cart> {
   return api<Cart>('/cart/items', {
@@ -99,6 +100,9 @@ export async function shopAddCartItem(payload: {
       ...(payload.variantId ? { variantId: payload.variantId } : {}),
       grindOption:
         payload.grindOption !== undefined ? payload.grindOption : 'whole_bean',
+      ...(payload.roastOption != null
+        ? { roastOption: payload.roastOption }
+        : {}),
       quantity: payload.quantity ?? 1,
     },
   });

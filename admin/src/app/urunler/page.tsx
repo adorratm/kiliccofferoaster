@@ -67,6 +67,8 @@ type FormState = {
   kind: string;
   allowWholeBean: boolean;
   allowGround: boolean;
+  allowRoastMediumDark: boolean;
+  allowRoastDark: boolean;
   unit: string;
   vatRate: string;
   roastedAt: string;
@@ -111,6 +113,31 @@ const FLAVOR_AXES: { key: keyof FlavorGeometryForm; label: string }[] = [
   { key: 'clarity', label: 'Clarity' },
 ];
 
+/** Kategori slug → tür / varsayılan kavrum */
+const CATEGORY_KIND_BY_SLUG: Record<
+  string,
+  { kind: string; roastLevel?: string }
+> = {
+  'turk-kahvesi': { kind: 'coffee_turkish', roastLevel: 'Orta' },
+  'filtre-kahve': { kind: 'coffee_filter', roastLevel: 'Orta' },
+  espresso: { kind: 'coffee_espresso', roastLevel: 'Orta-Koyu' },
+  lokum: { kind: 'lokum' },
+  draje: { kind: 'draje' },
+  kuruyemis: { kind: 'nuts' },
+  'bitki-cayi': { kind: 'herbal_tea' },
+  baharat: { kind: 'spice' },
+  mesrubat: { kind: 'beverage' },
+  cay: { kind: 'tea' },
+};
+
+function defaultsForKind(kind: string): { roastLevel?: string } {
+  if (kind === 'coffee_turkish' || kind === 'coffee_filter') {
+    return { roastLevel: 'Orta' };
+  }
+  if (kind === 'coffee_espresso') return { roastLevel: 'Orta-Koyu' };
+  return {};
+}
+
 const emptyForm = (): FormState => ({
   name: '',
   slug: '',
@@ -141,6 +168,8 @@ const emptyForm = (): FormState => ({
   kind: 'other',
   allowWholeBean: true,
   allowGround: true,
+  allowRoastMediumDark: true,
+  allowRoastDark: true,
   unit: 'adet',
   vatRate: '20',
   roastedAt: '',
@@ -327,6 +356,8 @@ function ProductsPageInner() {
       kind: p.kind || 'other',
       allowWholeBean: p.allowWholeBean !== false,
       allowGround: p.allowGround !== false,
+      allowRoastMediumDark: p.allowRoastMediumDark !== false,
+      allowRoastDark: p.allowRoastDark !== false,
       unit: p.unit || 'adet',
       vatRate: String(p.vatRate ?? '20'),
       roastedAt: p.roastedAt ? String(p.roastedAt).slice(0, 10) : '',
@@ -388,6 +419,8 @@ function ProductsPageInner() {
       kind: form.kind || 'other',
       allowWholeBean: form.allowWholeBean,
       allowGround: form.allowGround,
+      allowRoastMediumDark: form.allowRoastMediumDark,
+      allowRoastDark: form.allowRoastDark,
       unit: form.unit || 'adet',
       vatRate: Number(form.vatRate) || 20,
       roastedAt: form.roastedAt || null,
@@ -609,7 +642,14 @@ function ProductsPageInner() {
             <span className="mono text-[10px] uppercase text-muted">Tür</span>
             <select
               value={form.kind}
-              onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}
+              onChange={(e) => {
+                const kind = e.target.value;
+                setForm((f) => ({
+                  ...f,
+                  kind,
+                  ...defaultsForKind(kind),
+                }));
+              }}
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             >
               <option value="coffee_turkish">Türk Kahvesi</option>
@@ -646,6 +686,33 @@ function ProductsPageInner() {
                 label="Öğütülmüş"
                 description="Mağazada öğütülmüş seçeneği sunulsun"
               />
+              {form.kind === 'coffee_espresso' ? (
+                <>
+                  <p className="mono pt-2 text-[10px] uppercase text-muted">
+                    Kavrum seçenekleri
+                  </p>
+                  <Checkbox
+                    checked={form.allowRoastMediumDark}
+                    onChange={(allowRoastMediumDark) =>
+                      setForm((f) => ({ ...f, allowRoastMediumDark }))
+                    }
+                    label="Orta-Koyu"
+                    description="Mağazada orta-koyu kavrum seçeneği sunulsun"
+                  />
+                  <Checkbox
+                    checked={form.allowRoastDark}
+                    onChange={(allowRoastDark) =>
+                      setForm((f) => ({ ...f, allowRoastDark }))
+                    }
+                    label="Koyu"
+                    description="Mağazada koyu kavrum seçeneği sunulsun"
+                  />
+                </>
+              ) : (
+                <p className="pt-1 text-xs text-muted">
+                  Kavrum: Orta (filtre / Türk kahvesi için sabit)
+                </p>
+              )}
             </div>
           ) : null}
           <label className="block text-sm">
@@ -680,9 +747,25 @@ function ProductsPageInner() {
             </span>
             <select
               value={form.categoryId}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, categoryId: e.target.value }))
-              }
+              onChange={(e) => {
+                const categoryId = e.target.value;
+                const cat = categories.find((c) => c.id === categoryId);
+                const mapped = cat
+                  ? CATEGORY_KIND_BY_SLUG[cat.slug]
+                  : undefined;
+                setForm((f) => ({
+                  ...f,
+                  categoryId,
+                  ...(mapped
+                    ? {
+                        kind: mapped.kind,
+                        ...(mapped.roastLevel
+                          ? { roastLevel: mapped.roastLevel }
+                          : {}),
+                      }
+                    : {}),
+                }));
+              }}
               className="mt-1 w-full border border-border-muted bg-background px-3 py-2"
             >
               <option value="">— Kategori yok —</option>

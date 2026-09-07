@@ -253,7 +253,7 @@ export class InvoicesService {
     if (!order) throw new NotFoundException('Sipariş bulunamadı');
     const lines: InvoiceLineInputDto[] = (order.items || []).map(
       (item: OrderItem) => ({
-        description: [item.productName, item.variantLabel, item.grindLabel]
+        description: [item.productName, item.variantLabel, item.grindLabel, item.roastLabel]
           .filter(Boolean)
           .join(' · '),
         productId: item.productId ?? undefined,

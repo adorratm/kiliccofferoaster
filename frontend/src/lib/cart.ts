@@ -46,6 +46,7 @@ export async function cartAddItem(payload: {
   productId: string;
   variantId?: string | null;
   grindOption?: string | null;
+  roastOption?: string | null;
   quantity?: number;
 }) {
   const sessionId = getCartSessionId();
@@ -56,6 +57,7 @@ export async function cartAddItem(payload: {
       variantId: payload.variantId ?? null,
       grindOption:
         payload.grindOption !== undefined ? payload.grindOption : "whole_bean",
+      roastOption: payload.roastOption ?? null,
       quantity: payload.quantity ?? 1,
     },
     getToken(),
