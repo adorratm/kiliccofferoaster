@@ -44,6 +44,30 @@ const ACIDITY: { id: Acidity; label: string }[] = [
   { id: 'high', label: 'Yüksek' },
 ];
 
+const METHOD_KINDS: Record<Method, string[]> = {
+  espresso: ['coffee_espresso'],
+  filter: ['coffee_filter'],
+  french: ['coffee_filter'],
+  moka: ['coffee_espresso'],
+  turkish: ['coffee_turkish'],
+};
+
+const METHOD_CATEGORY_SLUGS: Record<Method, string[]> = {
+  espresso: ['espresso'],
+  filter: ['filtre-kahve'],
+  french: ['filtre-kahve'],
+  moka: ['espresso'],
+  turkish: ['turk-kahvesi'],
+};
+
+function productMatchesMethod(p: Product, method: Method): boolean {
+  const kinds = METHOD_KINDS[method];
+  if (p.kind && kinds.includes(p.kind)) return true;
+  const slug = p.category?.slug;
+  if (slug && METHOD_CATEGORY_SLUGS[method].includes(slug)) return true;
+  return false;
+}
+
 function scoreProduct(
   p: Product,
   taste: Taste,
@@ -56,20 +80,27 @@ function scoreProduct(
   const blob = `${notes} ${roast} ${name}`;
   let score = 0;
 
+  if (productMatchesMethod(p, method)) {
+    score += 12;
+  } else {
+    return -1;
+  }
+
   if (taste === 'fruity' && /(meyve|berry|çilek|narenciye|floral|çiçek)/.test(blob))
     score += 3;
   if (taste === 'chocolate' && /(çikolata|kakao|fındık|karamel|nut)/.test(blob))
     score += 3;
-  if (taste === 'bold' && /(dark|koyu|yoğun|bitter|espresso)/.test(blob)) score += 3;
+  if (taste === 'bold' && /(dark|koyu|yoğun|bitter|espresso|gövde)/.test(blob))
+    score += 3;
   if (taste === 'balanced' && /(dengeli|balanced|yumuşak|smooth)/.test(blob))
     score += 2;
 
-  if (method === 'espresso' && /(espresso|crema|yoğun)/.test(blob)) score += 2;
+  if (method === 'espresso' && /(espresso|crema|shot)/.test(blob)) score += 2;
   if (method === 'filter' && /(filtre|v60|pour|aydınlık|floral)/.test(blob))
     score += 2;
-  if (method === 'turkish' && /(türk|ince|fine)/.test(blob)) score += 2;
-  if (method === 'french' && /(french|full|body)/.test(blob)) score += 1;
-  if (method === 'moka' && /(moka|orta)/.test(blob)) score += 1;
+  if (method === 'turkish' && /(türk|ince|cezve)/.test(blob)) score += 2;
+  if (method === 'french' && /(french|press|gövde|full)/.test(blob)) score += 1;
+  if (method === 'moka' && /(moka|espresso|yoğun)/.test(blob)) score += 1;
 
   if (acidity === 'high' && /(asit|bright|narenciye|meyve)/.test(blob)) score += 2;
   if (acidity === 'low' && /(düşük asit|yumuşak|çikolata|fındık)/.test(blob))
@@ -115,6 +146,7 @@ export function CoffeeFinderScreen({ navigation }: Props) {
         product: p,
         score: scoreProduct(p, taste, method, acidity),
       }))
+      .filter((r) => r.score >= 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map((r) => r.product);
@@ -265,7 +297,9 @@ export function CoffeeFinderScreen({ navigation }: Props) {
             </View>
           ) : (
             <View style={{ marginTop: 24 }}>
-              <Text style={muted}>Aktif kahve ürünü bulunamadı.</Text>
+              <Text style={muted}>
+                Bu demleme yöntemine uygun aktif ürün yok.
+              </Text>
               <Pressable
                 onPress={() => navigation.navigate('Catalog', {})}
                 style={{ marginTop: 12 }}
