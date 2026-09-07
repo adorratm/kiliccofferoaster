@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kılıç Coffee Roaster",
     "slug": "kilic-ops",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Torbalı / İzmir specialty kahve: fiziksel kavrum siparişi, kargo veya mağazadan teslim, sipariş takibi ve hesap. Ödeme harici ödeme sağlayıcısı ile yapılır; dijital abonelik yoktur.",
     "orientation": "portrait",
     "scheme": "kilicops",

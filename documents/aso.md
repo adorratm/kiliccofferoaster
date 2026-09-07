@@ -59,4 +59,6 @@ Vitrin `/sitemap.xml`, `/robots.txt`; özel sayfalar (`/hesabim`, `/odeme`, `/si
 
 ## Sürüm
 
-`mobile/app.json` ve `mobile/package.json` `1.0.0` ile hizalıdır. Store’a çıkarken `eas.json` `autoIncrement` kullanın.
+`mobile/app.json` ve `mobile/package.json` sürümleri hizalı tutulur (ör. `1.0.1`).  
+`eas.json` production’da `autoIncrement` yalnız **buildNumber** artırır; App Store’da onaylanmış bir `version` (ör. `1.0.0`) kapandıysa yeni binary için **marketing version**’ı yükseltmek gerekir (`1.0.1`).  
+`appVersionSource: "remote"` iken: `eas build:version:set -p ios --version 1.0.1` sonra `eas build --profile production`.
