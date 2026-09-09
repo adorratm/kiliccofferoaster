@@ -90,13 +90,13 @@ export class WholesaleCatalogsPerBusiness1802000000000
           (id, business_name, token, is_enabled, notes, created_at, updated_at)
         SELECT gen_random_uuid(),
                'Genel toptan katalog',
-               $1,
-               $2,
+               $1::varchar(64),
+               $2::boolean,
                'Önceki tek paylaşım linkinden taşındı',
                now(),
                now()
         WHERE NOT EXISTS (
-          SELECT 1 FROM wholesale_catalogs WHERE token = $1
+          SELECT 1 FROM wholesale_catalogs WHERE token = $1::varchar(64)
         )
         `,
         [token, enabled],
