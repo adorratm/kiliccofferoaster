@@ -19,6 +19,7 @@ type Props = {
 
 export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
   const pathname = usePathname();
+  const isWholesaleCatalog = pathname.startsWith("/katalog/");
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [count, setCount] = useState(0);
@@ -172,6 +173,21 @@ export function SiteHeader({ settings = DEFAULT_SETTINGS }: Props) {
           document.body,
         )
       : null;
+
+  if (isWholesaleCatalog) {
+    return (
+      <header className="fixed top-0 z-50 w-full border-b border-outline-variant/20 bg-background/95 backdrop-blur-sm">
+        <nav className="page-shell flex h-20 items-center justify-between">
+          <span className="font-display text-xl tracking-tighter text-primary md:text-2xl">
+            {settings.brand.name}
+          </span>
+          <span className="font-meta text-[10px] uppercase tracking-[0.25em] text-secondary">
+            Toptan katalog
+          </span>
+        </nav>
+      </header>
+    );
+  }
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-outline-variant/20 bg-background/95 backdrop-blur-sm">

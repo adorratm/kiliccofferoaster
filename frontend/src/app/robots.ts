@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
         "/siparis-sorgula",
         "/takip",
         "/takip/",
+        "/katalog",
+        "/katalog/",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

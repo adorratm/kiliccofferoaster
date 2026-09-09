@@ -8,6 +8,8 @@ import { LowStockProcessor } from '@modules/catalog/low-stock.processor';
 import { LowStockScheduler } from '@modules/catalog/low-stock.scheduler';
 import { CategoriesController } from '@modules/catalog/categories.controller';
 import { ProductsController } from '@modules/catalog/products.controller';
+import { WholesaleCatalogController } from '@modules/catalog/wholesale-catalog.controller';
+import { WholesaleCatalogService } from '@modules/catalog/wholesale-catalog.service';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { CampaignsModule } from '@modules/campaigns/campaigns.module';
 import { QUEUE_LOW_STOCK } from '@modules/queues/queue.constants';
@@ -18,7 +20,11 @@ import { QUEUE_LOW_STOCK } from '@modules/queues/queue.constants';
     CampaignsModule,
     BullModule.registerQueue({ name: QUEUE_LOW_STOCK }),
   ],
-  controllers: [CategoriesController, ProductsController],
+  controllers: [
+    CategoriesController,
+    ProductsController,
+    WholesaleCatalogController,
+  ],
   providers: [
     CategoriesService,
     ProductsService,
@@ -26,12 +32,14 @@ import { QUEUE_LOW_STOCK } from '@modules/queues/queue.constants';
     InventoryService,
     LowStockProcessor,
     LowStockScheduler,
+    WholesaleCatalogService,
   ],
   exports: [
     CategoriesService,
     ProductsService,
     LowStockService,
     InventoryService,
+    WholesaleCatalogService,
   ],
 })
 export class CatalogModule {}

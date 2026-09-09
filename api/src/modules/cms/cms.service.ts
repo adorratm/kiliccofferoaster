@@ -17,7 +17,13 @@ export class CmsService {
     const rows = await this.em.find(SiteSetting, {
       order: { key: 'ASC' },
     });
-    return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    // Gizli / dahili anahtarlar public CMS yanıtına düşmesin
+    const privateKeys = new Set(['wholesale_catalog']);
+    return Object.fromEntries(
+      rows
+        .filter((row) => !privateKeys.has(row.key))
+        .map((row) => [row.key, row.value]),
+    );
   }
 
   async listSettingsAdmin(): Promise<SiteSetting[]> {

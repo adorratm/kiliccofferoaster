@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Anton, Inter, JetBrains_Mono } from "next/font/google";
-import { CookieBanner } from "@/components/CookieBanner";
+import { CookieBannerGate } from "@/components/CookieBannerGate";
 import { AppShellMark } from "@/components/AppShellMark";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { GoogleConsentTags } from "@/components/GoogleConsentTags";
-import { SiteFooter } from "@/components/SiteFooter";
+import { SiteFooterGate } from "@/components/SiteFooterGate";
 import { SiteHeader } from "@/components/SiteHeader";
-import { WhatsAppChat } from "@/components/WhatsAppChat";
+import { WhatsAppChatGate } from "@/components/WhatsAppChatGate";
 import { getSiteSettings } from "@/lib/cms";
 import {
   JsonLd,
@@ -81,8 +81,8 @@ export default async function RootLayout({
         <AppShellMark />
         <SiteHeader settings={settings} />
         <main className="flex-1 pt-20">{children}</main>
-        <SiteFooter settings={settings} />
-        <WhatsAppChat
+        <SiteFooterGate settings={settings} />
+        <WhatsAppChatGate
           enabled={settings.whatsapp.enabled}
           phone={resolveWhatsAppPhone({
             whatsappPhone: settings.whatsapp.phone,
@@ -92,7 +92,7 @@ export default async function RootLayout({
           greeting={settings.whatsapp.greeting}
           presets={settings.whatsapp.presets}
         />
-        <CookieBanner />
+        <CookieBannerGate />
         <AnalyticsScripts />
       </body>
     </html>

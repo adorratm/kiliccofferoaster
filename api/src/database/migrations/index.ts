@@ -26,6 +26,10 @@ import { SeoCatalogLocalContent1797000000000 } from './1797000000000-SeoCatalogL
 import { MobileClientEvents1798000000000 } from './1798000000000-MobileClientEvents';
 import { ProductRoastOptions1799000000000 } from './1799000000000-ProductRoastOptions';
 import { FilterEspressoSeoBlogPosts1800000000000 } from './1800000000000-FilterEspressoSeoBlogPosts';
+import { WholesaleCatalogSetting1801000000000 } from './1801000000000-WholesaleCatalogSetting';
+import { WholesaleCatalogsPerBusiness1802000000000 } from './1802000000000-WholesaleCatalogsPerBusiness';
+import { WholesaleCatalogContactFields1803000000000 } from './1803000000000-WholesaleCatalogContactFields';
+import { WholesaleCatalogInstagram1804000000000 } from './1804000000000-WholesaleCatalogInstagram';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -60,4 +64,8 @@ export const ALL_MIGRATIONS = [
   MobileClientEvents1798000000000,
   ProductRoastOptions1799000000000,
   FilterEspressoSeoBlogPosts1800000000000,
+  WholesaleCatalogSetting1801000000000,
+  WholesaleCatalogsPerBusiness1802000000000,
+  WholesaleCatalogContactFields1803000000000,
+  WholesaleCatalogInstagram1804000000000,
 ];

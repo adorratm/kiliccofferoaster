@@ -25,6 +25,7 @@ const NAV: { title: string; items: NavItem[] }[] = [
     title: 'Mağaza',
     items: [
       { to: '/urunler', label: 'Ürünler', code: '08' },
+      { to: '/toptan-katalog', label: 'Toptan Katalog', code: '08b', adminOnly: true },
       { to: '/kategoriler', label: 'Kategoriler', code: '09' },
       { to: '/siparisler', label: 'Siparişler', code: '10' },
       { to: '/musteriler', label: 'Müşteriler', code: '10c' },

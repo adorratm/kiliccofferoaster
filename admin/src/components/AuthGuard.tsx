@@ -20,6 +20,7 @@ const ADMIN_ONLY_PREFIXES = [
   '/pazaryeri',
   '/sozlesmeler',
   '/kuyruklar',
+  '/toptan-katalog',
 ];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {

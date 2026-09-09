@@ -53,6 +53,8 @@ export {
 } from '@entities/device-push-token.entity';
 export { Campaign } from '@entities/campaign.entity';
 export { Party, PartyType } from '@entities/party.entity';
+export { WholesaleCatalog } from '@entities/wholesale-catalog.entity';
+export { WholesaleCatalogPrice } from '@entities/wholesale-catalog-price.entity';
 export {
   Invoice,
   InvoiceDirection,

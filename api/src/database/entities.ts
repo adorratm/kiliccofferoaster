@@ -35,6 +35,8 @@ import { ProductReview } from '@entities/product-review.entity';
 import { WishlistItem } from '@entities/wishlist-item.entity';
 import { Campaign } from '@entities/campaign.entity';
 import { Party } from '@entities/party.entity';
+import { WholesaleCatalog } from '@entities/wholesale-catalog.entity';
+import { WholesaleCatalogPrice } from '@entities/wholesale-catalog-price.entity';
 import { Invoice } from '@entities/invoice.entity';
 import { InvoiceLine } from '@entities/invoice-line.entity';
 import { CashAccount } from '@entities/cash-account.entity';
@@ -82,6 +84,8 @@ export const ALL_ENTITIES = [
   WishlistItem,
   Campaign,
   Party,
+  WholesaleCatalog,
+  WholesaleCatalogPrice,
   Invoice,
   InvoiceLine,
   CashAccount,

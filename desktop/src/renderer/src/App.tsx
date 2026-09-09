@@ -26,6 +26,7 @@ import { CustomersPage } from './pages/Customers';
 import { NotificationsPage } from './pages/Notifications';
 import { StaffRequestsPage } from './pages/StaffRequests';
 import { UsersPage } from './pages/Users';
+import { WholesaleCatalogPage } from './pages/WholesaleCatalog';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const user = getUser();
@@ -63,6 +64,14 @@ export default function App() {
                 <Route path="/raporlar" element={<ReportsPage />} />
                 <Route path="/urunler" element={<ProductsPage />} />
                 <Route path="/urunler/:id" element={<ProductsPage />} />
+                <Route
+                  path="/toptan-katalog"
+                  element={
+                    <RequireAdmin>
+                      <WholesaleCatalogPage />
+                    </RequireAdmin>
+                  }
+                />
                 <Route path="/kategoriler" element={<CategoriesPage />} />
                 <Route path="/siparisler" element={<OrdersPage />} />
                 <Route path="/siparisler/:id" element={<OrdersPage />} />

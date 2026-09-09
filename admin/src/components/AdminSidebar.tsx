@@ -21,6 +21,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: '/blog', label: 'Blog', code: '04', adminOnly: true },
   { href: '/icerik', label: 'İçerik', code: '05', adminOnly: true },
   { href: '/site-ayarlari', label: 'Site Ayarları', code: '06', adminOnly: true },
+  { href: '/toptan-katalog', label: 'Toptan Katalog', code: '06b', adminOnly: true },
   { href: '/medya', label: 'Medya', code: '07', adminOnly: true },
   { href: '/galeri', label: 'Site Galerisi', code: '07b', adminOnly: true },
   { href: '/siparisler', label: 'Siparişler', code: '08' },
