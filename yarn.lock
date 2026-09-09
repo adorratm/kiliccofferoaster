@@ -3519,7 +3519,6 @@ __metadata:
     "@nestjs/typeorm": "npm:^12.0.1"
     "@nestjs/websockets": "npm:^12.0.1"
     "@rspack/core": "npm:^2.2.3"
-    "@types/adm-zip": "npm:^0.5.8"
     "@types/bcrypt": "npm:^6.0.0"
     "@types/bcryptjs": "npm:^3.0.0"
     "@types/express": "npm:^5.0.6"
@@ -3535,7 +3534,6 @@ __metadata:
     "@types/pg": "npm:^8.23.1"
     "@types/supertest": "npm:^7.2.1"
     "@types/uuid": "npm:^11.0.0"
-    adm-zip: "npm:0.5.8"
     axios: "npm:^1.20.0"
     bcrypt: "npm:^6.0.0"
     bcryptjs: "npm:^3.0.3"
@@ -3550,8 +3548,9 @@ __metadata:
     ioredis: "npm:^6.0.0"
     iyzipay: "npm:^2.0.69"
     jest: "npm:^30.5.1"
+    jszip: "npm:^3.10.2"
     mime-types: "npm:^3.0.2"
-    multer: "npm:^2.3.0"
+    multer: "npm:2.3.0"
     nodemailer: "npm:^10.0.1"
     passport: "npm:^0.7.0"
     passport-google-oauth20: "npm:^2.0.0"
@@ -5408,15 +5407,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/adm-zip@npm:^0.5.8":
-  version: 0.5.8
-  resolution: "@types/adm-zip@npm:0.5.8"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10c0/64d0f3a3e8c1546a7a6685726b3342100a4329e530e643b06107919668688b21db717aa35bf0df11454dce6f63968b6f412482de8a4dd2466664b19289f660f7
-  languageName: node
-  linkType: hard
-
 "@types/babel__core@npm:^7.20.5":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
@@ -6537,13 +6527,6 @@ __metadata:
   bin:
     acorn: bin/acorn
   checksum: 10c0/be771be2135cc07910cf76f444ad514d7dcfd6d4a8026e597e93155275abc8ef61eee12211d52146e9d962874269b634f397464942087be013c89d0c54c5f8e5
-  languageName: node
-  linkType: hard
-
-"adm-zip@npm:0.5.8":
-  version: 0.5.8
-  resolution: "adm-zip@npm:0.5.8"
-  checksum: 10c0/1d276b4fe92b02082bf7a0819d5391861e672bfaa21e50cebabb5649a90646f78776ed3af6f94a65605af5d137519050695031243465e866b87f48c139478e36
   languageName: node
   linkType: hard
 
@@ -11368,6 +11351,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immediate@npm:~3.0.5":
+  version: 3.0.6
+  resolution: "immediate@npm:3.0.6"
+  checksum: 10c0/f8ba7ede69bee9260241ad078d2d535848745ff5f6995c7c7cb41cfdc9ccc213f66e10fa5afb881f90298b24a3f7344b637b592beb4f54e582770cdce3f1f039
+  languageName: node
+  linkType: hard
+
 "import-fresh@npm:^3.2.1":
   version: 3.3.1
   resolution: "import-fresh@npm:3.3.1"
@@ -12744,6 +12734,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jszip@npm:^3.10.2":
+  version: 3.10.2
+  resolution: "jszip@npm:3.10.2"
+  dependencies:
+    lie: "npm:~3.3.0"
+    pako: "npm:~1.0.2"
+    readable-stream: "npm:~2.3.6"
+    setimmediate: "npm:^1.0.5"
+  checksum: 10c0/c51b1473062bb7ac81c0c76047d99a2b56a062f2427ac989e28b46b31ecab636a440f137d15ff6320a961b7e1048c802f0bed83a2e10ed0ba9c2cfd84e818bc6
+  languageName: node
+  linkType: hard
+
 "jwa@npm:^2.0.1":
   version: 2.0.1
   resolution: "jwa@npm:2.0.1"
@@ -12853,6 +12855,15 @@ __metadata:
   version: 1.13.8
   resolution: "libphonenumber-js@npm:1.13.8"
   checksum: 10c0/8115a709393f655c98bff70c4a6e80ad7ff402a3def177bc5042ccdd9849c900f0c766f3254c64897b4c77566108822e493b13fd6943d3b079fad5506245308e
+  languageName: node
+  linkType: hard
+
+"lie@npm:~3.3.0":
+  version: 3.3.0
+  resolution: "lie@npm:3.3.0"
+  dependencies:
+    immediate: "npm:~3.0.5"
+  checksum: 10c0/56dd113091978f82f9dc5081769c6f3b947852ecf9feccaf83e14a123bc630c2301439ce6182521e5fbafbde88e88ac38314327a4e0493a1bea7e0699a7af808
   languageName: node
   linkType: hard
 
@@ -14585,6 +14596,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pako@npm:~1.0.2":
+  version: 1.0.11
+  resolution: "pako@npm:1.0.11"
+  checksum: 10c0/86dd99d8b34c3930345b8bbeb5e1cd8a05f608eeb40967b293f72fe469d0e9c88b783a8777e4cc7dc7c91ce54c5e93d88ff4b4f060e6ff18408fd21030d9ffbe
+  languageName: node
+  linkType: hard
+
 "parent-module@npm:^1.0.0":
   version: 1.0.1
   resolution: "parent-module@npm:1.0.1"
@@ -15611,7 +15629,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^2.0.2":
+"readable-stream@npm:^2.0.2, readable-stream@npm:~2.3.6":
   version: 2.3.8
   resolution: "readable-stream@npm:2.3.8"
   dependencies:

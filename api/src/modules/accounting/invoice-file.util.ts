@@ -1,5 +1,5 @@
 import { BadRequestException, Logger } from '@nestjs/common';
-import AdmZip from 'adm-zip';
+import JSZip from 'jszip';
 import puppeteer, { type Browser, type PDFOptions } from 'puppeteer';
 
 export type InvoiceEmailAttachment = {
@@ -102,37 +102,38 @@ function sniffDocumentKind(
 }
 
 /** ZIP: önce HTML, yoksa XML. */
-export function extractDocumentFromZip(buffer: Buffer): {
+export async function extractDocumentFromZip(buffer: Buffer): Promise<{
   content: string;
   filename: string;
   kind: DocumentKind;
-} {
-  const zip = new AdmZip(buffer);
-  const entries = zip.getEntries().filter((e) => !e.isDirectory);
+}> {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(buffer, { checkCRC32: true });
+  } catch {
+    throw new BadRequestException('ZIP dosyası okunamadı');
+  }
 
-  const htmlEntries = entries.filter(
-    (e) => /\.html?$/i.test(e.entryName) && !isIgnoredZipEntry(e.entryName),
+  const files = Object.values(zip.files).filter(
+    (e) => !e.dir && !isIgnoredZipEntry(e.name),
   );
-  const xmlEntries = entries.filter(
-    (e) => /\.xml$/i.test(e.entryName) && !isIgnoredZipEntry(e.entryName),
-  );
 
-  const pick = (list: AdmZip.IZipEntry[]) => list[0];
-
-  const htmlEntry = pick(htmlEntries);
+  const htmlEntry = files.find((e) => /\.html?$/i.test(e.name));
   if (htmlEntry) {
+    const content = await htmlEntry.async('string');
     return {
-      content: htmlEntry.getData().toString('utf8'),
-      filename: basename(htmlEntry.entryName),
+      content,
+      filename: basename(htmlEntry.name),
       kind: 'html',
     };
   }
 
-  const xmlEntry = pick(xmlEntries);
+  const xmlEntry = files.find((e) => /\.xml$/i.test(e.name));
   if (xmlEntry) {
+    const content = await xmlEntry.async('string');
     return {
-      content: xmlEntry.getData().toString('utf8'),
-      filename: basename(xmlEntry.entryName),
+      content,
+      filename: basename(xmlEntry.name),
       kind: 'xml',
     };
   }
@@ -360,7 +361,7 @@ export async function prepareInvoiceAttachment(
   const kind = sniffDocumentKind(file.buffer, name, mime);
 
   if (kind === 'zip') {
-    const doc = extractDocumentFromZip(file.buffer);
+    const doc = await extractDocumentFromZip(file.buffer);
     const base = doc.filename.replace(/\.(html?|xml)$/i, '') || 'fatura';
     return {
       attachment: await documentToPdfAttachment(

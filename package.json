@@ -55,7 +55,6 @@
     "js-yaml@npm:5.2.2": "5.2.3",
     "multer": "2.3.0",
     "baseline-browser-mapping": "2.11.21",
-    "adm-zip": "0.5.8",
     "metro": "0.84.5",
     "metro-babel-transformer": "0.84.5",
     "metro-cache": "0.84.5",
