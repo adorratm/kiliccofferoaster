@@ -8,14 +8,13 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { EntityManager, In } from 'typeorm';
 import { COFFEE_KINDS } from '@common/constants/grind-options';
+import { WHOLESALE_MIN_ORDER_KG } from '@common/constants/wholesale';
 import {
   paginateResult,
   PaginatedResult,
 } from '@common/utils/pagination';
-import { sortByWeightLabel } from '@common/utils/weight-sort';
 import { Party } from '@entities/party.entity';
 import { Product } from '@entities/product.entity';
-import { ProductVariant } from '@entities/product-variant.entity';
 import { SiteSetting } from '@entities/site-setting.entity';
 import { WholesaleCatalog } from '@entities/wholesale-catalog.entity';
 import { WholesaleCatalogPrice } from '@entities/wholesale-catalog-price.entity';
@@ -41,15 +40,11 @@ export type WholesaleCatalogItem = {
   roastedAt: string | null;
   kind: string;
   currency: string;
-  basePrice: string;
+  /** ₺ / kg */
+  pricePerKg: string;
+  minOrderKg: number;
   imageUrl: string | null;
   category: { name: string; slug: string } | null;
-  variants: Array<{
-    weightLabel: string;
-    price: string;
-    listPrice?: string;
-    isCustomPrice?: boolean;
-  }>;
 };
 
 export type WholesaleCatalogListItem = {
@@ -69,6 +64,7 @@ export type WholesaleCatalogListItem = {
   sharePath: string;
   shareUrl: string;
   priceCount: number;
+  minOrderKg: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -81,12 +77,16 @@ export type WholesaleCatalogAdminDetail = WholesaleCatalogListItem & {
     kind: string;
     currency: string;
     categoryName: string | null;
-    variants: Array<{
-      id: string;
-      weightLabel: string;
-      listPrice: string;
-      customPrice: string | null;
-    }>;
+    imageUrl: string | null;
+    /** Ürün varsayılanları (referans) */
+    productOriginCountry: string | null;
+    productOriginRegion: string | null;
+    productFlavorNotes: string[];
+    /** Katalog değerleri (düzenlenebilir) */
+    pricePerKg: string | null;
+    originCountry: string;
+    originRegion: string;
+    flavorNotes: string[];
   }>;
 };
 
@@ -139,6 +139,7 @@ export class WholesaleCatalogService {
       sharePath: this.sharePath(catalog.token),
       shareUrl: this.shareUrl(catalog.token),
       priceCount,
+      minOrderKg: WHOLESALE_MIN_ORDER_KG,
       createdAt: new Date(catalog.createdAt).toISOString(),
       updatedAt: new Date(catalog.updatedAt).toISOString(),
     };
@@ -210,27 +211,34 @@ export class WholesaleCatalogService {
     });
     if (!catalog) throw new NotFoundException('Katalog bulunamadı');
 
-    const overrideMap = new Map(
-      (catalog.prices || []).map((p) => [p.variantId, p.price]),
+    const priceByProduct = new Map(
+      (catalog.prices || []).map((p) => [p.productId, p]),
     );
 
     const products = await this.loadCoffeeProducts();
-    const matrix = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      kind: p.kind,
-      currency: p.currency || 'TRY',
-      categoryName: p.category?.name ?? null,
-      variants: sortByWeightLabel(
-        (p.variants || []).filter((v) => v.isActive),
-      ).map((v) => ({
-        id: v.id,
-        weightLabel: v.weightLabel,
-        listPrice: v.price,
-        customPrice: overrideMap.get(v.id) ?? null,
-      })),
-    }));
+    const matrix = products.map((p) => {
+      const row = priceByProduct.get(p.id);
+      const productNotes = p.flavorNotes || [];
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        kind: p.kind,
+        currency: p.currency || 'TRY',
+        categoryName: p.category?.name ?? null,
+        imageUrl: p.imageUrl,
+        productOriginCountry: p.originCountry,
+        productOriginRegion: p.originRegion,
+        productFlavorNotes: productNotes,
+        pricePerKg: row?.price ?? null,
+        originCountry: row?.originCountry ?? p.originCountry ?? '',
+        originRegion: row?.originRegion ?? p.originRegion ?? '',
+        flavorNotes:
+          row?.flavorNotes && row.flavorNotes.length
+            ? row.flavorNotes
+            : productNotes,
+      };
+    });
 
     return {
       ...this.toListItem(catalog, catalog.prices?.length || 0),
@@ -357,19 +365,17 @@ export class WholesaleCatalogService {
     catalogId: string,
     inputs: WholesaleCatalogPriceInputDto[],
   ): Promise<void> {
-    const variantIds = [...new Set(inputs.map((i) => i.variantId))];
-    if (!variantIds.length) return;
+    const productIds = [...new Set(inputs.map((i) => i.productId))];
+    if (!productIds.length) return;
 
-    const variants = await this.em.find(ProductVariant, {
-      where: { id: In(variantIds) },
+    const products = await this.em.find(Product, {
+      where: { id: In(productIds) },
     });
-    const validIds = new Set(variants.map((v) => v.id));
+    const validIds = new Set(products.map((p) => p.id));
 
     for (const input of inputs) {
-      if (!validIds.has(input.variantId)) {
-        throw new BadRequestException(
-          `Geçersiz varyant: ${input.variantId}`,
-        );
+      if (!validIds.has(input.productId)) {
+        throw new BadRequestException(`Geçersiz ürün: ${input.productId}`);
       }
 
       const raw = input.price;
@@ -379,7 +385,7 @@ export class WholesaleCatalogService {
         (typeof raw === 'string' && raw.trim() === '');
 
       const existing = await this.em.findOne(WholesaleCatalogPrice, {
-        where: { catalogId, variantId: input.variantId },
+        where: { catalogId, productId: input.productId },
       });
 
       if (shouldClear) {
@@ -394,15 +400,36 @@ export class WholesaleCatalogService {
       }
       const normalized = num.toFixed(2);
 
+      const originCountry =
+        input.originCountry !== undefined
+          ? this.normalizeOptional(input.originCountry)
+          : (existing?.originCountry ?? null);
+      const originRegion =
+        input.originRegion !== undefined
+          ? this.normalizeOptional(input.originRegion)
+          : (existing?.originRegion ?? null);
+      const flavorNotes =
+        input.flavorNotes !== undefined
+          ? (input.flavorNotes || [])
+              .map((n) => String(n).trim())
+              .filter(Boolean)
+          : (existing?.flavorNotes ?? null);
+
       if (existing) {
         existing.price = normalized;
+        existing.originCountry = originCountry;
+        existing.originRegion = originRegion;
+        existing.flavorNotes = flavorNotes?.length ? flavorNotes : null;
         await this.em.save(existing);
       } else {
         await this.em.save(
           this.em.create(WholesaleCatalogPrice, {
             catalogId,
-            variantId: input.variantId,
+            productId: input.productId,
             price: normalized,
+            originCountry,
+            originRegion,
+            flavorNotes: flavorNotes?.length ? flavorNotes : null,
           }),
         );
       }
@@ -431,7 +458,6 @@ export class WholesaleCatalogService {
     return this.em
       .createQueryBuilder(Product, 'p')
       .leftJoinAndSelect('p.category', 'category')
-      .leftJoinAndSelect('p.variants', 'variants')
       .where('p.is_active = true')
       .andWhere('p.kind IN (:...coffeeKinds)', {
         coffeeKinds: [...COFFEE_KINDS],
@@ -458,6 +484,7 @@ export class WholesaleCatalogService {
   async getPublicCatalog(token: string): Promise<{
     brandName: string;
     businessName: string;
+    minOrderKg: number;
     updatedAt: string | null;
     items: WholesaleCatalogItem[];
   }> {
@@ -472,53 +499,71 @@ export class WholesaleCatalogService {
       throw new NotFoundException('Katalog bulunamadı');
     }
 
-    const overrideMap = new Map(
-      (catalog.prices || []).map((p) => [p.variantId, p.price]),
-    );
-
-    const products = await this.loadCoffeeProducts();
-    const items: WholesaleCatalogItem[] = products.map((p) => {
-      const variants = sortByWeightLabel(
-        (p.variants || []).filter((v) => v.isActive),
-      ).map((v) => {
-        const custom = overrideMap.get(v.id);
-        const price = custom ?? v.price;
-        return {
-          weightLabel: v.weightLabel,
-          price,
-          listPrice: v.price,
-          isCustomPrice: custom != null,
-        };
-      });
-
-      const first = variants[0];
+    const priceRows = (catalog.prices || []).filter((p) => p.productId);
+    if (!priceRows.length) {
       return {
+        brandName: await this.brandName(),
+        businessName: catalog.businessName,
+        minOrderKg: WHOLESALE_MIN_ORDER_KG,
+        updatedAt: catalog.updatedAt
+          ? new Date(catalog.updatedAt).toISOString()
+          : null,
+        items: [],
+      };
+    }
+
+    const products = await this.em.find(Product, {
+      where: {
+        id: In(priceRows.map((p) => p.productId)),
+        isActive: true,
+      },
+      relations: { category: true },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const items: WholesaleCatalogItem[] = [];
+    for (const row of priceRows) {
+      const p = productMap.get(row.productId);
+      if (!p) continue;
+      const flavorNotes =
+        row.flavorNotes && row.flavorNotes.length
+          ? row.flavorNotes
+          : p.flavorNotes || [];
+      items.push({
         id: p.id,
         name: p.name,
         slug: p.slug,
         shortDescription: p.shortDescription,
-        originCountry: p.originCountry,
-        originRegion: p.originRegion,
+        originCountry: row.originCountry || p.originCountry,
+        originRegion: row.originRegion || p.originRegion,
         altitude: p.altitude,
         process: p.process,
         varietal: p.varietal,
         roastLevel: p.roastLevel,
-        flavorNotes: p.flavorNotes || [],
+        flavorNotes,
         roastedAt: p.roastedAt,
         kind: p.kind,
         currency: p.currency || 'TRY',
-        basePrice: first?.price ?? p.basePrice,
+        pricePerKg: row.price,
+        minOrderKg: WHOLESALE_MIN_ORDER_KG,
         imageUrl: p.imageUrl,
         category: p.category
           ? { name: p.category.name, slug: p.category.slug }
           : null,
-        variants,
-      };
+      });
+    }
+
+    items.sort((a, b) => {
+      const ca = a.category?.name || '';
+      const cb = b.category?.name || '';
+      if (ca !== cb) return ca.localeCompare(cb, 'tr');
+      return a.name.localeCompare(b.name, 'tr');
     });
 
     return {
       brandName: await this.brandName(),
       businessName: catalog.businessName,
+      minOrderKg: WHOLESALE_MIN_ORDER_KG,
       updatedAt: catalog.updatedAt
         ? new Date(catalog.updatedAt).toISOString()
         : null,

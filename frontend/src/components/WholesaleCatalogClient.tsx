@@ -18,15 +18,16 @@ export type WholesaleCatalogItem = {
   roastedAt: string | null;
   kind: string;
   currency: string;
-  basePrice: string;
+  pricePerKg: string;
+  minOrderKg: number;
   imageUrl: string | null;
   category: { name: string; slug: string } | null;
-  variants: Array<{ weightLabel: string; price: string }>;
 };
 
 export type WholesaleCatalogResponse = {
   brandName: string;
   businessName: string;
+  minOrderKg: number;
   updatedAt: string | null;
   items: WholesaleCatalogItem[];
 };
@@ -56,6 +57,7 @@ export function WholesaleCatalogClient({
   contactPhone,
   contactEmail,
 }: Props) {
+  const minKg = catalog.minOrderKg || 10;
   const grouped = new Map<string, WholesaleCatalogItem[]>();
   for (const item of catalog.items) {
     const key = item.category?.name || productKindLabel(item.kind) || "Kahve";
@@ -87,12 +89,13 @@ export function WholesaleCatalogClient({
           </p>
         ) : null}
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-on-surface-variant sm:text-base">
-          Kavrulmuş kahve fiyat listesi ve tadım notaları. Bu sayfa yalnızca size
-          özel paylaşılan link ile görüntülenir.
+          Fiyatlar kilogram bazlıdır. Minimum sipariş {minKg} kg. Tadım notaları
+          ve menşei bilgileri her kahvenin altında yer alır.
         </p>
         <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 font-meta text-[11px] uppercase tracking-widest text-secondary">
           {updatedLabel ? <span>Güncelleme · {updatedLabel}</span> : null}
           <span>{catalog.items.length} kahve</span>
+          <span>Min. {minKg} kg</span>
           {contactPhone ? <span>{contactPhone}</span> : null}
           {contactEmail ? <span>{contactEmail}</span> : null}
         </div>
@@ -100,7 +103,7 @@ export function WholesaleCatalogClient({
 
       {catalog.items.length === 0 ? (
         <p className="mt-12 text-sm text-on-surface-variant">
-          Şu an listelenecek aktif kahve bulunmuyor.
+          Bu katalogda henüz fiyatlandırılmış kahve bulunmuyor.
         </p>
       ) : (
         <div className="mt-10 space-y-14">
@@ -137,9 +140,27 @@ export function WholesaleCatalogClient({
                             </span>
                           ) : null}
                         </div>
+                        {(item.originCountry || item.originRegion) && (
+                          <p className="mt-2 text-sm text-on-surface">
+                            <span className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
+                              Menşei{" "}
+                            </span>
+                            {[item.originRegion, item.originCountry]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                        )}
                         {bits.length > 0 ? (
                           <p className="mt-1 text-xs text-secondary">
-                            {bits.join(" · ")}
+                            {bits
+                              .filter(
+                                (b) =>
+                                  b !==
+                                  [item.originRegion, item.originCountry]
+                                    .filter(Boolean)
+                                    .join(", "),
+                              )
+                              .join(" · ")}
                           </p>
                         ) : null}
                         {item.shortDescription ? (
@@ -157,31 +178,21 @@ export function WholesaleCatalogClient({
                             </p>
                           </div>
                         ) : null}
-                        <div className="mt-4">
-                          <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
-                            Fiyatlar
-                          </p>
-                          {item.variants.length > 0 ? (
-                            <dl className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                              {item.variants.map((v) => (
-                                <div
-                                  key={`${item.id}-${v.weightLabel}`}
-                                  className="flex items-baseline justify-between gap-3 border-b border-outline-variant/20 pb-1.5 text-sm"
-                                >
-                                  <dt className="text-secondary">
-                                    {v.weightLabel}
-                                  </dt>
-                                  <dd className="font-medium tabular-nums text-on-surface">
-                                    {formatMoney(v.price, item.currency)}
-                                  </dd>
-                                </div>
-                              ))}
-                            </dl>
-                          ) : (
-                            <p className="mt-2 text-sm tabular-nums text-on-surface">
-                              {formatMoney(item.basePrice, item.currency)}
+                        <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-outline-variant/20 pt-3">
+                          <div>
+                            <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-primary/70">
+                              Toptan fiyat
                             </p>
-                          )}
+                            <p className="mt-1 text-lg font-medium tabular-nums text-on-surface">
+                              {formatMoney(item.pricePerKg, item.currency)}
+                              <span className="ml-1 text-sm font-normal text-secondary">
+                                / kg
+                              </span>
+                            </p>
+                          </div>
+                          <p className="font-meta text-[10px] uppercase tracking-widest text-secondary">
+                            Min. {item.minOrderKg || minKg} kg
+                          </p>
                         </div>
                       </div>
                     </li>
@@ -194,8 +205,8 @@ export function WholesaleCatalogClient({
       )}
 
       <footer className="mt-14 border-t border-outline-variant/40 pt-6 text-xs leading-relaxed text-secondary">
-        Fiyatlar bilgilendirme amaçlıdır ve önceden haber verilmeksizin
-        değişebilir. Toptan sipariş ve özel gramaj için iletişime geçin.
+        Fiyatlar kilogram başına olup minimum sipariş {minKg} kg’dır. Bilgilendirme
+        amaçlıdır ve önceden haber verilmeksizin değişebilir.
       </footer>
     </div>
   );

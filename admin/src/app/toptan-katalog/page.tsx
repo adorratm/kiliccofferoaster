@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
-import { asPaged, formatMoney } from '@/lib/utils';
+import { asPaged } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Checkbox } from '@/components/Checkbox';
 
@@ -47,6 +47,7 @@ type CatalogListItem = {
 };
 
 type CatalogDetail = CatalogListItem & {
+  minOrderKg?: number;
   products: Array<{
     id: string;
     name: string;
@@ -54,16 +55,25 @@ type CatalogDetail = CatalogListItem & {
     kind: string;
     currency: string;
     categoryName: string | null;
-    variants: Array<{
-      id: string;
-      weightLabel: string;
-      listPrice: string;
-      customPrice: string | null;
-    }>;
+    imageUrl: string | null;
+    productOriginCountry: string | null;
+    productOriginRegion: string | null;
+    productFlavorNotes: string[];
+    pricePerKg: string | null;
+    originCountry: string;
+    originRegion: string;
+    flavorNotes: string[];
   }>;
 };
 
-type PriceDraft = Record<string, string>;
+type ProductPriceDraft = {
+  price: string;
+  originCountry: string;
+  originRegion: string;
+  flavorNotes: string;
+};
+
+type PriceDraft = Record<string, ProductPriceDraft>;
 
 const emptyContact = (): ContactFields => ({
   contactPerson: '',
@@ -77,9 +87,12 @@ const emptyContact = (): ContactFields => ({
 function draftsFromDetail(detail: CatalogDetail): PriceDraft {
   const draft: PriceDraft = {};
   for (const p of detail.products) {
-    for (const v of p.variants) {
-      draft[v.id] = v.customPrice ?? '';
-    }
+    draft[p.id] = {
+      price: p.pricePerKg ?? '',
+      originCountry: p.originCountry || '',
+      originRegion: p.originRegion || '',
+      flavorNotes: (p.flavorNotes || []).join(', '),
+    };
   }
   return draft;
 }
@@ -347,9 +360,15 @@ export default function WholesaleCatalogAdminPage() {
     setError(null);
     setMessage(null);
     try {
-      const prices = Object.entries(priceDraft).map(([variantId, price]) => ({
-        variantId,
-        price: price.trim() === '' ? null : price.trim(),
+      const prices = Object.entries(priceDraft).map(([productId, row]) => ({
+        productId,
+        price: row.price.trim() === '' ? null : row.price.trim(),
+        originCountry: row.originCountry.trim() || null,
+        originRegion: row.originRegion.trim() || null,
+        flavorNotes: row.flavorNotes
+          .split(/[,;]+/)
+          .map((n) => n.trim())
+          .filter(Boolean),
       }));
       const row = await api<CatalogDetail>(
         `/wholesale-catalog/admin/${detail.id}`,
@@ -437,29 +456,47 @@ export default function WholesaleCatalogAdminPage() {
     }
   }
 
-  function fillListPrices() {
-    if (!detail) return;
-    const next: PriceDraft = { ...priceDraft };
-    for (const p of detail.products) {
-      for (const v of p.variants) {
-        if (!next[v.id]?.trim()) next[v.id] = v.listPrice;
-      }
-    }
-    setPriceDraft(next);
-  }
-
   function clearCustomPrices() {
     if (!detail) return;
     const next: PriceDraft = {};
     for (const p of detail.products) {
-      for (const v of p.variants) next[v.id] = '';
+      next[p.id] = {
+        price: '',
+        originCountry: p.productOriginCountry || '',
+        originRegion: p.productOriginRegion || '',
+        flavorNotes: (p.productFlavorNotes || []).join(', '),
+      };
+    }
+    setPriceDraft(next);
+  }
+
+  function fillFromProductMeta() {
+    if (!detail) return;
+    const next: PriceDraft = { ...priceDraft };
+    for (const p of detail.products) {
+      const cur = next[p.id] || {
+        price: '',
+        originCountry: '',
+        originRegion: '',
+        flavorNotes: '',
+      };
+      next[p.id] = {
+        ...cur,
+        originCountry: cur.originCountry || p.productOriginCountry || '',
+        originRegion: cur.originRegion || p.productOriginRegion || '',
+        flavorNotes:
+          cur.flavorNotes || (p.productFlavorNotes || []).join(', '),
+      };
     }
     setPriceDraft(next);
   }
 
   const customCount = useMemo(() => {
-    return Object.values(priceDraft).filter((v) => v.trim() !== '').length;
+    return Object.values(priceDraft).filter((v) => v.price.trim() !== '')
+      .length;
   }, [priceDraft]);
+
+  const minKg = detail?.minOrderKg || 10;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -762,82 +799,120 @@ export default function WholesaleCatalogAdminPage() {
               <div className="border-t border-border pt-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold">Özel fiyatlar</h3>
+                    <h3 className="text-base font-semibold">
+                      Toptan fiyatlar (₺/kg)
+                    </h3>
                     <p className="text-xs text-muted">
-                      {customCount} özel fiyat tanımlı. Boş = liste fiyatı.
+                      Minimum sipariş {minKg} kg. {customCount} kahve fiyatlandı.
+                      Fiyat boşsa katalogda görünmez. Menşei ve tadım notalarını
+                      buradan düzenleyebilirsiniz.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={fillListPrices}
+                      onClick={fillFromProductMeta}
                       className="border border-border px-3 py-1.5 text-xs hover:bg-surface-high"
                     >
-                      Liste fiyatını doldur
+                      Ürün menşei/notasını doldur
                     </button>
                     <button
                       type="button"
                       onClick={clearCustomPrices}
                       className="border border-border px-3 py-1.5 text-xs hover:bg-surface-high"
                     >
-                      Özel fiyatları temizle
+                      Fiyatları temizle
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[28rem] space-y-6 overflow-auto pr-1">
-                  {detail.products.map((product) => (
-                    <section key={product.id}>
-                      <h4 className="text-sm font-medium text-foreground">
-                        {product.name}
-                        {product.categoryName ? (
-                          <span className="ml-2 text-xs font-normal text-muted">
-                            {product.categoryName}
-                          </span>
-                        ) : null}
-                      </h4>
-                      <div className="mt-2 overflow-x-auto">
-                        <table className="w-full min-w-[28rem] text-left text-sm">
-                          <thead>
-                            <tr className="mono text-[10px] uppercase tracking-widest text-muted">
-                              <th className="pb-2 font-normal">Gramaj</th>
-                              <th className="pb-2 font-normal">Liste</th>
-                              <th className="pb-2 font-normal">Özel fiyat</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {product.variants.map((v) => (
-                              <tr
-                                key={v.id}
-                                className="border-t border-border/60"
-                              >
-                                <td className="py-2 pr-3 text-secondary">
-                                  {v.weightLabel}
-                                </td>
-                                <td className="py-2 pr-3 tabular-nums text-muted">
-                                  {formatMoney(v.listPrice, product.currency)}
-                                </td>
-                                <td className="py-2">
-                                  <input
-                                    inputMode="decimal"
-                                    value={priceDraft[v.id] ?? ''}
-                                    onChange={(e) =>
-                                      setPriceDraft((prev) => ({
-                                        ...prev,
-                                        [v.id]: e.target.value,
-                                      }))
-                                    }
-                                    placeholder={v.listPrice}
-                                    className="w-28 border border-border bg-background px-2 py-1 tabular-nums"
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </section>
-                  ))}
+                <div className="mt-4 max-h-[32rem] space-y-5 overflow-auto pr-1">
+                  {detail.products.map((product) => {
+                    const draft = priceDraft[product.id] || {
+                      price: '',
+                      originCountry: '',
+                      originRegion: '',
+                      flavorNotes: '',
+                    };
+                    function patch(partial: Partial<ProductPriceDraft>) {
+                      setPriceDraft((prev) => ({
+                        ...prev,
+                        [product.id]: { ...draft, ...partial },
+                      }));
+                    }
+                    return (
+                      <section
+                        key={product.id}
+                        className="border border-border/60 p-3"
+                      >
+                        <h4 className="text-sm font-medium text-foreground">
+                          {product.name}
+                          {product.categoryName ? (
+                            <span className="ml-2 text-xs font-normal text-muted">
+                              {product.categoryName}
+                            </span>
+                          ) : null}
+                        </h4>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <div>
+                            <label className="mono text-[10px] uppercase tracking-widest text-muted">
+                              Fiyat ₺/kg (min. {minKg} kg)
+                            </label>
+                            <input
+                              inputMode="decimal"
+                              value={draft.price}
+                              onChange={(e) => patch({ price: e.target.value })}
+                              placeholder="örn. 850"
+                              className="mt-1 w-full border border-border bg-background px-2 py-1.5 tabular-nums"
+                            />
+                          </div>
+                          <div>
+                            <label className="mono text-[10px] uppercase tracking-widest text-muted">
+                              Menşei ülke
+                            </label>
+                            <input
+                              value={draft.originCountry}
+                              onChange={(e) =>
+                                patch({ originCountry: e.target.value })
+                              }
+                              placeholder={
+                                product.productOriginCountry || 'örn. Etiyopya'
+                              }
+                              className="mt-1 w-full border border-border bg-background px-2 py-1.5"
+                            />
+                          </div>
+                          <div>
+                            <label className="mono text-[10px] uppercase tracking-widest text-muted">
+                              Menşei bölge
+                            </label>
+                            <input
+                              value={draft.originRegion}
+                              onChange={(e) =>
+                                patch({ originRegion: e.target.value })
+                              }
+                              placeholder={
+                                product.productOriginRegion || 'örn. Yirgacheffe'
+                              }
+                              className="mt-1 w-full border border-border bg-background px-2 py-1.5"
+                            />
+                          </div>
+                          <div>
+                            <label className="mono text-[10px] uppercase tracking-widest text-muted">
+                              Tadım notaları
+                            </label>
+                            <input
+                              value={draft.flavorNotes}
+                              onChange={(e) =>
+                                patch({ flavorNotes: e.target.value })
+                              }
+                              placeholder="çikolata, turunçgil, çiçeksi"
+                              className="mt-1 w-full border border-border bg-background px-2 py-1.5"
+                            />
+                          </div>
+                        </div>
+                      </section>
+                    );
+                  })}
                 </div>
 
                 <button

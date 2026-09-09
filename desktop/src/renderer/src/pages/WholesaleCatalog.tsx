@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { api, isOnline } from '../lib/api';
-import { asPaged, formatMoney } from '../lib/format';
+import { asPaged } from '../lib/format';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Switch } from '../components/Switch';
 
@@ -45,6 +45,7 @@ type CatalogListItem = {
 };
 
 type CatalogDetail = CatalogListItem & {
+  minOrderKg?: number;
   products: Array<{
     id: string;
     name: string;
@@ -52,16 +53,25 @@ type CatalogDetail = CatalogListItem & {
     kind: string;
     currency: string;
     categoryName: string | null;
-    variants: Array<{
-      id: string;
-      weightLabel: string;
-      listPrice: string;
-      customPrice: string | null;
-    }>;
+    imageUrl: string | null;
+    productOriginCountry: string | null;
+    productOriginRegion: string | null;
+    productFlavorNotes: string[];
+    pricePerKg: string | null;
+    originCountry: string;
+    originRegion: string;
+    flavorNotes: string[];
   }>;
 };
 
-type PriceDraft = Record<string, string>;
+type ProductPriceDraft = {
+  price: string;
+  originCountry: string;
+  originRegion: string;
+  flavorNotes: string;
+};
+
+type PriceDraft = Record<string, ProductPriceDraft>;
 
 const emptyContact = (): ContactFields => ({
   contactPerson: '',
@@ -75,9 +85,12 @@ const emptyContact = (): ContactFields => ({
 function draftsFromDetail(detail: CatalogDetail): PriceDraft {
   const draft: PriceDraft = {};
   for (const p of detail.products) {
-    for (const v of p.variants) {
-      draft[v.id] = v.customPrice ?? '';
-    }
+    draft[p.id] = {
+      price: p.pricePerKg ?? '',
+      originCountry: p.originCountry || '',
+      originRegion: p.originRegion || '',
+      flavorNotes: (p.flavorNotes || []).join(', '),
+    };
   }
   return draft;
 }
@@ -320,9 +333,15 @@ export function WholesaleCatalogPage() {
     setError(null);
     setMessage(null);
     try {
-      const prices = Object.entries(priceDraft).map(([variantId, price]) => ({
-        variantId,
-        price: price.trim() === '' ? null : price.trim(),
+      const prices = Object.entries(priceDraft).map(([productId, row]) => ({
+        productId,
+        price: row.price.trim() === '' ? null : row.price.trim(),
+        originCountry: row.originCountry.trim() || null,
+        originRegion: row.originRegion.trim() || null,
+        flavorNotes: row.flavorNotes
+          .split(/[,;]+/)
+          .map((n) => n.trim())
+          .filter(Boolean),
       }));
       const row = await api<CatalogDetail>(
         `/wholesale-catalog/admin/${detail.id}`,
@@ -410,30 +429,47 @@ export function WholesaleCatalogPage() {
     }
   }
 
-  function fillListPrices() {
-    if (!detail) return;
-    const next: PriceDraft = { ...priceDraft };
-    for (const p of detail.products) {
-      for (const v of p.variants) {
-        if (!next[v.id]?.trim()) next[v.id] = v.listPrice;
-      }
-    }
-    setPriceDraft(next);
-  }
-
   function clearCustomPrices() {
     if (!detail) return;
     const next: PriceDraft = {};
     for (const p of detail.products) {
-      for (const v of p.variants) next[v.id] = '';
+      next[p.id] = {
+        price: '',
+        originCountry: p.productOriginCountry || '',
+        originRegion: p.productOriginRegion || '',
+        flavorNotes: (p.productFlavorNotes || []).join(', '),
+      };
+    }
+    setPriceDraft(next);
+  }
+
+  function fillFromProductMeta() {
+    if (!detail) return;
+    const next: PriceDraft = { ...priceDraft };
+    for (const p of detail.products) {
+      const cur = next[p.id] || {
+        price: '',
+        originCountry: '',
+        originRegion: '',
+        flavorNotes: '',
+      };
+      next[p.id] = {
+        ...cur,
+        originCountry: cur.originCountry || p.productOriginCountry || '',
+        originRegion: cur.originRegion || p.productOriginRegion || '',
+        flavorNotes:
+          cur.flavorNotes || (p.productFlavorNotes || []).join(', '),
+      };
     }
     setPriceDraft(next);
   }
 
   const customCount = useMemo(
-    () => Object.values(priceDraft).filter((v) => v.trim() !== '').length,
+    () => Object.values(priceDraft).filter((v) => v.price.trim() !== '').length,
     [priceDraft],
   );
+
+  const minKg = detail?.minOrderKg || 10;
 
   return (
     <div className="space-y-6">
@@ -685,78 +721,97 @@ export function WholesaleCatalogPage() {
               <div className="border-t border-border-muted pt-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="font-medium">Özel fiyatlar</p>
+                    <p className="font-medium">Toptan fiyatlar (₺/kg)</p>
                     <p className="text-xs text-muted">
-                      {customCount} tanımlı · boş = liste fiyatı
+                      Minimum sipariş {minKg} kg · {customCount} kahve
+                      fiyatlandı. Fiyat boşsa katalogda görünmez.
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       className="border border-border-muted px-2 py-1 text-xs"
-                      onClick={fillListPrices}
+                      onClick={fillFromProductMeta}
                     >
-                      Listeyi doldur
+                      Menşei/nota doldur
                     </button>
                     <button
                       type="button"
                       className="border border-border-muted px-2 py-1 text-xs"
                       onClick={clearCustomPrices}
                     >
-                      Temizle
+                      Fiyatları temizle
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-3 max-h-[24rem] space-y-4 overflow-auto">
-                  {detail.products.map((product) => (
-                    <section key={product.id}>
-                      <p className="text-sm font-medium">
-                        {product.name}
-                        {product.categoryName ? (
-                          <span className="ml-2 text-xs font-normal text-muted">
-                            {product.categoryName}
-                          </span>
-                        ) : null}
-                      </p>
-                      <table className="mt-1 w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-xs text-muted">
-                            <th className="py-1 font-normal">Gramaj</th>
-                            <th className="font-normal">Liste</th>
-                            <th className="font-normal">Özel</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {product.variants.map((v) => (
-                            <tr
-                              key={v.id}
-                              className="border-t border-border-muted/50"
-                            >
-                              <td className="py-1.5 pr-2">{v.weightLabel}</td>
-                              <td className="pr-2 tabular-nums text-muted">
-                                {formatMoney(v.listPrice)}
-                              </td>
-                              <td>
-                                <input
-                                  inputMode="decimal"
-                                  value={priceDraft[v.id] ?? ''}
-                                  onChange={(e) =>
-                                    setPriceDraft((prev) => ({
-                                      ...prev,
-                                      [v.id]: e.target.value,
-                                    }))
-                                  }
-                                  placeholder={v.listPrice}
-                                  className="w-24 border border-border-muted bg-background px-2 py-1 tabular-nums"
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </section>
-                  ))}
+                <div className="mt-3 max-h-[28rem] space-y-4 overflow-auto">
+                  {detail.products.map((product) => {
+                    const draft = priceDraft[product.id] || {
+                      price: '',
+                      originCountry: '',
+                      originRegion: '',
+                      flavorNotes: '',
+                    };
+                    function patch(partial: Partial<ProductPriceDraft>) {
+                      setPriceDraft((prev) => ({
+                        ...prev,
+                        [product.id]: { ...draft, ...partial },
+                      }));
+                    }
+                    return (
+                      <section
+                        key={product.id}
+                        className="border border-border-muted/60 p-3"
+                      >
+                        <p className="text-sm font-medium">
+                          {product.name}
+                          {product.categoryName ? (
+                            <span className="ml-2 text-xs font-normal text-muted">
+                              {product.categoryName}
+                            </span>
+                          ) : null}
+                        </p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <input
+                            inputMode="decimal"
+                            value={draft.price}
+                            onChange={(e) => patch({ price: e.target.value })}
+                            placeholder={`₺/kg (min. ${minKg} kg)`}
+                            className="border border-border-muted bg-background px-2 py-1.5 text-sm tabular-nums"
+                          />
+                          <input
+                            value={draft.originCountry}
+                            onChange={(e) =>
+                              patch({ originCountry: e.target.value })
+                            }
+                            placeholder={
+                              product.productOriginCountry || 'Menşei ülke'
+                            }
+                            className="border border-border-muted bg-background px-2 py-1.5 text-sm"
+                          />
+                          <input
+                            value={draft.originRegion}
+                            onChange={(e) =>
+                              patch({ originRegion: e.target.value })
+                            }
+                            placeholder={
+                              product.productOriginRegion || 'Menşei bölge'
+                            }
+                            className="border border-border-muted bg-background px-2 py-1.5 text-sm"
+                          />
+                          <input
+                            value={draft.flavorNotes}
+                            onChange={(e) =>
+                              patch({ flavorNotes: e.target.value })
+                            }
+                            placeholder="Tadım notaları (virgülle)"
+                            className="border border-border-muted bg-background px-2 py-1.5 text-sm"
+                          />
+                        </div>
+                      </section>
+                    );
+                  })}
                 </div>
 
                 <button

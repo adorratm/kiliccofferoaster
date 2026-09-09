@@ -99,16 +99,39 @@ export class CreateWholesaleCatalogDto extends WholesaleCatalogContactFieldsDto 
 export class WholesaleCatalogPriceInputDto {
   @ApiProperty()
   @IsUUID()
-  variantId!: string;
+  productId!: string;
 
-  /** Boş / null = override kaldır, liste fiyatı kullan */
+  /** ₺/kg; null veya boş = bu ürün katalogdan çıkarılır */
   @ApiPropertyOptional({
-    description: 'Özel fiyat; null veya boş string override’ı siler',
+    description: 'Kilogram fiyatı; boşsa satır silinir',
     nullable: true,
   })
   @ValidateIf((_, v) => v !== null && v !== undefined && v !== '')
   @IsNumberString()
   price?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  originCountry?: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  originRegion?: string | null;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Tadım notaları; null = ürün notalarını kullan',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(80, { each: true })
+  flavorNotes?: string[] | null;
 }
 
 export class UpdateWholesaleCatalogDto extends WholesaleCatalogContactFieldsDto {
