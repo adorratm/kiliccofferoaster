@@ -546,51 +546,47 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       return parts.join(' — ').slice(0, 200);
     })();
 
+    // HB kategori şemasında olmayan özel alanlar (grind/roast/kg) import'ta
+    // sunucu tarafında 500 üretebiliyor — yalnızca isimde taşınır; attributes'a yazılmaz.
     const attributes: Record<string, unknown> = {
       merchantSku,
       Barcode: barcode,
       UrunAdi: displayName,
       UrunAciklamasi: (input.description || input.name).slice(0, 5000),
       Marka: brand,
-      tax_vat_rate: taxVatRate,
-      GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
+      tax_vat_rate: String(taxVatRate),
+      GarantiSuresi: String(
+        Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
+      ),
       VaryantGroupID: varyantGroupId,
       ...extra,
     };
-    if (input.weightLabel?.trim()) {
-      attributes.weight_label = input.weightLabel.trim();
-      const grams = this.parseGrams(input.weightLabel);
-      if (grams != null) {
-        attributes.kg = String(grams / 1000);
-      }
-    }
-    if (input.grindOption?.trim()) {
-      attributes.grind_option = input.grindOption.trim();
-    }
-    if (input.roastOption?.trim()) {
-      attributes.roast_option = input.roastOption.trim();
-    }
     if (imageUrl) {
       attributes.Image1 = imageUrl;
     }
     if (input.price != null && String(input.price).trim() !== '') {
-      attributes.price = Number(input.price) || 0;
+      const priceNum = Number(input.price);
+      if (Number.isFinite(priceNum) && priceNum > 0) {
+        attributes.price = priceNum;
+      }
     }
     if (typeof input.stock === 'number') {
-      attributes.availableStock = Math.max(0, input.stock);
+      attributes.stock = Math.max(0, input.stock);
     }
 
+    const categoryIdNum = Number(categoryId);
     const body = [
       {
-        categoryId: Number(categoryId) || categoryId,
+        categoryId: Number.isFinite(categoryIdNum) ? categoryIdNum : categoryId,
         merchant: auth.merchantId,
         attributes,
       },
     ];
 
+    const mpop = this.mpopBase();
     try {
       const res = await marketplaceFetch<Record<string, unknown>>(
-        `${this.mpopBase()}/product/api/products/import`,
+        `${mpop}/product/api/products/import`,
         {
           method: 'POST',
           headers: {
@@ -650,9 +646,34 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           stockPush,
           merchantSku,
           barcode,
+          mpopBaseUrl: mpop,
         },
       };
     } catch (err) {
+      if (err instanceof MarketplaceHttpError) {
+        this.logger.warn(
+          `Hepsiburada Ürün gönderimi: ${err.message} (mpop=${mpop})`,
+        );
+        throw new BadRequestException({
+          message: `Hepsiburada Ürün gönderimi: ${err.message}`,
+          hepsiburadaStatus: err.status,
+          hepsiburadaBody: err.body,
+          debug: {
+            mpopBaseUrl: mpop,
+            userAgent: auth['User-Agent'],
+            categoryId: Number.isFinite(categoryIdNum)
+              ? categoryIdNum
+              : categoryId,
+            merchantSku,
+            barcode,
+            attributeKeys: Object.keys(attributes),
+            hint:
+              mpop.includes('-sit') === false
+                ? 'Canlı MPOP kullanılıyor. Test (SIT) merchant ile çalışıyorsanız sunucuya HEPSIBURADA_MPOP_BASE_URL=https://mpop-sit.hepsiburada.com (ve listing/oms -sit) ekleyin.'
+                : 'SIT MPOP kullanılıyor. Kategori leaf mi, Marka HB’de tanımlı mı, zorunlu attribute’lar credentials.attributes içinde mi kontrol edin.',
+          },
+        });
+      }
       throw this.wrap(err, 'Ürün gönderimi');
     }
   }
