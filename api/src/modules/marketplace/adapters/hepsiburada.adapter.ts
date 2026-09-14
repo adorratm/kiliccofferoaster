@@ -529,6 +529,10 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       undefined;
     const taxVatRate = credentials.taxVatRate?.trim() || '20';
     const warrantyMonths = Number(credentials.warrantyMonths || 24);
+    const desi =
+      credentials.desi?.trim() ||
+      credentials.Desi?.trim() ||
+      '1';
     const extra = this.parseExtraAttributes(credentials);
     const varyantGroupId = (
       input.varyantGroupId?.trim() ||
@@ -545,47 +549,90 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       else if (input.roastOption === 'koyu') parts.push('Koyu kavrum');
       return parts.join(' — ').slice(0, 200);
     })();
+    const miktar =
+      (typeof extra.Miktar === 'string' && extra.Miktar.trim()) ||
+      (typeof extra.miktar === 'string' && extra.miktar.trim()) ||
+      input.weightLabel?.trim() ||
+      null;
+    const description = (input.description || input.name).slice(0, 5000);
 
     const categoryIdNum = Number(categoryId);
     const resolvedCategoryId = Number.isFinite(categoryIdNum)
       ? categoryIdNum
       : categoryId;
 
-    // Katalog import resmi örnekte price/stock yok; listing API’ye ayrıca yazılır.
-    // Kahve/gıda leaf’lerinde `kg` genelde zorunlu.
-    const attributes: Record<string, unknown> = {
+    // HB SIT/katalog şeması Türkçe attribute adları kullanıyor
+    // (ör. "Ürün Adı"); eski İngilizce anahtarlar (UrunAdi) alias olarak map edilir.
+    const valueByAlias: Record<string, unknown> = {
       merchantSku,
+      'Satıcı Stok Kodu': merchantSku,
       Barcode: barcode,
+      Barkod: barcode,
       UrunAdi: displayName,
-      UrunAciklamasi: (input.description || input.name).slice(0, 5000),
+      'Ürün Adı': displayName,
+      UrunAciklamasi: description,
+      'Ürün Açıklaması': description,
       Marka: brand,
-      tax_vat_rate: String(taxVatRate),
       GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
+      'Garanti Süresi (Ay)': Number.isFinite(warrantyMonths)
+        ? warrantyMonths
+        : 24,
+      tax_vat_rate: String(taxVatRate),
+      KDV: String(taxVatRate),
       VaryantGroupID: varyantGroupId,
+      'Varyant Grup Id': varyantGroupId,
+      Desi: desi,
+      desi,
+      ...(imageUrl
+        ? {
+            Image1: imageUrl,
+            Görsel1: imageUrl,
+            'Paket Görseli (ön)': imageUrl,
+          }
+        : {}),
+      ...(miktar ? { Miktar: miktar, miktar } : {}),
+      ...(input.price != null && String(input.price).trim() !== ''
+        ? {
+            price: Number(input.price) || 0,
+            Fiyat: Number(input.price) || 0,
+          }
+        : {}),
+      ...(typeof input.stock === 'number'
+        ? {
+            stock: Math.max(0, input.stock),
+            Stok: Math.max(0, input.stock),
+          }
+        : {}),
       ...extra,
     };
-    if (imageUrl) {
-      attributes.Image1 = imageUrl;
-    }
+
     const kgValue = this.weightLabelToKg(input.weightLabel);
     if (kgValue != null) {
-      attributes.kg = kgValue;
+      valueByAlias.kg = kgValue;
     }
 
     const schema = await this.fetchCategoryAttributes(auth, resolvedCategoryId);
-    if (schema.length) {
-      const allowed = new Set(
-        schema
-          .map((a) => a.name)
-          .filter((n): n is string => Boolean(n && n.trim())),
-      );
-      // merchantSku / Barcode her zaman kalır
-      allowed.add('merchantSku');
-      allowed.add('Barcode');
+    let attributes: Record<string, unknown> = {};
 
-      for (const key of Object.keys(attributes)) {
-        if (!allowed.has(key)) {
-          delete attributes[key];
+    if (schema.length) {
+      for (const attr of schema) {
+        const key = attr.name?.trim();
+        if (!key) continue;
+        const value = resolveHbAttributeValue(key, valueByAlias);
+        if (value !== undefined && value !== null && value !== '') {
+          attributes[key] = value;
+        }
+      }
+
+      // credentials.attributes içinde şema adıyla verilen ekstra alanlar
+      for (const [k, v] of Object.entries(extra)) {
+        if (
+          schema.some((a) => a.name === k) &&
+          v !== undefined &&
+          v !== null &&
+          v !== ''
+        ) {
+          attributes[k] = v;
         }
       }
 
@@ -608,10 +655,30 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             mandatory: a.mandatory,
             group: a.group,
           })),
+          filledKeys: Object.keys(attributes),
           hint:
-            'Örn. credentials.attributes: { "kg": "0.1", "…": "…" }. Marka HB satıcı panelinde tanımlı olmalı.',
+            'Zorunlu örnekler: Desi, Görsel1 / Paket Görseli (ön), Miktar (gramaj). Image URL public olmalı. credentials.attributes ile override edilebilir.',
         });
       }
+    } else {
+      // Şema alınamazsa eski İngilizce anahtarlarla dene
+      attributes = {
+        merchantSku,
+        Barcode: barcode,
+        UrunAdi: displayName,
+        UrunAciklamasi: description,
+        Marka: brand,
+        tax_vat_rate: String(taxVatRate),
+        GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
+        VaryantGroupID: varyantGroupId,
+        Desi: desi,
+        ...extra,
+      };
+      if (imageUrl) {
+        attributes.Image1 = imageUrl;
+      }
+      if (miktar) attributes.Miktar = miktar;
+      if (kgValue != null) attributes.kg = kgValue;
     }
 
     const body = [
@@ -708,7 +775,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             attributeKeys: Object.keys(attributes),
             schemaAttributeCount: schema.length,
             hint:
-              'Marka HB’de kayıtlı mı? Image1 public URL mi? Zorunlu alanlar (kg vb.) credentials.attributes’ta mı? Admin: GET /marketplace/accounts/:id/hepsiburada-category-attributes/:categoryId',
+              'Marka HB’de kayıtlı mı? Görsel public URL mi? Miktar/Desi dolu mu? Admin: GET /marketplace/accounts/:id/hepsiburada-category-attributes/:categoryId',
           },
         });
       }
@@ -995,6 +1062,52 @@ function statusRank(status: string | null | undefined): number {
     return 20;
   }
   return 10;
+}
+
+/** Şema Türkçe adı → bilinen İngilizce/eski anahtar alias’ları */
+const HB_ATTR_ALIASES: Record<string, string[]> = {
+  'Satıcı Stok Kodu': ['merchantSku', 'Satıcı Stok Kodu'],
+  'Varyant Grup Id': ['VaryantGroupID', 'VaryantGroupId', 'Varyant Grup Id'],
+  'Ürün Adı': ['UrunAdi', 'Ürün Adı'],
+  'Ürün Açıklaması': ['UrunAciklamasi', 'Ürün Açıklaması'],
+  Barkod: ['Barcode', 'Barkod'],
+  Marka: ['Marka', 'brand'],
+  'Garanti Süresi (Ay)': ['GarantiSuresi', 'Garanti Süresi (Ay)'],
+  KDV: ['tax_vat_rate', 'KDV'],
+  Desi: ['Desi', 'desi'],
+  Görsel1: ['Image1', 'Görsel1'],
+  Görsel2: ['Image2', 'Görsel2'],
+  Görsel3: ['Image3', 'Görsel3'],
+  Görsel4: ['Image4', 'Görsel4'],
+  Görsel5: ['Image5', 'Görsel5'],
+  Fiyat: ['price', 'Price', 'Fiyat'],
+  Stok: ['stock', 'Stock', 'availableStock', 'Stok'],
+  'Paket Görseli (ön)': [
+    'Paket Görseli (ön)',
+    'Image1',
+    'Görsel1',
+    'packageFrontImage',
+  ],
+  'Paket Görseli (arka)': [
+    'Paket Görseli (arka)',
+    'Image2',
+    'packageBackImage',
+  ],
+  Miktar: ['Miktar', 'miktar', 'weightLabel'],
+};
+
+function resolveHbAttributeValue(
+  schemaName: string,
+  bag: Record<string, unknown>,
+): unknown {
+  if (bag[schemaName] !== undefined && bag[schemaName] !== null && bag[schemaName] !== '') {
+    return bag[schemaName];
+  }
+  for (const alias of HB_ATTR_ALIASES[schemaName] || []) {
+    const v = bag[alias];
+    if (v !== undefined && v !== null && v !== '') return v;
+  }
+  return undefined;
 }
 
 function strOpt(value: unknown): string | null {
