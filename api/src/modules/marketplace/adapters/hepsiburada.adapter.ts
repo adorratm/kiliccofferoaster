@@ -546,8 +546,13 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       return parts.join(' — ').slice(0, 200);
     })();
 
-    // HB kategori şemasında olmayan özel alanlar (grind/roast/kg) import'ta
-    // sunucu tarafında 500 üretebiliyor — yalnızca isimde taşınır; attributes'a yazılmaz.
+    const categoryIdNum = Number(categoryId);
+    const resolvedCategoryId = Number.isFinite(categoryIdNum)
+      ? categoryIdNum
+      : categoryId;
+
+    // Katalog import resmi örnekte price/stock yok; listing API’ye ayrıca yazılır.
+    // Kahve/gıda leaf’lerinde `kg` genelde zorunlu.
     const attributes: Record<string, unknown> = {
       merchantSku,
       Barcode: barcode,
@@ -555,29 +560,63 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       UrunAciklamasi: (input.description || input.name).slice(0, 5000),
       Marka: brand,
       tax_vat_rate: String(taxVatRate),
-      GarantiSuresi: String(
-        Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
-      ),
+      GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
       VaryantGroupID: varyantGroupId,
       ...extra,
     };
     if (imageUrl) {
       attributes.Image1 = imageUrl;
     }
-    if (input.price != null && String(input.price).trim() !== '') {
-      const priceNum = Number(input.price);
-      if (Number.isFinite(priceNum) && priceNum > 0) {
-        attributes.price = priceNum;
-      }
-    }
-    if (typeof input.stock === 'number') {
-      attributes.stock = Math.max(0, input.stock);
+    const kgValue = this.weightLabelToKg(input.weightLabel);
+    if (kgValue != null) {
+      attributes.kg = kgValue;
     }
 
-    const categoryIdNum = Number(categoryId);
+    const schema = await this.fetchCategoryAttributes(auth, resolvedCategoryId);
+    if (schema.length) {
+      const allowed = new Set(
+        schema
+          .map((a) => a.name)
+          .filter((n): n is string => Boolean(n && n.trim())),
+      );
+      // merchantSku / Barcode her zaman kalır
+      allowed.add('merchantSku');
+      allowed.add('Barcode');
+
+      for (const key of Object.keys(attributes)) {
+        if (!allowed.has(key)) {
+          delete attributes[key];
+        }
+      }
+
+      const missingMandatory = schema
+        .filter((a) => a.mandatory && a.name && attributes[a.name!] == null)
+        .map((a) => ({
+          name: a.name,
+          externalName: a.externalName,
+          group: a.group,
+        }));
+
+      if (missingMandatory.length) {
+        throw new BadRequestException({
+          message:
+            'Hepsiburada: kategorinin zorunlu attribute’ları eksik. Admin → Pazaryeri credentials.attributes veya ürün alanlarını tamamlayın.',
+          missingMandatory,
+          availableAttributes: schema.map((a) => ({
+            name: a.name,
+            externalName: a.externalName,
+            mandatory: a.mandatory,
+            group: a.group,
+          })),
+          hint:
+            'Örn. credentials.attributes: { "kg": "0.1", "…": "…" }. Marka HB satıcı panelinde tanımlı olmalı.',
+        });
+      }
+    }
+
     const body = [
       {
-        categoryId: Number.isFinite(categoryIdNum) ? categoryIdNum : categoryId,
+        categoryId: resolvedCategoryId,
         merchant: auth.merchantId,
         attributes,
       },
@@ -647,9 +686,11 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           merchantSku,
           barcode,
           mpopBaseUrl: mpop,
+          attributeKeys: Object.keys(attributes),
         },
       };
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       if (err instanceof MarketplaceHttpError) {
         this.logger.warn(
           `Hepsiburada Ürün gönderimi: ${err.message} (mpop=${mpop})`,
@@ -661,21 +702,136 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           debug: {
             mpopBaseUrl: mpop,
             userAgent: auth['User-Agent'],
-            categoryId: Number.isFinite(categoryIdNum)
-              ? categoryIdNum
-              : categoryId,
+            categoryId: resolvedCategoryId,
             merchantSku,
             barcode,
             attributeKeys: Object.keys(attributes),
+            schemaAttributeCount: schema.length,
             hint:
-              mpop.includes('-sit') === false
-                ? 'Canlı MPOP kullanılıyor. Test (SIT) merchant ile çalışıyorsanız sunucuya HEPSIBURADA_MPOP_BASE_URL=https://mpop-sit.hepsiburada.com (ve listing/oms -sit) ekleyin.'
-                : 'SIT MPOP kullanılıyor. Kategori leaf mi, Marka HB’de tanımlı mı, zorunlu attribute’lar credentials.attributes içinde mi kontrol edin.',
+              'Marka HB’de kayıtlı mı? Image1 public URL mi? Zorunlu alanlar (kg vb.) credentials.attributes’ta mı? Admin: GET /marketplace/accounts/:id/hepsiburada-category-attributes/:categoryId',
           },
         });
       }
       throw this.wrap(err, 'Ürün gönderimi');
     }
+  }
+
+  /**
+   * Leaf kategori attribute şeması — zorunlu alanları önceden görmek için.
+   */
+  async listCategoryAttributes(
+    credentials: Record<string, string>,
+    categoryId: string | number,
+  ): Promise<{
+    categoryId: string | number;
+    attributes: Array<{
+      name?: string;
+      externalName?: string;
+      mandatory?: boolean;
+      group?: string;
+      id?: string | number;
+    }>;
+  }> {
+    const auth = this.auth(credentials);
+    const attributes = await this.fetchCategoryAttributes(auth, categoryId);
+    return { categoryId, attributes };
+  }
+
+  private async fetchCategoryAttributes(
+    auth: { Authorization: string; 'User-Agent': string },
+    categoryId: string | number,
+  ): Promise<
+    Array<{
+      name?: string;
+      externalName?: string;
+      mandatory?: boolean;
+      group?: string;
+      id?: string | number;
+    }>
+  > {
+    try {
+      const res = await marketplaceFetch<{
+        success?: boolean;
+        code?: number;
+        message?: string | null;
+        data?:
+          | Array<Record<string, unknown>>
+          | {
+              baseAttributes?: Array<Record<string, unknown>>;
+              attributes?: Array<Record<string, unknown>>;
+              variantAttributes?: Array<Record<string, unknown>>;
+            };
+      }>(
+        `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attributes`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: auth.Authorization,
+            'User-Agent': auth['User-Agent'],
+          },
+          label: 'hb.categoryAttributes',
+        },
+      );
+
+      if (res.data?.success === false) {
+        this.logger.warn(
+          `HB kategori attributes reddedildi: ${res.data.message} (code=${res.data.code})`,
+        );
+        return [];
+      }
+
+      const out: Array<{
+        name?: string;
+        externalName?: string;
+        mandatory?: boolean;
+        group?: string;
+        id?: string | number;
+      }> = [];
+
+      const mapRow = (row: Record<string, unknown>, group?: string) => {
+        out.push({
+          id:
+            typeof row.id === 'string' || typeof row.id === 'number'
+              ? row.id
+              : undefined,
+          name: typeof row.name === 'string' ? row.name : undefined,
+          externalName:
+            typeof row.externalName === 'string' ? row.externalName : undefined,
+          mandatory: typeof row.mandatory === 'boolean' ? row.mandatory : undefined,
+          group,
+        });
+      };
+
+      const data = res.data?.data;
+      if (Array.isArray(data)) {
+        for (const row of data) mapRow(row);
+        return out;
+      }
+      if (data && typeof data === 'object') {
+        for (const row of data.baseAttributes || []) mapRow(row, 'base');
+        for (const row of data.attributes || []) mapRow(row, 'category');
+        for (const row of data.variantAttributes || []) mapRow(row, 'variant');
+      }
+      return out;
+    } catch (err) {
+      this.logger.warn(
+        `HB kategori attributes alınamadı (${categoryId}): ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return [];
+    }
+  }
+
+  /** "250g" / "1kg" → HB `kg` attribute string (kg cinsinden) */
+  private weightLabelToKg(weightLabel?: string): string | null {
+    if (!weightLabel?.trim()) return null;
+    const grams = this.parseGrams(weightLabel);
+    if (grams == null || grams <= 0) return null;
+    const kg = grams / 1000;
+    // HB çoğu kategoride string bekler: "0.1", "0.25", "1"
+    const s = Number.isInteger(kg) ? String(kg) : String(Number(kg.toFixed(3)));
+    return s;
   }
 
   private async pollImportStatus(

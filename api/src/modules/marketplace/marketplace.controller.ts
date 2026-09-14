@@ -115,6 +115,21 @@ export class MarketplaceController {
     return this.marketplaceService.importPendingOrders(id);
   }
 
+  @Get('accounts/:id/hepsiburada-category-attributes/:categoryId')
+  @ApiOperation({
+    summary:
+      'Admin: HB leaf kategori zorunlu/opsiyonel attribute şeması (ürün push öncesi)',
+  })
+  listHbCategoryAttributes(
+    @Param('id') id: string,
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.marketplaceService.listHepsiburadaCategoryAttributes(
+      id,
+      categoryId,
+    );
+  }
+
   @Post('orders/:id/import')
   @ApiOperation({
     summary: 'Admin: tek pazaryeri siparişini iç siparişe aktar (yeniden dene)',

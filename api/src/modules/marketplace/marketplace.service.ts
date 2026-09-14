@@ -206,6 +206,26 @@ export class MarketplaceService {
     };
   }
 
+  async listHepsiburadaCategoryAttributes(
+    accountId: string,
+    categoryId: string,
+  ) {
+    const account = await this.em.findOne(MarketplaceAccount, {
+      where: { id: accountId },
+    });
+    if (!account) {
+      throw new NotFoundException('Pazar yeri hesabı bulunamadı');
+    }
+    if (account.platform !== MarketplacePlatform.HEPSIBURADA) {
+      throw new BadRequestException('Bu endpoint yalnızca Hepsiburada için');
+    }
+    const adapter = this.getAdapter(account.platform) as HepsiburadaAdapter;
+    if (typeof adapter.listCategoryAttributes !== 'function') {
+      throw new BadRequestException('Hepsiburada attribute listesi desteklenmiyor');
+    }
+    return adapter.listCategoryAttributes(account.credentials, categoryId);
+  }
+
   async importPendingOrders(accountId: string) {
     const account = await this.em.findOne(MarketplaceAccount, {
       where: { id: accountId },
