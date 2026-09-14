@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MarketplacePlatform } from '@entities/marketplace-account.entity';
 import {
@@ -788,9 +788,15 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
   private wrap(err: unknown, action: string): never {
     if (err instanceof MarketplaceHttpError) {
       this.logger.warn(`Hepsiburada ${action}: ${err.message}`);
-      throw err;
+      throw new BadRequestException({
+        message: `Hepsiburada ${action}: ${err.message}`,
+        hepsiburadaStatus: err.status,
+        hepsiburadaBody: err.body,
+      });
     }
-    throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    this.logger.warn(`Hepsiburada ${action}: ${message}`);
+    throw new BadRequestException(`Hepsiburada ${action}: ${message}`);
   }
 }
 

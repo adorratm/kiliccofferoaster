@@ -421,47 +421,54 @@ export class MarketplaceService {
       listing: MarketplaceListing | null;
     }> = [];
 
-    for (const target of targets) {
-      const pushed = await adapter.pushProduct(account.credentials, {
-        productId: product.id,
-        name: product.name,
-        price: target.price,
-        stock: target.stock,
-        sku: target.sku,
-        description: product.shortDescription || product.description,
-        imageUrl: imageUrl || undefined,
-        hepsiburadaCategoryId: product.hepsiburadaCategoryId || undefined,
-        weightLabel: target.weightLabel,
-        grindOption: target.grindOption,
-        roastOption: target.roastOption,
-        barcode: target.barcode,
-        varyantGroupId: product.id,
-      });
+    try {
+      for (const target of targets) {
+        const pushed = await adapter.pushProduct(account.credentials, {
+          productId: product.id,
+          name: product.name,
+          price: target.price,
+          stock: target.stock,
+          sku: target.sku,
+          description: product.shortDescription || product.description,
+          imageUrl: imageUrl || undefined,
+          hepsiburadaCategoryId: product.hepsiburadaCategoryId || undefined,
+          weightLabel: target.weightLabel,
+          grindOption: target.grindOption,
+          roastOption: target.roastOption,
+          barcode: target.barcode,
+          varyantGroupId: product.id,
+        });
 
-      if (dto.dryRun || pushed.skipped || !pushed.externalListingId) {
+        if (dto.dryRun || pushed.skipped || !pushed.externalListingId) {
+          results.push({
+            variantId: target.variantId,
+            sku: target.sku,
+            pushed,
+            listing: null,
+          });
+          continue;
+        }
+
+        const listing = await this.upsertListing({
+          accountId: account.id,
+          productId: product.id,
+          variantId: target.variantId,
+          externalListingId: pushed.externalListingId,
+          externalSku: target.sku ?? null,
+          stock: target.stock,
+        });
         results.push({
           variantId: target.variantId,
           sku: target.sku,
           pushed,
-          listing: null,
+          listing,
         });
-        continue;
       }
-
-      const listing = await this.upsertListing({
-        accountId: account.id,
-        productId: product.id,
-        variantId: target.variantId,
-        externalListingId: pushed.externalListingId,
-        externalSku: target.sku ?? null,
-        stock: target.stock,
-      });
-      results.push({
-        variantId: target.variantId,
-        sku: target.sku,
-        pushed,
-        listing,
-      });
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`pushProduct failed: ${message}`);
+      throw new BadRequestException(`Ürün gönderimi başarısız: ${message}`);
     }
 
     const first = results[0];
