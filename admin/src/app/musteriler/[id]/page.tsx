@@ -50,7 +50,11 @@ function OrderBlock({
           <li key={item.id} className="flex justify-between gap-3">
             <span>
               {item.productName}
-              {item.variantLabel ? ` · ${item.variantLabel}` : ''} × {item.quantity}
+              {[item.variantLabel, item.grindLabel, item.roastLabel]
+                .filter(Boolean)
+                .map((part) => ` · ${part}`)
+                .join('')}{' '}
+              × {item.quantity}
             </span>
             <span className="text-muted">{formatMoney(item.lineTotal, currency)}</span>
           </li>

@@ -6,9 +6,16 @@ import { PaymentsModule } from '@modules/payments/payments.module';
 import { NotificationsModule } from '@modules/notifications/notifications.module';
 import { CouponsModule } from '@modules/coupons/coupons.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
+import { MarketplaceModule } from '@modules/marketplace/marketplace.module';
 
 @Module({
-  imports: [PaymentsModule, NotificationsModule, CouponsModule, CatalogModule],
+  imports: [
+    PaymentsModule,
+    NotificationsModule,
+    CouponsModule,
+    CatalogModule,
+    MarketplaceModule,
+  ],
   controllers: [OrdersController, CheckoutController],
   providers: [OrdersService],
   exports: [OrdersService],

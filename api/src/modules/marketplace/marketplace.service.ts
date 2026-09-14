@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import {
@@ -11,6 +14,7 @@ import {
 } from '@entities/marketplace-account.entity';
 import { MarketplaceListing } from '@entities/marketplace-listing.entity';
 import { MarketplaceOrder } from '@entities/marketplace-order.entity';
+import { OrderStatus } from '@entities/order.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
 import { IMarketplaceAdapter } from '@modules/marketplace/adapters/marketplace.adapter';
@@ -26,7 +30,11 @@ import {
   SyncMarketplaceDto,
   PushMarketplaceProductDto,
 } from '@modules/marketplace/dto/marketplace.dto';
-import { MarketplaceOrderImportService } from '@modules/marketplace/marketplace-order-import.service';
+import {
+  mapExternalStatus,
+  MarketplaceOrderImportService,
+  shouldApplyMarketplaceStatus,
+} from '@modules/marketplace/marketplace-order-import.service';
 
 function maskCredentials(
   credentials: Record<string, string> | null | undefined,
@@ -64,10 +72,12 @@ function mergeCredentials(
 @Injectable()
 export class MarketplaceService {
   private readonly adapters: Map<MarketplacePlatform, IMarketplaceAdapter>;
+  private readonly logger = new Logger(MarketplaceService.name);
 
   constructor(
     @InjectEntityManager() private readonly em: EntityManager,
     private readonly orderImport: MarketplaceOrderImportService,
+    private readonly config: ConfigService,
     trendyol: TrendyolAdapter,
     hepsiburada: HepsiburadaAdapter,
     n11: N11Adapter,
@@ -332,9 +342,25 @@ export class MarketplaceService {
       throw new NotFoundException('Ürün bulunamadı');
     }
 
-    let stock = product.stock;
-    let sku: string | undefined;
-    let price = product.basePrice;
+    const adapter = this.getAdapter(account.platform);
+    const imageUrl =
+      product.imageUrl ||
+      (Array.isArray(product.gallery) && product.gallery[0]) ||
+      undefined;
+
+    type PushTarget = {
+      variantId: string | null;
+      sku?: string;
+      barcode?: string;
+      weightLabel?: string;
+      grindOption?: string;
+      roastOption?: string;
+      price: string;
+      stock: number;
+    };
+
+    const targets: PushTarget[] = [];
+
     if (dto.variantId) {
       const variant = await this.em.findOne(ProductVariant, {
         where: { id: dto.variantId, productId: product.id },
@@ -342,43 +368,436 @@ export class MarketplaceService {
       if (!variant) {
         throw new NotFoundException('Varyant bulunamadı');
       }
-      stock = variant.stock;
-      sku = variant.sku;
-      price = variant.price;
+      targets.push({
+        variantId: variant.id,
+        sku: variant.sku,
+        barcode: variant.barcode || undefined,
+        weightLabel: variant.weightLabel,
+        grindOption: variant.grindOption || undefined,
+        roastOption: variant.roastOption || undefined,
+        price: variant.price,
+        stock: variant.stock,
+      });
+    } else if (account.platform === MarketplacePlatform.HEPSIBURADA) {
+      // HB: aktif varyantların her biri ayrı merchantSku + aynı VaryantGroupID
+      const variants = await this.em.find(ProductVariant, {
+        where: { productId: product.id, isActive: true },
+        order: { weightLabel: 'ASC' },
+      });
+      if (variants.length > 0) {
+        for (const variant of variants) {
+          targets.push({
+            variantId: variant.id,
+            sku: variant.sku,
+            barcode: variant.barcode || undefined,
+            weightLabel: variant.weightLabel,
+            grindOption: variant.grindOption || undefined,
+            roastOption: variant.roastOption || undefined,
+            price: variant.price,
+            stock: variant.stock,
+          });
+        }
+      } else {
+        targets.push({
+          variantId: null,
+          sku: undefined,
+          price: product.basePrice,
+          stock: product.stock,
+        });
+      }
+    } else {
+      targets.push({
+        variantId: null,
+        sku: undefined,
+        price: product.basePrice,
+        stock: product.stock,
+      });
     }
 
-    const adapter = this.getAdapter(account.platform);
-    const pushed = await adapter.pushProduct(account.credentials, {
-      productId: product.id,
-      name: product.name,
-      price,
-      stock,
-      sku,
-      description: product.shortDescription || product.description,
-    });
+    const results: Array<{
+      variantId: string | null;
+      sku?: string;
+      pushed: Awaited<ReturnType<IMarketplaceAdapter['pushProduct']>>;
+      listing: MarketplaceListing | null;
+    }> = [];
+
+    for (const target of targets) {
+      const pushed = await adapter.pushProduct(account.credentials, {
+        productId: product.id,
+        name: product.name,
+        price: target.price,
+        stock: target.stock,
+        sku: target.sku,
+        description: product.shortDescription || product.description,
+        imageUrl: imageUrl || undefined,
+        hepsiburadaCategoryId: product.hepsiburadaCategoryId || undefined,
+        weightLabel: target.weightLabel,
+        grindOption: target.grindOption,
+        roastOption: target.roastOption,
+        barcode: target.barcode,
+        varyantGroupId: product.id,
+      });
+
+      if (dto.dryRun || pushed.skipped || !pushed.externalListingId) {
+        results.push({
+          variantId: target.variantId,
+          sku: target.sku,
+          pushed,
+          listing: null,
+        });
+        continue;
+      }
+
+      const listing = await this.upsertListing({
+        accountId: account.id,
+        productId: product.id,
+        variantId: target.variantId,
+        externalListingId: pushed.externalListingId,
+        externalSku: target.sku ?? null,
+        stock: target.stock,
+      });
+      results.push({
+        variantId: target.variantId,
+        sku: target.sku,
+        pushed,
+        listing,
+      });
+    }
+
+    const first = results[0];
+    const pushedSummary = first?.pushed;
+    const skippedAll = results.every((r) => r.pushed.skipped);
+    const okCount = results.filter((r) => r.listing || r.pushed.mock).length;
+    const failCount = results.filter(
+      (r) =>
+        !r.pushed.skipped &&
+        !r.listing &&
+        !r.pushed.mock &&
+        !dto.dryRun &&
+        !r.pushed.externalListingId,
+    ).length;
 
     if (dto.dryRun) {
-      return { dryRun: true, listing: null, pushed };
+      return {
+        dryRun: true,
+        listing: null,
+        listings: [],
+        pushed: {
+          ...pushedSummary,
+          message:
+            results.length > 1
+              ? `Dry-run: ${results.length} varyant/SKU gönderilecek`
+              : pushedSummary?.message,
+          rawResponse: {
+            ...(pushedSummary?.rawResponse || {}),
+            variants: results.map((r) => ({
+              variantId: r.variantId,
+              sku: r.sku,
+              pushed: r.pushed,
+            })),
+          },
+        },
+        results,
+      };
     }
 
-    if (!pushed.externalListingId) {
+    if (skippedAll && pushedSummary?.skipped) {
+      return {
+        dryRun: false,
+        listing: null,
+        listings: [],
+        pushed: pushedSummary,
+        results,
+      };
+    }
+
+    if (okCount === 0 && failCount > 0) {
       throw new BadRequestException(
-        pushed.message ||
+        pushedSummary?.message ||
           'Ürün gönderilemedi — externalListingId oluşmadı (platform kategori/marka bilgisi eksik olabilir)',
       );
     }
 
-    const listing = this.em.create(MarketplaceListing, {
-      accountId: account.id,
-      productId: product.id,
-      variantId: dto.variantId ?? null,
-      externalListingId: pushed.externalListingId,
-      externalSku: sku ?? null,
-      syncStock: true,
-      lastSyncedStock: stock,
-      isActive: true,
+    const listings = results
+      .map((r) => r.listing)
+      .filter((l): l is MarketplaceListing => Boolean(l));
+
+    return {
+      dryRun: false,
+      listing: listings[0] ?? null,
+      listings,
+      pushed: {
+        ...(pushedSummary || {
+          externalListingId: '',
+          mock: false,
+          rawResponse: {},
+        }),
+        message:
+          results.length > 1
+            ? `Hepsiburada: ${okCount}/${results.length} varyant SKU gönderildi (VaryantGroupID=${product.id.slice(0, 8)}…)`
+            : pushedSummary?.message,
+        rawResponse: {
+          ...(pushedSummary?.rawResponse || {}),
+          variantCount: results.length,
+          okCount,
+          variants: results.map((r) => ({
+            variantId: r.variantId,
+            sku: r.sku,
+            externalListingId: r.pushed.externalListingId,
+            skipped: r.pushed.skipped,
+            message: r.pushed.message,
+          })),
+        },
+      },
+      results,
+    };
+  }
+
+  private async upsertListing(input: {
+    accountId: string;
+    productId: string;
+    variantId: string | null;
+    externalListingId: string;
+    externalSku: string | null;
+    stock: number;
+  }): Promise<MarketplaceListing> {
+    const qb = this.em
+      .createQueryBuilder(MarketplaceListing, 'l')
+      .where('l.account_id = :accountId', { accountId: input.accountId })
+      .andWhere('l.product_id = :productId', { productId: input.productId });
+    if (input.variantId) {
+      qb.andWhere('l.variant_id = :variantId', { variantId: input.variantId });
+    } else {
+      qb.andWhere('l.variant_id IS NULL');
+    }
+    let listing = await qb.getOne();
+    if (!listing) {
+      listing = this.em.create(MarketplaceListing, {
+        accountId: input.accountId,
+        productId: input.productId,
+        variantId: input.variantId,
+        externalListingId: input.externalListingId,
+        externalSku: input.externalSku,
+        syncStock: true,
+        lastSyncedStock: input.stock,
+        isActive: true,
+      });
+    } else {
+      listing.externalListingId = input.externalListingId;
+      listing.externalSku = input.externalSku;
+      listing.syncStock = true;
+      listing.lastSyncedStock = input.stock;
+      listing.isActive = true;
+    }
+    return this.em.save(listing);
+  }
+
+  /**
+   * İç sipariş shipped olduğunda bağlı pazaryeri siparişine paket/kargo bildir.
+   * HepsiJet: createPackages yeterli; diğer kargoda tracking ile intransit.
+   */
+  async notifyFulfillment(
+    internalOrderId: string,
+    status: OrderStatus,
+  ): Promise<{
+    ok: boolean;
+    skipped?: boolean;
+    reason?: string;
+    packageNumber?: string;
+    trackingNumber?: string;
+    message?: string;
+  }> {
+    if (status !== OrderStatus.SHIPPED && status !== OrderStatus.DELIVERED) {
+      return { ok: true, skipped: true, reason: 'status_not_applicable' };
+    }
+
+    const mOrder = await this.em.findOne(MarketplaceOrder, {
+      where: { internalOrderId },
+      relations: { account: true },
     });
-    await this.em.save(listing);
-    return { dryRun: false, listing, pushed };
+    if (!mOrder?.account) {
+      return { ok: true, skipped: true, reason: 'not_marketplace_order' };
+    }
+    if (!mOrder.account.isEnabled) {
+      return { ok: true, skipped: true, reason: 'account_disabled' };
+    }
+
+    const adapter = this.getAdapter(mOrder.account.platform);
+    if (!adapter.fulfillOrder) {
+      return { ok: true, skipped: true, reason: 'adapter_no_fulfill' };
+    }
+
+    // Teslim: HepsiJet tarafında HB bildirir; biz sadece shipped'da paketleriz.
+    if (status === OrderStatus.DELIVERED) {
+      return { ok: true, skipped: true, reason: 'deliver_via_hb' };
+    }
+
+    try {
+      const result = await adapter.fulfillOrder(mOrder.account.credentials, {
+        externalOrderId: mOrder.externalOrderId,
+        payload: mOrder.payload || {},
+        cargoCompany:
+          mOrder.account.credentials.cargoCompany || undefined,
+      });
+
+      mOrder.payload = {
+        ...(mOrder.payload || {}),
+        hbFulfillment: {
+          at: new Date().toISOString(),
+          packageNumber: result.packageNumber,
+          trackingNumber: result.trackingNumber,
+          labelUrl: result.labelUrl,
+          mock: result.mock,
+          raw: result.raw,
+        },
+        packageNumber: result.packageNumber || mOrder.payload?.packageNumber,
+        trackingNumber:
+          result.trackingNumber || mOrder.payload?.trackingNumber,
+      };
+      if (!result.mock) {
+        mOrder.externalStatus = mOrder.externalStatus || 'Packaged';
+      }
+      await this.em.save(mOrder);
+
+      return {
+        ok: result.ok,
+        packageNumber: result.packageNumber,
+        trackingNumber: result.trackingNumber,
+        message: result.message,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Marketplace fulfill failed for order ${internalOrderId}: ${message}`,
+      );
+      mOrder.payload = {
+        ...(mOrder.payload || {}),
+        hbFulfillmentError: {
+          at: new Date().toISOString(),
+          message,
+        },
+      };
+      await this.em.save(mOrder);
+      return { ok: false, message };
+    }
+  }
+
+  /**
+   * HB merchant webhook: PUT .../packages/{packageNumber}/{event}
+   * event: intransit | deliver | undeliver
+   */
+  async handleHepsiburadaPackageWebhook(
+    packageNumber: string,
+    event: string,
+    body: Record<string, unknown>,
+    secret?: string,
+  ): Promise<{ ok: boolean; updated: boolean; orderId?: string | null }> {
+    this.assertHepsiburadaWebhookSecret(secret);
+
+    const normalized = event.trim().toLowerCase();
+    if (!['intransit', 'deliver', 'undeliver'].includes(normalized)) {
+      throw new BadRequestException(`Desteklenmeyen HB webhook event: ${event}`);
+    }
+
+    const pkg = packageNumber.trim();
+    if (!pkg) {
+      throw new BadRequestException('packageNumber gerekli');
+    }
+
+    const externalStatus =
+      normalized === 'deliver'
+        ? 'Delivered'
+        : normalized === 'intransit'
+          ? 'InTransit'
+          : 'Undelivered';
+
+    const orderNumber = String(
+      body.orderNumber || body.OrderNumber || body.orderId || '',
+    ).trim();
+
+    const accounts = await this.em.find(MarketplaceAccount, {
+      where: {
+        platform: MarketplacePlatform.HEPSIBURADA,
+        isEnabled: true,
+      },
+    });
+    if (!accounts.length) {
+      return { ok: true, updated: false };
+    }
+
+    let mOrder: MarketplaceOrder | null = null;
+    for (const account of accounts) {
+      if (orderNumber) {
+        mOrder = await this.em.findOne(MarketplaceOrder, {
+          where: { accountId: account.id, externalOrderId: orderNumber },
+          relations: { internalOrder: true, account: true },
+        });
+        if (mOrder) break;
+      }
+
+      mOrder = await this.em
+        .createQueryBuilder(MarketplaceOrder, 'm')
+        .leftJoinAndSelect('m.internalOrder', 'o')
+        .leftJoinAndSelect('m.account', 'a')
+        .where('m.account_id = :accountId', { accountId: account.id })
+        .andWhere(
+          `(m.payload->>'packageNumber' = :pkg
+            OR m.payload->'hbFulfillment'->>'packageNumber' = :pkg
+            OR m.payload->'package'->>'packageNumber' = :pkg
+            OR m.payload->>'PackageNumber' = :pkg)`,
+          { pkg },
+        )
+        .getOne();
+      if (mOrder) break;
+    }
+
+    if (!mOrder) {
+      // Bilinen sipariş yoksa yine 204 benzeri kabul — HB idempotent bekler
+      this.logger.warn(
+        `HB webhook: paket/sipariş bulunamadı (${pkg}, ${normalized})`,
+      );
+      return { ok: true, updated: false };
+    }
+
+    mOrder.externalStatus = externalStatus;
+    mOrder.payload = {
+      ...(mOrder.payload || {}),
+      ...body,
+      packageNumber: pkg,
+      webhookEvent: normalized,
+      webhookAt: new Date().toISOString(),
+    };
+    await this.em.save(mOrder);
+
+    if (mOrder.internalOrder) {
+      const next = mapExternalStatus(externalStatus);
+      const previous = mOrder.internalOrder.status;
+      if (shouldApplyMarketplaceStatus(previous, next)) {
+        mOrder.internalOrder.status = next;
+        if (next === OrderStatus.DELIVERED) {
+          mOrder.internalOrder.deliveredAt = new Date();
+        }
+        await this.em.save(mOrder.internalOrder);
+      }
+    } else {
+      await this.orderImport.importIfNeeded(mOrder.id);
+    }
+
+    return {
+      ok: true,
+      updated: true,
+      orderId: mOrder.internalOrderId,
+    };
+  }
+
+  private assertHepsiburadaWebhookSecret(secret?: string): void {
+    const expected = (
+      this.config.get<string>('marketplace.hepsiburada.webhookSecret') || ''
+    ).trim();
+    if (!expected) return;
+    const got = (secret || '').trim();
+    if (!got || got !== expected) {
+      throw new UnauthorizedException('Geçersiz webhook secret');
+    }
   }
 }

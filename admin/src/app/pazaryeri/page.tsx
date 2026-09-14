@@ -13,7 +13,8 @@ const CREDENTIAL_HINTS: Record<string, string> = {
     '{\n  "apiKey": "",\n  "apiSecret": "",\n  "sellerId": "",\n  "storeFrontCode": "TR",\n  "brandId": "",\n  "categoryId": ""\n}',
   trendyol_go_market:
     '{\n  "apiKey": "",\n  "apiSecret": "",\n  "sellerId": "",\n  "storeId": "",\n  "token": "",\n  "brandId": "",\n  "categoryId": "",\n  "integratorName": "KilicCoffeeRoaster",\n  "executorEmail": "integration@kiliccofferoaster.local",\n  "integrationReferenceCode": ""\n}',
-  hepsiburada: '{\n  "merchantId": "",\n  "username": "",\n  "password": ""\n}',
+  hepsiburada:
+    '{\n  "merchantId": "",\n  "username": "",\n  "password": "",\n  "userAgent": "kiliccoffeeroaster_dev",\n  "brand": "",\n  "barcode": "",\n  "attributes": {}\n}',
   n11: '{\n  "appKey": "",\n  "appSecret": "",\n  "categoryId": "",\n  "shipmentTemplate": ""\n}',
 };
 
@@ -372,14 +373,25 @@ export default function MarketplacePage() {
     try {
       const result = await api<{
         dryRun?: boolean;
-        pushed?: { mock?: boolean; stub?: boolean; message?: string; externalListingId?: string };
+        listing?: unknown;
+        pushed?: {
+          mock?: boolean;
+          stub?: boolean;
+          skipped?: boolean;
+          message?: string;
+          externalListingId?: string;
+        };
       }>(`/marketplace/accounts/${pushAccountId}/push-product`, {
         method: 'POST',
         body: { productId: pushProductId, dryRun: pushDryRun },
       });
       setMessage(
         [
-          pushDryRun ? 'Dry-run push' : 'Ürün gönderildi',
+          result.pushed?.skipped
+            ? 'Atlandı'
+            : pushDryRun
+              ? 'Dry-run push'
+              : 'Ürün gönderildi',
           result.pushed?.mock || result.pushed?.stub ? '· stub' : null,
           result.pushed?.externalListingId
             ? `ID ${result.pushed.externalListingId}`
@@ -628,6 +640,10 @@ export default function MarketplacePage() {
           >
             {pushing ? 'Gönderiliyor…' : 'Ürünü pazara gönder'}
           </button>
+          <p className="text-[11px] text-muted">
+            Hepsiburada’da aktif gramaj varyantlarının her SKU’su ayrı
+            gönderilir.
+          </p>
         </div>
       </form>
 

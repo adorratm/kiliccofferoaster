@@ -10,6 +10,7 @@ import {
 } from "@/lib/grind";
 import {
   availableRoastOptions,
+  roastLabel,
   showRoastPicker,
   type RoastValue,
 } from "@/lib/roast";
@@ -30,6 +31,15 @@ type Props = {
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+const GRIND_LABELS: Record<string, string> = {
+  whole_bean: "Çekirdek",
+  ground: "Öğütülmüş",
+};
+
+function uniqueSorted(values: string[]) {
+  return [...new Set(values.filter(Boolean))];
+}
+
 export function ProductBuyBox({
   product,
   whatsappEnabled = true,
@@ -42,7 +52,19 @@ export function ProductBuyBox({
       ),
     [product.variants],
   );
-  const grindChoices = useMemo(
+
+  /** Yeni model: satırda grind/roast dolu → kombinasyon SKU */
+  const structured = useMemo(
+    () => variants.some((v) => v.grindOption || v.roastOption),
+    [variants],
+  );
+
+  const weightLabels = useMemo(
+    () => uniqueSorted(variants.map((v) => v.weightLabel)),
+    [variants],
+  );
+
+  const productGrindChoices = useMemo(
     () =>
       availableGrindOptions(
         product.kind,
@@ -51,7 +73,7 @@ export function ProductBuyBox({
       ),
     [product.kind, product.allowWholeBean, product.allowGround],
   );
-  const roastChoices = useMemo(
+  const productRoastChoices = useMemo(
     () =>
       availableRoastOptions(
         product.kind,
@@ -60,15 +82,61 @@ export function ProductBuyBox({
       ),
     [product.kind, product.allowRoastMediumDark, product.allowRoastDark],
   );
-  const [variantId, setVariantId] = useState<string | null>(
-    variants[0]?.id ?? null,
+
+  const [weightLabel, setWeightLabel] = useState<string>(
+    () => weightLabels[0] || variants[0]?.weightLabel || "",
   );
   const [grind, setGrind] = useState<GrindValue>(
-    () => grindChoices[0]?.value ?? "whole_bean",
+    () =>
+      (variants.find((v) => v.grindOption)?.grindOption as GrindValue) ||
+      productGrindChoices[0]?.value ||
+      "whole_bean",
   );
   const [roast, setRoast] = useState<RoastValue>(
-    () => roastChoices[0]?.value ?? "orta",
+    () =>
+      (variants.find((v) => v.roastOption)?.roastOption as RoastValue) ||
+      productRoastChoices[0]?.value ||
+      "orta",
   );
+  const [legacyVariantId, setLegacyVariantId] = useState<string | null>(
+    variants[0]?.id ?? null,
+  );
+
+  const grindChoices = useMemo(() => {
+    if (!structured) return productGrindChoices;
+    const forWeight = variants.filter((v) => v.weightLabel === weightLabel);
+    const values = uniqueSorted(
+      forWeight.map((v) => v.grindOption || "").filter(Boolean),
+    ) as GrindValue[];
+    if (values.length === 0) return productGrindChoices;
+    return values.map((value) => ({
+      value,
+      label: GRIND_LABELS[value] || value,
+    }));
+  }, [structured, variants, weightLabel, productGrindChoices]);
+
+  const roastChoices = useMemo(() => {
+    if (!structured) return productRoastChoices;
+    const forCombo = variants.filter(
+      (v) =>
+        v.weightLabel === weightLabel &&
+        (!grind || !v.grindOption || v.grindOption === grind),
+    );
+    const values = uniqueSorted(
+      forCombo.map((v) => v.roastOption || "").filter(Boolean),
+    ) as RoastValue[];
+    if (values.length === 0) return productRoastChoices;
+    return values.map((value) => ({
+      value,
+      label: roastLabel(value),
+    }));
+  }, [structured, variants, weightLabel, grind, productRoastChoices]);
+
+  useEffect(() => {
+    if (weightLabels.length && !weightLabels.includes(weightLabel)) {
+      setWeightLabel(weightLabels[0]);
+    }
+  }, [weightLabels, weightLabel]);
 
   useEffect(() => {
     if (
@@ -90,15 +158,14 @@ export function ProductBuyBox({
 
   useEffect(() => {
     if (
+      !structured &&
       variants.length > 0 &&
-      !variants.some((v) => v.id === variantId)
+      !variants.some((v) => v.id === legacyVariantId)
     ) {
-      setVariantId(variants[0].id);
+      setLegacyVariantId(variants[0].id);
     }
-  }, [variants, variantId]);
+  }, [structured, variants, legacyVariantId]);
 
-  const showGrindPicker = grindChoices.length > 0;
-  const roastPickerVisible = showRoastPicker(product.kind, roastChoices.length);
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)
@@ -112,8 +179,25 @@ export function ProductBuyBox({
         : roastChoices[0].value
       : null;
 
-  const selected: ProductVariant | undefined =
-    variants.find((v) => v.id === variantId) || variants[0];
+  const selected: ProductVariant | undefined = structured
+    ? variants.find(
+        (v) =>
+          v.weightLabel === weightLabel &&
+          (!resolvedGrind ||
+            !v.grindOption ||
+            v.grindOption === resolvedGrind) &&
+          (!resolvedRoast ||
+            !v.roastOption ||
+            v.roastOption === resolvedRoast),
+      ) || variants.find((v) => v.weightLabel === weightLabel)
+    : variants.find((v) => v.id === legacyVariantId) || variants[0];
+
+  const showGrindPicker = grindChoices.length > 0;
+  const roastPickerVisible = structured
+    ? roastChoices.length > 1 ||
+      (product.kind === "coffee_espresso" && roastChoices.length > 0)
+    : showRoastPicker(product.kind, roastChoices.length);
+
   const displayPrice =
     selected?.price ?? product.salePrice ?? product.basePrice;
   const compareAt =
@@ -121,7 +205,7 @@ export function ProductBuyBox({
       ?.compareAtPrice ?? product.compareAtPrice;
   const stock = selected != null ? selected.stock : product.stock;
   const outOfStock = stock <= 0;
-  const disabled = outOfStock;
+  const disabled = outOfStock || (structured && !selected);
 
   return (
     <div className="space-y-6">
@@ -137,24 +221,50 @@ export function ProductBuyBox({
             Ağırlık
           </p>
           <div className="flex flex-wrap gap-2">
-            {variants.map((v) => {
-              const active = (selected?.id || variantId) === v.id;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariantId(v.id)}
-                  className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
-                    active
-                      ? "border-primary bg-primary text-white"
-                      : "border-outline-variant/40 hover:border-primary"
-                  }`}
-                >
-                  {v.weightLabel}
-                  {v.stock <= 0 ? " · Yok" : ""}
-                </button>
-              );
-            })}
+            {(structured ? weightLabels : variants.map((v) => v.id)).map(
+              (key) => {
+                if (structured) {
+                  const label = key;
+                  const active = weightLabel === label;
+                  const anyStock = variants.some(
+                    (v) => v.weightLabel === label && v.stock > 0,
+                  );
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setWeightLabel(label)}
+                      className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-white"
+                          : "border-outline-variant/40 hover:border-primary"
+                      }`}
+                    >
+                      {label}
+                      {!anyStock ? " · Yok" : ""}
+                    </button>
+                  );
+                }
+                const v = variants.find((row) => row.id === key);
+                if (!v) return null;
+                const active = (selected?.id || legacyVariantId) === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setLegacyVariantId(v.id)}
+                    className={`border px-4 py-2 font-meta text-[11px] uppercase tracking-widest transition-colors ${
+                      active
+                        ? "border-primary bg-primary text-white"
+                        : "border-outline-variant/40 hover:border-primary"
+                    }`}
+                  >
+                    {v.weightLabel}
+                    {v.stock <= 0 ? " · Yok" : ""}
+                  </button>
+                );
+              },
+            )}
           </div>
         </div>
       ) : null}
@@ -235,6 +345,12 @@ export function ProductBuyBox({
         {selected?.weightLabel ? (
           <p className="font-meta text-[11px] uppercase text-secondary">
             {selected.weightLabel}
+            {selected.grindOption
+              ? ` · ${GRIND_LABELS[selected.grindOption] || selected.grindOption}`
+              : ""}
+            {selected.roastOption
+              ? ` · ${roastLabel(selected.roastOption)}`
+              : ""}
           </p>
         ) : null}
       </div>
@@ -244,8 +360,8 @@ export function ProductBuyBox({
           <AddToCartButton
             productId={product.id}
             variantId={selected?.id}
-            grindOption={resolvedGrind}
-            roastOption={resolvedRoast}
+            grindOption={resolvedGrind || selected?.grindOption || null}
+            roastOption={resolvedRoast || selected?.roastOption || null}
             disabled={disabled}
             productName={product.name}
             price={Number(displayPrice)}

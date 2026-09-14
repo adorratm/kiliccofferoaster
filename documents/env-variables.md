@@ -90,7 +90,9 @@ Detay: [bildirimler.md](bildirimler.md).
 | `MARKETPLACE_SYNC_ENABLED` | Otomatik sync |
 | `MARKETPLACE_SYNC_INTERVAL_MINUTES` | Aralık (min 5) |
 | `TRENDYOL_API_BASE_URL` | Stage/prod gateway |
-| `HEPSIBURADA_LISTING_BASE_URL` / `HEPSIBURADA_OMS_BASE_URL` | HB |
+| `HEPSIBURADA_MPOP_BASE_URL` / `HEPSIBURADA_LISTING_BASE_URL` / `HEPSIBURADA_OMS_BASE_URL` | HB katalog / listing / sipariş (SIT: `*-sit.hepsiburada.com`) |
+| `HEPSIBURADA_USER_AGENT` | HB Developer Username (User-Agent) |
+| `HEPSIBURADA_WEBHOOK_SECRET` | Opsiyonel; HB paket webhook doğrulama (`?secret=` / `x-webhook-secret`) |
 | `N11_API_BASE_URL` / `N11_INTEGRATOR_NAME` | N11 |
 
 ## Ön muhasebe / e-belge

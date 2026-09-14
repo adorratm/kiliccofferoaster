@@ -160,6 +160,15 @@ export class Product extends BaseEntity {
   @Column({ name: 'category_id', type: 'uuid', nullable: true })
   categoryId!: string | null;
 
+  /** Hepsiburada MPOP leaf kategori ID (ürün push için) */
+  @Column({
+    name: 'hepsiburada_category_id',
+    type: 'varchar',
+    length: 40,
+    nullable: true,
+  })
+  hepsiburadaCategoryId!: string | null;
+
   @OneToMany('ProductVariant', 'product')
   variants!: ProductVariant[];
 }

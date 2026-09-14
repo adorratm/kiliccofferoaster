@@ -31,6 +31,8 @@ import { WholesaleCatalogsPerBusiness1802000000000 } from './1802000000000-Whole
 import { WholesaleCatalogContactFields1803000000000 } from './1803000000000-WholesaleCatalogContactFields';
 import { WholesaleCatalogInstagram1804000000000 } from './1804000000000-WholesaleCatalogInstagram';
 import { WholesaleCatalogProductKgPricing1805000000000 } from './1805000000000-WholesaleCatalogProductKgPricing';
+import { ProductHepsiburadaCategoryId1806000000000 } from './1806000000000-ProductHepsiburadaCategoryId';
+import { ProductVariantGrindRoast1807000000000 } from './1807000000000-ProductVariantGrindRoast';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -70,4 +72,6 @@ export const ALL_MIGRATIONS = [
   WholesaleCatalogContactFields1803000000000,
   WholesaleCatalogInstagram1804000000000,
   WholesaleCatalogProductKgPricing1805000000000,
+  ProductHepsiburadaCategoryId1806000000000,
+  ProductVariantGrindRoast1807000000000,
 ];

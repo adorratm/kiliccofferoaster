@@ -234,6 +234,14 @@ export default () => ({
       omsBaseUrl:
         process.env.HEPSIBURADA_OMS_BASE_URL ||
         'https://oms-external.hepsiburada.com',
+      mpopBaseUrl:
+        process.env.HEPSIBURADA_MPOP_BASE_URL ||
+        'https://mpop.hepsiburada.com',
+      /** HB Developer Username (User-Agent); credentials.userAgent override eder */
+      userAgent:
+        process.env.HEPSIBURADA_USER_AGENT || 'kiliccoffeeroaster_dev',
+      /** Opsiyonel; set edilirse webhook ?secret= veya x-webhook-secret ister */
+      webhookSecret: process.env.HEPSIBURADA_WEBHOOK_SECRET || '',
     },
     n11: {
       baseUrl: process.env.N11_API_BASE_URL || 'https://api.n11.com',

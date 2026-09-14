@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { MarketplaceService } from '@modules/marketplace/marketplace.service';
 import { MarketplaceController } from '@modules/marketplace/marketplace.controller';
+import { MarketplaceWebhookController } from '@modules/marketplace/marketplace-webhook.controller';
 import { MarketplaceSyncService } from '@modules/marketplace/marketplace-sync.service';
 import { MarketplaceSyncProcessor } from '@modules/marketplace/marketplace-sync.processor';
 import { MarketplaceSyncScheduler } from '@modules/marketplace/marketplace-sync.scheduler';
@@ -20,7 +21,7 @@ import { CatalogModule } from '@modules/catalog/catalog.module';
     BullModule.registerQueue({ name: QUEUE_MARKETPLACE_SYNC }),
     CatalogModule,
   ],
-  controllers: [MarketplaceController],
+  controllers: [MarketplaceController, MarketplaceWebhookController],
   providers: [
     MarketplaceService,
     MarketplaceSyncService,

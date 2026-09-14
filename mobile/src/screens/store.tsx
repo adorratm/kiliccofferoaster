@@ -108,6 +108,7 @@ type OrderItem = {
   productName: string;
   variantLabel?: string | null;
   grindLabel?: string | null;
+  roastLabel?: string | null;
   quantity: number;
   unitPrice?: string | number;
   lineTotal?: string | number;
@@ -350,7 +351,9 @@ export function ShopOrdersScreen() {
             >
               <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
               <Text style={muted}>
-                {[item.variantLabel, item.grindLabel].filter(Boolean).join(' · ')}
+                {[item.variantLabel, item.grindLabel, item.roastLabel]
+                  .filter(Boolean)
+                  .join(' · ')}
                 {item.quantity ? ` · ${item.quantity} adet` : ''}
               </Text>
               <Text style={{ color: colors.accentSoft, marginTop: 4 }}>

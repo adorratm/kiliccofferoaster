@@ -94,7 +94,23 @@ export function ProductScreen({ navigation, route }: Props) {
       ),
     [product],
   );
-  const grindChoices = useMemo(
+  const structured = useMemo(
+    () => variants.some((v) => v.grindOption || v.roastOption),
+    [variants],
+  );
+  const weightLabels = useMemo(
+    () => [...new Set(variants.map((v) => v.weightLabel).filter(Boolean))],
+    [variants],
+  );
+  const [weightLabel, setWeightLabel] = useState('');
+  useEffect(() => {
+    if (!weightLabel && weightLabels[0]) setWeightLabel(weightLabels[0]);
+    else if (weightLabels.length && !weightLabels.includes(weightLabel)) {
+      setWeightLabel(weightLabels[0]);
+    }
+  }, [weightLabels, weightLabel]);
+
+  const productGrindChoices = useMemo(
     () =>
       availableGrindOptions(
         product?.kind,
@@ -103,7 +119,7 @@ export function ProductScreen({ navigation, route }: Props) {
       ),
     [product?.kind, product?.allowWholeBean, product?.allowGround],
   );
-  const roastChoices = useMemo(
+  const productRoastChoices = useMemo(
     () =>
       availableRoastOptions(
         product?.kind,
@@ -112,8 +128,60 @@ export function ProductScreen({ navigation, route }: Props) {
       ),
     [product?.kind, product?.allowRoastMediumDark, product?.allowRoastDark],
   );
-  const selected: ProductVariant | undefined =
-    variants.find((v) => v.id === variantId) || variants[0];
+
+  const grindChoices = useMemo(() => {
+    if (!structured) return productGrindChoices;
+    const values = [
+      ...new Set(
+        variants
+          .filter((v) => !weightLabel || v.weightLabel === weightLabel)
+          .map((v) => v.grindOption)
+          .filter(Boolean),
+      ),
+    ] as GrindValue[];
+    if (!values.length) return productGrindChoices;
+    return values.map((value) => ({
+      value,
+      label: value === 'whole_bean' ? 'Çekirdek' : 'Öğütülmüş',
+    }));
+  }, [structured, variants, weightLabel, productGrindChoices]);
+
+  const roastChoices = useMemo(() => {
+    if (!structured) return productRoastChoices;
+    const values = [
+      ...new Set(
+        variants
+          .filter(
+            (v) =>
+              (!weightLabel || v.weightLabel === weightLabel) &&
+              (!grind || !v.grindOption || v.grindOption === grind),
+          )
+          .map((v) => v.roastOption)
+          .filter(Boolean),
+      ),
+    ] as RoastValue[];
+    if (!values.length) return productRoastChoices;
+    return values.map((value) => ({
+      value,
+      label:
+        value === 'orta'
+          ? 'Orta'
+          : value === 'orta_koyu'
+            ? 'Orta-Koyu'
+            : value === 'koyu'
+              ? 'Koyu'
+              : value,
+    }));
+  }, [structured, variants, weightLabel, grind, productRoastChoices]);
+
+  const selected: ProductVariant | undefined = structured
+    ? variants.find(
+        (v) =>
+          v.weightLabel === (weightLabel || v.weightLabel) &&
+          (!grind || !v.grindOption || v.grindOption === grind) &&
+          (!roast || !v.roastOption || v.roastOption === roast),
+      ) || variants.find((v) => v.weightLabel === weightLabel)
+    : variants.find((v) => v.id === variantId) || variants[0];
   const amount = selected?.price ?? product?.salePrice ?? product?.basePrice;
   const stock = selected ? stockQty(selected.stock) : stockQty(product?.stock);
   const origin = productOrigin(product?.originCountry, product?.originRegion);
@@ -137,7 +205,10 @@ export function ProductScreen({ navigation, route }: Props) {
     ['Gramaj', weights || null],
   ].filter((row): row is [string, string] => Boolean(row[1]));
   const showGrindPicker = grindChoices.length > 0;
-  const roastPickerVisible = showRoastPicker(product?.kind, roastChoices.length);
+  const roastPickerVisible = structured
+    ? roastChoices.length > 1 ||
+      (product?.kind === 'coffee_espresso' && roastChoices.length > 0)
+    : showRoastPicker(product?.kind, roastChoices.length);
   const resolvedGrind =
     grindChoices.length > 0
       ? grindChoices.some((g) => g.value === grind)
@@ -344,14 +415,32 @@ export function ProductScreen({ navigation, route }: Props) {
           <View style={{ marginTop: 8 }}>
             <SectionLabel label="Gramaj" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-              {variants.map((v) => (
-                <Chip
-                  key={v.id}
-                  label={stockQty(v.stock) > 0 ? v.weightLabel : `${v.weightLabel} · Yok`}
-                  selected={variantId === v.id}
-                  onPress={() => setVariantId(v.id)}
-                />
-              ))}
+              {structured
+                ? weightLabels.map((label) => {
+                    const anyStock = variants.some(
+                      (v) => v.weightLabel === label && stockQty(v.stock) > 0,
+                    );
+                    return (
+                      <Chip
+                        key={label}
+                        label={anyStock ? label : `${label} · Yok`}
+                        selected={weightLabel === label}
+                        onPress={() => setWeightLabel(label)}
+                      />
+                    );
+                  })
+                : variants.map((v) => (
+                    <Chip
+                      key={v.id}
+                      label={
+                        stockQty(v.stock) > 0
+                          ? v.weightLabel
+                          : `${v.weightLabel} · Yok`
+                      }
+                      selected={variantId === v.id}
+                      onPress={() => setVariantId(v.id)}
+                    />
+                  ))}
             </View>
           </View>
         ) : null}

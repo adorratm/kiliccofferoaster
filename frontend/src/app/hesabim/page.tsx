@@ -370,7 +370,18 @@ function AccountPageInner() {
                         </div>
                         <div className="mt-1 font-meta text-[11px] text-secondary">
                           {(order.items || [])
-                            .map((it) => `${it.productName} ×${it.quantity}`)
+                            .map((it) => {
+                              const detail = [
+                                it.variantLabel,
+                                it.grindLabel,
+                                it.roastLabel,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ");
+                              return detail
+                                ? `${it.productName} (${detail}) ×${it.quantity}`
+                                : `${it.productName} ×${it.quantity}`;
+                            })
                             .join(", ") || "—"}
                         </div>
                       </Link>

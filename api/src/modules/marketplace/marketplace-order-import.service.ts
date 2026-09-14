@@ -11,6 +11,8 @@ import { Order, OrderStatus } from '@entities/order.entity';
 import { OrderItem } from '@entities/order-item.entity';
 import { Payment, PaymentStatus } from '@entities/payment.entity';
 import { InventoryService } from '@modules/catalog/inventory.service';
+import { grindLabel } from '@common/constants/grind-options';
+import { roastLabel } from '@common/constants/roast-options';
 
 type ParsedLine = {
   barcode?: string;
@@ -137,10 +139,14 @@ export class MarketplaceOrderImportService {
             variantId: match?.variantId ?? null,
             productName: line.name || match?.product?.name || 'Ürün',
             variantLabel: match?.variant?.weightLabel ?? null,
-            grindOption: null,
-            grindLabel: null,
-            roastOption: null,
-            roastLabel: null,
+            grindOption: match?.variant?.grindOption ?? null,
+            grindLabel: match?.variant?.grindOption
+              ? grindLabel(match.variant.grindOption)
+              : null,
+            roastOption: match?.variant?.roastOption ?? null,
+            roastLabel: match?.variant?.roastOption
+              ? roastLabel(match.variant.roastOption)
+              : null,
             quantity: line.quantity,
             unitPrice: line.unitPrice.toFixed(2),
             lineTotal: line.lineTotal.toFixed(2),
@@ -273,8 +279,11 @@ export class MarketplaceOrderImportService {
     if (!mOrder.internalOrder) return;
     const next = mapExternalStatus(mOrder.externalStatus);
     const previous = mOrder.internalOrder.status;
-    if (previous === next) return;
+    if (!shouldApplyMarketplaceStatus(previous, next)) return;
     mOrder.internalOrder.status = next;
+    if (next === OrderStatus.DELIVERED && previous !== OrderStatus.DELIVERED) {
+      mOrder.internalOrder.deliveredAt = new Date();
+    }
     await this.em.save(mOrder.internalOrder);
     try {
       const restored = await this.inventory.maybeRestoreOnStatusChange(
@@ -380,9 +389,23 @@ export function mapExternalStatus(external: string | null | undefined): OrderSta
     return OrderStatus.CANCELLED;
   }
   if (s.includes('refund')) return OrderStatus.REFUNDED;
-  if (s.includes('deliver')) return OrderStatus.DELIVERED;
-  if (s.includes('ship') || s.includes('cargo') || s.includes('intransit')) {
+  if (s.includes('deliver') && !s.includes('undeliver')) {
+    return OrderStatus.DELIVERED;
+  }
+  if (
+    s.includes('intransit') ||
+    s.includes('in_transit') ||
+    s.includes('ship') ||
+    s.includes('cargo') ||
+    s === 'shipped'
+  ) {
     return OrderStatus.SHIPPED;
+  }
+  if (
+    (s.includes('packag') || s.includes('packed')) &&
+    !s.includes('unpack')
+  ) {
+    return OrderStatus.PROCESSING;
   }
   if (
     s.includes('creat') ||
@@ -391,12 +414,39 @@ export function mapExternalStatus(external: string | null | undefined): OrderSta
     s.includes('await') ||
     s.includes('open') ||
     s.includes('new') ||
-    s.includes('approved') ||
-    s.includes('packag')
+    s.includes('approved')
   ) {
     return OrderStatus.PROCESSING;
   }
   return OrderStatus.PAID;
+}
+
+/** İçe aktarılan pazaryeri durumunu yalnızca ileriye (veya iptal/iade) uygula */
+export function shouldApplyMarketplaceStatus(
+  previous: OrderStatus,
+  next: OrderStatus,
+): boolean {
+  if (previous === next) return false;
+  if (
+    previous === OrderStatus.CANCELLED ||
+    previous === OrderStatus.REFUNDED
+  ) {
+    return false;
+  }
+  if (next === OrderStatus.CANCELLED || next === OrderStatus.REFUNDED) {
+    return previous !== OrderStatus.DELIVERED;
+  }
+  if (previous === OrderStatus.DELIVERED) return false;
+  const rank: Record<OrderStatus, number> = {
+    [OrderStatus.PENDING_PAYMENT]: 0,
+    [OrderStatus.PAID]: 1,
+    [OrderStatus.PROCESSING]: 2,
+    [OrderStatus.SHIPPED]: 3,
+    [OrderStatus.DELIVERED]: 4,
+    [OrderStatus.CANCELLED]: -1,
+    [OrderStatus.REFUNDED]: -1,
+  };
+  return (rank[next] ?? 0) >= (rank[previous] ?? 0);
 }
 
 function parseTrendyol(
@@ -538,7 +588,9 @@ function parseHepsiburada(
   payload: Record<string, unknown>,
   mOrder: MarketplaceOrder,
 ): ParsedMarketplaceOrder {
-  const items = (payload.items ||
+  const items = (payload.lineItems ||
+    payload.LineItems ||
+    payload.items ||
     payload.orderItems ||
     payload.Items ||
     []) as Array<Record<string, unknown>>;

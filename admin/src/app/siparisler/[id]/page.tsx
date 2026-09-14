@@ -562,9 +562,11 @@ export default function OrderDetailPage() {
                     <p>
                       {item.productName} × {item.quantity}
                     </p>
-                    {(item.variantLabel || item.grindLabel) && (
+                    {(item.variantLabel ||
+                      item.grindLabel ||
+                      item.roastLabel) && (
                       <p className="text-xs text-muted">
-                        {[item.variantLabel, item.grindLabel]
+                        {[item.variantLabel, item.grindLabel, item.roastLabel]
                           .filter(Boolean)
                           .join(' · ')}
                       </p>

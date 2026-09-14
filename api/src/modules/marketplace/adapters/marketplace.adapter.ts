@@ -19,6 +19,17 @@ export interface PushProductInput {
   stock: number;
   sku?: string;
   description?: string;
+  imageUrl?: string;
+  /** Hepsiburada leaf kategori ID (ürün kaydından) */
+  hepsiburadaCategoryId?: string;
+  /** Gramaj etiketi (250g vb.) — HB ürün adına / attribute’a yazılır */
+  weightLabel?: string;
+  grindOption?: string;
+  roastOption?: string;
+  /** Varyant barkodu */
+  barcode?: string;
+  /** HB kardeş varyant grubu (aynı ürünün tüm SKU’ları) */
+  varyantGroupId?: string;
 }
 
 export interface PushProductResult {
@@ -26,8 +37,28 @@ export interface PushProductResult {
   rawResponse: Record<string, unknown>;
   mock: boolean;
   stub?: boolean;
+  /** true = kasıtlı atlandı (örn. HB kategori ID yok); hata değil */
+  skipped?: boolean;
   message?: string;
 }
+
+export type MarketplaceFulfillInput = {
+  externalOrderId: string;
+  payload: Record<string, unknown>;
+  /** HepsiJet, ARAS, … — credentials.cargoCompany yoksa varsayılan */
+  cargoCompany?: string;
+  trackingNumber?: string;
+};
+
+export type MarketplaceFulfillResult = {
+  ok: boolean;
+  mock: boolean;
+  packageNumber?: string;
+  trackingNumber?: string;
+  labelUrl?: string;
+  message?: string;
+  raw: Record<string, unknown>;
+};
 
 export interface IMarketplaceAdapter {
   readonly platform: MarketplacePlatform;
@@ -53,6 +84,11 @@ export interface IMarketplaceAdapter {
     credentials: Record<string, string>,
     input: PushProductInput,
   ): Promise<PushProductResult>;
+  /** Opsiyonel: iç sipariş shipped olduğunda pazaryerine paket/kargo bildir */
+  fulfillOrder?(
+    credentials: Record<string, string>,
+    input: MarketplaceFulfillInput,
+  ): Promise<MarketplaceFulfillResult>;
 }
 
 export function hasMarketplaceCredentials(

@@ -34,6 +34,7 @@ import { statusLabel } from '@modules/notifications/notification.templates';
 import { CouponsService } from '@modules/coupons/coupons.service';
 import { InventoryService } from '@modules/catalog/inventory.service';
 import { PaytrService } from '@modules/payments/paytr.service';
+import { MarketplaceService } from '@modules/marketplace/marketplace.service';
 import { grindLabel, resolveGrindOption } from '@common/constants/grind-options';
 import { resolveRoastOption, roastLabel } from '@common/constants/roast-options';
 import {
@@ -65,6 +66,7 @@ export class OrdersService {
     private readonly coupons: CouponsService,
     private readonly inventory: InventoryService,
     private readonly paytr: PaytrService,
+    private readonly marketplace: MarketplaceService,
   ) {}
 
   async createFromCart(
@@ -178,14 +180,22 @@ export class OrdersService {
       // Kupon kullanımı ödeme PAID olunca confirm edilir (başarısız ödemede yanmasın)
 
       const orderItems = cart!.items.map((item: CartItem) => {
-        const grind = resolveGrindOption(item.product?.kind, item.grindOption, {
-          allowWholeBean: item.product?.allowWholeBean,
-          allowGround: item.product?.allowGround,
-        });
-        const roast = resolveRoastOption(item.product?.kind, item.roastOption, {
-          allowRoastMediumDark: item.product?.allowRoastMediumDark,
-          allowRoastDark: item.product?.allowRoastDark,
-        });
+        const grind = resolveGrindOption(
+          item.product?.kind,
+          item.grindOption ?? item.variant?.grindOption,
+          {
+            allowWholeBean: item.product?.allowWholeBean,
+            allowGround: item.product?.allowGround,
+          },
+        );
+        const roast = resolveRoastOption(
+          item.product?.kind,
+          item.roastOption ?? item.variant?.roastOption,
+          {
+            allowRoastMediumDark: item.product?.allowRoastMediumDark,
+            allowRoastDark: item.product?.allowRoastDark,
+          },
+        );
         return tx.create(OrderItem, {
           orderId: created.id,
           productId: item.productId,
@@ -411,6 +421,29 @@ export class OrdersService {
             err instanceof Error ? err.message : String(err)
           }`,
         );
+      }
+
+      if (
+        dto.status === OrderStatus.SHIPPED ||
+        dto.status === OrderStatus.DELIVERED
+      ) {
+        try {
+          const fulfill = await this.marketplace.notifyFulfillment(
+            saved.id,
+            dto.status,
+          );
+          if (!fulfill.skipped && !fulfill.ok) {
+            this.logger.warn(
+              `Marketplace fulfill for ${saved.id}: ${fulfill.message || 'failed'}`,
+            );
+          }
+        } catch (err) {
+          this.logger.warn(
+            `Marketplace fulfill notify failed for ${saved.id}: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
       }
 
       const template =

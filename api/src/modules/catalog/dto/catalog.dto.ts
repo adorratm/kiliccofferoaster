@@ -32,6 +32,24 @@ export class ProductVariantDto {
   @MaxLength(40)
   weightLabel!: string;
 
+  @ApiPropertyOptional({
+    example: 'ground',
+    description: 'whole_bean | ground (kahve varyantları)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  grindOption?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'orta',
+    description: 'orta | orta_koyu | koyu (kahve varyantları)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  roastOption?: string | null;
+
   @ApiProperty()
   @IsString()
   price!: string;
@@ -254,6 +272,16 @@ export class CreateProductDto {
   @IsString()
   @MaxLength(40)
   kind?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Hepsiburada leaf kategori ID (developer portal). Ürün push bu değeri kullanır.',
+    example: '18021982',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  hepsiburadaCategoryId?: string | null;
 
   @ApiPropertyOptional({
     description: 'Kahve ürünlerinde Çekirdek seçeneği',

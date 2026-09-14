@@ -16,7 +16,7 @@ export const ROAST_OPTIONS = [
 
 export type RoastValue = (typeof ROAST_OPTIONS)[number]["value"];
 
-/** Espresso: panelden açılan seçenekler. Filtre / Türk: sabit Orta. */
+/** Espresso: Orta + panelden açılan Orta-Koyu / Koyu. Filtre / Türk: sabit Orta. */
 export function availableRoastOptions(
   kind?: string | null,
   allowRoastMediumDark?: boolean | null,
@@ -27,6 +27,7 @@ export function availableRoastOptions(
     return ROAST_OPTIONS.filter((r) => r.value === "orta");
   }
   return ROAST_OPTIONS.filter((r) => {
+    if (r.value === "orta") return true;
     if (r.value === "orta_koyu") return allowRoastMediumDark !== false;
     if (r.value === "koyu") return allowRoastDark !== false;
     return false;

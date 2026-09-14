@@ -15,6 +15,8 @@ type VariantForm = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption: string;
+  roastOption: string;
   price: string;
   stock: string;
   isActive: boolean;
@@ -62,6 +64,7 @@ type FormState = {
   imageUrl: string;
   gallery: string;
   categoryId: string;
+  hepsiburadaCategoryId: string;
   isActive: boolean;
   isFeatured: boolean;
   kind: string;
@@ -80,13 +83,45 @@ type FormState = {
   variants: VariantForm[];
 };
 
-const emptyVariant = (): VariantForm => ({
-  sku: '',
-  weightLabel: '250g',
-  price: '',
-  stock: '0',
-  isActive: true,
-});
+const emptyVariant = (kind = 'other'): VariantForm => {
+  const coffee = kind.startsWith('coffee_');
+  return {
+    sku: '',
+    weightLabel: '250g',
+    grindOption: coffee
+      ? kind === 'coffee_turkish'
+        ? 'ground'
+        : 'whole_bean'
+      : '',
+    roastOption: coffee ? 'orta' : '',
+    price: '',
+    stock: '0',
+    isActive: true,
+  };
+};
+
+function grindChoicesForProduct(kind: string, allowWholeBean: boolean, allowGround: boolean) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  const opts: { value: string; label: string }[] = [];
+  if (allowWholeBean) opts.push({ value: 'whole_bean', label: 'Çekirdek' });
+  if (allowGround) opts.push({ value: 'ground', label: 'Öğütülmüş' });
+  return opts;
+}
+
+function roastChoicesForProduct(
+  kind: string,
+  allowRoastMediumDark: boolean,
+  allowRoastDark: boolean,
+) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  if (kind === 'coffee_turkish' || kind === 'coffee_filter') {
+    return [{ value: 'orta', label: 'Orta' }];
+  }
+  const opts = [{ value: 'orta', label: 'Orta' }];
+  if (allowRoastMediumDark) opts.push({ value: 'orta_koyu', label: 'Orta-Koyu' });
+  if (allowRoastDark) opts.push({ value: 'koyu', label: 'Koyu' });
+  return opts;
+}
 
 const emptyPhase = (): RoastPhaseForm => ({
   phase: '',
@@ -163,6 +198,7 @@ const emptyForm = (): FormState => ({
   imageUrl: '',
   gallery: '',
   categoryId: '',
+  hepsiburadaCategoryId: '',
   isActive: true,
   isFeatured: false,
   kind: 'other',
@@ -312,11 +348,13 @@ function ProductsPageInner() {
             id: v.id,
             sku: v.sku || '',
             weightLabel: v.weightLabel || '',
+            grindOption: v.grindOption || '',
+            roastOption: v.roastOption || '',
             price: String(v.price ?? ''),
             stock: String(v.stock ?? 0),
             isActive: v.isActive !== false,
           }))
-        : [emptyVariant()];
+        : [emptyVariant(p.kind || 'other')];
     setForm({
       id: p.id,
       name: p.name,
@@ -351,6 +389,7 @@ function ProductsPageInner() {
       imageUrl: p.imageUrl || '',
       gallery: (p.gallery || []).join('\n'),
       categoryId: p.categoryId || '',
+      hepsiburadaCategoryId: p.hepsiburadaCategoryId || '',
       isActive: p.isActive,
       isFeatured: Boolean(p.isFeatured),
       kind: p.kind || 'other',
@@ -381,8 +420,18 @@ function ProductsPageInner() {
         ...(v.id ? { id: v.id } : {}),
         sku:
           v.sku.trim() ||
-          `${slugify(form.name) || 'urun'}-${slugify(v.weightLabel) || i + 1}`.toUpperCase(),
+          [
+            slugify(form.name) || 'urun',
+            slugify(v.weightLabel) || String(i + 1),
+            v.grindOption || '',
+            v.roastOption || '',
+          ]
+            .filter(Boolean)
+            .join('-')
+            .toUpperCase(),
         weightLabel: v.weightLabel.trim(),
+        grindOption: v.grindOption.trim() || null,
+        roastOption: v.roastOption.trim() || null,
         price: String(v.price),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
@@ -416,6 +465,7 @@ function ProductsPageInner() {
         .map((u) => u.trim())
         .filter(Boolean),
       categoryId: form.categoryId || null,
+      hepsiburadaCategoryId: form.hepsiburadaCategoryId.trim() || null,
       kind: form.kind || 'other',
       allowWholeBean: form.allowWholeBean,
       allowGround: form.allowGround,
@@ -775,6 +825,26 @@ function ProductsPageInner() {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="block text-sm md:col-span-2">
+            <span className="mono text-[10px] uppercase text-muted">
+              Hepsiburada leaf kategori ID
+            </span>
+            <input
+              value={form.hepsiburadaCategoryId}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  hepsiburadaCategoryId: e.target.value,
+                }))
+              }
+              placeholder="Örn. 18021982 — HB developer portal leaf kategori"
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2 mono text-sm"
+            />
+            <span className="mt-1 block text-[11px] text-muted">
+              Opsiyonel. Boş bırakılırsa Hepsiburada’ya gönderilmez; ID
+              girildiğinde pazaryeri push bu kategoriyi kullanır.
+            </span>
           </label>
           <label className="block text-sm">
             <span className="mono text-[10px] uppercase text-muted">Stok</span>
@@ -1146,14 +1216,14 @@ function ProductsPageInner() {
           <div className="md:col-span-2 space-y-3 border border-border-muted p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="mono text-[10px] uppercase text-muted">
-                Varyantlar (ağırlık / SKU)
+                Varyantlar (gramaj / öğütme / kavrum / SKU)
               </span>
               <button
                 type="button"
                 onClick={() =>
                   setForm((f) => ({
                     ...f,
-                    variants: [...f.variants, emptyVariant()],
+                    variants: [...f.variants, emptyVariant(f.kind)],
                   }))
                 }
                 className="text-xs text-accent hover:underline"
@@ -1161,10 +1231,25 @@ function ProductsPageInner() {
                 + Varyant
               </button>
             </div>
-            {form.variants.map((v, i) => (
+            <p className="text-[11px] text-muted">
+              Kahvede her satır ayrı SKU’dur (ör. 250g + çekirdek + orta). Üstteki
+              öğütme/kavrum anahtarları hangi seçeneklerin açılabileceğini belirler.
+            </p>
+            {form.variants.map((v, i) => {
+              const grindOpts = grindChoicesForProduct(
+                form.kind,
+                form.allowWholeBean,
+                form.allowGround,
+              );
+              const roastOpts = roastChoicesForProduct(
+                form.kind,
+                form.allowRoastMediumDark,
+                form.allowRoastDark,
+              );
+              return (
               <div
                 key={v.id || i}
-                className="grid gap-2 border border-border-muted/60 p-2 md:grid-cols-5"
+                className="grid gap-2 border border-border-muted/60 p-2 md:grid-cols-3 lg:grid-cols-6"
               >
                 <input
                   placeholder="SKU (boş bırakılırsa otomatik)"
@@ -1176,7 +1261,7 @@ function ProductsPageInner() {
                       return { ...f, variants };
                     })
                   }
-                  className="border border-border-muted bg-background px-2 py-1.5 text-sm mono"
+                  className="border border-border-muted bg-background px-2 py-1.5 text-sm mono md:col-span-2 lg:col-span-2"
                 />
                 <input
                   placeholder="250g"
@@ -1193,6 +1278,52 @@ function ProductsPageInner() {
                   }
                   className="border border-border-muted bg-background px-2 py-1.5 text-sm"
                 />
+                {grindOpts.length > 0 ? (
+                  <select
+                    value={v.grindOption}
+                    onChange={(e) =>
+                      setForm((f) => {
+                        const variants = [...f.variants];
+                        variants[i] = {
+                          ...variants[i],
+                          grindOption: e.target.value,
+                        };
+                        return { ...f, variants };
+                      })
+                    }
+                    className="border border-border-muted bg-background px-2 py-1.5 text-sm"
+                  >
+                    <option value="">Öğütme…</option>
+                    {grindOpts.map((g) => (
+                      <option key={g.value} value={g.value}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {roastOpts.length > 0 ? (
+                  <select
+                    value={v.roastOption}
+                    onChange={(e) =>
+                      setForm((f) => {
+                        const variants = [...f.variants];
+                        variants[i] = {
+                          ...variants[i],
+                          roastOption: e.target.value,
+                        };
+                        return { ...f, variants };
+                      })
+                    }
+                    className="border border-border-muted bg-background px-2 py-1.5 text-sm"
+                  >
+                    <option value="">Kavrum…</option>
+                    {roastOpts.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <input
                   placeholder="Fiyat"
                   value={v.price}
@@ -1217,7 +1348,7 @@ function ProductsPageInner() {
                   }
                   className="border border-border-muted bg-background px-2 py-1.5 text-sm"
                 />
-                <div className="flex flex-col gap-2 md:col-span-5 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-2 md:col-span-3 lg:col-span-6 md:flex-row md:items-center md:justify-between">
                   <Checkbox
                     checked={v.isActive}
                     onChange={(isActive) =>
@@ -1240,7 +1371,8 @@ function ProductsPageInner() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           <Checkbox
             checked={form.isActive}

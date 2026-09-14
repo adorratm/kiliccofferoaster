@@ -2,6 +2,8 @@ export type ProductVariant = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption?: string | null;
+  roastOption?: string | null;
   price: string | number;
   stock: number;
   isActive?: boolean;
@@ -53,6 +55,7 @@ export type Product = {
   isActive: boolean;
   isFeatured?: boolean;
   categoryId?: string | null;
+  hepsiburadaCategoryId?: string | null;
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;
@@ -87,6 +90,9 @@ export type OrderItem = {
   productName: string;
   variantLabel?: string | null;
   grindLabel?: string | null;
+  roastLabel?: string | null;
+  grindOption?: string | null;
+  roastOption?: string | null;
   quantity: number;
   unitPrice: string | number;
   lineTotal: string | number;

@@ -3,6 +3,8 @@ export type ProductVariant = {
   productId: string;
   sku: string;
   weightLabel: string;
+  grindOption?: string | null;
+  roastOption?: string | null;
   price: string;
   /** Kampanya varsa orijinal fiyat (API decorate) */
   compareAtPrice?: string | null;

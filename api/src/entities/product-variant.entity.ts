@@ -27,6 +27,14 @@ export class ProductVariant extends BaseEntity {
   @Column({ name: 'weight_label', type: 'varchar', length: 40 })
   weightLabel!: string;
 
+  /** whole_bean | ground — kahve dışı null */
+  @Column({ name: 'grind_option', type: 'varchar', length: 40, nullable: true })
+  grindOption!: string | null;
+
+  /** orta | orta_koyu | koyu — kahve dışı null */
+  @Column({ name: 'roast_option', type: 'varchar', length: 40, nullable: true })
+  roastOption!: string | null;
+
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   price!: string;
 

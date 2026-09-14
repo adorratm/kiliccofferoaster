@@ -260,6 +260,9 @@ export class ProductsService {
       isFeatured: productFields.isFeatured ?? false,
       category,
       categoryId: category?.id ?? productFields.categoryId ?? null,
+      hepsiburadaCategoryId: productFields.hepsiburadaCategoryId?.trim()
+        ? productFields.hepsiburadaCategoryId.trim()
+        : null,
       kind,
       allowWholeBean: productFields.allowWholeBean ?? true,
       allowGround: productFields.allowGround ?? true,
@@ -339,6 +342,10 @@ export class ProductsService {
 
     Object.assign(product, {
       ...rest,
+      hepsiburadaCategoryId:
+        rest.hepsiburadaCategoryId !== undefined
+          ? rest.hepsiburadaCategoryId?.trim() || null
+          : product.hepsiburadaCategoryId,
       shortDescription:
         rest.shortDescription !== undefined
           ? rest.shortDescription
@@ -414,6 +421,10 @@ export class ProductsService {
         if (!current) continue;
         current.sku = v.sku;
         current.weightLabel = v.weightLabel;
+        current.grindOption =
+          v.grindOption !== undefined ? v.grindOption || null : current.grindOption;
+        current.roastOption =
+          v.roastOption !== undefined ? v.roastOption || null : current.roastOption;
         current.price = v.price;
         current.stock = v.stock ?? current.stock;
         current.isActive = v.isActive ?? true;
@@ -426,6 +437,8 @@ export class ProductsService {
             productId,
             sku: v.sku,
             weightLabel: v.weightLabel,
+            grindOption: v.grindOption || null,
+            roastOption: v.roastOption || null,
             price: v.price,
             stock: v.stock ?? 0,
             isActive: v.isActive ?? true,

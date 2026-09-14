@@ -249,7 +249,7 @@ export class CartService {
     }
     const grindOption = resolveGrindOption(
       product.kind,
-      dto.grindOption,
+      dto.grindOption ?? variant?.grindOption,
       availability,
     );
 
@@ -265,7 +265,7 @@ export class CartService {
     }
     const roastOption = resolveRoastOption(
       product.kind,
-      dto.roastOption,
+      dto.roastOption ?? variant?.roastOption,
       roastAvail,
     );
     const qtyToAdd = dto.quantity;

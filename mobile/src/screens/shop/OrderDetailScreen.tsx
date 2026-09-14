@@ -90,7 +90,9 @@ export function OrderDetailScreen({ route }: Props) {
         >
           <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
           <Text style={[muted, { marginTop: 6 }]}>
-            {[item.variantLabel, item.grindLabel].filter(Boolean).join(' · ')}
+            {[item.variantLabel, item.grindLabel, item.roastLabel]
+              .filter(Boolean)
+              .join(' · ')}
             {item.quantity ? ` · ${item.quantity} adet` : ''}
           </Text>
           <Text style={{ color: colors.accentSoft, marginTop: 8 }}>{formatMoney(item.lineTotal || item.unitPrice)}</Text>

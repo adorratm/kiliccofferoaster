@@ -20,6 +20,8 @@ type ProductVariant = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption?: string | null;
+  roastOption?: string | null;
   price: string | number;
   stock: number;
   isActive?: boolean;
@@ -68,6 +70,8 @@ type VariantForm = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption: string;
+  roastOption: string;
   price: string;
   stock: string;
   isActive: boolean;
@@ -151,16 +155,50 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-function emptyVariant(): VariantForm {
+function emptyVariant(kind = 'other'): VariantForm {
+  const coffee = kind.startsWith('coffee_');
   return {
     sku: '',
     weightLabel: '250g',
+    grindOption: coffee
+      ? kind === 'coffee_turkish'
+        ? 'ground'
+        : 'whole_bean'
+      : '',
+    roastOption: coffee ? 'orta' : '',
     price: '',
     stock: '0',
     isActive: true,
     barcode: '',
     expiresAt: '',
   };
+}
+
+function grindChoicesForProduct(
+  kind: string,
+  allowWholeBean: boolean,
+  allowGround: boolean,
+) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  const opts: { value: string; label: string }[] = [];
+  if (allowWholeBean) opts.push({ value: 'whole_bean', label: 'Çekirdek' });
+  if (allowGround) opts.push({ value: 'ground', label: 'Öğütülmüş' });
+  return opts;
+}
+
+function roastChoicesForProduct(
+  kind: string,
+  allowRoastMediumDark: boolean,
+  allowRoastDark: boolean,
+) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  if (kind === 'coffee_turkish' || kind === 'coffee_filter') {
+    return [{ value: 'orta', label: 'Orta' }];
+  }
+  const opts = [{ value: 'orta', label: 'Orta' }];
+  if (allowRoastMediumDark) opts.push({ value: 'orta_koyu', label: 'Orta-Koyu' });
+  if (allowRoastDark) opts.push({ value: 'koyu', label: 'Koyu' });
+  return opts;
 }
 
 function emptyForm(): FormState {
@@ -204,13 +242,15 @@ function formFromProduct(p: Product): FormState {
           id: v.id,
           sku: v.sku || '',
           weightLabel: v.weightLabel || '',
+          grindOption: v.grindOption || '',
+          roastOption: v.roastOption || '',
           price: String(v.price ?? ''),
           stock: String(v.stock ?? 0),
           isActive: v.isActive !== false,
           barcode: v.barcode || '',
           expiresAt: v.expiresAt ? String(v.expiresAt).slice(0, 10) : '',
         }))
-      : [emptyVariant()];
+      : [emptyVariant(p.kind || 'other')];
   return {
     name: p.name,
     slug: p.slug,
@@ -435,8 +475,20 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
       .filter((v) => v.weightLabel.trim() && v.price.trim())
       .map((v, i) => ({
         ...(v.id ? { id: v.id } : {}),
-        sku: v.sku.trim() || `${slugify(form.name) || 'urun'}-${slugify(v.weightLabel) || i + 1}`.toUpperCase(),
+        sku:
+          v.sku.trim() ||
+          [
+            slugify(form.name) || 'urun',
+            slugify(v.weightLabel) || String(i + 1),
+            v.grindOption || '',
+            v.roastOption || '',
+          ]
+            .filter(Boolean)
+            .join('-')
+            .toUpperCase(),
         weightLabel: v.weightLabel.trim(),
+        grindOption: v.grindOption.trim() || null,
+        roastOption: v.roastOption.trim() || null,
         price: String(v.price),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
@@ -810,7 +862,7 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
 
         <View style={[card, { paddingBottom: 8 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: colors.text }}>Varyantlar</Text>
+            <Text style={{ color: colors.text }}>Varyantlar (gramaj / öğütme / kavrum)</Text>
             <Pressable
               onPress={() =>
                 setForm((f) => ({
@@ -818,7 +870,7 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
                   variants: [
                     ...f.variants,
                     {
-                      ...emptyVariant(),
+                      ...emptyVariant(f.kind),
                       sku: f.name
                         ? `${slugify(f.name)}-${f.variants.length + 1}`.toUpperCase()
                         : '',
@@ -830,7 +882,18 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
               <Text style={{ color: colors.accentSoft }}>+ Varyant</Text>
             </Pressable>
           </View>
-          {form.variants.map((v, i) => (
+          {form.variants.map((v, i) => {
+            const grindOpts = grindChoicesForProduct(
+              form.kind,
+              form.allowWholeBean,
+              form.allowGround,
+            );
+            const roastOpts = roastChoicesForProduct(
+              form.kind,
+              form.allowRoastMediumDark,
+              form.allowRoastDark,
+            );
+            return (
             <View
               key={v.id || `new-${i}`}
               style={{
@@ -841,7 +904,8 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
               }}
             >
               <Text style={muted}>
-                {v.weightLabel || `Varyant ${i + 1}`}
+                {[v.weightLabel, v.grindOption, v.roastOption].filter(Boolean).join(' · ') ||
+                  `Varyant ${i + 1}`}
                 {v.id ? '' : ' · yeni'}
               </Text>
               <TextInput
@@ -859,6 +923,22 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
                 onChangeText={(weightLabel) => updateVariant(i, { weightLabel })}
                 style={input}
               />
+              {grindOpts.length > 0 ? (
+                <ChoiceRow
+                  label="Öğütme"
+                  value={v.grindOption}
+                  options={grindOpts}
+                  onChange={(grindOption) => updateVariant(i, { grindOption })}
+                />
+              ) : null}
+              {roastOpts.length > 0 ? (
+                <ChoiceRow
+                  label="Kavrum"
+                  value={v.roastOption}
+                  options={roastOpts}
+                  onChange={(roastOption) => updateVariant(i, { roastOption })}
+                />
+              ) : null}
               <TextInput
                 placeholder="Fiyat"
                 placeholderTextColor={colors.muted}
@@ -906,7 +986,8 @@ export function ProductEditScreen({ navigation, route }: EditProps) {
                 </Pressable>
               </View>
             </View>
-          ))}
+            );
+          })}
         </View>
 
         {error ? <Text style={{ color: colors.danger, marginTop: 10 }}>{error}</Text> : null}

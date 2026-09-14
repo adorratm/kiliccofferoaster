@@ -29,7 +29,14 @@ type Order = {
     netAmount: string;
   };
   couponCode?: string | null;
-  items?: { productName: string; quantity: number; lineTotal: string | number }[];
+  items?: {
+    productName: string;
+    quantity: number;
+    lineTotal: string | number;
+    variantLabel?: string | null;
+    grindLabel?: string | null;
+    roastLabel?: string | null;
+  }[];
 };
 
 type LinkedInvoice = {
@@ -337,9 +344,20 @@ export function OrdersPage() {
             <ul className="mt-4 space-y-2 text-sm">
               {(selected.items || []).map((item, i) => (
                 <li key={i} className="flex justify-between border-b border-border-muted/40 pb-1">
-                  <span>
-                    {item.productName} × {item.quantity}
-                  </span>
+                  <div>
+                    <span>
+                      {item.productName} × {item.quantity}
+                    </span>
+                    {(item.variantLabel ||
+                      item.grindLabel ||
+                      item.roastLabel) && (
+                      <p className="text-xs text-muted">
+                        {[item.variantLabel, item.grindLabel, item.roastLabel]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    )}
+                  </div>
                   <span>{formatMoney(item.lineTotal)}</span>
                 </li>
               ))}

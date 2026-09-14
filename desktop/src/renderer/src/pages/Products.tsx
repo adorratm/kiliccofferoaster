@@ -13,6 +13,8 @@ type ProductVariant = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption?: string | null;
+  roastOption?: string | null;
   price: string | number;
   stock: number;
   isActive?: boolean;
@@ -59,6 +61,8 @@ type VariantForm = {
   id?: string;
   sku: string;
   weightLabel: string;
+  grindOption: string;
+  roastOption: string;
   price: string;
   stock: string;
   isActive: boolean;
@@ -127,16 +131,50 @@ const CATEGORY_KIND_BY_SLUG: Record<string, string> = {
   cay: 'tea',
 };
 
-function emptyVariant(): VariantForm {
+function emptyVariant(kind = 'other'): VariantForm {
+  const coffee = kind.startsWith('coffee_');
   return {
     sku: '',
     weightLabel: '250g',
+    grindOption: coffee
+      ? kind === 'coffee_turkish'
+        ? 'ground'
+        : 'whole_bean'
+      : '',
+    roastOption: coffee ? 'orta' : '',
     price: '',
     stock: '0',
     isActive: true,
     barcode: '',
     expiresAt: '',
   };
+}
+
+function grindChoicesForProduct(
+  kind: string,
+  allowWholeBean: boolean,
+  allowGround: boolean,
+) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  const opts: { value: string; label: string }[] = [];
+  if (allowWholeBean) opts.push({ value: 'whole_bean', label: 'Çekirdek' });
+  if (allowGround) opts.push({ value: 'ground', label: 'Öğütülmüş' });
+  return opts;
+}
+
+function roastChoicesForProduct(
+  kind: string,
+  allowRoastMediumDark: boolean,
+  allowRoastDark: boolean,
+) {
+  if (!kind.startsWith('coffee_')) return [] as { value: string; label: string }[];
+  if (kind === 'coffee_turkish' || kind === 'coffee_filter') {
+    return [{ value: 'orta', label: 'Orta' }];
+  }
+  const opts = [{ value: 'orta', label: 'Orta' }];
+  if (allowRoastMediumDark) opts.push({ value: 'orta_koyu', label: 'Orta-Koyu' });
+  if (allowRoastDark) opts.push({ value: 'koyu', label: 'Koyu' });
+  return opts;
 }
 
 function emptyForm(): FormState {
@@ -180,13 +218,15 @@ function formFromProduct(p: Product): FormState {
           id: v.id,
           sku: v.sku || '',
           weightLabel: v.weightLabel || '',
+          grindOption: v.grindOption || '',
+          roastOption: v.roastOption || '',
           price: String(v.price ?? ''),
           stock: String(v.stock ?? 0),
           isActive: v.isActive !== false,
           barcode: v.barcode || '',
           expiresAt: v.expiresAt ? String(v.expiresAt).slice(0, 10) : '',
         }))
-      : [emptyVariant()];
+      : [emptyVariant(p.kind || 'other')];
   const brew = asBrewGuide(p.brewGuide);
   return {
     name: p.name,
@@ -307,8 +347,18 @@ export function ProductsPage() {
         ...(v.id ? { id: v.id } : {}),
         sku:
           v.sku.trim() ||
-          `${slugify(form.name) || 'urun'}-${slugify(v.weightLabel) || i + 1}`.toUpperCase(),
+          [
+            slugify(form.name) || 'urun',
+            slugify(v.weightLabel) || String(i + 1),
+            v.grindOption || '',
+            v.roastOption || '',
+          ]
+            .filter(Boolean)
+            .join('-')
+            .toUpperCase(),
         weightLabel: v.weightLabel.trim(),
+        grindOption: v.grindOption.trim() || null,
+        roastOption: v.roastOption.trim() || null,
         price: String(v.price),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
@@ -745,7 +795,9 @@ export function ProductsPage() {
 
         <div className="mt-4 border border-border-muted p-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="mono text-[10px] uppercase text-muted">Varyantlar</p>
+            <p className="mono text-[10px] uppercase text-muted">
+              Varyantlar (gramaj / öğütme / kavrum)
+            </p>
             <button
               type="button"
               className="text-xs text-accent hover:underline"
@@ -755,8 +807,10 @@ export function ProductsPage() {
                   variants: [
                     ...f.variants,
                     {
-                      ...emptyVariant(),
-                      sku: f.name ? `${slugify(f.name)}-${f.variants.length + 1}`.toUpperCase() : '',
+                      ...emptyVariant(f.kind),
+                      sku: f.name
+                        ? `${slugify(f.name)}-${f.variants.length + 1}`.toUpperCase()
+                        : '',
                     },
                   ],
                 }))
@@ -765,7 +819,18 @@ export function ProductsPage() {
               + Varyant
             </button>
           </div>
-          {form.variants.map((v, i) => (
+          {form.variants.map((v, i) => {
+            const grindOpts = grindChoicesForProduct(
+              form.kind,
+              form.allowWholeBean,
+              form.allowGround,
+            );
+            const roastOpts = roastChoicesForProduct(
+              form.kind,
+              form.allowRoastMediumDark,
+              form.allowRoastDark,
+            );
+            return (
             <div key={v.id || `new-${i}`} className="mt-2 border border-border-muted/60 p-2">
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -780,6 +845,34 @@ export function ProductsPage() {
                   value={v.weightLabel}
                   onChange={(e) => updateVariant(i, { weightLabel: e.target.value })}
                 />
+                {grindOpts.length > 0 ? (
+                  <select
+                    className={`${inputClass} mt-0`}
+                    value={v.grindOption}
+                    onChange={(e) => updateVariant(i, { grindOption: e.target.value })}
+                  >
+                    <option value="">Öğütme…</option>
+                    {grindOpts.map((g) => (
+                      <option key={g.value} value={g.value}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {roastOpts.length > 0 ? (
+                  <select
+                    className={`${inputClass} mt-0`}
+                    value={v.roastOption}
+                    onChange={(e) => updateVariant(i, { roastOption: e.target.value })}
+                  >
+                    <option value="">Kavrum…</option>
+                    {roastOpts.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <input
                   placeholder="Fiyat"
                   className={`${inputClass} mt-0`}
@@ -823,7 +916,8 @@ export function ProductsPage() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}

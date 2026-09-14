@@ -35,7 +35,8 @@ export function availableRoastOptions(
   if (kind === 'coffee_turkish' || kind === 'coffee_filter') {
     return ['orta'];
   }
-  const opts: RoastOption[] = [];
+  // Espresso: Orta + panelden açılan Orta-Koyu / Koyu
+  const opts: RoastOption[] = ['orta'];
   if (availability?.allowRoastMediumDark !== false) opts.push('orta_koyu');
   if (availability?.allowRoastDark !== false) opts.push('koyu');
   return opts;

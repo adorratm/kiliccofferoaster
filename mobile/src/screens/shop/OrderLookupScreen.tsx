@@ -83,7 +83,11 @@ export function OrderLookupScreen({ navigation }: Props) {
           {result.items?.map((item) => (
             <Text key={item.id} style={[muted, { marginTop: 8 }]}>
               {item.productName}
-              {item.variantLabel ? ` · ${item.variantLabel}` : ''} × {item.quantity}
+              {[item.variantLabel, item.grindLabel, item.roastLabel]
+                .filter(Boolean)
+                .map((part) => ` · ${part}`)
+                .join('')}{' '}
+              × {item.quantity}
             </Text>
           ))}
           {result.shipments?.map((s) => (

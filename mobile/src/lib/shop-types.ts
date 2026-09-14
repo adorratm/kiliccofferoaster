@@ -3,6 +3,8 @@ export type ProductVariant = {
   productId: string;
   sku: string;
   weightLabel: string;
+  grindOption?: string | null;
+  roastOption?: string | null;
   price: string;
   stock: number;
   isActive: boolean;
@@ -134,6 +136,7 @@ export type OrderItem = {
   productName: string;
   variantLabel: string | null;
   grindLabel?: string | null;
+  roastLabel?: string | null;
   quantity: number;
   unitPrice: string;
   lineTotal: string;
@@ -249,6 +252,8 @@ export type GuestOrderLookup = {
     id: string;
     productName: string;
     variantLabel: string | null;
+    grindLabel?: string | null;
+    roastLabel?: string | null;
     quantity: number;
     lineTotal: string;
   }>;

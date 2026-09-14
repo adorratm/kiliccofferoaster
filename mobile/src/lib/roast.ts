@@ -26,6 +26,7 @@ export function availableRoastOptions(
     return ROAST_OPTIONS.filter((r) => r.value === 'orta');
   }
   return ROAST_OPTIONS.filter((r) => {
+    if (r.value === 'orta') return true;
     if (r.value === 'orta_koyu') return allowRoastMediumDark !== false;
     if (r.value === 'koyu') return allowRoastDark !== false;
     return false;

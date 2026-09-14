@@ -130,7 +130,7 @@ function LookupForm() {
                   <div>
                     <p>{item.productName}</p>
                     <p className="mt-1 text-secondary">
-                      {[item.variantLabel, item.grindLabel]
+                      {[item.variantLabel, item.grindLabel, item.roastLabel]
                         .filter(Boolean)
                         .join(" · ") || "—"}{" "}
                       × {item.quantity}
