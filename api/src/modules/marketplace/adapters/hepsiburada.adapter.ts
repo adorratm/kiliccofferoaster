@@ -512,9 +512,22 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           'Ürün gönderimi için credentials içinde brand (Marka) gerekli.',
         rawResponse: {
           error: 'missing_brand',
-          hint: 'Hesap credentials JSON: brand',
+          hint: 'Hesap credentials JSON: brand — HB’de tanımlı marka adı (UUID/merchantId değil)',
         },
       };
+    }
+    const merchantIdHint =
+      credentials.merchantId?.trim() || credentials.username?.trim() || '';
+    if (
+      looksLikeUuid(brand) ||
+      (merchantIdHint && brand.toLowerCase() === merchantIdHint.toLowerCase())
+    ) {
+      throw new BadRequestException({
+        message:
+          'Hepsiburada Marka alanı merchantId/UUID olamaz. credentials.brand = HB satıcı panelindeki marka adı olmalı (ör. "Kılıç Coffee Roaster").',
+        receivedBrand: brand,
+        hint: 'Admin → Pazaryeri → credentials JSON içinde "brand" değerini düzeltin.',
+      });
     }
 
     const auth = this.auth(credentials);
@@ -530,11 +543,14 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     const taxVatRate = credentials.taxVatRate?.trim() || '20';
     const warrantyMonths = Number(credentials.warrantyMonths || 24);
     const extra = this.parseExtraAttributes(credentials);
+    // HB VaryantGroupID: tireli UUID yerine alfanümerik daha güvenli
     const varyantGroupId = (
       input.varyantGroupId?.trim() ||
       credentials.varyantGroupId?.trim() ||
       input.productId
-    ).slice(0, 40);
+    )
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 40);
     const displayName = (() => {
       const parts = [input.name];
       if (input.weightLabel?.trim()) parts.push(input.weightLabel.trim());
@@ -601,17 +617,25 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           (rawValue != null || attr.mandatory) &&
           attr.id != null
         ) {
-          const matched = await this.resolveEnumAttributeValue(
+          const enumResult = await this.resolveEnumAttributeValue(
             auth,
             resolvedCategoryId,
             attr.id,
             rawValue ?? input.weightLabel,
             attr.name,
           );
-          if (matched != null) {
-            rawValue = matched;
+          if (enumResult.value != null) {
+            rawValue = enumResult.value;
           } else if (attr.mandatory) {
-            // missingMandatory’de yakalanır
+            throw new BadRequestException({
+              message: `Hepsiburada enum değeri eşleşmedi: ${attr.name || attr.id}`,
+              attributeId: attr.id,
+              attributeName: attr.name,
+              tried: rawValue ?? input.weightLabel,
+              sampleValues: enumResult.samples,
+              hint: `credentials.attributes["${attr.id}"] = listeden birebir bir değer yazın (ör. "100 g").`,
+            });
+          } else {
             rawValue = undefined;
           }
         }
@@ -869,7 +893,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
 
   /**
    * Enum attribute için izin verilen değeri seç.
-   * Dönüş: HB’nin beklediği value (genelde value name veya id).
+   * Dönüş: HB’nin beklediği value (genelde value name) + örnek liste.
    */
   private async resolveEnumAttributeValue(
     auth: { Authorization: string; 'User-Agent': string },
@@ -877,12 +901,10 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     attributeId: string | number,
     candidate: unknown,
     attrLabel?: string,
-  ): Promise<string | null> {
-    const wanted = String(candidate ?? '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, ' ');
-    if (!wanted) return null;
+  ): Promise<{ value: string | null; samples: string[] }> {
+    const wantedRaw = String(candidate ?? '').trim();
+    const wanted = wantedRaw.toLowerCase().replace(/\s+/g, ' ');
+    if (!wanted) return { value: null, samples: [] };
 
     try {
       const res = await marketplaceFetch<{
@@ -900,18 +922,28 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         },
       );
       const rows = Array.isArray(res.data?.data) ? res.data!.data! : [];
+      const samples = rows
+        .slice(0, 20)
+        .map((r) => String(r.name || r.value || r.id || '').trim())
+        .filter(Boolean);
+
       if (!rows.length) {
-        // Value listesi boşsa adayı olduğu gibi dene
-        return String(candidate).trim();
+        this.logger.warn(
+          `HB enum values boş (${attrLabel || attributeId}); serbest metin gönderilmeyecek`,
+        );
+        return { value: null, samples: [] };
       }
 
       const norm = (s: string) =>
         s
           .toLowerCase()
-          .replace(/gram|gr\b/g, 'g')
+          .replace(/(\d)[.,]?(\d*)\s*gr(am)?s?\b/g, '$1$2g')
+          .replace(/\bgram\b/g, 'g')
           .replace(/\s+/g, ' ')
+          .replace(/\s*g\s*$/i, 'g')
           .trim();
       const wantedN = norm(wanted);
+      const wantedGrams = extractGrams(wantedN);
 
       const scored = rows
         .map((row) => {
@@ -919,21 +951,20 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           const ext = String(row.externalName || '').trim();
           const id = String(row.id || '').trim();
           const labels = [name, ext, id].filter(Boolean);
-          const exact = labels.some((l) => norm(l) === wantedN);
-          const loose = labels.some(
+          const norms = labels.map(norm);
+          const exact = norms.some((l) => l === wantedN);
+          const compact = (s: string) => s.replace(/\s/g, '');
+          const loose = norms.some(
             (l) =>
-              norm(l).includes(wantedN) ||
-              wantedN.includes(norm(l)) ||
-              norm(l).replace(/\s/g, '') === wantedN.replace(/\s/g, ''),
+              compact(l) === compact(wantedN) ||
+              l.includes(wantedN) ||
+              wantedN.includes(l),
           );
-          // 100g ↔ 100 g
-          const gramsWanted = wantedN.match(/^([\d.,]+)\s*g$/);
-          const gramsLabel = name.match(/^([\d.,]+)\s*g/i);
+          const labelGrams = extractGrams(norm(name));
           const gramMatch =
-            gramsWanted &&
-            gramsLabel &&
-            Number(gramsWanted[1].replace(',', '.')) ===
-              Number(gramsLabel[1].replace(',', '.'));
+            wantedGrams != null &&
+            labelGrams != null &&
+            wantedGrams === labelGrams;
           return {
             send: name || ext || id,
             score: exact ? 3 : gramMatch ? 2 : loose ? 1 : 0,
@@ -942,22 +973,19 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         .filter((x) => x.score > 0 && x.send)
         .sort((a, b) => b.score - a.score);
 
-      if (scored[0]) return scored[0].send;
+      if (scored[0]) return { value: scored[0].send, samples };
 
       this.logger.warn(
-        `HB enum eşleşmedi (${attrLabel || attributeId}): "${candidate}" — örnekler: ${rows
-          .slice(0, 8)
-          .map((r) => r.name)
-          .join(', ')}`,
+        `HB enum eşleşmedi (${attrLabel || attributeId}): "${candidate}" — örnekler: ${samples.slice(0, 8).join(', ')}`,
       );
-      return null;
+      return { value: null, samples };
     } catch (err) {
       this.logger.warn(
         `HB enum values alınamadı (${attributeId}): ${
           err instanceof Error ? err.message : String(err)
         }`,
       );
-      return String(candidate).trim() || null;
+      return { value: null, samples: [] };
     }
   }
 
@@ -1186,6 +1214,19 @@ function coerceHbAttributeValue(value: unknown, type?: string): unknown {
   // enum + diğerleri: string tercih
   if (typeof value === 'number') return String(value);
   return value;
+}
+
+function looksLikeUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim(),
+  );
+}
+
+function extractGrams(normalized: string): number | null {
+  const m = normalized.match(/^([\d.,]+)\s*g$/);
+  if (!m) return null;
+  const n = Number(m[1].replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
 }
 
 function strOpt(value: unknown): string | null {
