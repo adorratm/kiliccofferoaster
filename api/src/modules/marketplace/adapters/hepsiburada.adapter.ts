@@ -529,10 +529,6 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       undefined;
     const taxVatRate = credentials.taxVatRate?.trim() || '20';
     const warrantyMonths = Number(credentials.warrantyMonths || 24);
-    const desi =
-      credentials.desi?.trim() ||
-      credentials.Desi?.trim() ||
-      '1';
     const extra = this.parseExtraAttributes(credentials);
     const varyantGroupId = (
       input.varyantGroupId?.trim() ||
@@ -549,119 +545,110 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       else if (input.roastOption === 'koyu') parts.push('Koyu kavrum');
       return parts.join(' — ').slice(0, 200);
     })();
-    const miktar =
-      (typeof extra.Miktar === 'string' && extra.Miktar.trim()) ||
-      (typeof extra.miktar === 'string' && extra.miktar.trim()) ||
-      input.weightLabel?.trim() ||
-      null;
     const description = (input.description || input.name).slice(0, 5000);
+    const kgValue =
+      this.weightLabelToKg(input.weightLabel) ||
+      credentials.desi?.trim() ||
+      credentials.Desi?.trim() ||
+      (typeof extra.kg === 'string' ? extra.kg : null) ||
+      '0.1';
 
     const categoryIdNum = Number(categoryId);
     const resolvedCategoryId = Number.isFinite(categoryIdNum)
       ? categoryIdNum
       : categoryId;
 
-    // HB SIT/katalog şeması Türkçe attribute adları kullanıyor
-    // (ör. "Ürün Adı"); eski İngilizce anahtarlar (UrunAdi) alias olarak map edilir.
-    const valueByAlias: Record<string, unknown> = {
+    // Import body anahtarı = attribute.id (merchantSku, kg, 00001STC…)
+    // Türkçe name yalnızca görüntü / eşleme için.
+    const valueByKey: Record<string, unknown> = {
       merchantSku,
-      'Satıcı Stok Kodu': merchantSku,
       Barcode: barcode,
-      Barkod: barcode,
       UrunAdi: displayName,
-      'Ürün Adı': displayName,
       UrunAciklamasi: description,
-      'Ürün Açıklaması': description,
       Marka: brand,
       GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
-      'Garanti Süresi (Ay)': Number.isFinite(warrantyMonths)
-        ? warrantyMonths
-        : 24,
       tax_vat_rate: String(taxVatRate),
-      KDV: String(taxVatRate),
       VaryantGroupID: varyantGroupId,
-      'Varyant Grup Id': varyantGroupId,
-      Desi: desi,
-      desi,
+      kg: String(kgValue),
       ...(imageUrl
         ? {
             Image1: imageUrl,
-            Görsel1: imageUrl,
-            'Paket Görseli (ön)': imageUrl,
+            '00000MU': imageUrl, // Paket Görseli (ön)
           }
         : {}),
-      ...(miktar ? { Miktar: miktar, miktar } : {}),
       ...(input.price != null && String(input.price).trim() !== ''
-        ? {
-            price: Number(input.price) || 0,
-            Fiyat: Number(input.price) || 0,
-          }
+        ? { price: String(Number(input.price) || 0) }
         : {}),
       ...(typeof input.stock === 'number'
-        ? {
-            stock: Math.max(0, input.stock),
-            Stok: Math.max(0, input.stock),
-          }
+        ? { stock: String(Math.max(0, input.stock)) }
         : {}),
       ...extra,
     };
-
-    const kgValue = this.weightLabelToKg(input.weightLabel);
-    if (kgValue != null) {
-      valueByAlias.kg = kgValue;
-    }
 
     const schema = await this.fetchCategoryAttributes(auth, resolvedCategoryId);
     let attributes: Record<string, unknown> = {};
 
     if (schema.length) {
       for (const attr of schema) {
-        const key = attr.name?.trim();
-        if (!key) continue;
-        const value = resolveHbAttributeValue(key, valueByAlias);
-        if (value !== undefined && value !== null && value !== '') {
-          attributes[key] = value;
-        }
-      }
+        const importKey = String(attr.id || '').trim();
+        if (!importKey) continue;
 
-      // credentials.attributes içinde şema adıyla verilen ekstra alanlar
-      for (const [k, v] of Object.entries(extra)) {
+        let rawValue = resolveHbAttributeValue(attr, valueByKey);
+
+        // Enum (ör. Miktar → 00001STC): serbest metin değil, HB value listesinden seç
         if (
-          schema.some((a) => a.name === k) &&
-          v !== undefined &&
-          v !== null &&
-          v !== ''
+          attr.type === 'enum' &&
+          (rawValue != null || attr.mandatory) &&
+          attr.id != null
         ) {
-          attributes[k] = v;
+          const matched = await this.resolveEnumAttributeValue(
+            auth,
+            resolvedCategoryId,
+            attr.id,
+            rawValue ?? input.weightLabel,
+            attr.name,
+          );
+          if (matched != null) {
+            rawValue = matched;
+          } else if (attr.mandatory) {
+            // missingMandatory’de yakalanır
+            rawValue = undefined;
+          }
         }
+
+        if (rawValue === undefined || rawValue === null || rawValue === '') {
+          continue;
+        }
+        attributes[importKey] = coerceHbAttributeValue(rawValue, attr.type);
       }
 
       const missingMandatory = schema
-        .filter((a) => a.mandatory && a.name && attributes[a.name!] == null)
+        .filter(
+          (a) =>
+            a.mandatory &&
+            a.id != null &&
+            (attributes[String(a.id)] === undefined ||
+              attributes[String(a.id)] === null ||
+              attributes[String(a.id)] === ''),
+        )
         .map((a) => ({
           name: a.name,
-          externalName: a.externalName,
+          id: a.id,
+          type: a.type,
           group: a.group,
         }));
 
       if (missingMandatory.length) {
         throw new BadRequestException({
           message:
-            'Hepsiburada: kategorinin zorunlu attribute’ları eksik. Admin → Pazaryeri credentials.attributes veya ürün alanlarını tamamlayın.',
+            'Hepsiburada: kategorinin zorunlu attribute’ları eksik veya enum değeri eşleşmedi.',
           missingMandatory,
-          availableAttributes: schema.map((a) => ({
-            name: a.name,
-            externalName: a.externalName,
-            mandatory: a.mandatory,
-            group: a.group,
-          })),
           filledKeys: Object.keys(attributes),
           hint:
-            'Zorunlu örnekler: Desi, Görsel1 / Paket Görseli (ön), Miktar (gramaj). Image URL public olmalı. credentials.attributes ile override edilebilir.',
+            'Import anahtarı attribute.id’dir (ör. Desi→kg, Miktar→00001STC). Miktar için HB enum değerlerinden birini credentials.attributes["00001STC"] olarak verin veya weightLabel’ı listedeki ada yakın tutun (100 g).',
         });
       }
     } else {
-      // Şema alınamazsa eski İngilizce anahtarlarla dene
       attributes = {
         merchantSku,
         Barcode: barcode,
@@ -671,14 +658,17 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         tax_vat_rate: String(taxVatRate),
         GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
         VaryantGroupID: varyantGroupId,
-        Desi: desi,
+        kg: String(kgValue),
         ...extra,
       };
       if (imageUrl) {
         attributes.Image1 = imageUrl;
+        attributes['00000MU'] = imageUrl;
       }
-      if (miktar) attributes.Miktar = miktar;
-      if (kgValue != null) attributes.kg = kgValue;
+      if (input.price != null) attributes.price = String(Number(input.price) || 0);
+      if (typeof input.stock === 'number') {
+        attributes.stock = String(Math.max(0, input.stock));
+      }
     }
 
     const body = [
@@ -773,9 +763,15 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             merchantSku,
             barcode,
             attributeKeys: Object.keys(attributes),
+            attributesPreview: Object.fromEntries(
+              Object.entries(attributes).map(([k, v]) => [
+                k,
+                typeof v === 'string' && v.length > 80 ? `${v.slice(0, 80)}…` : v,
+              ]),
+            ),
             schemaAttributeCount: schema.length,
             hint:
-              'Marka HB’de kayıtlı mı? Görsel public URL mi? Miktar/Desi dolu mu? Admin: GET /marketplace/accounts/:id/hepsiburada-category-attributes/:categoryId',
+              'Marka HB’de kayıtlı mı? Görsel public URL mi? Miktar enum değeri doğru mu (00001STC)?',
           },
         });
       }
@@ -791,13 +787,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     categoryId: string | number,
   ): Promise<{
     categoryId: string | number;
-    attributes: Array<{
-      name?: string;
-      externalName?: string;
-      mandatory?: boolean;
-      group?: string;
-      id?: string | number;
-    }>;
+    attributes: HbCategoryAttribute[];
   }> {
     const auth = this.auth(credentials);
     const attributes = await this.fetchCategoryAttributes(auth, categoryId);
@@ -807,15 +797,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
   private async fetchCategoryAttributes(
     auth: { Authorization: string; 'User-Agent': string },
     categoryId: string | number,
-  ): Promise<
-    Array<{
-      name?: string;
-      externalName?: string;
-      mandatory?: boolean;
-      group?: string;
-      id?: string | number;
-    }>
-  > {
+  ): Promise<HbCategoryAttribute[]> {
     try {
       const res = await marketplaceFetch<{
         success?: boolean;
@@ -847,14 +829,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         return [];
       }
 
-      const out: Array<{
-        name?: string;
-        externalName?: string;
-        mandatory?: boolean;
-        group?: string;
-        id?: string | number;
-      }> = [];
-
+      const out: HbCategoryAttribute[] = [];
       const mapRow = (row: Record<string, unknown>, group?: string) => {
         out.push({
           id:
@@ -862,9 +837,11 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
               ? row.id
               : undefined,
           name: typeof row.name === 'string' ? row.name : undefined,
-          externalName:
-            typeof row.externalName === 'string' ? row.externalName : undefined,
-          mandatory: typeof row.mandatory === 'boolean' ? row.mandatory : undefined,
+          type: typeof row.type === 'string' ? row.type : undefined,
+          mandatory:
+            typeof row.mandatory === 'boolean' ? row.mandatory : undefined,
+          multiValue:
+            typeof row.multiValue === 'boolean' ? row.multiValue : undefined,
           group,
         });
       };
@@ -890,13 +867,106 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     }
   }
 
+  /**
+   * Enum attribute için izin verilen değeri seç.
+   * Dönüş: HB’nin beklediği value (genelde value name veya id).
+   */
+  private async resolveEnumAttributeValue(
+    auth: { Authorization: string; 'User-Agent': string },
+    categoryId: string | number,
+    attributeId: string | number,
+    candidate: unknown,
+    attrLabel?: string,
+  ): Promise<string | null> {
+    const wanted = String(candidate ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (!wanted) return null;
+
+    try {
+      const res = await marketplaceFetch<{
+        success?: boolean;
+        data?: Array<Record<string, unknown>>;
+      }>(
+        `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attribute/${encodeURIComponent(String(attributeId))}/values`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: auth.Authorization,
+            'User-Agent': auth['User-Agent'],
+          },
+          label: 'hb.attributeValues',
+        },
+      );
+      const rows = Array.isArray(res.data?.data) ? res.data!.data! : [];
+      if (!rows.length) {
+        // Value listesi boşsa adayı olduğu gibi dene
+        return String(candidate).trim();
+      }
+
+      const norm = (s: string) =>
+        s
+          .toLowerCase()
+          .replace(/gram|gr\b/g, 'g')
+          .replace(/\s+/g, ' ')
+          .trim();
+      const wantedN = norm(wanted);
+
+      const scored = rows
+        .map((row) => {
+          const name = String(row.name || row.value || '').trim();
+          const ext = String(row.externalName || '').trim();
+          const id = String(row.id || '').trim();
+          const labels = [name, ext, id].filter(Boolean);
+          const exact = labels.some((l) => norm(l) === wantedN);
+          const loose = labels.some(
+            (l) =>
+              norm(l).includes(wantedN) ||
+              wantedN.includes(norm(l)) ||
+              norm(l).replace(/\s/g, '') === wantedN.replace(/\s/g, ''),
+          );
+          // 100g ↔ 100 g
+          const gramsWanted = wantedN.match(/^([\d.,]+)\s*g$/);
+          const gramsLabel = name.match(/^([\d.,]+)\s*g/i);
+          const gramMatch =
+            gramsWanted &&
+            gramsLabel &&
+            Number(gramsWanted[1].replace(',', '.')) ===
+              Number(gramsLabel[1].replace(',', '.'));
+          return {
+            send: name || ext || id,
+            score: exact ? 3 : gramMatch ? 2 : loose ? 1 : 0,
+          };
+        })
+        .filter((x) => x.score > 0 && x.send)
+        .sort((a, b) => b.score - a.score);
+
+      if (scored[0]) return scored[0].send;
+
+      this.logger.warn(
+        `HB enum eşleşmedi (${attrLabel || attributeId}): "${candidate}" — örnekler: ${rows
+          .slice(0, 8)
+          .map((r) => r.name)
+          .join(', ')}`,
+      );
+      return null;
+    } catch (err) {
+      this.logger.warn(
+        `HB enum values alınamadı (${attributeId}): ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return String(candidate).trim() || null;
+    }
+  }
+
   /** "250g" / "1kg" → HB `kg` attribute string (kg cinsinden) */
   private weightLabelToKg(weightLabel?: string): string | null {
     if (!weightLabel?.trim()) return null;
     const grams = this.parseGrams(weightLabel);
     if (grams == null || grams <= 0) return null;
     const kg = grams / 1000;
-    // HB çoğu kategoride string bekler: "0.1", "0.25", "1"
     const s = Number.isInteger(kg) ? String(kg) : String(Number(kg.toFixed(3)));
     return s;
   }
@@ -1064,50 +1134,58 @@ function statusRank(status: string | null | undefined): number {
   return 10;
 }
 
-/** Şema Türkçe adı → bilinen İngilizce/eski anahtar alias’ları */
-const HB_ATTR_ALIASES: Record<string, string[]> = {
-  'Satıcı Stok Kodu': ['merchantSku', 'Satıcı Stok Kodu'],
-  'Varyant Grup Id': ['VaryantGroupID', 'VaryantGroupId', 'Varyant Grup Id'],
-  'Ürün Adı': ['UrunAdi', 'Ürün Adı'],
-  'Ürün Açıklaması': ['UrunAciklamasi', 'Ürün Açıklaması'],
-  Barkod: ['Barcode', 'Barkod'],
-  Marka: ['Marka', 'brand'],
-  'Garanti Süresi (Ay)': ['GarantiSuresi', 'Garanti Süresi (Ay)'],
-  KDV: ['tax_vat_rate', 'KDV'],
-  Desi: ['Desi', 'desi'],
-  Görsel1: ['Image1', 'Görsel1'],
-  Görsel2: ['Image2', 'Görsel2'],
-  Görsel3: ['Image3', 'Görsel3'],
-  Görsel4: ['Image4', 'Görsel4'],
-  Görsel5: ['Image5', 'Görsel5'],
-  Fiyat: ['price', 'Price', 'Fiyat'],
-  Stok: ['stock', 'Stock', 'availableStock', 'Stok'],
-  'Paket Görseli (ön)': [
-    'Paket Görseli (ön)',
-    'Image1',
-    'Görsel1',
-    'packageFrontImage',
-  ],
-  'Paket Görseli (arka)': [
-    'Paket Görseli (arka)',
-    'Image2',
-    'packageBackImage',
-  ],
-  Miktar: ['Miktar', 'miktar', 'weightLabel'],
+type HbCategoryAttribute = {
+  id?: string | number;
+  name?: string;
+  type?: string;
+  mandatory?: boolean;
+  multiValue?: boolean;
+  group?: string;
 };
 
 function resolveHbAttributeValue(
-  schemaName: string,
+  attr: HbCategoryAttribute,
   bag: Record<string, unknown>,
 ): unknown {
-  if (bag[schemaName] !== undefined && bag[schemaName] !== null && bag[schemaName] !== '') {
-    return bag[schemaName];
-  }
-  for (const alias of HB_ATTR_ALIASES[schemaName] || []) {
-    const v = bag[alias];
+  const keys = [
+    attr.id != null ? String(attr.id) : '',
+    attr.name || '',
+    // Bilinen Türkçe → id köprüleri
+    ...(attr.name === 'Desi' ? ['kg', 'Desi', 'desi'] : []),
+    ...(attr.name === 'Miktar' ? ['00001STC', 'Miktar', 'miktar', 'weightLabel'] : []),
+    ...(attr.name === 'Paket Görseli (ön)'
+      ? ['00000MU', 'Image1', 'Görsel1']
+      : []),
+    ...(attr.name === 'KDV' ? ['tax_vat_rate', 'KDV'] : []),
+    ...(attr.name === 'Garanti Süresi (Ay)' ? ['GarantiSuresi'] : []),
+    ...(attr.name === 'Satıcı Stok Kodu' ? ['merchantSku'] : []),
+    ...(attr.name === 'Ürün Adı' ? ['UrunAdi'] : []),
+    ...(attr.name === 'Ürün Açıklaması' ? ['UrunAciklamasi'] : []),
+    ...(attr.name === 'Barkod' ? ['Barcode'] : []),
+    ...(attr.name === 'Görsel1' ? ['Image1'] : []),
+    ...(attr.name === 'Fiyat' ? ['price', 'Fiyat'] : []),
+    ...(attr.name === 'Stok' ? ['stock', 'Stok'] : []),
+    ...(attr.name === 'Varyant Grup Id' ? ['VaryantGroupID'] : []),
+  ].filter(Boolean);
+
+  for (const key of keys) {
+    const v = bag[key];
     if (v !== undefined && v !== null && v !== '') return v;
   }
   return undefined;
+}
+
+function coerceHbAttributeValue(value: unknown, type?: string): unknown {
+  if (type === 'integer') {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.trunc(n) : value;
+  }
+  if (type === 'string' || type === 'media' || type === 'video') {
+    return String(value);
+  }
+  // enum + diğerleri: string tercih
+  if (typeof value === 'number') return String(value);
+  return value;
 }
 
 function strOpt(value: unknown): string | null {
