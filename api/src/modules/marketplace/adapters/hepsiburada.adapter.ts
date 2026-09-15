@@ -561,13 +561,16 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       else if (input.roastOption === 'koyu') parts.push('Koyu kavrum');
       return parts.join(' — ').slice(0, 200);
     })();
-    const description = (input.description || input.name).slice(0, 5000);
-    const kgValue =
-      this.weightLabelToKg(input.weightLabel) ||
+    const description = (input.description || input.name)
+      .slice(0, 5000)
+      .replace(/[·•]/g, '-');
+    // HB "Desi" attribute id = kg → kargo desisi (1, 2…), ürün gramajı değil
+    const desiValue =
       credentials.desi?.trim() ||
       credentials.Desi?.trim() ||
-      (typeof extra.kg === 'string' ? extra.kg : null) ||
-      '0.1';
+      (typeof extra.kg === 'string' && extra.kg.trim()) ||
+      (typeof extra.Desi === 'string' && extra.Desi.trim()) ||
+      '1';
 
     const categoryIdNum = Number(categoryId);
     const resolvedCategoryId = Number.isFinite(categoryIdNum)
@@ -575,7 +578,6 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       : categoryId;
 
     // Import body anahtarı = attribute.id (merchantSku, kg, 00001STC…)
-    // Türkçe name yalnızca görüntü / eşleme için.
     const valueByKey: Record<string, unknown> = {
       merchantSku,
       Barcode: barcode,
@@ -585,7 +587,9 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
       tax_vat_rate: String(taxVatRate),
       VaryantGroupID: varyantGroupId,
-      kg: String(kgValue),
+      kg: String(desiValue),
+      Desi: String(desiValue),
+      desi: String(desiValue),
       ...(imageUrl
         ? {
             Image1: imageUrl,
@@ -697,7 +701,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         tax_vat_rate: String(taxVatRate),
         GarantiSuresi: Number.isFinite(warrantyMonths) ? warrantyMonths : 24,
         VaryantGroupID: varyantGroupId,
-        kg: String(kgValue),
+        kg: String(desiValue),
         ...extra,
       };
       if (imageUrl) {
@@ -808,7 +812,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             ),
             schemaAttributeCount: schema.length,
             hint:
-              'Marka HB’de kayıtlı mı? Görsel public URL mi? Miktar enum değeri doğru mu (00001STC)?',
+              'Marka HB satıcı panelinde tanımlı marka adı mı (integrator username değil)? Desi(kg)=kargo desisi (örn. 1). Miktar genelde "100 gr". Image1 public URL olmalı. credentials.attributes ile override edin.',
           },
         });
       }
@@ -1292,7 +1296,7 @@ function unwrapHbValueRows(data: unknown): Array<Record<string, unknown>> {
   return [];
 }
 
-/** SIT values API boşken yaygın Miktar formatı: "100 g" */
+/** SIT values API boşken yaygın Miktar formatı: "100 gr" / "1 kg" */
 function guessMiktarEnumValue(candidate: unknown): string | null {
   const raw = String(candidate ?? '').trim();
   if (!raw) return null;
@@ -1309,7 +1313,8 @@ function guessMiktarEnumValue(candidate: unknown): string | null {
     const kg = grams / 1000;
     return Number.isInteger(kg) ? `${kg} kg` : `${Number(kg.toFixed(2))} kg`;
   }
-  return `${Math.round(grams)} g`;
+  // HB gıda kategorilerinde çoğu zaman "100 gr" (g değil)
+  return `${Math.round(grams)} gr`;
 }
 
 function strOpt(value: unknown): string | null {
