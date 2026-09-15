@@ -488,17 +488,19 @@ export class MarketplaceService {
           listing,
         });
       } catch (err) {
+        const response =
+          err instanceof BadRequestException ? err.getResponse() : null;
         const message =
-          err instanceof BadRequestException
-            ? typeof err.getResponse() === 'string'
-              ? String(err.getResponse())
-              : String(
-                  (err.getResponse() as { message?: string })?.message ||
-                    err.message,
+          typeof response === 'string'
+            ? response
+            : response && typeof response === 'object'
+              ? String(
+                  (response as { message?: string }).message ||
+                    (err as Error).message,
                 )
-            : err instanceof Error
-              ? err.message
-              : String(err);
+              : err instanceof Error
+                ? err.message
+                : String(err);
         this.logger.warn(
           `pushProduct variant failed sku=${target.sku || '-'} weight=${target.weightLabel || '-'}: ${message}`,
         );
@@ -512,9 +514,8 @@ export class MarketplaceService {
             stub: false,
             message,
             rawResponse:
-              err instanceof BadRequestException &&
-              typeof err.getResponse() === 'object'
-                ? (err.getResponse() as Record<string, unknown>)
+              response && typeof response === 'object'
+                ? (response as Record<string, unknown>)
                 : { error: message },
           },
           listing: null,
@@ -592,8 +593,10 @@ export class MarketplaceService {
     }
 
     if (okCount === 0 && (failCount > 0 || emptyCount > 0)) {
+      const firstErr = results.find((r) => r.error);
       throw new BadRequestException({
         message:
+          firstErr?.error ||
           pushedSummary?.message ||
           'Hiçbir varyant gönderilemedi — tüm SKU’lar başarısız',
         variantSummary,
@@ -602,6 +605,7 @@ export class MarketplaceService {
           weightLabel: r.weightLabel,
           error: r.error,
           message: r.pushed.message,
+          debug: r.pushed.rawResponse,
         })),
       });
     }

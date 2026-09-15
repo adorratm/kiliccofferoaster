@@ -540,7 +540,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
       input.imageUrl?.trim() ||
       credentials.imageUrl?.trim() ||
       undefined;
-    const taxVatRate = credentials.taxVatRate?.trim() || '20';
+    const taxVatRate = credentials.taxVatRate?.trim() || '1';
     const warrantyMonths = Number(credentials.warrantyMonths || 24);
     const extra = this.parseExtraAttributes(credentials);
     // HB VaryantGroupID: tireli UUID yerine alfanümerik daha güvenli
@@ -592,12 +592,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             '00000MU': imageUrl, // Paket Görseli (ön)
           }
         : {}),
-      ...(input.price != null && String(input.price).trim() !== ''
-        ? { price: String(Number(input.price) || 0) }
-        : {}),
-      ...(typeof input.stock === 'number'
-        ? { stock: String(Math.max(0, input.stock)) }
-        : {}),
+      // price/stock katalogda opsiyonel; SIT’te 500 tetikleyebildiği için default göndermiyoruz
       ...extra,
     };
 
@@ -709,10 +704,8 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         attributes.Image1 = imageUrl;
         attributes['00000MU'] = imageUrl;
       }
-      if (input.price != null) attributes.price = String(Number(input.price) || 0);
-      if (typeof input.stock === 'number') {
-        attributes.stock = String(Math.max(0, input.stock));
-      }
+      const guessedMiktar = guessMiktarEnumValue(input.weightLabel);
+      if (guessedMiktar) attributes['00001STC'] = guessedMiktar;
     }
 
     const body = [
