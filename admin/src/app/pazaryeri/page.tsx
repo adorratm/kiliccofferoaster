@@ -380,11 +380,24 @@ export default function MarketplacePage() {
           skipped?: boolean;
           message?: string;
           externalListingId?: string;
+          rawResponse?: {
+            variantCount?: number;
+            okCount?: number;
+            failCount?: number;
+            variants?: Array<{
+              sku?: string;
+              weightLabel?: string;
+              error?: string;
+              externalListingId?: string;
+            }>;
+          };
         };
+        results?: unknown[];
       }>(`/marketplace/accounts/${pushAccountId}/push-product`, {
         method: 'POST',
         body: { productId: pushProductId, dryRun: pushDryRun },
       });
+      const vr = result.pushed?.rawResponse;
       setMessage(
         [
           result.pushed?.skipped
@@ -392,10 +405,11 @@ export default function MarketplacePage() {
             : pushDryRun
               ? 'Dry-run push'
               : 'Ürün gönderildi',
-          result.pushed?.mock || result.pushed?.stub ? '· stub' : null,
-          result.pushed?.externalListingId
-            ? `ID ${result.pushed.externalListingId}`
+          vr?.variantCount
+            ? `· ${vr.okCount ?? 0}/${vr.variantCount} varyant` +
+              (vr.failCount ? ` (${vr.failCount} hata)` : '')
             : null,
+          result.pushed?.mock || result.pushed?.stub ? '· stub' : null,
           result.pushed?.message || null,
         ]
           .filter(Boolean)

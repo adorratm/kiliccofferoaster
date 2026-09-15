@@ -437,12 +437,14 @@ export class MarketplaceService {
     const results: Array<{
       variantId: string | null;
       sku?: string;
+      weightLabel?: string;
       pushed: Awaited<ReturnType<IMarketplaceAdapter['pushProduct']>>;
       listing: MarketplaceListing | null;
+      error?: string;
     }> = [];
 
-    try {
-      for (const target of targets) {
+    for (const target of targets) {
+      try {
         const pushed = await adapter.pushProduct(account.credentials, {
           productId: product.id,
           name: product.name,
@@ -463,6 +465,7 @@ export class MarketplaceService {
           results.push({
             variantId: target.variantId,
             sku: target.sku,
+            weightLabel: target.weightLabel,
             pushed,
             listing: null,
           });
@@ -480,29 +483,76 @@ export class MarketplaceService {
         results.push({
           variantId: target.variantId,
           sku: target.sku,
+          weightLabel: target.weightLabel,
           pushed,
           listing,
         });
+      } catch (err) {
+        const message =
+          err instanceof BadRequestException
+            ? typeof err.getResponse() === 'string'
+              ? String(err.getResponse())
+              : String(
+                  (err.getResponse() as { message?: string })?.message ||
+                    err.message,
+                )
+            : err instanceof Error
+              ? err.message
+              : String(err);
+        this.logger.warn(
+          `pushProduct variant failed sku=${target.sku || '-'} weight=${target.weightLabel || '-'}: ${message}`,
+        );
+        results.push({
+          variantId: target.variantId,
+          sku: target.sku,
+          weightLabel: target.weightLabel,
+          pushed: {
+            externalListingId: '',
+            mock: false,
+            stub: false,
+            message,
+            rawResponse:
+              err instanceof BadRequestException &&
+              typeof err.getResponse() === 'object'
+                ? (err.getResponse() as Record<string, unknown>)
+                : { error: message },
+          },
+          listing: null,
+          error: message,
+        });
       }
-    } catch (err) {
-      if (err instanceof BadRequestException) throw err;
-      const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`pushProduct failed: ${message}`);
-      throw new BadRequestException(`Ürün gönderimi başarısız: ${message}`);
     }
 
-    const first = results[0];
+    if (!results.length) {
+      throw new BadRequestException(
+        'Gönderilecek aktif varyant bulunamadı. Üründe isActive=true varyant olmalı.',
+      );
+    }
+
+    const first = results.find((r) => r.listing || r.pushed.mock) || results[0];
     const pushedSummary = first?.pushed;
     const skippedAll = results.every((r) => r.pushed.skipped);
     const okCount = results.filter((r) => r.listing || r.pushed.mock).length;
-    const failCount = results.filter(
+    const failCount = results.filter((r) => Boolean(r.error)).length;
+    const emptyCount = results.filter(
       (r) =>
+        !r.error &&
         !r.pushed.skipped &&
         !r.listing &&
         !r.pushed.mock &&
         !dto.dryRun &&
         !r.pushed.externalListingId,
     ).length;
+
+    const variantSummary = results
+      .map((r) => {
+        const label = [r.sku, r.weightLabel].filter(Boolean).join(' · ') || 'SKU?';
+        if (r.error) return `${label}: HATA`;
+        if (r.pushed.skipped) return `${label}: atlandı`;
+        if (r.listing || r.pushed.mock) return `${label}: OK`;
+        return `${label}: başarısız`;
+      })
+      .join(' | ');
 
     if (dto.dryRun) {
       return {
@@ -511,16 +561,16 @@ export class MarketplaceService {
         listings: [],
         pushed: {
           ...pushedSummary,
-          message:
-            results.length > 1
-              ? `Dry-run: ${results.length} varyant/SKU gönderilecek`
-              : pushedSummary?.message,
+          message: `Dry-run: ${results.length} aktif varyant → ${variantSummary}`,
           rawResponse: {
             ...(pushedSummary?.rawResponse || {}),
+            variantCount: results.length,
             variants: results.map((r) => ({
               variantId: r.variantId,
               sku: r.sku,
+              weightLabel: r.weightLabel,
               pushed: r.pushed,
+              error: r.error,
             })),
           },
         },
@@ -533,16 +583,27 @@ export class MarketplaceService {
         dryRun: false,
         listing: null,
         listings: [],
-        pushed: pushedSummary,
+        pushed: {
+          ...pushedSummary,
+          message: `${pushedSummary.message || 'Atlandı'} (${results.length} varyant)`,
+        },
         results,
       };
     }
 
-    if (okCount === 0 && failCount > 0) {
-      throw new BadRequestException(
-        pushedSummary?.message ||
-          'Ürün gönderilemedi — externalListingId oluşmadı (platform kategori/marka bilgisi eksik olabilir)',
-      );
+    if (okCount === 0 && (failCount > 0 || emptyCount > 0)) {
+      throw new BadRequestException({
+        message:
+          pushedSummary?.message ||
+          'Hiçbir varyant gönderilemedi — tüm SKU’lar başarısız',
+        variantSummary,
+        results: results.map((r) => ({
+          sku: r.sku,
+          weightLabel: r.weightLabel,
+          error: r.error,
+          message: r.pushed.message,
+        })),
+      });
     }
 
     const listings = results
@@ -561,18 +622,23 @@ export class MarketplaceService {
         }),
         message:
           results.length > 1
-            ? `Hepsiburada: ${okCount}/${results.length} varyant SKU gönderildi (VaryantGroupID=${product.id.slice(0, 8)}…)`
+            ? `Hepsiburada: ${okCount}/${results.length} varyant OK` +
+              (failCount ? `, ${failCount} hata` : '') +
+              ` — ${variantSummary}`
             : pushedSummary?.message,
         rawResponse: {
           ...(pushedSummary?.rawResponse || {}),
           variantCount: results.length,
           okCount,
+          failCount,
           variants: results.map((r) => ({
             variantId: r.variantId,
             sku: r.sku,
+            weightLabel: r.weightLabel,
             externalListingId: r.pushed.externalListingId,
             skipped: r.pushed.skipped,
             message: r.pushed.message,
+            error: r.error,
           })),
         },
       },

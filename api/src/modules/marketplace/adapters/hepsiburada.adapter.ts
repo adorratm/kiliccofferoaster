@@ -610,33 +610,53 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         if (!importKey) continue;
 
         let rawValue = resolveHbAttributeValue(attr, valueByKey);
+        const explicitOverride =
+          extra[importKey] !== undefined &&
+          extra[importKey] !== null &&
+          String(extra[importKey]).trim() !== '';
 
-        // Enum (ör. Miktar → 00001STC): serbest metin değil, HB value listesinden seç
+        // Enum (ör. Miktar → 00001STC): serbest metin değil, HB value listesinden seç.
+        // credentials.attributes[id] verilmişse API listesi boş olsa bile güvenilir override.
         if (
           attr.type === 'enum' &&
           (rawValue != null || attr.mandatory) &&
           attr.id != null
         ) {
-          const enumResult = await this.resolveEnumAttributeValue(
-            auth,
-            resolvedCategoryId,
-            attr.id,
-            rawValue ?? input.weightLabel,
-            attr.name,
-          );
-          if (enumResult.value != null) {
-            rawValue = enumResult.value;
-          } else if (attr.mandatory) {
-            throw new BadRequestException({
-              message: `Hepsiburada enum değeri eşleşmedi: ${attr.name || attr.id}`,
-              attributeId: attr.id,
-              attributeName: attr.name,
-              tried: rawValue ?? input.weightLabel,
-              sampleValues: enumResult.samples,
-              hint: `credentials.attributes["${attr.id}"] = listeden birebir bir değer yazın (ör. "100 g").`,
-            });
+          if (explicitOverride) {
+            rawValue = String(extra[importKey]).trim();
           } else {
-            rawValue = undefined;
+            const enumResult = await this.resolveEnumAttributeValue(
+              auth,
+              resolvedCategoryId,
+              attr.id,
+              rawValue ?? input.weightLabel,
+              attr.name,
+            );
+            if (enumResult.value != null) {
+              rawValue = enumResult.value;
+            } else if (attr.mandatory) {
+              const guessed = guessMiktarEnumValue(
+                rawValue ?? input.weightLabel,
+              );
+              if (guessed && importKey === '00001STC') {
+                this.logger.warn(
+                  `HB Miktar enum listesi boş/eşleşmedi; tahmini değer kullanılıyor: ${guessed}`,
+                );
+                rawValue = guessed;
+              } else {
+                throw new BadRequestException({
+                  message: `Hepsiburada enum değeri eşleşmedi: ${attr.name || attr.id}`,
+                  attributeId: attr.id,
+                  attributeName: attr.name,
+                  tried: rawValue ?? input.weightLabel,
+                  sampleValues: enumResult.samples,
+                  valuesHttp: enumResult.debug,
+                  hint: `SIT values API boş dönebilir. credentials.attributes["${attr.id}"] = "100 g" gibi birebir değer yazın.`,
+                });
+              }
+            } else {
+              rawValue = undefined;
+            }
           }
         }
 
@@ -901,37 +921,50 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     attributeId: string | number,
     candidate: unknown,
     attrLabel?: string,
-  ): Promise<{ value: string | null; samples: string[] }> {
+  ): Promise<{
+    value: string | null;
+    samples: string[];
+    debug?: Record<string, unknown>;
+  }> {
     const wantedRaw = String(candidate ?? '').trim();
     const wanted = wantedRaw.toLowerCase().replace(/\s+/g, ' ');
     if (!wanted) return { value: null, samples: [] };
 
+    const url = `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attribute/${encodeURIComponent(String(attributeId))}/values`;
+
     try {
-      const res = await marketplaceFetch<{
-        success?: boolean;
-        data?: Array<Record<string, unknown>>;
-      }>(
-        `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attribute/${encodeURIComponent(String(attributeId))}/values`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: auth.Authorization,
-            'User-Agent': auth['User-Agent'],
-          },
-          label: 'hb.attributeValues',
+      const res = await marketplaceFetch<unknown>(url, {
+        method: 'GET',
+        headers: {
+          Authorization: auth.Authorization,
+          'User-Agent': auth['User-Agent'],
         },
-      );
-      const rows = Array.isArray(res.data?.data) ? res.data!.data! : [];
+        label: 'hb.attributeValues',
+      });
+
+      const rows = unwrapHbValueRows(res.data);
       const samples = rows
-        .slice(0, 20)
-        .map((r) => String(r.name || r.value || r.id || '').trim())
+        .slice(0, 30)
+        .map((r) =>
+          String(r.name || r.value || r.externalName || r.id || '').trim(),
+        )
         .filter(Boolean);
+
+      const debug = {
+        httpStatus: res.status,
+        rowCount: rows.length,
+        dataType: Array.isArray(res.data)
+          ? 'array'
+          : res.data && typeof res.data === 'object'
+            ? Object.keys(res.data as object).slice(0, 8)
+            : typeof res.data,
+      };
 
       if (!rows.length) {
         this.logger.warn(
-          `HB enum values boş (${attrLabel || attributeId}); serbest metin gönderilmeyecek`,
+          `HB enum values boş (${attrLabel || attributeId}) ${JSON.stringify(debug)}`,
         );
-        return { value: null, samples: [] };
+        return { value: null, samples: [], debug };
       }
 
       const norm = (s: string) =>
@@ -973,19 +1006,25 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         .filter((x) => x.score > 0 && x.send)
         .sort((a, b) => b.score - a.score);
 
-      if (scored[0]) return { value: scored[0].send, samples };
+      if (scored[0]) return { value: scored[0].send, samples, debug };
 
       this.logger.warn(
         `HB enum eşleşmedi (${attrLabel || attributeId}): "${candidate}" — örnekler: ${samples.slice(0, 8).join(', ')}`,
       );
-      return { value: null, samples };
+      return { value: null, samples, debug };
     } catch (err) {
       this.logger.warn(
         `HB enum values alınamadı (${attributeId}): ${
           err instanceof Error ? err.message : String(err)
         }`,
       );
-      return { value: null, samples: [] };
+      return {
+        value: null,
+        samples: [],
+        debug: {
+          error: err instanceof Error ? err.message : String(err),
+        },
+      };
     }
   }
 
@@ -1227,6 +1266,57 @@ function extractGrams(normalized: string): number | null {
   if (!m) return null;
   const n = Number(m[1].replace(',', '.'));
   return Number.isFinite(n) ? n : null;
+}
+
+/** HB values endpoint farklı zarflar döndürebilir */
+function unwrapHbValueRows(data: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(data)) {
+    return data.filter(
+      (x): x is Record<string, unknown> => !!x && typeof x === 'object',
+    );
+  }
+  if (!data || typeof data !== 'object') return [];
+  const obj = data as Record<string, unknown>;
+  for (const key of ['data', 'content', 'items', 'values', 'attributeValues']) {
+    const v = obj[key];
+    if (Array.isArray(v)) {
+      return v.filter(
+        (x): x is Record<string, unknown> => !!x && typeof x === 'object',
+      );
+    }
+    if (v && typeof v === 'object') {
+      const nested = v as Record<string, unknown>;
+      for (const k2 of ['data', 'content', 'items', 'values']) {
+        const arr = nested[k2];
+        if (Array.isArray(arr)) {
+          return arr.filter(
+            (x): x is Record<string, unknown> => !!x && typeof x === 'object',
+          );
+        }
+      }
+    }
+  }
+  return [];
+}
+
+/** SIT values API boşken yaygın Miktar formatı: "100 g" */
+function guessMiktarEnumValue(candidate: unknown): string | null {
+  const raw = String(candidate ?? '').trim();
+  if (!raw) return null;
+  const m = raw
+    .toLowerCase()
+    .replace(',', '.')
+    .match(/^([\d.]+)\s*(kg|g|gr|gram)?$/i);
+  if (!m) return null;
+  let grams = Number(m[1]);
+  if (!Number.isFinite(grams) || grams <= 0) return null;
+  const unit = (m[2] || 'g').toLowerCase();
+  if (unit === 'kg') grams = grams * 1000;
+  if (grams >= 1000) {
+    const kg = grams / 1000;
+    return Number.isInteger(kg) ? `${kg} kg` : `${Number(kg.toFixed(2))} kg`;
+  }
+  return `${Math.round(grams)} g`;
 }
 
 function strOpt(value: unknown): string | null {
