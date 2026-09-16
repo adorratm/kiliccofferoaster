@@ -721,20 +721,18 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     ];
 
     const mpop = this.mpopBase();
+    const importUrl = `${mpop}/product/api/products/import`;
     try {
-      const res = await marketplaceFetch<Record<string, unknown>>(
-        `${mpop}/product/api/products/import`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: auth.Authorization,
-            'User-Agent': auth['User-Agent'],
-          },
-          body,
-          label: 'hb.pushProduct.import',
-          timeoutMs: 45_000,
+      const res = await marketplaceFetch<Record<string, unknown>>(importUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: auth.Authorization,
+          'User-Agent': auth['User-Agent'],
         },
-      );
+        body,
+        label: 'hb.pushProduct.import',
+        timeoutMs: 45_000,
+      });
 
       const trackingId = String(
         res.data?.trackingId ||
@@ -785,6 +783,13 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           barcode,
           mpopBaseUrl: mpop,
           attributeKeys: Object.keys(attributes),
+          requestBody: body,
+          requestMeta: {
+            method: 'POST',
+            url: importUrl,
+            action: 'products.import',
+            responseStatus: res.status,
+          },
         },
       };
     } catch (err) {
@@ -797,6 +802,13 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           message: `Hepsiburada Ürün gönderimi: ${err.message}`,
           hepsiburadaStatus: err.status,
           hepsiburadaBody: err.body,
+          requestBody: body,
+          requestMeta: {
+            method: 'POST',
+            url: importUrl,
+            action: 'products.import',
+            responseStatus: err.status,
+          },
           debug: {
             mpopBaseUrl: mpop,
             userAgent: auth['User-Agent'],
@@ -811,6 +823,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
               ]),
             ),
             schemaAttributeCount: schema.length,
+            requestBody: body,
             hint:
               'Marka HB satıcı panelinde tanımlı marka adı mı (integrator username değil)? Desi(kg)=kargo desisi (örn. 1). Miktar genelde "100 gr". Image1 public URL olmalı. credentials.attributes ile override edin.',
           },

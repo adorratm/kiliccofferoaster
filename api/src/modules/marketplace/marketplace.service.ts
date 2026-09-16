@@ -14,6 +14,7 @@ import {
 } from '@entities/marketplace-account.entity';
 import { MarketplaceListing } from '@entities/marketplace-listing.entity';
 import { MarketplaceOrder } from '@entities/marketplace-order.entity';
+import { MarketplaceApiLog } from '@entities/marketplace-api-log.entity';
 import { OrderStatus } from '@entities/order.entity';
 import { Product } from '@entities/product.entity';
 import { ProductVariant } from '@entities/product-variant.entity';
@@ -185,6 +186,27 @@ export class MarketplaceService {
       relations: { internalOrder: true },
       order: { createdAt: 'DESC' },
       take: 50,
+    });
+  }
+
+  async listApiLogs(
+    accountId: string,
+    opts?: { limit?: number; productId?: string },
+  ): Promise<MarketplaceApiLog[]> {
+    const account = await this.em.findOne(MarketplaceAccount, {
+      where: { id: accountId },
+    });
+    if (!account) {
+      throw new NotFoundException('Pazar yeri hesabı bulunamadı');
+    }
+    const take = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
+    return this.em.find(MarketplaceApiLog, {
+      where: {
+        accountId,
+        ...(opts?.productId ? { productId: opts.productId } : {}),
+      },
+      order: { createdAt: 'DESC' },
+      take,
     });
   }
 
@@ -461,6 +483,16 @@ export class MarketplaceService {
           varyantGroupId: product.id,
         });
 
+        await this.persistPushApiLog({
+          account,
+          productId: product.id,
+          variantId: target.variantId,
+          sku: target.sku,
+          success: !pushed.skipped && Boolean(pushed.externalListingId || pushed.mock),
+          errorMessage: pushed.skipped ? pushed.message : null,
+          raw: pushed.rawResponse,
+        });
+
         if (dto.dryRun || pushed.skipped || !pushed.externalListingId) {
           results.push({
             variantId: target.variantId,
@@ -501,6 +533,21 @@ export class MarketplaceService {
               : err instanceof Error
                 ? err.message
                 : String(err);
+        const rawResponse =
+          response && typeof response === 'object'
+            ? (response as Record<string, unknown>)
+            : { error: message };
+
+        await this.persistPushApiLog({
+          account,
+          productId: product.id,
+          variantId: target.variantId,
+          sku: target.sku,
+          success: false,
+          errorMessage: message,
+          raw: rawResponse,
+        });
+
         this.logger.warn(
           `pushProduct variant failed sku=${target.sku || '-'} weight=${target.weightLabel || '-'}: ${message}`,
         );
@@ -513,10 +560,7 @@ export class MarketplaceService {
             mock: false,
             stub: false,
             message,
-            rawResponse:
-              response && typeof response === 'object'
-                ? (response as Record<string, unknown>)
-                : { error: message },
+            rawResponse,
           },
           listing: null,
           error: message,
@@ -648,6 +692,77 @@ export class MarketplaceService {
       },
       results,
     };
+  }
+
+  private async persistPushApiLog(input: {
+    account: MarketplaceAccount;
+    productId: string;
+    variantId: string | null;
+    sku?: string;
+    success: boolean;
+    errorMessage?: string | null;
+    raw?: Record<string, unknown> | null;
+  }): Promise<void> {
+    try {
+      const raw = input.raw || {};
+      const debug =
+        raw.debug && typeof raw.debug === 'object'
+          ? (raw.debug as Record<string, unknown>)
+          : null;
+      const requestMeta =
+        raw.requestMeta && typeof raw.requestMeta === 'object'
+          ? (raw.requestMeta as Record<string, unknown>)
+          : null;
+
+      const requestBody =
+        raw.requestBody ?? debug?.requestBody ?? null;
+      const responseStatus =
+        typeof raw.hepsiburadaStatus === 'number'
+          ? raw.hepsiburadaStatus
+          : typeof requestMeta?.responseStatus === 'number'
+            ? requestMeta.responseStatus
+            : null;
+      const responseBody =
+        raw.hepsiburadaBody ??
+        raw.import ??
+        (responseStatus != null ? raw : null);
+      const merchantSku =
+        input.sku ||
+        (typeof raw.merchantSku === 'string' ? raw.merchantSku : null) ||
+        (typeof debug?.merchantSku === 'string' ? debug.merchantSku : null);
+
+      await this.em.save(
+        this.em.create(MarketplaceApiLog, {
+          accountId: input.account.id,
+          platform: input.account.platform,
+          action:
+            (typeof requestMeta?.action === 'string' && requestMeta.action) ||
+            'products.import',
+          method:
+            (typeof requestMeta?.method === 'string' && requestMeta.method) ||
+            'POST',
+          url:
+            (typeof requestMeta?.url === 'string' && requestMeta.url) ||
+            (typeof debug?.mpopBaseUrl === 'string'
+              ? `${debug.mpopBaseUrl}/product/api/products/import`
+              : null),
+          productId: input.productId,
+          variantId: input.variantId,
+          merchantSku,
+          requestBody,
+          responseStatus,
+          responseBody,
+          errorMessage: input.errorMessage || null,
+          success: input.success,
+        }),
+      );
+    } catch (err) {
+      this.logger.warn(
+        `marketplace_api_logs yazılamadı: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
   }
 
   private async upsertListing(input: {

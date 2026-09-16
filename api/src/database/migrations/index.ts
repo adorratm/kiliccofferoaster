@@ -33,6 +33,7 @@ import { WholesaleCatalogInstagram1804000000000 } from './1804000000000-Wholesal
 import { WholesaleCatalogProductKgPricing1805000000000 } from './1805000000000-WholesaleCatalogProductKgPricing';
 import { ProductHepsiburadaCategoryId1806000000000 } from './1806000000000-ProductHepsiburadaCategoryId';
 import { ProductVariantGrindRoast1807000000000 } from './1807000000000-ProductVariantGrindRoast';
+import { MarketplaceApiLogs1808000000000 } from './1808000000000-MarketplaceApiLogs';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -74,4 +75,5 @@ export const ALL_MIGRATIONS = [
   WholesaleCatalogProductKgPricing1805000000000,
   ProductHepsiburadaCategoryId1806000000000,
   ProductVariantGrindRoast1807000000000,
+  MarketplaceApiLogs1808000000000,
 ];

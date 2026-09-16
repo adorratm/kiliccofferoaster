@@ -94,6 +94,15 @@ export class MarketplaceController {
     return this.marketplaceService.pushProduct(id, dto);
   }
 
+  @Get('accounts/:id/api-logs')
+  @ApiOperation({
+    summary:
+      'Admin: pazaryeri API istek logları (HB’ye giden request_body dahil)',
+  })
+  listApiLogs(@Param('id') id: string) {
+    return this.marketplaceService.listApiLogs(id);
+  }
+
   @Get('accounts/:id/listings')
   @ApiOperation({ summary: 'Admin: hesap listingleri' })
   listListings(@Param('id') id: string) {

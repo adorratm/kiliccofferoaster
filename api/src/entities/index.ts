@@ -28,6 +28,7 @@ export {
 } from '@entities/marketplace-account.entity';
 export { MarketplaceListing } from '@entities/marketplace-listing.entity';
 export { MarketplaceOrder } from '@entities/marketplace-order.entity';
+export { MarketplaceApiLog } from '@entities/marketplace-api-log.entity';
 export { LegalDocument } from '@entities/legal-document.entity';
 export { CookieConsentLog } from '@entities/cookie-consent-log.entity';
 export { ContactMessage } from '@entities/contact-message.entity';

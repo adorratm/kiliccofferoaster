@@ -16,6 +16,7 @@ import { ShippingProviderConfig } from '@entities/shipping-provider-config.entit
 import { MarketplaceAccount } from '@entities/marketplace-account.entity';
 import { MarketplaceListing } from '@entities/marketplace-listing.entity';
 import { MarketplaceOrder } from '@entities/marketplace-order.entity';
+import { MarketplaceApiLog } from '@entities/marketplace-api-log.entity';
 import { LegalDocument } from '@entities/legal-document.entity';
 import { CookieConsentLog } from '@entities/cookie-consent-log.entity';
 import { ContactMessage } from '@entities/contact-message.entity';
@@ -65,6 +66,7 @@ export const ALL_ENTITIES = [
   MarketplaceAccount,
   MarketplaceListing,
   MarketplaceOrder,
+  MarketplaceApiLog,
   LegalDocument,
   CookieConsentLog,
   ContactMessage,
