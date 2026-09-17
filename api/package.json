@@ -27,7 +27,7 @@
     "iap:tiers": "node scripts/generate-revenuecat-iap-tiers.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1133.0",
+    "@aws-sdk/client-s3": "^3.1134.0",
     "@bull-board/api": "9.10.1",
     "@bull-board/express": "9.10.1",
     "@bull-board/nestjs": "9.10.1",
@@ -84,7 +84,7 @@
     "@types/jest": "^30.0.0",
     "@types/mime-types": "^3.0.1",
     "@types/multer": "^2.2.0",
-    "@types/node": "^26.6.1",
+    "@types/node": "^22.20.3",
     "@types/nodemailer": "^8.0.2",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",

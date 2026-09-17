@@ -102,9 +102,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:^3.1133.0":
-  version: 3.1133.0
-  resolution: "@aws-sdk/client-s3@npm:3.1133.0"
+"@aws-sdk/client-s3@npm:^3.1134.0":
+  version: 3.1134.0
+  resolution: "@aws-sdk/client-s3@npm:3.1134.0"
   dependencies:
     "@aws-sdk/checksums": "npm:^3.1001.0"
     "@aws-sdk/core": "npm:^3.978.0"
@@ -117,7 +117,7 @@ __metadata:
     "@smithy/node-http-handler": "npm:^4.11.3"
     "@smithy/types": "npm:^4.17.2"
     tslib: "npm:^2.6.2"
-  checksum: 10c0/2ee687d381a5fc9d8c2f6bf7be54817d4ea1aef3f6d01c258bd8d24c850ea2f5d62533dfb7a4e803153b5b97f80b03d946bf3f5a2f461d61f0c59673cc7f69a1
+  checksum: 10c0/57bd10381f0aee5210740385577f9488a682b9411350acb787de9bbefc038abcc0a95421457c31b5833e998bb6adaaef78c80770f915076244011ef90e3d6927
   languageName: node
   linkType: hard
 
@@ -3726,7 +3726,7 @@ __metadata:
   resolution: "@kilic/admin@workspace:admin"
   dependencies:
     "@tailwindcss/postcss": "npm:^4.3.3"
-    "@types/node": "npm:^26.6.1"
+    "@types/node": "npm:^22.20.3"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     echarts: "npm:^6.1.0"
@@ -3746,7 +3746,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@kilic/api@workspace:api"
   dependencies:
-    "@aws-sdk/client-s3": "npm:^3.1133.0"
+    "@aws-sdk/client-s3": "npm:^3.1134.0"
     "@bull-board/api": "npm:9.10.1"
     "@bull-board/express": "npm:9.10.1"
     "@bull-board/nestjs": "npm:9.10.1"
@@ -3776,7 +3776,7 @@ __metadata:
     "@types/jest": "npm:^30.0.0"
     "@types/mime-types": "npm:^3.0.1"
     "@types/multer": "npm:^2.2.0"
-    "@types/node": "npm:^26.6.1"
+    "@types/node": "npm:^22.20.3"
     "@types/nodemailer": "npm:^8.0.2"
     "@types/passport": "npm:^1.0.17"
     "@types/passport-google-oauth20": "npm:^2.0.17"
@@ -3861,7 +3861,7 @@ __metadata:
   resolution: "@kilic/frontend@workspace:frontend"
   dependencies:
     "@tailwindcss/postcss": "npm:^4.3.3"
-    "@types/node": "npm:^26.6.1"
+    "@types/node": "npm:^22.20.3"
     "@types/react": "npm:^19.3.0"
     "@types/react-dom": "npm:^19.3.0"
     eslint: "npm:^10.10.0"
@@ -6093,21 +6093,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^22.20.3":
+  version: 22.20.3
+  resolution: "@types/node@npm:22.20.3"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10c0/27034f3f66d7044494f0be7b20b17eecbb1f6deab9e2ea8b004d79e896f4a90cde954da9a433a145e800f3db3e5c5c4761a65366434997c77102ba364dcbedd0
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^24.9.0":
   version: 24.13.3
   resolution: "@types/node@npm:24.13.3"
   dependencies:
     undici-types: "npm:~7.18.0"
   checksum: 10c0/a5bc08f49b9581dcdca90e02cd77197a3c799840807664942e5cd5161a553d4d2ae8064f7e3294410d748d7d098b5c1848be7fa50c06f29c4193ab16be4e59eb
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^26.6.1":
-  version: 26.6.1
-  resolution: "@types/node@npm:26.6.1"
-  dependencies:
-    undici-types: "npm:~8.9.0"
-  checksum: 10c0/c90d3db40e7c9c92f0854ecdcaabd9c1923b7e2a43cf2c97cf147a5aba7e18a1c80034088edfb1bb2153ceffdd87be7ce0a256b80ec7cd92e619c564133ae5fe
   languageName: node
   linkType: hard
 
@@ -18403,6 +18403,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10c0/c01ed51829b10aa72fc3ce64b747f8e74ae9b60eafa19a7b46ef624403508a54c526ffab06a14a26b3120d055e1104d7abe7c9017e83ced038ea5cf52f8d5e04
+  languageName: node
+  linkType: hard
+
 "undici-types@npm:~7.18.0":
   version: 7.18.2
   resolution: "undici-types@npm:7.18.2"
@@ -18414,13 +18421,6 @@ __metadata:
   version: 8.3.0
   resolution: "undici-types@npm:8.3.0"
   checksum: 10c0/c8aa7e2fbebfce519654dafadc0ece59be888d2ccaf180fb4495da875e7b536d2456345c384069c7e6f3e9c9ab7435f074957da306f142343eee86ff8048855a
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:~8.9.0":
-  version: 8.9.0
-  resolution: "undici-types@npm:8.9.0"
-  checksum: 10c0/51c712c20c087368f62c6fc0f2bc49fa76bfe5dec28ff01584bb677ff29b0622569783c02d43e151143808c48c0503f804093bd2c491b10f2a830138034cb451
   languageName: node
   linkType: hard
 

@@ -4,6 +4,14 @@ export type MarketplaceHttpOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
+  /**
+   * HB katalog import gibi endpointler: JSON’u `multipart/form-data` file alanı
+   * olarak gönder. `body` JSON’a çevrilip `file` part’ına yazılır.
+   */
+  multipartJsonFile?: {
+    fieldName?: string;
+    filename?: string;
+  };
   timeoutMs?: number;
   /** Debug etiket */
   label?: string;
@@ -42,8 +50,25 @@ export async function marketplaceFetch<T = unknown>(
       Accept: 'application/json',
       ...(options.headers || {}),
     };
-    let body: string | undefined;
-    if (options.body !== undefined && options.body !== null) {
+    let body: BodyInit | undefined;
+
+    if (options.multipartJsonFile && options.body !== undefined) {
+      // Boundary’yi fetch/FormData kendisi koyar; Content-Type elle set edilmemeli.
+      delete headers['Content-Type'];
+      delete headers['content-type'];
+      const json =
+        typeof options.body === 'string'
+          ? options.body
+          : JSON.stringify(options.body);
+      const form = new FormData();
+      const blob = new Blob([json], { type: 'application/json' });
+      form.append(
+        options.multipartJsonFile.fieldName || 'file',
+        blob,
+        options.multipartJsonFile.filename || 'products.json',
+      );
+      body = form;
+    } else if (options.body !== undefined && options.body !== null) {
       headers['Content-Type'] = headers['Content-Type'] || 'application/json';
       body =
         typeof options.body === 'string'

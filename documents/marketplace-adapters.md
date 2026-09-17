@@ -58,7 +58,7 @@ Credentials yoksa işlemler **mock** döner (simülasyon). Credentials varsa ger
 - `userAgent` = Developer Username (header).  
 - `cargoCompany` = paketlemede varsayılan kargo (HepsiJet önerilir).  
 - **Kategori:** her ürünün opsiyonel `hepsiburadaCategoryId` alanı (Admin → Ürünler). Boşsa push **atlanır** (HB’ye gitmez); doluysa o leaf ID ile import edilir.  
-- Ürün push: aktif **ProductVariant** satırları ayrı `merchantSku` ile import edilir; aynı ürün `VaryantGroupID` = ürün id. Gramaj + öğütme + kavrum ürün adına yazılır.  
+- Ürün push: `POST {MPOP}/product/api/products/import` (**multipart/form-data**, JSON dosyası `file` alanı) → `trackingId`; `externalListingId` = merchantSku.  
 - Kahve varyantları: her satırda `grindOption` / `roastOption` (Admin / Desktop / Mobile ürün formu). Ürün `allow*` bayrakları hangi seçeneklerin açılabileceğini belirler.  
 - Leaf kategori + zorunlu attributeler developer portalden; ortak alanlar `attributes` ile eklenebilir.  
 - Stok: her listing kendi varyant stokunu sync eder (`externalSku` = varyant SKU).  

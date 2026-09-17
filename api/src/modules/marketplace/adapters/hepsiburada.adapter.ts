@@ -723,6 +723,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     const mpop = this.mpopBase();
     const importUrl = `${mpop}/product/api/products/import`;
     try {
+      // HB dokümanı: JSON body değil, multipart/form-data ile `file` (JSON dosyası)
       const res = await marketplaceFetch<Record<string, unknown>>(importUrl, {
         method: 'POST',
         headers: {
@@ -730,6 +731,10 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
           'User-Agent': auth['User-Agent'],
         },
         body,
+        multipartJsonFile: {
+          fieldName: 'file',
+          filename: 'products.json',
+        },
         label: 'hb.pushProduct.import',
         timeoutMs: 45_000,
       });
@@ -788,6 +793,8 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             method: 'POST',
             url: importUrl,
             action: 'products.import',
+            contentType: 'multipart/form-data',
+            fileField: 'file',
             responseStatus: res.status,
           },
         },
@@ -807,6 +814,8 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             method: 'POST',
             url: importUrl,
             action: 'products.import',
+            contentType: 'multipart/form-data',
+            fileField: 'file',
             responseStatus: err.status,
           },
           debug: {
@@ -825,7 +834,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             schemaAttributeCount: schema.length,
             requestBody: body,
             hint:
-              'Marka HB satıcı panelinde tanımlı marka adı mı (integrator username değil)? Desi(kg)=kargo desisi (örn. 1). Miktar genelde "100 gr". Image1 public URL olmalı. credentials.attributes ile override edin.',
+              'Import multipart file alanı `file` ile gider. Marka HB panel markası mı? Desi(kg)=kargo desisi. Miktar örn. \"100 gr\".',
           },
         });
       }
