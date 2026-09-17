@@ -169,6 +169,13 @@ export class Product extends BaseEntity {
   })
   hepsiburadaCategoryId!: string | null;
 
+  /**
+   * HB kategori zorunlu enum/alan override’ları (attribute.id → değer).
+   * Hesap credentials.attributes üzerine yazar; baharat/lokum/draje vb. için.
+   */
+  @Column({ name: 'hepsiburada_attributes', type: 'jsonb', nullable: true })
+  hepsiburadaAttributes!: Record<string, string | number | boolean> | null;
+
   @OneToMany('ProductVariant', 'product')
   variants!: ProductVariant[];
 }

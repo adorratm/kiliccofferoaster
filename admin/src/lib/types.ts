@@ -56,6 +56,7 @@ export type Product = {
   isFeatured?: boolean;
   categoryId?: string | null;
   hepsiburadaCategoryId?: string | null;
+  hepsiburadaAttributes?: Record<string, string | number | boolean> | null;
   kind?: string;
   allowWholeBean?: boolean;
   allowGround?: boolean;

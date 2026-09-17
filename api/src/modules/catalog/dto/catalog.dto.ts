@@ -284,6 +284,16 @@ export class CreateProductDto {
   hepsiburadaCategoryId?: string | null;
 
   @ApiPropertyOptional({
+    description:
+      'HB attribute.id → değer override (zorunlu enum’lar). Örn. {"00001STC":"250 gr"}',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  hepsiburadaAttributes?: Record<string, string | number | boolean> | null;
+
+  @ApiPropertyOptional({
     description: 'Kahve ürünlerinde Çekirdek seçeneği',
     default: true,
   })

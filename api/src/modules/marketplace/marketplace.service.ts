@@ -481,6 +481,8 @@ export class MarketplaceService {
           roastOption: target.roastOption,
           barcode: target.barcode,
           varyantGroupId: product.id,
+          productKind: product.kind,
+          hepsiburadaAttributes: product.hepsiburadaAttributes,
         });
 
         await this.persistPushApiLog({

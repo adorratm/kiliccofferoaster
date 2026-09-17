@@ -263,6 +263,11 @@ export class ProductsService {
       hepsiburadaCategoryId: productFields.hepsiburadaCategoryId?.trim()
         ? productFields.hepsiburadaCategoryId.trim()
         : null,
+      hepsiburadaAttributes:
+        productFields.hepsiburadaAttributes &&
+        typeof productFields.hepsiburadaAttributes === 'object'
+          ? productFields.hepsiburadaAttributes
+          : null,
       kind,
       allowWholeBean: productFields.allowWholeBean ?? true,
       allowGround: productFields.allowGround ?? true,
@@ -346,6 +351,13 @@ export class ProductsService {
         rest.hepsiburadaCategoryId !== undefined
           ? rest.hepsiburadaCategoryId?.trim() || null
           : product.hepsiburadaCategoryId,
+      hepsiburadaAttributes:
+        rest.hepsiburadaAttributes !== undefined
+          ? rest.hepsiburadaAttributes &&
+            typeof rest.hepsiburadaAttributes === 'object'
+            ? rest.hepsiburadaAttributes
+            : null
+          : product.hepsiburadaAttributes,
       shortDescription:
         rest.shortDescription !== undefined
           ? rest.shortDescription

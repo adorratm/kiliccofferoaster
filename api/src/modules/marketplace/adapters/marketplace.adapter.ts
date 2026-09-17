@@ -30,6 +30,10 @@ export interface PushProductInput {
   barcode?: string;
   /** HB kardeş varyant grubu (aynı ürünün tüm SKU’ları) */
   varyantGroupId?: string;
+  /** Ürün kind — kahve dışı miktar tahmini kapatılır */
+  productKind?: string;
+  /** Ürün kaydındaki HB attribute override’ları */
+  hepsiburadaAttributes?: Record<string, string | number | boolean> | null;
 }
 
 export interface PushProductResult {

@@ -65,6 +65,7 @@ type FormState = {
   gallery: string;
   categoryId: string;
   hepsiburadaCategoryId: string;
+  hepsiburadaAttributesJson: string;
   isActive: boolean;
   isFeatured: boolean;
   kind: string;
@@ -199,6 +200,7 @@ const emptyForm = (): FormState => ({
   gallery: '',
   categoryId: '',
   hepsiburadaCategoryId: '',
+  hepsiburadaAttributesJson: '',
   isActive: true,
   isFeatured: false,
   kind: 'other',
@@ -390,6 +392,9 @@ function ProductsPageInner() {
       gallery: (p.gallery || []).join('\n'),
       categoryId: p.categoryId || '',
       hepsiburadaCategoryId: p.hepsiburadaCategoryId || '',
+      hepsiburadaAttributesJson: p.hepsiburadaAttributes
+        ? JSON.stringify(p.hepsiburadaAttributes, null, 2)
+        : '',
       isActive: p.isActive,
       isFeatured: Boolean(p.isFeatured),
       kind: p.kind || 'other',
@@ -414,6 +419,31 @@ function ProductsPageInner() {
     e.preventDefault();
     setSaving(true);
     setError(null);
+
+    let hepsiburadaAttributes: Record<
+      string,
+      string | number | boolean
+    > | null = null;
+    const hbAttrRaw = form.hepsiburadaAttributesJson.trim();
+    if (hbAttrRaw) {
+      try {
+        const parsed = JSON.parse(hbAttrRaw) as unknown;
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          throw new Error('object bekleniyor');
+        }
+        hepsiburadaAttributes = parsed as Record<
+          string,
+          string | number | boolean
+        >;
+      } catch {
+        setError(
+          'Hepsiburada attributes geçerli bir JSON object olmalı (örn. {"00001STC":"250 gr"})',
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
     const variants = form.variants
       .filter((v) => v.weightLabel.trim() && String(v.price).trim())
       .map((v, i) => ({
@@ -466,6 +496,7 @@ function ProductsPageInner() {
         .filter(Boolean),
       categoryId: form.categoryId || null,
       hepsiburadaCategoryId: form.hepsiburadaCategoryId.trim() || null,
+      hepsiburadaAttributes,
       kind: form.kind || 'other',
       allowWholeBean: form.allowWholeBean,
       allowGround: form.allowGround,
@@ -844,6 +875,28 @@ function ProductsPageInner() {
             <span className="mt-1 block text-[11px] text-muted">
               Opsiyonel. Boş bırakılırsa Hepsiburada’ya gönderilmez; ID
               girildiğinde pazaryeri push bu kategoriyi kullanır.
+            </span>
+          </label>
+          <label className="block text-sm md:col-span-2">
+            <span className="mono text-[10px] uppercase text-muted">
+              Hepsiburada attributes (JSON)
+            </span>
+            <textarea
+              value={form.hepsiburadaAttributesJson}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  hepsiburadaAttributesJson: e.target.value,
+                }))
+              }
+              rows={4}
+              placeholder='{"00001STC":"250 gr"} — kategori zorunlu enum’ları'
+              className="mt-1 w-full border border-border-muted bg-background px-3 py-2 mono text-sm"
+            />
+            <span className="mt-1 block text-[11px] text-muted">
+              Kahve dışı (baharat, lokum, draje, kuruyemiş) için zorunlu enum
+              değerlerini attribute.id ile yazın. Değerleri Pazaryeri → HB
+              kategori şemasından alın.
             </span>
           </label>
           <label className="block text-sm">

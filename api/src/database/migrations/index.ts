@@ -34,6 +34,7 @@ import { WholesaleCatalogProductKgPricing1805000000000 } from './1805000000000-W
 import { ProductHepsiburadaCategoryId1806000000000 } from './1806000000000-ProductHepsiburadaCategoryId';
 import { ProductVariantGrindRoast1807000000000 } from './1807000000000-ProductVariantGrindRoast';
 import { MarketplaceApiLogs1808000000000 } from './1808000000000-MarketplaceApiLogs';
+import { ProductHepsiburadaAttributes1809000000000 } from './1809000000000-ProductHepsiburadaAttributes';
 
 /**
  * Nest rspack build migration glob'larını dist'e kopyalamaz.
@@ -76,4 +77,5 @@ export const ALL_MIGRATIONS = [
   ProductHepsiburadaCategoryId1806000000000,
   ProductVariantGrindRoast1807000000000,
   MarketplaceApiLogs1808000000000,
+  ProductHepsiburadaAttributes1809000000000,
 ];
