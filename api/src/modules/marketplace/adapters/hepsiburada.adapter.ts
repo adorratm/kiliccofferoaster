@@ -97,32 +97,37 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     }
 
     const auth = this.auth(credentials);
+    const rows = items
+      .map((item) => ({
+        merchantSku: (item.sku || item.externalListingId || '').trim(),
+        availableStock: Math.max(0, Math.floor(Number(item.stock) || 0)),
+      }))
+      .filter((row) => row.merchantSku);
+    if (!rows.length) {
+      return {
+        synced: 0,
+        mock: false,
+        stub: false,
+        message: 'Stok senkronu için SKU yok',
+        raw: { results: [] },
+      };
+    }
+
     const results: unknown[] = [];
     let synced = 0;
 
     try {
-      for (const item of items) {
-        const sku = encodeURIComponent(item.sku || item.externalListingId);
-        const res = await marketplaceFetch(
-          `${this.listingBase()}/listings/merchantid/${auth.merchantId}/sku/${sku}`,
-          {
-            method: 'PUT',
-            headers: {
-              Authorization: auth.Authorization,
-              'User-Agent': auth['User-Agent'],
-            },
-            body: { AvailableStock: Math.max(0, item.stock) },
-            label: 'hb.syncStock',
-          },
-        );
-        results.push(res.data);
-        synced += 1;
+      for (let i = 0; i < rows.length; i += 1000) {
+        const chunk = rows.slice(i, i + 1000);
+        const data = await this.uploadListingInventory(auth, chunk, 'hb.syncStock');
+        results.push(data);
+        synced += chunk.length;
       }
       return {
         synced,
         mock: false,
         stub: false,
-        message: `${synced} SKU stok güncellendi`,
+        message: `${synced} SKU stok güncellemesi kuyruğa alındı`,
         raw: { results },
       };
     } catch (err) {
@@ -1160,22 +1165,41 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     stock: number,
     price?: number,
   ) {
-    const body: Record<string, unknown> = {
-      AvailableStock: Math.max(0, stock),
+    const row: { merchantSku: string; availableStock: number; price?: number } = {
+      merchantSku,
+      availableStock: Math.max(0, Math.floor(stock)),
     };
     if (price != null && Number.isFinite(price) && price > 0) {
-      body.Price = price;
+      row.price = price;
     }
+    return this.uploadListingInventory(auth, [row], 'hb.pushProduct.stock');
+  }
+
+  /**
+   * Listing stok/fiyat: PUT /sku/{sku} yok (404).
+   * Fiyat varsa inventory-uploads, yalnız stoksa stock-uploads.
+   */
+  private async uploadListingInventory(
+    auth: {
+      merchantId: string;
+      Authorization: string;
+      'User-Agent': string;
+    },
+    rows: Array<{ merchantSku: string; availableStock: number; price?: number }>,
+    label: string,
+  ) {
+    const withPrice = rows.some((row) => row.price != null && row.price > 0);
+    const path = withPrice ? 'inventory-uploads' : 'stock-uploads';
     const res = await marketplaceFetch(
-      `${this.listingBase()}/listings/merchantid/${auth.merchantId}/sku/${encodeURIComponent(merchantSku)}`,
+      `${this.listingBase()}/listings/merchantid/${encodeURIComponent(auth.merchantId)}/${path}`,
       {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           Authorization: auth.Authorization,
           'User-Agent': auth['User-Agent'],
         },
-        body,
-        label: 'hb.pushProduct.stock',
+        body: rows,
+        label,
       },
     );
     return res.data;
