@@ -546,7 +546,6 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     const productExtra = normalizeHbAttrMap(input.hepsiburadaAttributes);
     // Ürün override > hesap credentials.attributes
     const extra = { ...accountExtra, ...productExtra };
-    const isCoffeeKind = isHbCoffeeKind(input.productKind);
     // HB VaryantGroupID: tireli UUID yerine alfanümerik daha güvenli
     const varyantGroupId = (
       input.varyantGroupId?.trim() ||
@@ -639,7 +638,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
               rawValue = enumResult.value;
             } else if (attr.mandatory) {
               const guessed =
-                isCoffeeKind && importKey === '00001STC'
+                importKey === '00001STC' || attr.name === 'Miktar'
                   ? guessMiktarEnumValue(rawValue ?? input.weightLabel)
                   : null;
               if (guessed) {
@@ -655,7 +654,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
                   tried: rawValue ?? input.weightLabel,
                   sampleValues: enumResult.samples,
                   valuesHttp: enumResult.debug,
-                  hint: `Bu kategori için Admin → Ürün → Hepsiburada attributes JSON’a attribute.id yazın (ör. {"${attr.id}":"${enumResult.samples[0] || 'değer'}"}). Kahve dışı türlerde weightLabel otomatik Miktar olmaz.`,
+                  hint: `Bu kategori için Admin → Ürün → Hepsiburada attributes JSON’a attribute.id yazın (ör. {"${attr.id}":"${enumResult.samples[0] || 'değer'}"}). Miktar, varyant gramajından "100 gr" / "1 kg" biçimine çevrilir; Türü gibi tür alanları JSON’da kalır.`,
                 });
               }
             } else {
@@ -713,10 +712,8 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         attributes.Image1 = imageUrl;
         attributes['00000MU'] = imageUrl;
       }
-      if (isCoffeeKind) {
-        const guessedMiktar = guessMiktarEnumValue(input.weightLabel);
-        if (guessedMiktar) attributes['00001STC'] = guessedMiktar;
-      }
+      const guessedMiktar = guessMiktarEnumValue(input.weightLabel);
+      if (guessedMiktar) attributes['00001STC'] = guessedMiktar;
     }
 
     const body = [
@@ -937,6 +934,65 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     }
   }
 
+  /** HB attribute values sayfalı dönebilir; ilk sayfa çoğu zaman 20 satır. */
+  private async fetchHbAttributeValuePages(
+    auth: { Authorization: string; 'User-Agent': string },
+    baseUrl: string,
+  ): Promise<{
+    rows: Array<Record<string, unknown>>;
+    status: number;
+    data: unknown;
+  }> {
+    const headers = {
+      Authorization: auth.Authorization,
+      'User-Agent': auth['User-Agent'],
+    };
+    const load = (url: string) =>
+      marketplaceFetch<unknown>(url, {
+        method: 'GET',
+        headers,
+        label: 'hb.attributeValues',
+      });
+
+    let first;
+    try {
+      first = await load(`${baseUrl}?page=0&size=1000`);
+    } catch {
+      first = null;
+    }
+    if (!first || unwrapHbValueRows(first.data).length === 0) {
+      first = await load(baseUrl);
+    }
+
+    const rows = unwrapHbValueRows(first.data);
+    const seen = new Set(rows.map((row) => hbValueRowKey(row)));
+    const continuePaging = rows.length === 1000 || rows.length === 20;
+
+    if (continuePaging) {
+      for (let page = 1; page < 40; page += 1) {
+        let next;
+        try {
+          next = await load(`${baseUrl}?page=${page}&size=1000`);
+        } catch {
+          break;
+        }
+        const more = unwrapHbValueRows(next.data);
+        if (!more.length) break;
+        let added = 0;
+        for (const row of more) {
+          const key = hbValueRowKey(row);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          rows.push(row);
+          added += 1;
+        }
+        if (added === 0 || more.length < 1000) break;
+      }
+    }
+
+    return { rows, status: first.status, data: first.data };
+  }
+
   /**
    * Enum attribute için izin verilen değeri seç.
    * Dönüş: HB’nin beklediği value (genelde value name) + örnek liste.
@@ -956,19 +1012,11 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
     const wanted = wantedRaw.toLowerCase().replace(/\s+/g, ' ');
     if (!wanted) return { value: null, samples: [] };
 
-    const url = `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attribute/${encodeURIComponent(String(attributeId))}/values`;
+    const baseUrl = `${this.mpopBase()}/product/api/categories/${encodeURIComponent(String(categoryId))}/attribute/${encodeURIComponent(String(attributeId))}/values`;
 
     try {
-      const res = await marketplaceFetch<unknown>(url, {
-        method: 'GET',
-        headers: {
-          Authorization: auth.Authorization,
-          'User-Agent': auth['User-Agent'],
-        },
-        label: 'hb.attributeValues',
-      });
-
-      const rows = unwrapHbValueRows(res.data);
+      const fetched = await this.fetchHbAttributeValuePages(auth, baseUrl);
+      const rows = fetched.rows;
       const samples = rows
         .slice(0, 30)
         .map((r) =>
@@ -977,13 +1025,13 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         .filter(Boolean);
 
       const debug = {
-        httpStatus: res.status,
+        httpStatus: fetched.status,
         rowCount: rows.length,
-        dataType: Array.isArray(res.data)
+        dataType: Array.isArray(fetched.data)
           ? 'array'
-          : res.data && typeof res.data === 'object'
-            ? Object.keys(res.data as object).slice(0, 8)
-            : typeof res.data,
+          : fetched.data && typeof fetched.data === 'object'
+            ? Object.keys(fetched.data as object).slice(0, 8)
+            : typeof fetched.data,
       };
 
       if (!rows.length) {
@@ -993,14 +1041,7 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
         return { value: null, samples: [], debug };
       }
 
-      const norm = (s: string) =>
-        s
-          .toLowerCase()
-          .replace(/(\d)[.,]?(\d*)\s*gr(am)?s?\b/g, '$1$2g')
-          .replace(/\bgram\b/g, 'g')
-          .replace(/\s+/g, ' ')
-          .replace(/\s*g\s*$/i, 'g')
-          .trim();
+      const norm = (s: string) => normalizeHbEnumLabel(s);
       const wantedN = norm(wanted);
       const wantedGrams = extractGrams(wantedN);
 
@@ -1024,9 +1065,11 @@ export class HepsiburadaAdapter implements IMarketplaceAdapter {
             wantedGrams != null &&
             labelGrams != null &&
             wantedGrams === labelGrams;
+          // Gramaj adayında "100g" ⊃ "10g" gibi gevşek eşleşme yanlış miktar seçer.
+          const looseOk = wantedGrams == null && loose;
           return {
             send: name || ext || id,
-            score: exact ? 3 : gramMatch ? 2 : loose ? 1 : 0,
+            score: exact ? 3 : gramMatch ? 2 : looseOk ? 1 : 0,
           };
         })
         .filter((x) => x.score > 0 && x.send)
@@ -1294,6 +1337,23 @@ function extractGrams(normalized: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** "100g" / "100 gr" / "1 kg" → karşılaştırılabilir "100g" / "1000g". */
+function normalizeHbEnumLabel(s: string): string {
+  let t = s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const toGrams = (raw: string, factor: number) => {
+    const n = Number(String(raw).replace(',', '.')) * factor;
+    return Number.isFinite(n) ? `${Math.round(n)}g` : raw;
+  };
+  t = t.replace(/(\d+(?:[.,]\d+)?)\s*kg\b/g, (_, n) => toGrams(n, 1000));
+  t = t.replace(/(\d+(?:[.,]\d+)?)\s*gr(am)?s?\b/g, (_, n) => toGrams(n, 1));
+  t = t.replace(/(\d+(?:[.,]\d+)?)\s*g\b/g, (_, n) => toGrams(n, 1));
+  return t.trim();
+}
+
+function hbValueRowKey(row: Record<string, unknown>): string {
+  return String(row.id || row.value || row.name || JSON.stringify(row));
+}
+
 /** HB values endpoint farklı zarflar döndürebilir */
 function unwrapHbValueRows(data: unknown): Array<Record<string, unknown>> {
   if (Array.isArray(data)) {
@@ -1344,16 +1404,6 @@ function guessMiktarEnumValue(candidate: unknown): string | null {
   }
   // HB gıda kategorilerinde çoğu zaman "100 gr" (g değil)
   return `${Math.round(grams)} gr`;
-}
-
-function isHbCoffeeKind(kind?: string | null): boolean {
-  const k = (kind || '').toLowerCase();
-  return (
-    k === 'coffee_turkish' ||
-    k === 'coffee_filter' ||
-    k === 'coffee_espresso' ||
-    k.startsWith('coffee_')
-  );
 }
 
 function normalizeHbAttrMap(
