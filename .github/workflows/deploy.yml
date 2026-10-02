@@ -1,5 +1,8 @@
 name: Deploy Kılıç Coffee
 
+# Build images on GitHub runners → GHCR, then SSH pull + rolling recreate.
+# Never docker-build Next/Nest on the shared Hetzner VPS (causes sibling 502).
+
 on:
   push:
     branches: [main]
@@ -7,59 +10,84 @@ on:
 
 concurrency:
   group: kiliccoffee-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/kiliccofferoaster
 
 jobs:
   build:
-    name: Build & Verify
+    name: Build images (GHCR)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - service: api
+            dockerfile: docker/api.Dockerfile
+            build_args: ""
+          - service: frontend
+            dockerfile: docker/frontend.Dockerfile
+            build_args: |
+              NEXT_PUBLIC_API_URL=https://api.kiliccoffeeroaster.com.tr
+              NEXT_PUBLIC_SITE_URL=https://kiliccoffeeroaster.com.tr
+              NEXT_PUBLIC_ADMIN_URL=https://admin.kiliccoffeeroaster.com.tr
+          - service: admin
+            dockerfile: docker/admin.Dockerfile
+            build_args: |
+              NEXT_PUBLIC_API_URL=https://api.kiliccoffeeroaster.com.tr
+              NEXT_PUBLIC_ADMIN_URL=https://admin.kiliccoffeeroaster.com.tr
+              NEXT_PUBLIC_SITE_URL=https://kiliccoffeeroaster.com.tr
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+      image_prefix: ${{ env.IMAGE_PREFIX }}
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v5
+      - name: Image tag
+        id: meta
+        run: echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
-          node-version: 26
-          # v5 varsayılan true: packageManager=yarn görünce Yarn 1.22 ile cache kurmaya çalışır
-          package-manager-cache: false
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Node 25+ corepack'i paketlemiyor
-      - name: Install Corepack & Yarn 4
-        run: |
-          npm install -g corepack@latest --force
-          corepack enable
-          corepack prepare yarn@4.18.0 --activate
-          corepack yarn --version
-
-      - name: Install
-        run: corepack yarn install --immutable
-
-      - name: Build API
-        run: corepack yarn build:api
-
-      - name: Build frontend
-        env:
-          NEXT_PUBLIC_API_URL: https://api.kiliccoffeeroaster.com.tr
-          NEXT_PUBLIC_SITE_URL: https://kiliccoffeeroaster.com.tr
-          NEXT_PUBLIC_ADMIN_URL: https://admin.kiliccoffeeroaster.com.tr
-        run: corepack yarn build:frontend
-
-      - name: Build admin
-        env:
-          NEXT_PUBLIC_API_URL: https://api.kiliccoffeeroaster.com.tr
-          NEXT_PUBLIC_ADMIN_URL: https://admin.kiliccoffeeroaster.com.tr
-          NEXT_PUBLIC_SITE_URL: https://kiliccoffeeroaster.com.tr
-        run: corepack yarn build:admin
+      - name: Build + push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
+          build-args: ${{ matrix.build_args }}
+          cache-from: type=gha,scope=kilic-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=kilic-${{ matrix.service }}
+          provenance: false
 
   deploy:
     name: Deploy to Hetzner
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v5
 
-      - name: Upload project archive to server
+      - name: Sync deploy scripts + compose to server
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -100,19 +128,31 @@ jobs:
             "${SSH_USER}@${SSH_HOST}" \
             "cd '${DEPLOY_PATH}' && tar xzf /tmp/kiliccoffee-deploy.tar.gz && rm -f /tmp/kiliccoffee-deploy.tar.gz"
 
-      - name: Run deploy script
+      - name: Pull images + deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          command_timeout: 45m
+          command_timeout: 25m
+          envs: KILIC_IMAGE_TAG,KILIC_IMAGE_PREFIX,GHCR_TOKEN,GHCR_USER
           script: |
             set -euo pipefail
             cd ${{ secrets.DEPLOY_PATH }}
             chmod +x deploy/*.sh deploy/lib/*.sh
+            if [[ -n "${GHCR_TOKEN:-}" ]]; then
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-adorratm}" --password-stdin
+            fi
+            export KILIC_IMAGE_TAG="${KILIC_IMAGE_TAG}"
+            export KILIC_IMAGE_PREFIX="${KILIC_IMAGE_PREFIX}"
+            export KILIC_USE_REGISTRY=1
             ./deploy/deploy.sh
+        env:
+          KILIC_IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+          KILIC_IMAGE_PREFIX: ${{ needs.build.outputs.image_prefix }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
 
       - name: Health check
         uses: appleboy/ssh-action@v1.2.0

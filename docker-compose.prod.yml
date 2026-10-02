@@ -1,4 +1,5 @@
 # Kılıç Coffee Roaster — production (Hetzner, paylaşımlı VPS)
+# Prefer CI→GHCR (KILIC_USE_REGISTRY=1); VPS compose build is last resort (sibling 502).
 # Host portları TTEN (3000/4000) ve Portfolio (3100–3102 / 5433 / 6380) ile çakışmaz.
 # Kullanım: bash deploy/deploy.sh
 #
@@ -6,7 +7,7 @@
 # Sebep: compose service adı "frontend" TTEN nginx upstream'i (frontend:3000) ile çakışır.
 #
 # Zero-downtime yaklaşımı (deploy.sh):
-# 1) Image build (eski container'lar ayakta)
+# 1) Pull/build image (eski container'lar ayakta)
 # 2) migrate one-shot (fail → eski container'lara dokunulmaz)
 # 3) Servisleri tek tek recreate + health; fail → :rollback image
 

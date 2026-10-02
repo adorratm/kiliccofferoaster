@@ -300,7 +300,19 @@ rolling_recreate() {
 
 cd "${ROOT_DIR}"
 
-echo "==> Kılıç Coffee production deploy: $(date -Is)"
+USE_REGISTRY="${KILIC_USE_REGISTRY:-0}"
+
+DEPLOY_LOCK="${DEPLOY_LOCK:-/var/lock/hetzner-site-deploy.lock}"
+mkdir -p "$(dirname "$DEPLOY_LOCK")"
+exec 9>"$DEPLOY_LOCK"
+echo "==> waiting for shared deploy lock ($DEPLOY_LOCK)"
+if ! flock -w 3600 9; then
+  echo "ERROR: another site deploy still holds $DEPLOY_LOCK" >&2
+  exit 1
+fi
+echo "==> acquired deploy lock"
+
+echo "==> Kılıç Coffee production deploy: $(date -Is) (registry=${USE_REGISTRY})"
 
 export COMPOSE_PARALLEL_LIMIT=1
 export DOCKER_BUILDKIT=1
@@ -330,13 +342,19 @@ snapshot_rollback kiliccoffee-prod-api kiliccoffee-prod-api:live
 snapshot_rollback kiliccoffee-prod-frontend kiliccoffee-prod-frontend:live
 snapshot_rollback kiliccoffee-prod-admin kiliccoffee-prod-admin:live
 
-echo "==> Servisler sırayla build (RAM dostu; eski container'lar ayakta)..."
-for service in api frontend admin; do
-  echo "--- build: ${service} ($(date -Is))"
-  echo "    free: $(free -m | awk '/Mem:/{print $7}')M available"
-  "${COMPOSE[@]}" build "${service}"
-  docker builder prune -f --keep-storage 2GB >/dev/null 2>&1 || true
-done
+if [[ "${USE_REGISTRY}" == "1" ]]; then
+  echo "==> Pull prebuilt images (no VPS Next/Nest build)"
+  bash "${ROOT_DIR}/deploy/pull-prebuilt.sh"
+else
+  echo "==> Servisler sırayla build (RAM dostu — last resort; prefer GHCR)..."
+  for service in api frontend admin; do
+    echo "--- build: ${service} ($(date -Is))"
+    echo "    free: $(free -m | awk '/Mem:/{print $7}')M available"
+    nice -n 15 ionice -c2 -n7 "${COMPOSE[@]}" build "${service}" \
+      || "${COMPOSE[@]}" build "${service}"
+    docker builder prune -f --keep-storage 2GB >/dev/null 2>&1 || true
+  done
+fi
 
 echo "==> Migration one-shot (yeni api image; fail → container'lara dokunulmaz)..."
 if ! "${COMPOSE[@]}" run --rm --no-deps --entrypoint node api dist/migrate.js; then

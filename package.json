@@ -73,12 +73,12 @@
   },
   "volta": {
     "node": "26.10.0",
-    "yarn": "4.18.0"
+    "yarn": "4.18.1"
   },
   "packageManager": "yarn@4.18.0",
   "version": "1.0.0",
   "dependencies": {
-    "expo": "~57.0.24",
+    "expo": "~57.0.26",
     "react": "19.3.0",
     "react-native": "0.87.1"
   }
