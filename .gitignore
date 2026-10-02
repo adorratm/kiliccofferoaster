@@ -6,6 +6,8 @@ node_modules
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+!.yarn/vendor
+!.yarn/vendor/**
 .pnp.*
 dist
 .next
