@@ -12,7 +12,7 @@ ENV REDIS_URL=redis://127.0.0.1:6379
 ENV DATABASE_HOST=127.0.0.1
 
 COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/patches ./.yarn/patches
+COPY .yarn/vendor ./.yarn/vendor
 COPY api ./api
 COPY frontend/package.json ./frontend/
 COPY admin/package.json ./admin/
