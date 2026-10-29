@@ -78,14 +78,59 @@ jobs:
           cache-to: type=gha,mode=max,scope=kilic-${{ matrix.service }}
           provenance: false
 
+  # Matrix job outputs are flaky; resolve tag/prefix once before SSH deploy.
+  prepare:
+    name: Resolve image refs
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+      image_prefix: ${{ env.IMAGE_PREFIX }}
+    steps:
+      - name: Image tag
+        id: meta
+        run: echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
   deploy:
     name: Deploy to Hetzner
-    needs: build
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.ref == 'refs/heads/main'
+    # VPS pulls private GHCR images with a classic PAT (read:packages).
+    # GITHUB_TOKEN often returns Login Succeeded + pull "denied" off-runner.
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v5
+
+      - name: Require GHCR pull token
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GHCR_TOKEN:-}" ]]; then
+            echo "::error::Missing secret GHCR_TOKEN. Create a classic PAT with read:packages"
+            echo "and add it as repository secret GHCR_TOKEN (username = GitHub user that owns the packages)."
+            echo "https://github.com/settings/tokens/new?scopes=read:packages"
+            exit 1
+          fi
+
+      - name: Verify images are pullable with GHCR_TOKEN
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ secrets.GHCR_USER || github.repository_owner }}
+          IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
+          IMAGE_PREFIX: ${{ needs.prepare.outputs.image_prefix }}
+        run: |
+          set -euo pipefail
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          for svc in api frontend admin; do
+            img="${IMAGE_PREFIX}/${svc}:${IMAGE_TAG}"
+            echo "==> docker pull $img"
+            docker pull "$img"
+          done
 
       - name: Sync deploy scripts + compose to server
         env:
@@ -141,18 +186,20 @@ jobs:
             set -euo pipefail
             cd ${{ secrets.DEPLOY_PATH }}
             chmod +x deploy/*.sh deploy/lib/*.sh
-            if [[ -n "${GHCR_TOKEN:-}" ]]; then
-              echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-adorratm}" --password-stdin
+            if [[ -z "${GHCR_TOKEN:-}" ]]; then
+              echo "GHCR_TOKEN empty on VPS — cannot pull private images"
+              exit 1
             fi
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
             export KILIC_IMAGE_TAG="${KILIC_IMAGE_TAG}"
             export KILIC_IMAGE_PREFIX="${KILIC_IMAGE_PREFIX}"
             export KILIC_USE_REGISTRY=1
             ./deploy/deploy.sh
         env:
-          KILIC_IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
-          KILIC_IMAGE_PREFIX: ${{ needs.build.outputs.image_prefix }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
+          KILIC_IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
+          KILIC_IMAGE_PREFIX: ${{ needs.prepare.outputs.image_prefix }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ secrets.GHCR_USER || github.repository_owner }}
 
       - name: Health check
         uses: appleboy/ssh-action@v1.2.0

@@ -14,7 +14,13 @@ pull_one() {
   local local_img="$2"
   local remote="${PREFIX}/${svc}:${TAG}"
   echo "--> $remote → ${local_img}:live"
-  docker pull "$remote"
+  if ! docker pull "$remote"; then
+    echo "ERROR: docker pull failed for $remote" >&2
+    echo "If the error is 'denied': VPS needs a classic PAT (read:packages) as GHCR_TOKEN," >&2
+    echo "and Package settings must grant that user read access." >&2
+    echo "GITHUB_TOKEN from Actions often cannot pull GHCR from outside the runner." >&2
+    exit 1
+  fi
   docker tag "$remote" "${local_img}:live"
   docker tag "$remote" "${local_img}:${TAG}"
 }
