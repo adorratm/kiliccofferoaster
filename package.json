@@ -84,14 +84,14 @@
     "node-forge": "portal:./.yarn/vendor/node-forge"
   },
   "volta": {
-    "node": "26.12.0",
+    "node": "26.13.0",
     "yarn": "4.18.1"
   },
   "packageManager": "yarn@4.18.0",
   "version": "1.0.0",
   "dependencies": {
-    "expo": "~58.0.12",
+    "expo": "~58.0.21",
     "react": "19.3.1",
-    "react-native": "0.88.0"
+    "react-native": "0.88.1"
   }
 }
