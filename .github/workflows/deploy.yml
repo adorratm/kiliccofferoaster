@@ -1,6 +1,8 @@
 name: Deploy Kılıç Coffee
 
-# Build images on GitHub runners → GHCR, then SSH pull + rolling recreate.
+# Build images on GitHub runners → GHCR, then deliver to VPS + rolling recreate.
+# Prefer optional GHCR_TOKEN for VPS pull; otherwise runner pulls with GITHUB_TOKEN
+# and streams images via docker save|load (avoids GHCR "denied" on the VPS).
 # Never docker-build Next/Nest on the shared Hetzner VPS (causes sibling 502).
 
 on:
@@ -95,42 +97,15 @@ jobs:
     name: Deploy to Hetzner
     needs: prepare
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     if: github.ref == 'refs/heads/main'
-    # VPS pulls private GHCR images with a classic PAT (read:packages).
-    # GITHUB_TOKEN often returns Login Succeeded + pull "denied" off-runner.
+    # GITHUB_TOKEN can pull on the runner; VPS often gets GHCR "denied".
+    # Prefer optional GHCR_TOKEN (classic PAT) for VPS pull; else ship images via docker save|load.
     permissions:
       contents: read
       packages: read
     steps:
       - uses: actions/checkout@v5
-
-      - name: Require GHCR pull token
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${GHCR_TOKEN:-}" ]]; then
-            echo "::error::Missing secret GHCR_TOKEN. Create a classic PAT with read:packages"
-            echo "and add it as repository secret GHCR_TOKEN (username = GitHub user that owns the packages)."
-            echo "https://github.com/settings/tokens/new?scopes=read:packages"
-            exit 1
-          fi
-
-      - name: Verify images are pullable with GHCR_TOKEN
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USER: ${{ secrets.GHCR_USER || github.repository_owner }}
-          IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
-          IMAGE_PREFIX: ${{ needs.prepare.outputs.image_prefix }}
-        run: |
-          set -euo pipefail
-          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-          for svc in api frontend admin; do
-            img="${IMAGE_PREFIX}/${svc}:${IMAGE_TAG}"
-            echo "==> docker pull $img"
-            docker pull "$img"
-          done
 
       - name: Sync deploy scripts + compose to server
         env:
@@ -173,7 +148,69 @@ jobs:
             "${SSH_USER}@${SSH_HOST}" \
             "cd '${DEPLOY_PATH}' && tar xzf /tmp/kiliccoffee-deploy.tar.gz && rm -f /tmp/kiliccoffee-deploy.tar.gz"
 
-      - name: Pull images + deploy
+      - name: Deliver images to VPS
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
+          IMAGE_PREFIX: ${{ needs.prepare.outputs.image_prefix }}
+        run: |
+          set -euo pipefail
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          remote_ssh() {
+            ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" \
+              -o StrictHostKeyChecking=accept-new \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=20 \
+              "${SSH_USER}@${SSH_HOST}" "$@"
+          }
+
+          if [[ -n "${GHCR_TOKEN:-}" ]]; then
+            echo "==> VPS will pull from GHCR with GHCR_TOKEN"
+            remote_ssh "printf 'export KILIC_SKIP_PULL=0\\n' > /tmp/kilic-image-mode.env"
+            exit 0
+          fi
+
+          echo "==> No GHCR_TOKEN — pull on runner with GITHUB_TOKEN, stream to VPS"
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+
+          imgs=()
+          for svc in api frontend admin; do
+            img="${IMAGE_PREFIX}/${svc}:${IMAGE_TAG}"
+            echo "==> docker pull $img"
+            docker pull "$img"
+            imgs+=("$img")
+          done
+
+          echo "==> docker save | ssh docker load (${#imgs[@]} images)"
+          docker save "${imgs[@]}" | remote_ssh "docker load"
+
+          echo "==> retag as kiliccoffee-prod-*:live on VPS"
+          remote_ssh "set -euo pipefail
+            TAG='${IMAGE_TAG}'
+            PREFIX='${IMAGE_PREFIX}'
+            docker tag \"\${PREFIX}/api:\${TAG}\" kiliccoffee-prod-api:live
+            docker tag \"\${PREFIX}/api:\${TAG}\" \"kiliccoffee-prod-api:\${TAG}\"
+            docker tag \"\${PREFIX}/frontend:\${TAG}\" kiliccoffee-prod-frontend:live
+            docker tag \"\${PREFIX}/frontend:\${TAG}\" \"kiliccoffee-prod-frontend:\${TAG}\"
+            docker tag \"\${PREFIX}/admin:\${TAG}\" kiliccoffee-prod-admin:live
+            docker tag \"\${PREFIX}/admin:\${TAG}\" \"kiliccoffee-prod-admin:\${TAG}\"
+          "
+
+          remote_ssh "printf 'export KILIC_SKIP_PULL=1\\n' > /tmp/kilic-image-mode.env"
+          echo "==> Images ready on VPS (skip GHCR pull)"
+
+      - name: Rolling deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -186,14 +223,20 @@ jobs:
             set -euo pipefail
             cd ${{ secrets.DEPLOY_PATH }}
             chmod +x deploy/*.sh deploy/lib/*.sh
-            if [[ -z "${GHCR_TOKEN:-}" ]]; then
-              echo "GHCR_TOKEN empty on VPS — cannot pull private images"
-              exit 1
+            # shellcheck disable=SC1091
+            if [[ -f /tmp/kilic-image-mode.env ]]; then
+              # shellcheck source=/dev/null
+              source /tmp/kilic-image-mode.env
+              rm -f /tmp/kilic-image-mode.env
             fi
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+            if [[ -n "${GHCR_TOKEN:-}" ]]; then
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+              export KILIC_SKIP_PULL=0
+            fi
             export KILIC_IMAGE_TAG="${KILIC_IMAGE_TAG}"
             export KILIC_IMAGE_PREFIX="${KILIC_IMAGE_PREFIX}"
             export KILIC_USE_REGISTRY=1
+            export KILIC_SKIP_PULL="${KILIC_SKIP_PULL:-0}"
             ./deploy/deploy.sh
         env:
           KILIC_IMAGE_TAG: ${{ needs.prepare.outputs.image_tag }}
